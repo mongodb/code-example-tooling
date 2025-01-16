@@ -1,0 +1,19 @@
+{
+  "name": "github-metrics-tooling",
+  "version": "1.0.0",
+  "main": "index.js",
+  "module": "get-github-metrics.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "type": "module",
+  "dependencies": {
+    "esm": "^3.2.25",
+    "mongodb": "^6.12.0",
+    "octokit": "^4.1.0"
+  }
+}

@@ -100,7 +100,7 @@ async function getTopPaths(octokit, owner, repo) {
     return paths;
 }
 
-// Currently there is no data to display, so not sure what form the return data takes. Will add details to work with this data once I can get a return value.
+// Currently there is no data to display, so not sure what form the return data takes. // @todo Add details to work with this data once I can get a return value.
 async function getMaintenanceInfo(octokit, owner, repo) {
     const codeFrequency = await octokit.rest.repos.getCodeFrequencyStats({
         owner: owner,

@@ -1,9 +1,14 @@
 # Project Metrics Tooling
 
-This repo contains tooling to enable us to programmatically keep track of various project metrics.
+This directory contains tooling to enable us to track various GitHub project metrics programmatically.
 
-At the moment, it only contains a PoC for a simple pipeline to get metrics out of GitHub and into MongoDB Atlas. In the
-future, we can move this into the `mongodb` org and add tooling for our various projects.
+Currently, it contains a PoC for a simple pipeline to pull metrics from GitHub into MongoDB Atlas. 
+
+Planned future work: 
+
+- Set up a server to pull metrics every 14 days 
+- Add logic to work with pulled metrics once available in the test repo
+- Set up Atlas Charts to visualize the data
 
 ## GitHub Repo Metrics
 
@@ -55,7 +60,7 @@ Contact a member of the Developer Docs team to be added to this project and get 
 
 **GitHub**:
 
-- A [GitHub Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
+- A [GitHub Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) (PAT)
   with `repo` permissions
 
 For this project, as a MongoDB org member, you must also auth your PAT with SSO.

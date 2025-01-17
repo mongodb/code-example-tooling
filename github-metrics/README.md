@@ -9,9 +9,9 @@ Planned future work:
 - Add logic to work with pulled maintenance metrics once available in the test repo
 - Set up Atlas Charts to visualize the data
 
-## GitHub Repo Metrics
+## GitHub repo metrics
 
-### Get Metrics from GitHub
+### Get metrics from GitHub
 
 This is a simple PoC that uses [octokit](https://github.com/octokit/octokit.js) to get the following data out of GitHub
 for a given repository over a trailing 14 day period:

@@ -1,4 +1,4 @@
-# Project Metrics Tooling
+# GitHub Metrics Tooling
 
 This directory contains tooling to enable us to track various GitHub project metrics programmatically.
 

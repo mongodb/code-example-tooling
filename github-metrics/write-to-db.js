@@ -5,7 +5,6 @@ async function addMetricsToAtlas(metricsDoc) {
     const client = new MongoClient(uri);
     try {
         await client.connect();
-
         const database = client.db("github_metrics");
         const coll = database.collection(metricsDoc.owner + "_" + metricsDoc.repo);
         const result = await coll.insertOne(metricsDoc);

@@ -85,7 +85,7 @@ For this project, as a MongoDB org member, you must also auth your PAT with SSO.
 
    > Note: The `.env` file is in the `.gitignore`, so no worries about accidentally committing credentials.
 
-#. **Install the dependencies**
+2. **Install the dependencies**
 
    From the root of the directory, run the following command to install project dependencies:
 
@@ -93,7 +93,7 @@ For this project, as a MongoDB org member, you must also auth your PAT with SSO.
    npm install
    ```
 
-#. **Run the utility**
+3. **Run the utility**
 
    From the root of the directory, run the following command to run the utility:
 

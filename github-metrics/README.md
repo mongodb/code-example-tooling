@@ -6,8 +6,7 @@ Currently, it contains a PoC for a simple pipeline to pull metrics from GitHub i
 
 Planned future work: 
 
-- Set up a server to pull metrics every 14 days 
-- Add logic to work with pulled metrics once available in the test repo
+- Add logic to work with pulled maintenance metrics once available in the test repo
 - Set up Atlas Charts to visualize the data
 
 ## GitHub Repo Metrics
@@ -22,6 +21,8 @@ for a given repository over a trailing 14 day period:
 - Stars
 - Watchers
 - Forks
+- Top 10 referral sources
+- Top 10 paths/destinations in the repo
 
 The intent is to also get the following maintenance-related stats for a given repository over a trailing 14 day period:
 
@@ -33,8 +34,8 @@ However, at present, GitHub does not have any data cached for the test repo, so 
 This code is in the `get-github-metrics.js` file.
 
 > **Note**: The GitHub API does not provide the option to specify a date range for these metrics. The API _only_ provides
-> this data for the trailing 14 day period, fixed. In the future, we'll want to set up a server to run this job regularly
-> since we cannot specify a date range.
+> this data for the trailing 14 day period, fixed. We'll need to re-run this job regularly, and in the future, we
+> may want to set up a server to run this job since we cannot specify a date range.
 
 ### Write metrics to Atlas
 
@@ -71,37 +72,37 @@ For this project, as a MongoDB org member, you must also auth your PAT with SSO.
 
 #### Steps
 
-##### Create a `.env` file
+1. **Create a `.env` file**
 
-Create a `.env` file that contains the following details:
+   Create a `.env` file that contains the following details:
 
-```
-ATLAS_CONNECTION_STRING="yourConnectionString"
-GITHUB_TOKEN="yourToken"
-```
+   ```
+   ATLAS_CONNECTION_STRING="yourConnectionString"
+   GITHUB_TOKEN="yourToken"
+   ```
 
-Replace the placeholder values with your connection string and GitHub token.
+   Replace the placeholder values with your connection string and GitHub token.
 
-The `.env` file is in the `.gitignore`, so no worries about accidentally committing credentials.
+   > Note: The `.env` file is in the `.gitignore`, so no worries about accidentally committing credentials.
 
-##### Install the dependencies
+#. **Install the dependencies**
 
-From the root of the directory, run the following command to install project dependencies:
+   From the root of the directory, run the following command to install project dependencies:
 
-```
-npm install
-```
+   ```
+   npm install
+   ```
 
-##### Run the utility
+#. **Run the utility**
 
-From the root of the directory, run the following command to run the utility:
+   From the root of the directory, run the following command to run the utility:
 
-```
-node --env-file=.env index.js
-```
+   ```
+   node --env-file=.env index.js
+   ```
 
-You should see output similar to:
+   You should see output similar to:
 
-```
-A document was inserted with the _id: 678197a0ffe1539ff213bd86
-```
+   ```
+   A document was inserted with the _id: 678197a0ffe1539ff213bd86
+   ```

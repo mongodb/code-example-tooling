@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+      "module": "commonjs",
+      "esModuleInterop": true,
+      "target": "es6",
+      "moduleResolution": "node",
+      "sourceMap": true,
+      "outDir": "./build",
+      "allowJs": false,
+      "downlevelIteration": true,
+      "strictNullChecks": true,
+      "strict": true,
+      "declaration": true,
+      "declarationMap": true,
+      "resolveJsonModule": true,
+      "lib": ["ES2020", "dom"]
+    },
+    "sourceMap": true,
+    "include": ["./src/**/*.ts"],
+    "exclude": ["**/*.test.ts"]
+  }

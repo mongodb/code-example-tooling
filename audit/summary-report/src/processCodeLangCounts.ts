@@ -38,10 +38,10 @@ export async function processCodeLangCounts() {
     const repoLangReports: RepoLangReport[] = [];
     // Start reading files from the top-level directory
     const result = await readLangFilesRecursively(directoryPath, langData, repoLangReports);
-    console.log(result[0]);
-    result[1].forEach((entry) => {
-        console.log(entry);
-    })
+    // console.log(result[0]);
+    // result[1].forEach((entry) => {
+    //     console.log(entry);
+    // })
     await writeJSONToFile("./output/aggregate-lang-report.json", result[0]);
     await writeJSONToFile("./output/repo-lang-summary.json", result[1]);
 }

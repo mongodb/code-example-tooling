@@ -34,6 +34,12 @@ export async function readCategoryFilesRecursively(
             if (totals.exampleReturnObject) {
                 categoryCounts.exampleReturnObject += totals.exampleReturnObject;
             }
+            if (totals.mongoshCommand) {
+                categoryCounts.mongoshCommand += totals.mongoshCommand;
+            }
+            if (totals.nonMongoCommand) {
+                categoryCounts.nonMongoCommand += totals.nonMongoCommand;
+            }
             if (totals.uncategorized) {
                 categoryCounts.uncategorized += totals.uncategorized;
             }

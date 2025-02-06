@@ -23,8 +23,35 @@ export interface LangCategoryCounts {
 }
 
 export interface RepoCategoryReport {
-    [category: string]: LangCategoryCounts;
+    total_code_blocks: number;
+    categorization_details: {
+        llm_categorized_count: number;
+        string_matched_count: number;
+        accuracy_estimate: number;
+    };
+    category_language_counts: {
+        [category: string]: LangCategoryCounts;
+    }
 }
+
+export type CategorizationDetails = {
+    llm_categorized_count: number;
+    string_matched_count: number;
+    accuracy_estimate: number;
+};
+
+export type CategoryLanguageCounts = {
+    [category: string]: {
+        [language: string]: number;
+        totals: number;
+    };
+};
+
+export type GeneratedCategoryReport = {
+    total_code_blocks: number;
+    categorization_details: CategorizationDetails;
+    category_language_counts: CategoryLanguageCounts;
+};
 
 export type RepoSummary = {
     name: string,
@@ -32,9 +59,16 @@ export type RepoSummary = {
     apiMethodSignature?: number,
     exampleReturnObject?: number,
     exampleConfigObject?: number,
+    mongoshCommand?: number,
+    nonMongoCommand?: number,
     usageExample?: number,
     uncategorized?: number,
     totalCodeBlocks: number,
+    categorizationDetails: {
+        llmCategorizedCount: number,
+        stringMatchedCount: number,
+        accuracyEstimate: number
+    }
 }
 
 export type CategorySummary = {
@@ -43,6 +77,8 @@ export type CategorySummary = {
     apiMethodSignature: number,
     exampleReturnObject: number,
     exampleConfigObject: number,
+    mongoshCommand: number,
+    nonMongoCommand: number,
     usageExample: number,
     uncategorized: number,
     totalCodeBlocks: number,

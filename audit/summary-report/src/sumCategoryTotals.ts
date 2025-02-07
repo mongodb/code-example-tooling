@@ -1,4 +1,4 @@
-import {GeneratedCategoryReport, RepoCategoryReport, RepoSummary} from "./models/category-report";
+import {GeneratedCategoryReport, RepoSummary} from "./models/category-report";
 
 export const sumCategoryTotals = (
     projectName: string,
@@ -18,24 +18,19 @@ export const sumCategoryTotals = (
     };
     for (const category in repoCounts.category_language_counts) {
         const categoryData = repoCounts.category_language_counts[category];
-        if (category == "API Method Signature") {
-            summary.apiMethodSignature = categoryData.totals
-        } else if (category == "Atlas CLI Command") {
-            summary.atlasCliCommand = categoryData.totals
-        } else if (category == "Example configuration object") {
+        if (category == "Example configuration object") {
             summary.exampleConfigObject = categoryData.totals
         } else if (category == "Example return object") {
             summary.exampleReturnObject = categoryData.totals
-        } else if (category == "mongosh command") {
-            summary.mongoshCommand = categoryData.totals
-        }  else if (category == "Non-MongoDB command") {
+        } else if (category == "Non-MongoDB command") {
             summary.nonMongoCommand = categoryData.totals
+        } else if (category == "Syntax example") {
+            summary.syntaxExample = categoryData.totals
         } else if (category == "Task-based usage") {
             summary.usageExample = categoryData.totals
         } else if (category == "Uncategorized") {
             summary.uncategorized = categoryData.totals
         }
-        // @ts-ignore
         summary.totalCodeBlocks += categoryData.totals;
     }
     if (summary.totalCodeBlocks != repoCounts.total_code_blocks) {

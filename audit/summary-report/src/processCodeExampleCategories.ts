@@ -6,13 +6,11 @@ export async function processCodeExampleCategories() {
     // Path to the top-level directory you want to traverse
     const directoryPath = '/Users/dachary.carey/workspace/code-example-reports/category-reports';
     const categoryCounts: CategorySummary = {
-        name: "Totals",
-        apiMethodSignature: 0,
-        atlasCliCommand: 0,
+        name: "Totals across all repos",
         exampleConfigObject: 0,
         exampleReturnObject: 0,
-        mongoshCommand: 0,
         nonMongoCommand: 0,
+        syntaxExample: 0,
         usageExample: 0,
         uncategorized: 0,
         totalCodeBlocks: 0,

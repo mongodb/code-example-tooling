@@ -55,12 +55,10 @@ export type GeneratedCategoryReport = {
 
 export type RepoSummary = {
     name: string,
-    atlasCliCommand?: number,
-    apiMethodSignature?: number,
     exampleReturnObject?: number,
     exampleConfigObject?: number,
-    mongoshCommand?: number,
     nonMongoCommand?: number,
+    syntaxExample?: number,
     usageExample?: number,
     uncategorized?: number,
     totalCodeBlocks: number,
@@ -73,12 +71,10 @@ export type RepoSummary = {
 
 export type CategorySummary = {
     name: string,
-    atlasCliCommand: number,
-    apiMethodSignature: number,
     exampleReturnObject: number,
     exampleConfigObject: number,
-    mongoshCommand: number,
     nonMongoCommand: number,
+    syntaxExample: number,
     usageExample: number,
     uncategorized: number,
     totalCodeBlocks: number,

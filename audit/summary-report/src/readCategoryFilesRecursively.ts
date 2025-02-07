@@ -22,23 +22,17 @@ export async function readCategoryFilesRecursively(
             const data = await fs.readFile(fullPath, 'utf8');
             const totals = sumCategoryTotals(projectName, data);
             // Update categoryCounts
-            if (totals.apiMethodSignature) {
-                categoryCounts.apiMethodSignature += totals.apiMethodSignature;
-            }
-            if (totals.atlasCliCommand) {
-                categoryCounts.atlasCliCommand += totals.atlasCliCommand;
-            }
             if (totals.exampleConfigObject) {
                 categoryCounts.exampleConfigObject += totals.exampleConfigObject;
             }
             if (totals.exampleReturnObject) {
                 categoryCounts.exampleReturnObject += totals.exampleReturnObject;
             }
-            if (totals.mongoshCommand) {
-                categoryCounts.mongoshCommand += totals.mongoshCommand;
-            }
             if (totals.nonMongoCommand) {
                 categoryCounts.nonMongoCommand += totals.nonMongoCommand;
+            }
+            if (totals.syntaxExample) {
+                categoryCounts.syntaxExample += totals.syntaxExample;
             }
             if (totals.uncategorized) {
                 categoryCounts.uncategorized += totals.uncategorized;

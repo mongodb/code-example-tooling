@@ -56,6 +56,27 @@ export async function readLangFilesRecursively(
             langCounts.codeNodesByLang.undefined += totals.data.codeNodesByLang.undefined;
             langCounts.codeNodesByLang.xml += totals.data.codeNodesByLang.xml;
             langCounts.codeNodesByLang.yaml += totals.data.codeNodesByLang.yaml;
+            langCounts.literalIncludesByLang.bash += totals.data.literalIncludesByLang.bash;
+            langCounts.literalIncludesByLang.c += totals.data.literalIncludesByLang.c;
+            langCounts.literalIncludesByLang.cpp += totals.data.literalIncludesByLang.cpp;
+            langCounts.literalIncludesByLang.csharp += totals.data.literalIncludesByLang.csharp;
+            langCounts.literalIncludesByLang.go += totals.data.literalIncludesByLang.go;
+            langCounts.literalIncludesByLang.java += totals.data.literalIncludesByLang.java;
+            langCounts.literalIncludesByLang.javascript += totals.data.literalIncludesByLang.javascript;
+            langCounts.literalIncludesByLang.json += totals.data.literalIncludesByLang.json;
+            langCounts.literalIncludesByLang.kotlin += totals.data.literalIncludesByLang.kotlin;
+            langCounts.literalIncludesByLang.php += totals.data.literalIncludesByLang.php;
+            langCounts.literalIncludesByLang.python += totals.data.literalIncludesByLang.python;
+            langCounts.literalIncludesByLang.ruby += totals.data.literalIncludesByLang.ruby;
+            langCounts.literalIncludesByLang.rust += totals.data.literalIncludesByLang.rust;
+            langCounts.literalIncludesByLang.scala += totals.data.literalIncludesByLang.scala;
+            langCounts.literalIncludesByLang.shell += totals.data.literalIncludesByLang.shell;
+            langCounts.literalIncludesByLang.swift += totals.data.literalIncludesByLang.swift;
+            langCounts.literalIncludesByLang.text += totals.data.literalIncludesByLang.text;
+            langCounts.literalIncludesByLang.typescript += totals.data.literalIncludesByLang.typescript;
+            langCounts.literalIncludesByLang.undefined += totals.data.literalIncludesByLang.undefined;
+            langCounts.literalIncludesByLang.xml += totals.data.literalIncludesByLang.xml;
+            langCounts.literalIncludesByLang.yaml += totals.data.literalIncludesByLang.yaml;
         }
     }));
     return [langCounts, repoReports];

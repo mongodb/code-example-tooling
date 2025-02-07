@@ -1,5 +1,5 @@
 import { promises as fs } from 'fs';
-import * as path from 'path';
+
 export async function writeJSONToFile(filePath: string, data: any): Promise<void> {
     try {
         // Convert the data object to a JSON string

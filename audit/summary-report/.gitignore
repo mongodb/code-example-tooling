@@ -1,0 +1,15 @@
+# macOS file system
+.DS_Store
+
+# Dependency directories
+node_modules/
+
+# TS build
+build/
+
+# IDEs
+.vscode/
+.idea/
+
+# Reports
+output/

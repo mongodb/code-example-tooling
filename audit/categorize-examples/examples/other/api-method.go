@@ -1,0 +1,1 @@
+coll.Aggregate(ctx, mongo.Pipeline{vectorSearchStage, projectStage})

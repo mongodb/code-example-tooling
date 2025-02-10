@@ -1,0 +1,21 @@
+##---
+# Source: mongodb-enterprise-operator/templates/serviceaccount.yaml
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: enterprise-operator
+  namespace: production
+##---
+# Source: mongodb-enterprise-operator/templates/operator.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enterprise-operator
+  namespace: production
+
+---
+# Example truncated
+---
+...

@@ -62,17 +62,18 @@ available to both the project and the tests.
 With the model and dependencies installed, and Ollama running on your machine,
 you can run the project from an IDE or from the command line.
 
-### Change the start directory path (optional)
+### Change the start directory path
 
-As written, this project categorizes files in the `examples/` directory of
-this repository. If you'd like to categorize files in a different part of your
-file system, change the path in `constants.go`.
+If you do not have `docdoctor` output to operate on, you can categorize the
+files in the `examples/` directory of this repository. If you'd like to
+categorize files in a different part of your file system, change the path in
+`constants.go`.
 
-This project currently categorizes _all_ files in the given directory. If you
-want to differentiate between code examples and other types of files, add
-logic to handle files with different extensions or naming structures, or add
-other logic as needed to differentiate between files to process and files to
-ignore.
+This project currently categorizes _all_ files in the given directory
+(except `.DS_Store` files). If you want to differentiate between code examples
+and other types of files, add logic to handle files with different extensions
+or naming structures, or add other logic as needed to differentiate between
+files to process and files to ignore.
 
 ### IDE
 
@@ -106,7 +107,7 @@ function you want to run.
 #### Run all the tests
 
 In any test file, press the `play` button next to the package declaration and
-select `Run` -> `go test test-code-example-categorization`
+select `Run` -> `go test code-example-categorization`
 
 ### Command-line
 
@@ -121,7 +122,7 @@ go test code-example-categorization -run TestFuncName
 Example:
 
 ```
-go test code-example-categorization -run TestGetSnippetHash
+go test code-example-categorization -run TestCategorizeTaskBasedUsage
 ```
 
 #### Run all the tests

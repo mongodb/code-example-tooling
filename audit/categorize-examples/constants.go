@@ -2,11 +2,10 @@ package main
 
 const (
 	MODEL = "qwen2.5-coder"
-	// SnippetsStartDirectory To traverse a different directory on your file system, change the path here
-	//SnippetsStartDirectory = "../go-test-code-example-categorization/examples/"
-	SnippetsStartDirectory     = "/Users/dachary.carey/workspace/code-example-reports/code-blocks/"
+	//SnippetsStartDirectory = "../categorize-examples/examples/"
+	SnippetsStartDirectory     = "/Users/your-username/your-filepath/docdoctor/output/code-example-blocks/"
 	ProjectName                = "spark-connector"
-	BaseReportOutputDir        = "../go-test-code-example-categorization/output/"
+	BaseReportOutputDir        = "../categorize-examples/output/"
 	SyntaxExample              = "Syntax example"
 	NonMongoCommand            = "Non-MongoDB command"
 	ExampleReturnObject        = "Example return object"

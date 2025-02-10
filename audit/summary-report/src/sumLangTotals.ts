@@ -51,12 +51,37 @@ export const sumLangTotals = (
         xml: repoCounts.literalIncludesByLang.xml,
         yaml: repoCounts.literalIncludesByLang.yaml,
     }
+    const ioCodeBlockNodeLangCounts: LangCounts = {
+        bash: repoCounts.ioCodeBlockByLang.bash,
+        c: repoCounts.ioCodeBlockByLang.c,
+        cpp: repoCounts.ioCodeBlockByLang.cpp,
+        csharp: repoCounts.ioCodeBlockByLang.csharp,
+        go: repoCounts.ioCodeBlockByLang.go,
+        java: repoCounts.ioCodeBlockByLang.java,
+        javascript: repoCounts.ioCodeBlockByLang.javascript,
+        json: repoCounts.ioCodeBlockByLang.json,
+        kotlin: repoCounts.ioCodeBlockByLang.kotlin,
+        php: repoCounts.ioCodeBlockByLang.php,
+        python: repoCounts.ioCodeBlockByLang.python,
+        ruby: repoCounts.ioCodeBlockByLang.ruby,
+        rust: repoCounts.ioCodeBlockByLang.rust,
+        scala: repoCounts.ioCodeBlockByLang.scala,
+        shell: repoCounts.ioCodeBlockByLang.shell,
+        swift: repoCounts.ioCodeBlockByLang.swift,
+        text: repoCounts.ioCodeBlockByLang.text,
+        typescript: repoCounts.ioCodeBlockByLang.typescript,
+        undefined: repoCounts.ioCodeBlockByLang.undefined,
+        xml: repoCounts.ioCodeBlockByLang.xml,
+        yaml: repoCounts.ioCodeBlockByLang.yaml,
+    }
     const langData: LangData = {
         codeNodes: repoCounts.totalCodeNodesByDirective,
         literalIncludes: repoCounts.totalLiteralIncludesByDirective,
+        ioCodeBlocks: repoCounts.ioCodeBlockCountByDirective,
         issueCount: repoCounts.pagesWithIssues.length || 0,
         codeNodesByLang: codeNodeLangCounts,
-        literalIncludesByLang: literalIncludeNodeLangCounts
+        literalIncludesByLang: literalIncludeNodeLangCounts,
+        ioCodeBlockByLang: ioCodeBlockNodeLangCounts,
     };
     return {
         repo: projectName,

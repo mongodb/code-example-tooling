@@ -32,6 +32,8 @@ export type LangData = {
     codeNodesByLang: LangCounts;
     literalIncludes: number,
     literalIncludesByLang: LangCounts;
+    ioCodeBlocks: number,
+    ioCodeBlockByLang: LangCounts;
     issueCount: number;
 }
 
@@ -43,5 +45,8 @@ export interface CodeNodeTypesByLang {
     totalLiteralIncludesByDirective: number,
     totalLiteralIncludesByLangSum: number,
     literalIncludesByLang: LangCounts,
+    ioCodeBlockCountByDirective: number,
+    ioCodeBlockCountByLangSum: number,
+    ioCodeBlockByLang: LangCounts,
     pagesWithIssues: string[];
 }

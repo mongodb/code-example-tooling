@@ -34,7 +34,7 @@ export const sumCategoryTotals = (
         summary.totalCodeBlocks += categoryData.totals;
     }
     if (summary.totalCodeBlocks != repoCounts.total_code_blocks) {
-        console.error("Report says there should be %s code blocks, but mathing the category counts equals %s", repoCounts.total_code_blocks, summary.totalCodeBlocks);
+        console.error("Report says there should be %s code blocks, but matching the category counts equals %s", repoCounts.total_code_blocks, summary.totalCodeBlocks);
     }
     return summary;
 }

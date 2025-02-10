@@ -34,6 +34,7 @@ export async function readLangFilesRecursively(
             repoReports.push(totals);
             langCounts.codeNodes += totals.data.codeNodes;
             langCounts.literalIncludes += totals.data.literalIncludes;
+            langCounts.ioCodeBlocks += totals.data.ioCodeBlocks;
             langCounts.issueCount += totals.data.issueCount;
             langCounts.codeNodesByLang.bash += totals.data.codeNodesByLang.bash;
             langCounts.codeNodesByLang.c += totals.data.codeNodesByLang.c;
@@ -77,6 +78,27 @@ export async function readLangFilesRecursively(
             langCounts.literalIncludesByLang.undefined += totals.data.literalIncludesByLang.undefined;
             langCounts.literalIncludesByLang.xml += totals.data.literalIncludesByLang.xml;
             langCounts.literalIncludesByLang.yaml += totals.data.literalIncludesByLang.yaml;
+            langCounts.ioCodeBlockByLang.bash += totals.data.ioCodeBlockByLang.bash;
+            langCounts.ioCodeBlockByLang.c += totals.data.ioCodeBlockByLang.c;
+            langCounts.ioCodeBlockByLang.cpp += totals.data.ioCodeBlockByLang.cpp;
+            langCounts.ioCodeBlockByLang.csharp += totals.data.ioCodeBlockByLang.csharp;
+            langCounts.ioCodeBlockByLang.go += totals.data.ioCodeBlockByLang.go;
+            langCounts.ioCodeBlockByLang.java += totals.data.ioCodeBlockByLang.java;
+            langCounts.ioCodeBlockByLang.javascript += totals.data.ioCodeBlockByLang.javascript;
+            langCounts.ioCodeBlockByLang.json += totals.data.ioCodeBlockByLang.json;
+            langCounts.ioCodeBlockByLang.kotlin += totals.data.ioCodeBlockByLang.kotlin;
+            langCounts.ioCodeBlockByLang.php += totals.data.ioCodeBlockByLang.php;
+            langCounts.ioCodeBlockByLang.python += totals.data.ioCodeBlockByLang.python;
+            langCounts.ioCodeBlockByLang.ruby += totals.data.ioCodeBlockByLang.ruby;
+            langCounts.ioCodeBlockByLang.rust += totals.data.ioCodeBlockByLang.rust;
+            langCounts.ioCodeBlockByLang.scala += totals.data.ioCodeBlockByLang.scala;
+            langCounts.ioCodeBlockByLang.shell += totals.data.ioCodeBlockByLang.shell;
+            langCounts.ioCodeBlockByLang.swift += totals.data.ioCodeBlockByLang.swift;
+            langCounts.ioCodeBlockByLang.text += totals.data.ioCodeBlockByLang.text;
+            langCounts.ioCodeBlockByLang.typescript += totals.data.ioCodeBlockByLang.typescript;
+            langCounts.ioCodeBlockByLang.undefined += totals.data.ioCodeBlockByLang.undefined;
+            langCounts.ioCodeBlockByLang.xml += totals.data.ioCodeBlockByLang.xml;
+            langCounts.ioCodeBlockByLang.yaml += totals.data.ioCodeBlockByLang.yaml;
         }
     }));
     return [langCounts, repoReports];

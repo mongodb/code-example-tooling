@@ -51,20 +51,41 @@ export async function processCodeLangCounts() {
         xml: 0,
         yaml: 0
     };
+    const ioCodeBlockLangCounts: LangCounts = {
+        bash: 0,
+        c: 0,
+        cpp: 0,
+        csharp: 0,
+        go: 0,
+        java: 0,
+        javascript: 0,
+        json: 0,
+        kotlin: 0,
+        php: 0,
+        python: 0,
+        ruby: 0,
+        rust: 0,
+        scala: 0,
+        shell: 0,
+        swift: 0,
+        text: 0,
+        typescript: 0,
+        undefined: 0,
+        xml: 0,
+        yaml: 0
+    };
     const langData: LangData = {
         codeNodes: 0,
         literalIncludes: 0,
+        ioCodeBlocks: 0,
         issueCount: 0,
         codeNodesByLang: codeNodeLangCounts,
         literalIncludesByLang: literalIncludeLangCounts,
+        ioCodeBlockByLang: ioCodeBlockLangCounts,
     }
     const repoLangReports: RepoLangReport[] = [];
     // Start reading files from the top-level directory
     const result = await readLangFilesRecursively(directoryPath, langData, repoLangReports);
-    // console.log(result[0]);
-    // result[1].forEach((entry) => {
-    //     console.log(entry);
-    // })
     await writeJSONToFile("./output/aggregate-lang-report.json", result[0]);
     await writeJSONToFile("./output/repo-lang-summary.json", result[1]);
 }

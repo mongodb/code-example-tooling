@@ -1,4 +1,4 @@
-package main
+package updates
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"regexp"
 )
 
+// AddProductNames adds `product` and `sub_product` (where applicable) fields to documents with values that correspond to the Docs Taxonomy.
 func AddProductNames(db *mongo.Database, ctx context.Context) {
 	collectionProducts := map[string]string{
 		"atlas-cli":             "Atlas",
@@ -111,7 +112,7 @@ func AddProductNames(db *mongo.Database, ctx context.Context) {
 		}
 		// Define the update to add a new field with the desired value
 		update := bson.M{
-			"$set": bson.M{"new_field": subProductString},
+			"$set": bson.M{"sub_product": subProductString},
 		}
 		// Apply the update to all matching documents
 		updateResult, err := collection.UpdateMany(context.TODO(), filter, update)

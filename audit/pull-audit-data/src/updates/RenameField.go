@@ -1,0 +1,36 @@
+package updates
+
+import (
+	"context"
+	"fmt"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"log"
+)
+
+func RenameField(db *mongo.Database, ctx context.Context) {
+	// List collection names
+	collections, err := db.ListCollectionNames(ctx, bson.D{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	oldFieldName := "new_field"   // Replace with the actual old field name
+	newFieldName := "sub_product" // Replace with the desired new field name
+	// Iterate through each collection
+	for _, collectionName := range collections {
+		collection := db.Collection(collectionName)
+		// Build the update statement to rename the field
+		update := bson.D{
+			{"$rename", bson.D{
+				{oldFieldName, newFieldName},
+			}},
+		}
+		// Update documents in the collection
+		result, err := collection.UpdateMany(ctx, bson.D{}, update)
+		if err != nil {
+			log.Printf("Error updating collection %s: %v\n", collectionName, err)
+			continue
+		}
+		fmt.Printf("Updated %d documents in collection %s\n", result.ModifiedCount, collectionName)
+	}
+}

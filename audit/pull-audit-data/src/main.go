@@ -33,6 +33,11 @@ func main() {
 	ctx := context.Background()
 	db := client.Database("code_metrics")
 
-	AddProductNames(db, ctx)
-	//PerformAggregation(db, ctx)
+	// To add product names to new docs pages, uncomment this code
+	//updates.AddProductNames(db, ctx)
+
+	// To perform aggregations, uncomment this code
+	PerformAggregation(db, ctx)
+
+	//updates.RenameField(db, ctx)
 }

@@ -1,7 +1,8 @@
 package types
 
 type CodeLengthStats struct {
-	Min    int
-	Median int
-	Max    int
+	Min            int
+	Median         int
+	Max            int
+	ShortCodeCount int
 }

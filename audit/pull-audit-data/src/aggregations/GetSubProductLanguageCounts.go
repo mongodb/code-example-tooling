@@ -8,6 +8,7 @@ import (
 	"pull-audit-data/types"
 )
 
+// GetSubProductLanguageCounts uses the `nestedTwoLevelMap` data structure in the `PerformAggregation` function
 func GetSubProductLanguageCounts(db *mongo.Database, collectionName string, subProductLanguageMap map[string]map[string]map[string]int, ctx context.Context) map[string]map[string]map[string]int {
 	collection := db.Collection(collectionName)
 	categoryPipeline := mongo.Pipeline{

@@ -7,6 +7,7 @@ import (
 	"log"
 )
 
+// GetProductCategoryCounts uses the `nestedOneLevelMap` data structure in the `PerformAggregation` function
 func GetProductCategoryCounts(db *mongo.Database, collectionName string, productCategoryMap map[string]map[string]int, ctx context.Context) map[string]map[string]int {
 	collection := db.Collection(collectionName)
 	categoryPipeline := mongo.Pipeline{

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"pull-audit-data/types"
 	"sort"
 )
@@ -25,134 +26,125 @@ func printRow(columnWidth []int, columns ...interface{}) {
 	fmt.Println("|")
 }
 
-func PrintProductCategoryData(productCategoryMap map[string]map[string]int) {
-	// Column widths for table formatting
-	columnWidths := []int{30, 15, 20}
-	// Print a separate table for each Product
-	for product, categories := range productCategoryMap {
-		// Calculate total sum for this Product
-		totalProductCount := 0
-		for _, count := range categories {
-			totalProductCount += count
+// PrintSimpleCountDataToConsole expects two string column names and two column width ints
+func PrintSimpleCountDataToConsole(simpleMap map[string]int, tableLable string, columnNames []interface{}, columnWidths []int) {
+	if len(columnNames) != len(columnWidths) {
+		log.Fatalf("Got %d column names, but %d column widths - can't print the table unless we have the same number of names and widths", len(columnNames), len(columnWidths))
+	}
+	totalValue, totalExists := simpleMap["total"]
+	var totalCount int
+	if totalExists {
+		totalCount = totalValue
+	} else {
+		totalCount = 0
+	}
+	var elementCounts []types.KeyCount
+	// Sort keys by count
+	for key, value := range simpleMap {
+		if key != "total" {
+			elementCounts = append(elementCounts, types.KeyCount{Key: key, Count: value})
+		}
+	}
+	sort.Slice(elementCounts, func(i, j int) bool {
+		return elementCounts[i].Count > elementCounts[j].Count
+	})
+	fmt.Printf("\n%s Counts\n", tableLable)
+	fmt.Printf("Total code examples by %s: %d\n", tableLable, totalCount)
+	// If there is a "total" key in the map, we want to present a column that displays the count as a percent of the total
+	// Otherwise, we omit the percent column
+	if totalCount > 0 {
+		columnNames = append(columnNames, "% of Total")
+		columnWidths = append(columnWidths, 18)
+		printSeparator(columnWidths...)
+		printRow(columnWidths, columnNames...)
+		printSeparator(columnWidths...)
+		for _, item := range elementCounts {
+			percent := float64(item.Count) / float64(totalCount) * 100
+			printRow(columnWidths, item.Key, item.Count, fmt.Sprintf("%.1f%%", percent))
+		}
+		printSeparator(columnWidths...)
+	} else {
+		printSeparator(columnWidths...)
+		printRow(columnWidths, columnNames...)
+		printSeparator(columnWidths...)
+		for _, item := range elementCounts {
+			printRow(columnWidths, item.Key, item.Count)
+		}
+		printSeparator(columnWidths...)
+	}
+}
+
+// PrintNestedOneLevelCountDataToConsole expects two string column names and two column width ints
+func PrintNestedOneLevelCountDataToConsole(nestedOneLevelMap map[string]map[string]int, tableLabel string, columnNames []interface{}, columnWidths []int) {
+	if len(columnNames) != len(columnWidths) {
+		log.Fatalf("Got %d column names, but %d column widths - can't print the table unless we have the same number of names and widths", len(columnNames), len(columnWidths))
+	}
+	// Print a separate table for each top-level element
+	columnNames = append(columnNames, "% of Total")
+	columnWidths = append(columnWidths, 18)
+	for topLevelElement, nestedMap := range nestedOneLevelMap {
+		// Calculate total sum for this top-level element
+		totalTopLevelElementCount := 0
+		for _, count := range nestedMap {
+			totalTopLevelElementCount += count
 		}
 
-		// Sort categories by count
-		var productCategories []types.ProductCategoryCount
-		for category, count := range categories {
-			productCategories = append(productCategories, types.ProductCategoryCount{Category: category, Count: count})
+		// Sort nested map by count
+		var nestedMapElements []types.KeyCount
+		for key, count := range nestedMap {
+			nestedMapElements = append(nestedMapElements, types.KeyCount{Key: key, Count: count})
 		}
-		sort.Slice(productCategories, func(i, j int) bool {
-			return productCategories[i].Count > productCategories[j].Count
+		sort.Slice(nestedMapElements, func(i, j int) bool {
+			return nestedMapElements[i].Count > nestedMapElements[j].Count
 		})
-		fmt.Printf("\nProduct Category Counts for: %s\n", product)
-		fmt.Printf("Total code examples by product: %d\n", totalProductCount)
+		fmt.Printf("\n%s Counts for: %s\n", tableLabel, topLevelElement)
+		fmt.Printf("Total code examples by %s: %d\n", topLevelElement, totalTopLevelElementCount)
 		printSeparator(columnWidths...)
-		printRow(columnWidths, "Category", "Counts", "% of Total")
+		printRow(columnWidths, columnNames...)
 		printSeparator(columnWidths...)
-		for _, pc := range productCategories {
-			percent := float64(pc.Count) / float64(totalProductCount) * 100
-			printRow(columnWidths, pc.Category, pc.Count, fmt.Sprintf("%.1f%%", percent))
+		for _, item := range nestedMapElements {
+			percent := float64(item.Count) / float64(totalTopLevelElementCount) * 100
+			printRow(columnWidths, item.Key, item.Count, fmt.Sprintf("%.1f%%", percent))
 		}
 		printSeparator(columnWidths...)
 	}
 }
 
-func PrintSubProductCategoryData(subProductCategoryMap map[string]map[string]map[string]int) {
-	columnWidths := []int{30, 15, 20}
-	// Print a separate table for each SubProduct within each Product
-	// Print a separate table for each SubProduct within each Product
-	for product, subProducts := range subProductCategoryMap {
-		for subProduct, categories := range subProducts {
-			// Calculate total sum for this sub_product
-			totalSubProductCount := 0
-			for _, count := range categories {
-				totalSubProductCount += count
-			}
-
-			// Sort categories by count
-			var subProductCategories []types.SubProductCategoryCount
-			for category, count := range categories {
-				subProductCategories = append(subProductCategories, types.SubProductCategoryCount{SubProduct: subProduct, Category: category, Count: count})
-			}
-			sort.Slice(subProductCategories, func(i, j int) bool {
-				return subProductCategories[i].Count > subProductCategories[j].Count
-			})
-			fmt.Printf("\nSubProduct Category Counts for: %s - %s\n", product, subProduct)
-			fmt.Printf("Total code examples by sub-product: %d\n", totalSubProductCount)
-			printSeparator(columnWidths...)
-			printRow(columnWidths, "Category", "Counts", "% of Total")
-			printSeparator(columnWidths...)
-			for _, spc := range subProductCategories {
-				percent := float64(spc.Count) / float64(totalSubProductCount) * 100
-				printRow(columnWidths, spc.Category, spc.Count, fmt.Sprintf("%.1f%%", percent))
-			}
-			printSeparator(columnWidths...)
-		}
+// PrintNestedTwoLevelCountDataToConsole expects two string column names and two column width ints
+func PrintNestedTwoLevelCountDataToConsole(nestedTwoLevelCountMap map[string]map[string]map[string]int, tableLabel string, columnNames []interface{}, columnWidths []int) {
+	if len(columnNames) != len(columnWidths) {
+		log.Fatalf("Got %d column names, but %d column widths - can't print the table unless we have the same number of names and widths", len(columnNames), len(columnWidths))
 	}
-}
-
-func PrintProductLanguageData(productLanguageMap map[string]map[string]int) {
-	// Column widths for table formatting
-	columnWidths := []int{20, 15, 18}
-	// Print a separate table for each Product
-	for product, languages := range productLanguageMap {
-		// Calculate total sum for this Product
-		totalProductCount := 0
-		for _, count := range languages {
-			totalProductCount += count
-		}
-
-		// Sort categories by count
-		var productLanguages []types.LanguageCount
-		for language, count := range languages {
-			productLanguages = append(productLanguages, types.LanguageCount{Language: language, Count: count})
-		}
-		sort.Slice(productLanguages, func(i, j int) bool {
-			return productLanguages[i].Count > productLanguages[j].Count
-		})
-		fmt.Printf("\nProduct Language Counts for: %s\n", product)
-		fmt.Printf("Total code examples by product: %d\n", totalProductCount)
-		printSeparator(columnWidths...)
-		printRow(columnWidths, "Language", "Counts", "% of Total")
-		printSeparator(columnWidths...)
-		for _, lc := range productLanguages {
-			percent := float64(lc.Count) / float64(totalProductCount) * 100
-			printRow(columnWidths, lc.Language, lc.Count, fmt.Sprintf("%.1f%%", percent))
-		}
-		printSeparator(columnWidths...)
-	}
-}
-
-func PrintSubProductLanguageData(subProductLanguageMap map[string]map[string]map[string]int) {
-	columnWidths := []int{20, 15, 18}
-	// Print a separate table for each SubProduct within each Product
-	for product, subProducts := range subProductLanguageMap {
-		if len(subProducts) == 0 {
+	columnNames = append(columnNames, "% of Total")
+	columnWidths = append(columnWidths, 18)
+	// Print a separate table for each nestedOneLevelMap within each top-level key
+	for topLevelElement, nestedOneLevelMap := range nestedTwoLevelCountMap {
+		if len(nestedOneLevelMap) == 0 {
 			continue
 		}
-		for subProduct, languages := range subProducts {
-			// Calculate total sum for this sub_product
-			totalSubProductCount := 0
-			for _, count := range languages {
-				totalSubProductCount += count
+		for nestedOneLevelMapKey, secondLevelNestedMap := range nestedOneLevelMap {
+			// Calculate total sum for this nestedOneLevelMapKey
+			nestedOneLevelMapKeyCount := 0
+			for _, count := range secondLevelNestedMap {
+				nestedOneLevelMapKeyCount += count
 			}
 
-			// Sort languages by count
-			var subProductLanguages []types.SubProductLanguageCount
-			for language, count := range languages {
-				subProductLanguages = append(subProductLanguages, types.SubProductLanguageCount{Product: product, SubProduct: subProduct, Language: language, Count: count})
+			// Sort secondLevelNestedMap by count
+			var secondLevelNestedMapItems []types.TwoLevelNestedKeyCount
+			for secondLevelMapKey, count := range secondLevelNestedMap {
+				secondLevelNestedMapItems = append(secondLevelNestedMapItems, types.TwoLevelNestedKeyCount{TopLevelKey: topLevelElement, NestedMapKey: nestedOneLevelMapKey, SecondLevelNestedMapKey: secondLevelMapKey, Count: count})
 			}
-			sort.Slice(subProductLanguages, func(i, j int) bool {
-				return subProductLanguages[i].Count > subProductLanguages[j].Count
+			sort.Slice(secondLevelNestedMapItems, func(i, j int) bool {
+				return secondLevelNestedMapItems[i].Count > secondLevelNestedMapItems[j].Count
 			})
-			fmt.Printf("\nSubProduct Language Counts for: %s - %s\n", product, subProduct)
-			fmt.Printf("Total code examples by sub-product: %d\n", totalSubProductCount)
+			fmt.Printf("\n%s Counts for: %s - %s\n", tableLabel, topLevelElement, nestedOneLevelMapKey)
+			fmt.Printf("Total code examples by %s: %d\n", nestedOneLevelMapKey, nestedOneLevelMapKeyCount)
 			printSeparator(columnWidths...)
-			printRow(columnWidths, "Language", "Counts", "% of Total")
+			printRow(columnWidths, columnNames...)
 			printSeparator(columnWidths...)
-			for _, spl := range subProductLanguages {
-				percent := float64(spl.Count) / float64(totalSubProductCount) * 100
-				printRow(columnWidths, spl.Language, spl.Count, fmt.Sprintf("%.1f%%", percent))
+			for _, item := range secondLevelNestedMapItems {
+				percent := float64(item.Count) / float64(nestedOneLevelMapKeyCount) * 100
+				printRow(columnWidths, item.SecondLevelNestedMapKey, item.Count, fmt.Sprintf("%.1f%%", percent))
 			}
 			printSeparator(columnWidths...)
 		}

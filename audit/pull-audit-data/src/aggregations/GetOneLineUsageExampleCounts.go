@@ -7,8 +7,8 @@ import (
 	"log"
 )
 
-// GetOneLinerCounts uses the `simpleMap` data structure in the `PerformAggregation` function
-func GetOneLinerCounts(db *mongo.Database, collectionName string, oneLinerCountMap map[string]int, ctx context.Context) map[string]int {
+// GetOneLineUsageExampleCounts uses the `simpleMap` data structure in the `PerformAggregation` function
+func GetOneLineUsageExampleCounts(db *mongo.Database, collectionName string, oneLinerCountMap map[string]int, ctx context.Context) map[string]int {
 	collection := db.Collection(collectionName)
 	pipeline := mongo.Pipeline{
 		{{"$match", bson.D{
@@ -23,6 +23,7 @@ func GetOneLinerCounts(db *mongo.Database, collectionName string, oneLinerCountM
 				{"$exists", true},
 				{"$type", "string"}, // Ensure code is a string
 			}},
+			{"nodes.category", "Task-based usage"}, // Ensure category is "Usage Example"
 		}}},
 		{{"$project", bson.D{
 			{"codeLength", bson.D{{"$strLenCP", "$nodes.code"}}},
@@ -38,7 +39,6 @@ func GetOneLinerCounts(db *mongo.Database, collectionName string, oneLinerCountM
 	}
 	defer cursor.Close(ctx)
 	// Process results and update countMap
-
 	totalCount := 0
 	for cursor.Next(ctx) {
 		var result struct {
@@ -55,11 +55,11 @@ func GetOneLinerCounts(db *mongo.Database, collectionName string, oneLinerCountM
 	if err := cursor.Err(); err != nil {
 		log.Fatalf("Cursor error in collection %s: %v", collectionName, err)
 	}
+
 	if oneLinerCountMap["total"] != 0 {
 		oneLinerCountMap["total"] += totalCount
 	} else {
 		oneLinerCountMap["total"] = totalCount
 	}
-
 	return oneLinerCountMap
 }

@@ -8,6 +8,7 @@ import (
 	"pull-audit-data/types"
 )
 
+// GetCategoryCounts uses the `simpleMap` data structure in the `PerformAggregation` function
 func GetCategoryCounts(db *mongo.Database, collectionName string, categoryCountMap map[string]int, ctx context.Context) map[string]int {
 	collection := db.Collection(collectionName)
 	categoryPipeline := mongo.Pipeline{

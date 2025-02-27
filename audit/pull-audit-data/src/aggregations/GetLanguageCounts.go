@@ -8,6 +8,7 @@ import (
 	"pull-audit-data/types"
 )
 
+// GetLanguageCounts uses the `simpleMap` data structure in the `PerformAggregation` function
 func GetLanguageCounts(db *mongo.Database, collectionName string, languageCountMap map[string]int, ctx context.Context) map[string]int {
 	collection := db.Collection(collectionName)
 	languagePipeline := mongo.Pipeline{

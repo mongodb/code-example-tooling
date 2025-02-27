@@ -8,10 +8,3 @@ type SubProductLanguageResult struct {
 	} `bson:"_id"`
 	TotalSum int `bson:"totalSum"`
 }
-
-type SubProductLanguageCount struct {
-	Product    string
-	SubProduct string
-	Language   string
-	Count      int
-}

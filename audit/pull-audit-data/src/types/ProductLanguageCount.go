@@ -7,8 +7,3 @@ type ProductLanguageCount struct {
 	} `bson:"_id"`
 	TotalSum int `bson:"totalSum"`
 }
-
-type LanguageCount struct {
-	Language string
-	Count    int
-}

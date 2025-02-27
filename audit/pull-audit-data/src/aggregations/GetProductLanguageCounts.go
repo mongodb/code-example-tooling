@@ -8,6 +8,7 @@ import (
 	"pull-audit-data/types"
 )
 
+// GetProductLanguageCounts uses the `nestedOneLevelMap` data structure in the `PerformAggregation` function
 func GetProductLanguageCounts(db *mongo.Database, collectionName string, productLanguageMap map[string]map[string]int, ctx context.Context) map[string]map[string]int {
 	collection := db.Collection(collectionName)
 	languagePipeline := mongo.Pipeline{

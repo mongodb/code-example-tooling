@@ -7,6 +7,7 @@ import (
 	"log"
 )
 
+// GetSubProductCategoryCounts uses the `nestedTwoLevelMap` data structure in the `PerformAggregation` function
 func GetSubProductCategoryCounts(db *mongo.Database, collectionName string, subProductCategoryMap map[string]map[string]map[string]int, ctx context.Context) map[string]map[string]map[string]int {
 	collection := db.Collection(collectionName)
 	categoryPipeline := mongo.Pipeline{

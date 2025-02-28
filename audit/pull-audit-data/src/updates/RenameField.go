@@ -8,6 +8,7 @@ import (
 	"log"
 )
 
+// RenameField changes a field name from oldFieldName to newFieldName for every document in all the collections.
 func RenameField(db *mongo.Database, ctx context.Context) {
 	// List collection names
 	collections, err := db.ListCollectionNames(ctx, bson.D{})

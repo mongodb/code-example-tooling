@@ -8,7 +8,9 @@ import (
 	"pull-audit-data/types"
 )
 
-// GetLanguageCounts uses the `simpleMap` data structure in the `PerformAggregation` function
+// GetLanguageCounts returns a `simpleMap` data structure as defined in the PerformAggregation function. Each key is the
+// name of a programming language, and the int value is the count of code examples in that programming language. The map
+// also contains a types.Total key whose value is the aggregate count of all the code examples across all the collections.
 func GetLanguageCounts(db *mongo.Database, collectionName string, languageCountMap map[string]int, ctx context.Context) map[string]int {
 	collection := db.Collection(collectionName)
 	languagePipeline := mongo.Pipeline{
@@ -26,7 +28,10 @@ func GetLanguageCounts(db *mongo.Database, collectionName string, languageCountM
 	langCount := 0
 	// Process results and update countMap
 	for cursor.Next(ctx) {
-		var result types.CountResult
+		var result struct {
+			ID    string `bson:"_id"`
+			Count int    `bson:"count"`
+		}
 		if err := cursor.Decode(&result); err != nil {
 			log.Fatalf("Failed to decode result: %v", err)
 		}
@@ -37,10 +42,10 @@ func GetLanguageCounts(db *mongo.Database, collectionName string, languageCountM
 	if err := cursor.Err(); err != nil {
 		log.Fatalf("Cursor error in collection %s: %v", collectionName, err)
 	}
-	if _, exists := languageCountMap["total"]; exists {
-		languageCountMap["total"] += langCount
+	if _, exists := languageCountMap[types.Total]; exists {
+		languageCountMap[types.Total] += langCount
 	} else {
-		languageCountMap["total"] = langCount
+		languageCountMap[types.Total] = langCount
 	}
 	return languageCountMap
 }

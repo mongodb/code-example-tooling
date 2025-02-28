@@ -5,9 +5,12 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"log"
+	"pull-audit-data/types"
 )
 
-// GetCollectionCount uses the `simpleMap` data structure in the `PerformAggregation` function
+// GetCollectionCount returns a `simpleMap` data structure as defined in the PerformAggregation function. Each key is
+// the name of a collection, and the int value is the count of code examples in that collection. This map also contains
+// a types.Total key whose value is the aggregate count of all the code examples across all the collections.
 func GetCollectionCount(db *mongo.Database, collectionName string, collectionSums map[string]int, ctx context.Context) map[string]int {
 	collection := db.Collection(collectionName)
 	countPipeline := mongo.Pipeline{
@@ -38,10 +41,10 @@ func GetCollectionCount(db *mongo.Database, collectionName string, collectionSum
 	if len(results) > 0 {
 		count := results[0]["totalNodes"].(int32)
 		collectionSums[collectionName] = int(count)
-		if collectionSums["total"] > 0 {
-			collectionSums["total"] += int(count)
+		if collectionSums[types.Total] > 0 {
+			collectionSums[types.Total] += int(count)
 		} else {
-			collectionSums["total"] = int(count)
+			collectionSums[types.Total] = int(count)
 		}
 	}
 	return collectionSums

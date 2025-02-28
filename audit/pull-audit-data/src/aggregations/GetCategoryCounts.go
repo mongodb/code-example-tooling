@@ -8,7 +8,10 @@ import (
 	"pull-audit-data/types"
 )
 
-// GetCategoryCounts uses the `simpleMap` data structure in the `PerformAggregation` function
+// GetCategoryCounts returns a `simpleMap` data structure as defined in the PerformAggregation function. Each key
+// is the name of a category, and the int value is the count of code examples for that category. The map also contains
+// a types.ComplexExamples key whose value is the count of code examples where the code example character count is greater
+// than 500 characters, and a types.Total key whose value is an aggregate count of all code examples regardless of category.
 func GetCategoryCounts(db *mongo.Database, collectionName string, categoryCountMap map[string]int, ctx context.Context) map[string]int {
 	collection := db.Collection(collectionName)
 	categoryPipeline := mongo.Pipeline{
@@ -32,7 +35,7 @@ func GetCategoryCounts(db *mongo.Database, collectionName string, categoryCountM
 				{"$cond", bson.A{
 					bson.D{
 						{"$and", bson.A{
-							bson.D{{"$eq", bson.A{"$nodes.category", "Task-based usage"}}},
+							bson.D{{"$eq", bson.A{"$nodes.category", types.UsageExample}}},
 							"$isLongCode",
 						}},
 					},
@@ -53,7 +56,11 @@ func GetCategoryCounts(db *mongo.Database, collectionName string, categoryCountM
 	categoryCount := 0
 	complexExampleCount := 0
 	for cursor.Next(ctx) {
-		var result types.CountResult
+		var result struct {
+			ID            string `bson:"_id"`
+			Count         int    `bson:"count"`
+			LongCodeCount int    `bson:"longCodeCount"`
+		}
 		if err := cursor.Decode(&result); err != nil {
 			log.Fatalf("Failed to decode result: %v", err)
 		}
@@ -65,15 +72,15 @@ func GetCategoryCounts(db *mongo.Database, collectionName string, categoryCountM
 	if err := cursor.Err(); err != nil {
 		log.Fatalf("Cursor error in collection %s: %v", collectionName, err)
 	}
-	if _, exists := categoryCountMap["total"]; exists {
-		categoryCountMap["total"] += categoryCount
+	if _, exists := categoryCountMap[types.Total]; exists {
+		categoryCountMap[types.Total] += categoryCount
 	} else {
-		categoryCountMap["total"] = categoryCount
+		categoryCountMap[types.Total] = categoryCount
 	}
-	if _, exists := categoryCountMap["complex examples"]; exists {
-		categoryCountMap["complex examples"] += complexExampleCount
+	if _, exists := categoryCountMap[types.ComplexExamples]; exists {
+		categoryCountMap[types.ComplexExamples] += complexExampleCount
 	} else {
-		categoryCountMap["complex examples"] = complexExampleCount
+		categoryCountMap[types.ComplexExamples] = complexExampleCount
 	}
 	return categoryCountMap
 }

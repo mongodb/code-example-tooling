@@ -5,10 +5,11 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"log"
-	"pull-audit-data/types"
 )
 
-// GetSubProductLanguageCounts uses the `nestedTwoLevelMap` data structure in the `PerformAggregation` function
+// GetSubProductLanguageCounts returns a `nestedTwoLevelMap` data structure as defined in the PerformAggregation function.
+// The first key is the product name. The second key is the sub-product name. The third key is the programming language
+// name. The int count is the sum of all code examples in the programming language within the sub-product.
 func GetSubProductLanguageCounts(db *mongo.Database, collectionName string, subProductLanguageMap map[string]map[string]map[string]int, ctx context.Context) map[string]map[string]map[string]int {
 	collection := db.Collection(collectionName)
 	categoryPipeline := mongo.Pipeline{
@@ -42,7 +43,14 @@ func GetSubProductLanguageCounts(db *mongo.Database, collectionName string, subP
 	defer cursor.Close(ctx)
 
 	for cursor.Next(ctx) {
-		var result types.SubProductLanguageResult
+		var result struct {
+			ID struct {
+				Product    string `bson:"product"`
+				SubProduct string `bson:"subProduct"`
+				Language   string `bson:"language"`
+			} `bson:"_id"`
+			TotalSum int `bson:"totalSum"`
+		}
 		if err := cursor.Decode(&result); err != nil {
 			log.Fatal(err)
 		}

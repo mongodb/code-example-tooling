@@ -9,7 +9,8 @@ import (
 	"regexp"
 )
 
-// AddProductNames adds `product` and `sub_product` (where applicable) fields to documents with values that correspond to the Docs Taxonomy.
+// AddProductNames adds `product` and `sub_product` (where applicable) fields to documents with values that correspond
+// to the Docs Taxonomy. If the document in the collection already has the applicable field(s), no change is made.
 func AddProductNames(db *mongo.Database, ctx context.Context) {
 	collectionProducts := map[string]string{
 		"atlas-cli":             "Atlas",

@@ -33,11 +33,15 @@ func main() {
 	ctx := context.Background()
 	db := client.Database("code_metrics")
 
-	// To add product names to new docs pages, uncomment this code
+	// To add product names to new docs pages
 	//updates.AddProductNames(db, ctx)
 
-	// To perform aggregations, uncomment this code
+	// To perform aggregations
 	PerformAggregation(db, ctx)
 
+	// To rename a field in the document
 	//updates.RenameField(db, ctx)
+
+	// To change the value of a field in the CodeNode object
+	//updates.RenameValue(db, ctx)
 }

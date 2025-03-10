@@ -1,0 +1,135 @@
+{
+  "data": [
+    {
+      "displayName": "Spark Connector",
+      "repoName": "docs-spark-connector",
+      "project": "spark-connector",
+      "search": {
+        "categoryTitle": "Spark Connector"
+      },
+      "branches": [
+        {
+          "gitBranchName": "master",
+          "active": true,
+          "fullUrl": "https://mongodb.com/docs/spark-connector/upcoming",
+          "label": "upcoming",
+          "isStableBranch": false
+        },
+        {
+          "gitBranchName": "v10.4",
+          "active": true,
+          "fullUrl": "https://mongodb.com/docs/spark-connector/current",
+          "label": "v10.4 (current)",
+          "isStableBranch": true
+        },
+        {
+          "gitBranchName": "v10.3",
+          "active": true,
+          "fullUrl": "https://mongodb.com/docs/spark-connector/v10.3",
+          "label": "v10.3",
+          "isStableBranch": false
+        },
+        {
+          "gitBranchName": "v10.2",
+          "active": true,
+          "fullUrl": "https://mongodb.com/docs/spark-connector/v10.2",
+          "label": "v10.2",
+          "isStableBranch": false
+        },
+        {
+          "gitBranchName": "v10.1",
+          "active": true,
+          "fullUrl": "https://mongodb.com/docs/spark-connector/v10.1",
+          "label": "v10.1",
+          "isStableBranch": false
+        },
+        {
+          "gitBranchName": "v10.0",
+          "active": true,
+          "fullUrl": "https://mongodb.com/docs/spark-connector/v10.0",
+          "label": "v10.0",
+          "isStableBranch": false
+        },
+        {
+          "gitBranchName": "v3.0",
+          "active": false,
+          "fullUrl": "https://mongodb.com/docs/spark-connector/v3.0",
+          "label": "v3.0",
+          "isStableBranch": false
+        },
+        {
+          "gitBranchName": "v2.4",
+          "active": false,
+          "fullUrl": "https://mongodb.com/docs/spark-connector/v2.4",
+          "label": "v2.4",
+          "isStableBranch": false
+        },
+        {
+          "gitBranchName": "v2.3",
+          "active": false,
+          "fullUrl": "https://mongodb.com/docs/spark-connector/v2.3",
+          "label": "v2.3",
+          "isStableBranch": false
+        },
+        {
+          "gitBranchName": "v2.2",
+          "active": false,
+          "fullUrl": "https://mongodb.com/docs/spark-connector/v2.2",
+          "label": "v2.2",
+          "isStableBranch": false
+        },
+        {
+          "gitBranchName": "v2.1",
+          "active": false,
+          "fullUrl": "https://mongodb.com/docs/spark-connector/v2.1",
+          "label": "v2.1",
+          "isStableBranch": false
+        },
+        {
+          "gitBranchName": "v2.0",
+          "active": false,
+          "fullUrl": "https://mongodb.com/docs/spark-connector/v2.0",
+          "label": "v2.0",
+          "isStableBranch": false
+        },
+        {
+          "gitBranchName": "v1.1",
+          "active": false,
+          "fullUrl": "https://mongodb.com/docs/spark-connector/v1.1",
+          "label": "v1.1",
+          "isStableBranch": false
+        }
+      ]
+    },
+    {
+      "displayName": "MongoDB Drivers",
+      "repoName": "docs-ecosystem",
+      "project": "drivers",
+      "branches": [
+        {
+          "gitBranchName": "master",
+          "active": true,
+          "fullUrl": "https://mongodb.com/docs/drivers/",
+          "label": "master",
+          "isStableBranch": true,
+          "offlineUrl": "https://mongodb.com/docs/offline/drivers-master.tar.gz"
+        }
+      ]
+    },
+    {
+      "displayName": "MongoDB Documentation",
+      "repoName": "docs-landing",
+      "project": "landing",
+      "branches": [
+        {
+          "gitBranchName": "master",
+          "active": true,
+          "fullUrl": "https://mongodb.com/docs/",
+          "label": "master",
+          "isStableBranch": true,
+          "offlineUrl": "https://mongodb.com/docs/offline/landing-master.tar.gz"
+        }
+      ]
+    }
+  ]
+}

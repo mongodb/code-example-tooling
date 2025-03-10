@@ -76,7 +76,7 @@ type Heading struct {
 // PageMetadata conveys comprehensive metadata and content information about the page.
 type PageMetadata struct {
 	ID             string  `json:"_id"`
-	GitHubUsername string  `json:"github_username"`
+	GitHubUsername string  `json:"github_username,omitempty"`
 	PageID         string  `json:"page_id"`
 	AST            AST     `json:"ast"`
 	BuildID        string  `json:"build_id"`

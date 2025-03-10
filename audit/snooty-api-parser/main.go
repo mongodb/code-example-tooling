@@ -12,31 +12,6 @@ import (
 	"time"
 )
 
-// Recursive function to find ASTNodes with a specific name
-func findNodesByName(nodes []types.ASTNode, name string) []types.ASTNode {
-	var result []types.ASTNode
-	for _, node := range nodes {
-		if node.Name == name {
-			result = append(result, node)
-		}
-		// Recursively search in the children of the current node
-		result = append(result, findNodesByName(node.Children, name)...)
-	}
-	return result
-}
-
-func findNodesByType(nodes []types.ASTNode, nodeType string) []types.ASTNode {
-	var result []types.ASTNode
-	for _, node := range nodes {
-		if node.Type == nodeType {
-			result = append(result, node)
-		}
-		// Recursively search in the children of the current node
-		result = append(result, findNodesByType(node.Children, nodeType)...)
-	}
-	return result
-}
-
 func getPageId(pageId string) string {
 	parts := strings.Split(pageId, "/")
 	// Check if the path has at least three parts to slice
@@ -69,7 +44,7 @@ func main() {
 		Timeout: 30 * time.Second, // Set a timeout
 	}
 	// Uncomment to parse all projects
-	projectsToParse := snooty.GetProjects(client)
+	//projectsToParse := snooty.GetProjects(client)
 
 	// Uncomment to parse a single project during testing
 	//sparkConnector := types.DocsProjectDetails{
@@ -87,12 +62,12 @@ func main() {
 	//	ActiveBranch: "v1.30",
 	//	ProdUrl:      "https://mongodb.com/docs/languages/c/c-driver/current",
 	//}
-	//node := types.DocsProjectDetails{
-	//	ProjectName:  "node",
-	//	ActiveBranch: "v6.14",
-	//	ProdUrl:      "https://mongodb.com/docs/drivers/node/current",
-	//}
-	//projectsToParse := []types.DocsProjectDetails{sparkConnector, pyMongo, cDriver, node}
+	node := types.DocsProjectDetails{
+		ProjectName:  "node",
+		ActiveBranch: "v6.14",
+		ProdUrl:      "https://mongodb.com/docs/drivers/node/current",
+	}
+	projectsToParse := []types.DocsProjectDetails{node}
 
 	// Finish setting up console display to show progress during run
 	totalProjects := len(projectsToParse)
@@ -101,7 +76,7 @@ func main() {
 	// Process docs pages for every project in the projectsToParse array
 	firstProject := true
 	for _, project := range projectsToParse {
-		docsPages := snooty.GetDocsPages(project, client)
+		docsPages := snooty.GetProjectDocuments(project, client)
 		log.Printf("Found %d docs pages for project %s\n", len(docsPages), project.ProjectName)
 		if firstProject {
 			utils.SetUpProgressDisplay(totalProjects, len(docsPages), project.ProjectName)

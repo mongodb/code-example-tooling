@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"snooty-api-parser/types"
 )
 
@@ -18,28 +19,36 @@ func contains(slice []string, target string) bool {
 }
 
 func GetProjects(client *http.Client) []types.DocsProjectDetails {
-	apiURL := "https://snooty-data-api.mongodb.com/prod/projects/"
-	// Make the HTTP GET request
-	resp, err := client.Get(apiURL)
-	if err != nil {
-		log.Fatalf("Failed to make request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	// Check for HTTP error response
-	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("Error: received status code %d", resp.StatusCode)
-	}
-
-	// Read the response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalf("failed to read response body: %s", err)
-	}
+	env := os.Getenv("APP_ENV")
 	var response types.Response
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		log.Fatalf("failed to unmarshal JSON: %s", err)
+	if env == "production" {
+		apiURL := "https://snooty-data-api.mongodb.com/prod/projects/"
+		resp, err := client.Get(apiURL)
+		if err != nil {
+			log.Fatalf("Failed to make request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		// Check for HTTP error response
+		if resp.StatusCode != http.StatusOK {
+			log.Fatalf("Error: received status code %d", resp.StatusCode)
+		}
+
+		// Read the response body
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatalf("failed to read response body: %s", err)
+		}
+		err = json.Unmarshal(body, &response)
+		if err != nil {
+			log.Fatalf("failed to unmarshal JSON: %s", err)
+		}
+	} else {
+		stubbedResponse := LoadJsonTestDataFromFile("projects-stub.json")
+		err := json.Unmarshal(stubbedResponse, &response)
+		if err != nil {
+			log.Fatalf("failed to unmarshal JSON: %s", err)
+		}
 	}
 
 	ignoreProjectNames := []string{

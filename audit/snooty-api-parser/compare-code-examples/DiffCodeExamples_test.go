@@ -1,4 +1,4 @@
-package main
+package compare_code_examples
 
 import (
 	"log"

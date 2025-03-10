@@ -2,13 +2,15 @@ package main
 
 import (
 	"log"
+	"snooty-api-parser/compare-code-examples"
+	"snooty-api-parser/snooty"
 	"snooty-api-parser/types"
 	"time"
 )
 
 func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper, projectCounter types.ProjectCounts) (*types.DocsPage, types.ProjectCounts) {
 	atlasDocCodeNodeCount := existingPage.CodeNodesTotal
-	incomingCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes := GetCodeExamplesFromIncomingData(data.Data.AST)
+	incomingCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes := snooty.GetCodeExamplesFromIncomingData(data.Data.AST)
 	incomingCodeNodePageCount := len(incomingCodeNodes)
 	projectCounter = IncrementProjectCountsForExistingPage(len(incomingCodeNodes), len(incomingLiteralIncludeNodes), len(incomingIoCodeBlockNodes), existingPage, projectCounter)
 	if incomingCodeNodePageCount == atlasDocCodeNodeCount {
@@ -36,7 +38,7 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 		// There are no existing code examples - they're all new - so just make new code examples
 		newCodeNodes := make([]types.CodeNode, 0)
 		for _, snootyNode := range incomingCodeNodes {
-			newNode := MakeCodeNodeFromSnootyAST(snootyNode)
+			newNode := snooty.MakeCodeNodeFromSnootyAST(snootyNode)
 			newCodeNodes = append(newCodeNodes, newNode)
 		}
 		updatedDocsPage.Nodes = &newCodeNodes
@@ -53,7 +55,7 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 	} else {
 		var updatedCodeNodes []types.CodeNode
 		//updatedCodeNodes, projectCounter = CompareCodeNodesForPage(*existingPage.Nodes, incomingCodeNodes, projectCounter, existingPage.ID)
-		updatedCodeNodes, projectCounter = CompareExistingIncomingCodeExampleSlices(*existingPage.Nodes, incomingCodeNodes, projectCounter, existingPage.ID)
+		updatedCodeNodes, projectCounter = compare_code_examples.CompareExistingIncomingCodeExampleSlices(*existingPage.Nodes, incomingCodeNodes, projectCounter, existingPage.ID)
 		updatedDocsPage.Nodes = &updatedCodeNodes
 		updatedDocsPage.DateLastUpdated = time.Now()
 		// TODO: still need to update lang counts and page totals for updated nodes array

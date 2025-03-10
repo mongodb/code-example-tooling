@@ -1,4 +1,4 @@
-package main
+package snooty
 
 import (
 	"crypto/sha256"

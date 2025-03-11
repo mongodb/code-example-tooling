@@ -2,38 +2,14 @@ package add_code_examples
 
 import "snooty-api-parser/types"
 
-const (
-	BashExtension       = ".sh"
-	CExtension          = ".c"
-	CPPExtension        = ".cpp"
-	CSharpExtension     = ".cs"
-	GoExtension         = ".go"
-	JavaExtension       = ".java"
-	JavaScriptExtension = ".js"
-	JSONExtension       = ".json"
-	KotlinExtension     = ".kt"
-	PHPExtension        = ".php"
-	PythonExtension     = ".py"
-	RubyExtension       = ".rb"
-	RustExtension       = ".rs"
-	ScalaExtension      = ".scala"
-	ShellExtension      = ".sh"
-	SwiftExtension      = ".swift"
-	TextExtension       = ".txt"
-	TypeScriptExtension = ".ts"
-	UndefinedExtension  = ".txt"
-	XMLExtension        = ".xml"
-	YAMLExtension       = ".yaml"
-)
-
 func GetFileExtension(snootyNode types.ASTNode) string {
 	langExtensionMap := make(map[string]string)
 
 	// Add the canonical languages and their extensions
-	langExtensionMap[BASH] = BashExtension
+	langExtensionMap[Bash] = BashExtension
 	langExtensionMap[C] = CExtension
 	langExtensionMap[CPP] = CPPExtension
-	langExtensionMap[CSHARP] = CSharpExtension
+	langExtensionMap[CSharp] = CSharpExtension
 	langExtensionMap[Go] = GoExtension
 	langExtensionMap[Java] = JavaExtension
 	langExtensionMap[JavaScript] = JavaScriptExtension

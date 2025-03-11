@@ -4,38 +4,14 @@ import (
 	"snooty-api-parser/types"
 )
 
-const (
-	BASH       = "bash"
-	C          = "c"
-	CPP        = "cpp"
-	CSHARP     = "csharp"
-	Go         = "go"
-	Java       = "java"
-	JavaScript = "javascript"
-	JSON       = "json"
-	Kotlin     = "kotlin"
-	PHP        = "php"
-	Python     = "python"
-	Ruby       = "ruby"
-	Rust       = "rust"
-	Scala      = "scala"
-	Shell      = "shell"
-	Swift      = "swift"
-	Text       = "text"
-	TypeScript = "typescript"
-	Undefined  = "undefined"
-	XML        = "xml"
-	YAML       = "yaml"
-)
-
 func GetLanguage(snootyNode types.ASTNode) string {
 	normalizeLanguagesMap := make(map[string]string)
 
 	// Add the canonical languages and their values
-	normalizeLanguagesMap[BASH] = BASH
+	normalizeLanguagesMap[Bash] = Bash
 	normalizeLanguagesMap[C] = C
 	normalizeLanguagesMap[CPP] = CPP
-	normalizeLanguagesMap[CSHARP] = CSHARP
+	normalizeLanguagesMap[CSharp] = CSharp
 	normalizeLanguagesMap[Go] = Go
 	normalizeLanguagesMap[Java] = Java
 	normalizeLanguagesMap[JavaScript] = JavaScript
@@ -57,7 +33,7 @@ func GetLanguage(snootyNode types.ASTNode) string {
 	// Add variations and map to canonical values
 	normalizeLanguagesMap[""] = Undefined
 	normalizeLanguagesMap["console"] = Shell
-	normalizeLanguagesMap["cs"] = CSHARP
+	normalizeLanguagesMap["cs"] = CSharp
 	normalizeLanguagesMap["golang"] = Go
 	normalizeLanguagesMap["http"] = Text
 	normalizeLanguagesMap["ini"] = Text

@@ -15,10 +15,10 @@ func TestGetLanguage(t *testing.T) {
 		args args
 		want string
 	}{
-		{BASH, args{GetAstNodeForLangForTesting(BASH)}, BASH},
+		{Bash, args{GetAstNodeForLangForTesting(Bash)}, Bash},
 		{C, args{GetAstNodeForLangForTesting(C)}, C},
 		{CPP, args{GetAstNodeForLangForTesting(CPP)}, CPP},
-		{CSHARP, args{GetAstNodeForLangForTesting(CSHARP)}, CSHARP},
+		{CSharp, args{GetAstNodeForLangForTesting(CSharp)}, CSharp},
 		{Go, args{GetAstNodeForLangForTesting(Go)}, Go},
 		{Java, args{GetAstNodeForLangForTesting(Java)}, Java},
 		{JavaScript, args{GetAstNodeForLangForTesting(JavaScript)}, JavaScript},
@@ -38,7 +38,7 @@ func TestGetLanguage(t *testing.T) {
 		{YAML, args{GetAstNodeForLangForTesting(YAML)}, YAML},
 		{"Empty string", args{GetAstNodeForLangForTesting("")}, Undefined},
 		{"console", args{GetAstNodeForLangForTesting("console")}, Shell},
-		{"cs", args{GetAstNodeForLangForTesting("cs")}, CSHARP},
+		{"cs", args{GetAstNodeForLangForTesting("cs")}, CSharp},
 		{"golang", args{GetAstNodeForLangForTesting("golang")}, Go},
 		{"http", args{GetAstNodeForLangForTesting("http")}, Text},
 		{"ini", args{GetAstNodeForLangForTesting("ini")}, Text},

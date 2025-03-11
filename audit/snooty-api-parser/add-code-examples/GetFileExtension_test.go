@@ -14,10 +14,10 @@ func TestGetFileExtension(t *testing.T) {
 		args args
 		want string
 	}{
-		{BASH, args{GetAstNodeForLangForTesting(BASH)}, BashExtension},
+		{Bash, args{GetAstNodeForLangForTesting(Bash)}, BashExtension},
 		{C, args{GetAstNodeForLangForTesting(C)}, CExtension},
 		{CPP, args{GetAstNodeForLangForTesting(CPP)}, CPPExtension},
-		{CSHARP, args{GetAstNodeForLangForTesting(CSHARP)}, CSharpExtension},
+		{CSharp, args{GetAstNodeForLangForTesting(CSharp)}, CSharpExtension},
 		{Go, args{GetAstNodeForLangForTesting(Go)}, GoExtension},
 		{Java, args{GetAstNodeForLangForTesting(Java)}, JavaExtension},
 		{JavaScript, args{GetAstNodeForLangForTesting(JavaScript)}, JavaScriptExtension},

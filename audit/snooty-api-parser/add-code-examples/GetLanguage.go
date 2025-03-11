@@ -1,4 +1,4 @@
-package utils
+package add_code_examples
 
 import (
 	"snooty-api-parser/types"

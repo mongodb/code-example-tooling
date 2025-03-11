@@ -6,6 +6,11 @@ import (
 	"snooty-api-parser/types"
 )
 
+// CompareExistingIncomingCodeExampleSlices takes []types.CodeNode, which represents the existing code example nodes from
+// Atlas, and []types.ASTNode, which represents incoming code examples from the Snooty Data API. It also takes a types.ProjectCounts
+// to track various project counts. This function compares the existing code examples with the incoming code examples
+// to find unchanged, updated, new, and removed nodes. It appends these nodes into an updated []types.CodeNode slice,
+// which it returns to the call site for making updates to Atlas. It also returns the updated types.ProjectCounts.
 func CompareExistingIncomingCodeExampleSlices(existingNodes []types.CodeNode, incomingNodes []types.ASTNode, projectCounter types.ProjectCounts, pageId string) ([]types.CodeNode, types.ProjectCounts) {
 	var updatedPageNodes []types.ASTNode
 	var newPageNodes []types.ASTNode

@@ -97,6 +97,7 @@ type ProjectCounts struct {
 	IncomingIoCodeBlockCount    int
 	RemovedCodeNodesCount       int
 	UpdatedCodeNodesCount       int
+	UnchangedCodeNodesCount     int
 	NewCodeNodesCount           int
 	ExistingCodeNodesCount      int
 	ExistingLiteralIncludeCount int

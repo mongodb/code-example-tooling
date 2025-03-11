@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func ConvertPageIdToProductionUrl(pageId string, siteUrl string) string {
+func ConvertSnootyPageIdToProductionUrl(pageId string, siteUrl string) string {
 	parts := strings.Split(pageId, "/")
 	pageUrl := ""
 	// Check if the path has at least three parts to slice

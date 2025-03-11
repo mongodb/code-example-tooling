@@ -14,7 +14,7 @@ func MakeNewDocsPage(data types.PageWrapper, siteUrl string, projectName string,
 	incomingIoCodeNodeCount := len(incomingIoCodeBlockNodes)
 	projectCounter = IncrementProjectCountsForNewPage(incomingCodeNodeCount, incomingLiteralIncludeNodeCount, incomingIoCodeNodeCount, projectCounter)
 	pageId := getPageId(data.Data.PageID)
-	pageUrl := utils.ConvertPageIdToProductionUrl(data.Data.PageID, siteUrl)
+	pageUrl := utils.ConvertSnootyPageIdToProductionUrl(data.Data.PageID, siteUrl)
 	var newCodeNodes []types.CodeNode
 	for _, node := range incomingCodeNodes {
 		newNode := snooty.MakeCodeNodeFromSnootyAST(node)

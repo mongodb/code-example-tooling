@@ -1,8 +1,8 @@
 package snooty
 
 import (
+	"snooty-api-parser/add-code-examples"
 	"snooty-api-parser/types"
-	"snooty-api-parser/utils"
 	"strings"
 	"time"
 )
@@ -10,9 +10,9 @@ import (
 func MakeCodeNodeFromSnootyAST(snootyNode types.ASTNode) types.CodeNode {
 	whiteSpaceTrimmedNode := strings.TrimSpace(snootyNode.Value)
 	hashString := MakeSha256HashForCode(whiteSpaceTrimmedNode)
-	language := utils.GetLanguage(snootyNode)
-	fileExtension := utils.GetFileExtension(language)
-	category, llmCategorized := utils.GetCategory(whiteSpaceTrimmedNode)
+	language := add_code_examples.GetLanguage(snootyNode)
+	fileExtension := add_code_examples.GetFileExtension(language)
+	category, llmCategorized := add_code_examples.GetCategory(whiteSpaceTrimmedNode)
 	return types.CodeNode{
 		Code:           whiteSpaceTrimmedNode,
 		Language:       language,

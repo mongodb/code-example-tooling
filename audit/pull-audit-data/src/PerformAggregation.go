@@ -39,6 +39,7 @@ func PerformAggregation(db *mongo.Database, ctx context.Context) {
 		//nestedTwoLevelMap = aggregations.GetSubProductLanguageCounts(db, collectionName, nestedTwoLevelMap, ctx)
 		//simpleMap = aggregations.GetCollectionCount(db, collectionName, simpleMap, ctx)
 		//simpleMap = aggregations.GetSpecificCategoryByProduct(db, collectionName, types.UsageExample, simpleMap, ctx)
+		//langCount := aggregations.GetSpecificLanguageCount(db, collectionName, "go", ctx)
 	}
 
 	simpleTableLabel := "Category"

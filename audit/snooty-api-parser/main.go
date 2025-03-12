@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/tmc/langchaingo/llms/ollama"
 	"log"
 	"net/http"
 	"os"
+	add_code_examples "snooty-api-parser/add-code-examples"
 	"snooty-api-parser/snooty"
 	"snooty-api-parser/types"
 	"snooty-api-parser/utils"
@@ -62,6 +65,7 @@ func main() {
 	//	ActiveBranch: "v1.30",
 	//	ProdUrl:      "https://mongodb.com/docs/languages/c/c-driver/current",
 	//}
+
 	node := types.DocsProjectDetails{
 		ProjectName:  "node",
 		ActiveBranch: "v6.14",
@@ -72,6 +76,13 @@ func main() {
 	// Finish setting up console display to show progress during run
 	totalProjects := len(projectsToParse)
 	fmt.Printf("%d projects to parse\n", totalProjects)
+
+	// Initialize the LLM
+	ctx := context.Background()
+	llm, err := ollama.New(ollama.WithModel(add_code_examples.MODEL))
+	if err != nil {
+		log.Fatalf("failed to connect to ollama: %v", err)
+	}
 
 	// Process docs pages for every project in the projectsToParse array
 	firstProject := true
@@ -84,7 +95,7 @@ func main() {
 		} else {
 			utils.SetNewSecondaryTarget(len(docsPages), project.ProjectName)
 		}
-		CheckDocsForUpdates(docsPages, project)
+		CheckDocsForUpdates(docsPages, project, llm, ctx)
 		utils.UpdatePrimaryTarget()
 	}
 

@@ -1,14 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/tmc/langchaingo/llms/ollama"
 	"log"
 	"snooty-api-parser/db"
 	"snooty-api-parser/types"
 	"snooty-api-parser/utils"
 )
 
-func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjectDetails) {
+func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjectDetails, llm *ollama.LLM, ctx context.Context) {
 	projectCounter := types.ProjectCounts{}
 	incomingPageIds := make(map[string]bool)
 	var newPageIds []string
@@ -20,7 +22,7 @@ func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjec
 		atlasDocument := db.GetAtlasPageData(project.ProjectName, atlasDocId)
 		// If there is no existing document in Atlas that matches the page, we need to make a new page
 		if atlasDocument == nil {
-			newPage, projectCounter = MakeNewDocsPage(page, project.ProdUrl, project.ProjectName, projectCounter)
+			newPage, projectCounter = MakeNewDocsPage(page, project.ProdUrl, project.ProjectName, projectCounter, llm, ctx)
 			newPageIds = append(newPageIds, atlasDocId)
 			log.Printf("Info: new docs page for %s: \n", atlasDocId)
 			log.Printf("Page: %+v\n", newPage)
@@ -31,7 +33,7 @@ func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjec
 			projectCounter.ExistingCodeNodesCount += atlasDocument.CodeNodesTotal
 			projectCounter.ExistingLiteralIncludeCount += atlasDocument.LiteralIncludesTotal
 			projectCounter.ExistingIoCodeBlockCount += atlasDocument.IoCodeBlocksTotal
-			updatedPage, projectCounter = UpdateExistingDocsPage(*atlasDocument, page, projectCounter)
+			updatedPage, projectCounter = UpdateExistingDocsPage(*atlasDocument, page, projectCounter, llm, ctx)
 			if updatedPage != nil {
 				log.Println("Updated page ", updatedPage.ID)
 			}

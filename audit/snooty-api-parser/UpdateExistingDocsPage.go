@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"github.com/tmc/langchaingo/llms/ollama"
 	"log"
 	"snooty-api-parser/compare-code-examples"
 	"snooty-api-parser/snooty"
@@ -8,7 +10,7 @@ import (
 	"time"
 )
 
-func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper, projectCounter types.ProjectCounts) (*types.DocsPage, types.ProjectCounts) {
+func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper, projectCounter types.ProjectCounts, llm *ollama.LLM, ctx context.Context) (*types.DocsPage, types.ProjectCounts) {
 	atlasDocCodeNodeCount := existingPage.CodeNodesTotal
 	incomingCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes := snooty.GetCodeExamplesFromIncomingData(data.Data.AST)
 	incomingCodeNodePageCount := len(incomingCodeNodes)
@@ -18,6 +20,12 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 		return nil, projectCounter
 	}
 	updatedDocsPage := existingPage
+	var isDriversProject bool
+	if existingPage.Product == "Drivers" {
+		isDriversProject = true
+	} else {
+		isDriversProject = false
+	}
 
 	// If examples exist already and we are getting no incoming examples from the API, the existing examples have been removed from the incoming page
 	if existingPage.Nodes != nil && incomingCodeNodePageCount == 0 {
@@ -38,7 +46,7 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 		// There are no existing code examples - they're all new - so just make new code examples
 		newCodeNodes := make([]types.CodeNode, 0)
 		for _, snootyNode := range incomingCodeNodes {
-			newNode := snooty.MakeCodeNodeFromSnootyAST(snootyNode)
+			newNode := snooty.MakeCodeNodeFromSnootyAST(snootyNode, llm, ctx, isDriversProject)
 			newCodeNodes = append(newCodeNodes, newNode)
 		}
 		updatedDocsPage.Nodes = &newCodeNodes
@@ -55,7 +63,7 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 	} else {
 		var updatedCodeNodes []types.CodeNode
 		//updatedCodeNodes, projectCounter = CompareCodeNodesForPage(*existingPage.Nodes, incomingCodeNodes, projectCounter, existingPage.ID)
-		updatedCodeNodes, projectCounter = compare_code_examples.CompareExistingIncomingCodeExampleSlices(*existingPage.Nodes, incomingCodeNodes, projectCounter, existingPage.ID)
+		updatedCodeNodes, projectCounter = compare_code_examples.CompareExistingIncomingCodeExampleSlices(*existingPage.Nodes, incomingCodeNodes, projectCounter, existingPage.ID, llm, ctx, isDriversProject)
 		updatedDocsPage.Nodes = &updatedCodeNodes
 		updatedDocsPage.DateLastUpdated = time.Now()
 		// TODO: still need to update lang counts and page totals for updated nodes array

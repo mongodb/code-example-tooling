@@ -1,11 +1,26 @@
 package compare_code_examples
 
-import "snooty-api-parser/types"
+import (
+	"context"
+	"github.com/tmc/langchaingo/llms/ollama"
+	"snooty-api-parser/types"
+)
 
 // MakeUpdatedCodeNodesArray takes the slices created in CompareExistingIncomingCodeExampleSlices and creates a new array
 // of []types.CodeNode for inserting into Atlas. Because the code examples don't have a unique identifier to perform an
 // effective upsert operation, we'll replace the entire array of code examples every time there are updates.
-func MakeUpdatedCodeNodesArray(removedCodeNodes []types.CodeNode, unchangedPageNodes []types.ASTNode, unchangedPageNodesSha256CodeNodeLookup map[string]types.CodeNode, updatedPageNodes []types.ASTNode, updatedPageNodesSha256CodeNodeLookup map[string]types.CodeNode, newPageNodes []types.ASTNode, existingNodes []types.CodeNode, projectCounts types.ProjectCounts, pageId string) ([]types.CodeNode, types.ProjectCounts) {
+func MakeUpdatedCodeNodesArray(removedCodeNodes []types.CodeNode,
+	unchangedPageNodes []types.ASTNode,
+	unchangedPageNodesSha256CodeNodeLookup map[string]types.CodeNode,
+	updatedPageNodes []types.ASTNode,
+	updatedPageNodesSha256CodeNodeLookup map[string]types.CodeNode,
+	newPageNodes []types.ASTNode, existingNodes []types.CodeNode,
+	projectCounts types.ProjectCounts,
+	pageId string,
+	llm *ollama.LLM,
+	ctx context.Context,
+	isDriversProject bool) ([]types.CodeNode, types.ProjectCounts) {
+
 	// Set up variables used by these functions
 	unchangedCount := 0
 	updatedCount := 0
@@ -21,7 +36,7 @@ func MakeUpdatedCodeNodesArray(removedCodeNodes []types.CodeNode, unchangedPageN
 	// Call all the 'Handle' functions in sequence
 	unchangedCodeNodes, unchangedCount, newCount, removedCount = HandleUnchangedPageNodes(existingHashCountMap, unchangedPageNodes, unchangedPageNodesSha256CodeNodeLookup, pageId)
 	updatedCodeNodes := HandleUpdatedPageNodes(updatedPageNodes, updatedPageNodesSha256CodeNodeLookup)
-	newCodeNodes := HandleNewPageNodes(newPageNodes)
+	newCodeNodes := HandleNewPageNodes(newPageNodes, llm, ctx, isDriversProject)
 	removedCodeNodesUpdatedForRemoval := HandleRemovedCodeNodes(removedCodeNodes)
 
 	// Increment project counters

@@ -66,3 +66,10 @@ const (
 
 	MODEL = "qwen2.5-coder"
 )
+
+var CanonicalLanguages = []string{Bash, C, CPP,
+	CSharp, Go, Java, JavaScript,
+	JSON, Kotlin, PHP, Python,
+	Ruby, Rust, Scala, Shell,
+	Swift, Text, TypeScript, Undefined, XML, YAML,
+}

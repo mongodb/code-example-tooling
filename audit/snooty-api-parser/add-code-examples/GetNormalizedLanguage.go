@@ -4,7 +4,7 @@ import (
 	"snooty-api-parser/types"
 )
 
-func GetLanguage(snootyNode types.ASTNode) string {
+func GetNormalizedLanguage(snootyNode types.ASTNode) string {
 	normalizeLanguagesMap := make(map[string]string)
 
 	// Add the canonical languages and their values

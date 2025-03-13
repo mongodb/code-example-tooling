@@ -53,6 +53,7 @@ type ASTNode struct {
 	Argument       []TextNode             `json:"argument,omitempty"`
 	Options        map[string]interface{} `json:"options,omitempty"`
 	EmphasizeLines EmphasizeLines         `json:"emphasize_lines,omitempty"`
+	LineNumbers    bool                   `json:"lineos,omitempty"`
 }
 
 // ToctreeEntry details entries contained within a toctree.

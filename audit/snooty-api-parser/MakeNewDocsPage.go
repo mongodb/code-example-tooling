@@ -31,14 +31,15 @@ func MakeNewDocsPage(data types.PageWrapper, siteUrl string, projectName string,
 	}
 	maybeKeywords := snooty.GetMetaKeywords(data.Data.AST.Children)
 
-	// TODO: Populate Languages for page
+	languagesArrayValues := MakeLanguagesArray(newCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes)
+
 	return types.DocsPage{
 		ID:                   pageId,
 		CodeNodesTotal:       incomingCodeNodeCount,
 		DateAdded:            time.Now(),
 		DateLastUpdated:      time.Now(),
 		IoCodeBlocksTotal:    incomingIoCodeNodeCount,
-		Languages:            nil,
+		Languages:            languagesArrayValues,
 		LiteralIncludesTotal: incomingLiteralIncludeNodeCount,
 		Nodes:                &newCodeNodes,
 		PageURL:              pageUrl,

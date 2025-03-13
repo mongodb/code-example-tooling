@@ -7,7 +7,7 @@ project currently supports:
 
 **Retrieving data**
 
-Getting counts broken down in the following ways:
+Get counts broken down in the following ways:
 
 - Total counts:
   - [Total count by docs property](src/aggregations/GetCollectionCount.go)
@@ -28,6 +28,7 @@ Getting counts broken down in the following ways:
 - [Adding `product` and `sub_product` fields](src/updates/AddProductNames.go) to their relevant documents across the 37
   docs properties
 - [Renaming a field](src/updates/RenameField.go) in the document across the 37 docs properties
+- [Renaming a value](src/updates/RenameValue.go) in the document across the 37 docs properties
 
 **Printing to console**
 
@@ -55,7 +56,7 @@ To perform operations with this project, you need:
 - The required dependencies
 - A `MONGODB_URI` key in your environment with a connection string
 
-### Install the dependencies
+### Install project dependencies
 
 ### Golang
 

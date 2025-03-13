@@ -11,7 +11,7 @@ import (
 // PerformAggregation executes several different aggregation operations for every collection in the DB, and logs the output to console.
 func PerformAggregation(db *mongo.Database, ctx context.Context) {
 	// The aggregations in this project use one of these data structures. Uncomment the corresponding data structure,
-	// and/or make duplicates with appropriate names as needed
+	// or make duplicates with appropriate names as needed
 	simpleMap := make(map[string]int)
 	//codeLengthMap := make(map[string]types.CodeLengthStats)
 	//nestedOneLevelMap := make(map[string]map[string]int)

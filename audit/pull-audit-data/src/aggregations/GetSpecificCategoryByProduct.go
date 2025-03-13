@@ -8,8 +8,8 @@ import (
 )
 
 // GetSpecificCategoryByProduct returns a `simpleMap` data structure as defined in the PerformAggregation function. The
-// key is the product name, and the int is the count of the number of code examples in the given category across the product.
-// types.Constants has constants for all the category names.
+// key is the product name, and the int is the count of code examples in the given category across the product.
+// `types.Constants` has constants for all the category names.
 func GetSpecificCategoryByProduct(db *mongo.Database, collectionName string, categoryName string, productSums map[string]int, ctx context.Context) map[string]int {
 	collection := db.Collection(collectionName)
 	countPipeline := mongo.Pipeline{

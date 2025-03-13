@@ -11,7 +11,7 @@ import (
 // GetOneLineUsageExampleCounts returns a `simpleMap` data structure as defined in the PerformAggregation function. The
 // key is the collection name, and the int value is the count of one-line code examples in the Usage Example category.
 // One-line code example is defined as a code example whose character count is fewer than 80 characters. The map also
-// contains a types.Total key whose value is the aggregate count of all the code examples across all the collections.
+// contains a `types.Total` key whose value is the aggregate count of all one-line code examples in the Usage Example category across all collections.
 func GetOneLineUsageExampleCounts(db *mongo.Database, collectionName string, oneLinerCountMap map[string]int, ctx context.Context) map[string]int {
 	collection := db.Collection(collectionName)
 	pipeline := mongo.Pipeline{

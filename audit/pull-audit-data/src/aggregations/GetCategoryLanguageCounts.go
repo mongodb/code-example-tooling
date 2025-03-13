@@ -8,7 +8,7 @@ import (
 )
 
 // GetCategoryLanguageCounts returns a `nestedOneLevelMap` data structure as defined in the PerformAggregation function.
-// The top-level map key is the category name, the nested map string key is the language name, and the int is the count of
+// The top-level map key is the category name, the nested-map string key is the language name, and the int is the count of
 // code examples in that language for that category.
 func GetCategoryLanguageCounts(db *mongo.Database, collectionName string, categoryLanguageCountMap map[string]map[string]int, ctx context.Context) map[string]map[string]int {
 	collection := db.Collection(collectionName)

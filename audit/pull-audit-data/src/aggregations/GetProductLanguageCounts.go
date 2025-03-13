@@ -8,8 +8,8 @@ import (
 )
 
 // GetProductLanguageCounts returns a `nestedOneLevelMap` data structure in the as defined in the PerformAggregation function.
-// The first key is the name of the product. The second key is the name of a programming language. The int count is the
-// sum of all code examples in the programming language within the product.
+// The first key is the product name. The second key is the programming language. The int count is the
+// sum of all code examples in the language within the product.
 func GetProductLanguageCounts(db *mongo.Database, collectionName string, productLanguageMap map[string]map[string]int, ctx context.Context) map[string]map[string]int {
 	collection := db.Collection(collectionName)
 	languagePipeline := mongo.Pipeline{

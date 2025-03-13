@@ -9,8 +9,8 @@ import (
 )
 
 // GetLanguageCounts returns a `simpleMap` data structure as defined in the PerformAggregation function. Each key is the
-// name of a programming language, and the int value is the count of code examples in that programming language. The map
-// also contains a types.Total key whose value is the aggregate count of all the code examples across all the collections.
+// programming language, and the int value is the count of code examples in that language. The map
+// also contains a `types.Total` key whose value is the aggregate count of all code examples across all collections for each language.
 func GetLanguageCounts(db *mongo.Database, collectionName string, languageCountMap map[string]int, ctx context.Context) map[string]int {
 	collection := db.Collection(collectionName)
 	languagePipeline := mongo.Pipeline{

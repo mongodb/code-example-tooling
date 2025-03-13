@@ -9,8 +9,8 @@ import (
 )
 
 // GetCategoryCounts returns a `simpleMap` data structure as defined in the PerformAggregation function. Each key
-// is the name of a category, and the int value is the count of code examples for that category. The map also contains
-// a types.ComplexExamples key whose value is the count of code examples where the code example character count is greater
+// is the category name, and the int value is the count of code examples for that category. The map also contains
+// a types.ComplexExamples key whose value is the count of Usage Examples where the code example character count is greater
 // than 500 characters, and a types.Total key whose value is an aggregate count of all code examples regardless of category.
 func GetCategoryCounts(db *mongo.Database, collectionName string, categoryCountMap map[string]int, ctx context.Context) map[string]int {
 	collection := db.Collection(collectionName)

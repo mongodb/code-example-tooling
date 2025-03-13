@@ -9,9 +9,9 @@ import (
 )
 
 // GetCodeLengths returns a `lengthCountMap` data structure as defined in the PerformAggregation function.
-// The key is the collection name, and the value is a struct that capture the minimum code example length, median code
-// example length, and maximum code example length by character count across the collection. It also counts the number
-// of one-line code examples, defined as a code example whose character count is fewer than 80 characters.
+// The key is the collection name, and the value is a struct capturing the minimum, median, and maximum code example
+// lengths by character count across the collection. It also counts the number of one-line code examples, defined as a
+// code example whose character count is fewer than 80 characters.
 func GetCodeLengths(db *mongo.Database, collectionName string, lengthCountMap map[string]types.CodeLengthStats, ctx context.Context) map[string]types.CodeLengthStats {
 	collection := db.Collection(collectionName)
 	pipeline := mongo.Pipeline{

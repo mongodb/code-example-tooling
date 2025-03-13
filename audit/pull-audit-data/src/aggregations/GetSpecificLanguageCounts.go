@@ -7,6 +7,7 @@ import (
 	"log"
 )
 
+// GetSpecificLanguageCount returns the int count for the specified language within the collection.
 func GetSpecificLanguageCount(db *mongo.Database, collectionName string, language string, ctx context.Context) int {
 	collection := db.Collection(collectionName)
 	languagePipeline := mongo.Pipeline{

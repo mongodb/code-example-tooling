@@ -1,6 +1,8 @@
 package main
 
-import "strings"
+import (
+	"strings"
+)
 
 func GetProductSubProduct(project string, page string) (string, string) {
 	collectionProducts := map[string]string{
@@ -68,10 +70,13 @@ func GetProductSubProduct(project string, page string) (string, string) {
 			}
 		}
 	} else {
-		for collection, displayName := range collectionSubProducts {
-			if project == collection {
-				subProduct = displayName
-			}
+		// If it's a collection that directly correlates to one of the collectionSubProducts, it's an Atlas product
+		// and has the relevant sub-product display name
+		displayName, exists := collectionSubProducts[project]
+		if exists {
+			product = "Atlas"
+			subProduct = displayName
+			return product, subProduct
 		}
 	}
 	return product, subProduct

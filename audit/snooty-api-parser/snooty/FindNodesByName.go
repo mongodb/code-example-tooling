@@ -2,7 +2,7 @@ package snooty
 
 import "snooty-api-parser/types"
 
-// FindNodesByName recursively finds ASTNodes with a specific name (used to find `literalinclude` and `io-code-block` nodes)
+// FindNodesByName recursively finds ASTNodes with a specific name (used to find `literalinclude`, `io-code-block`, and `meta` nodes)
 func FindNodesByName(nodes []types.ASTNode, name string) []types.ASTNode {
 	var result []types.ASTNode
 	for _, node := range nodes {

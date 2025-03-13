@@ -3,9 +3,9 @@
 ## Overview
 
 This project contains scaffold and several aggregation pipelines to work with the code example audit database. This
-project currently supports:
+project currently supports the following functionality:
 
-**Retrieving data**
+**Retrieve data**
 
 Get counts broken down in the following ways:
 
@@ -15,6 +15,7 @@ Get counts broken down in the following ways:
   - [By docs property](src/aggregations/GetLanguageCounts.go)
   - [By product](src/aggregations/GetProductLanguageCounts.go)
   - [By Atlas sub-product](src/aggregations/GetSubProductLanguageCounts.go)
+  - [For a specific language by docs property](src/aggregations/GetSpecificLanguageCounts.go)
 - Category counts:
   - [By docs property](src/aggregations/GetCategoryCounts.go)
   - [By product](src/aggregations/GetProductCategoryCounts.go)
@@ -24,15 +25,15 @@ Get counts broken down in the following ways:
   - [One line usage examples by docs property](src/aggregations/GetOneLineUsageExampleCounts.go)
   - [Minimum, median, maximum character counts for code examples in the collection, and one-liner counts](src/aggregations/GetMinMedianMaxCodeLength.go)
 
-**Updating Documents**
-- [Adding `product` and `sub_product` fields](src/updates/AddProductNames.go) to their relevant documents across the 37
+**Update Documents**
+- [Add `product` and `sub_product` fields](src/updates/AddProductNames.go) to their relevant documents across the 37
   docs properties
-- [Renaming a field](src/updates/RenameField.go) in the document across the 37 docs properties
-- [Renaming a value](src/updates/RenameValue.go) in the document across the 37 docs properties
+- [Rename a field](src/updates/RenameField.go) in the document across the 37 docs properties
+- [Rename a value](src/updates/RenameValue.go) in the document across the 37 docs properties
 
-**Printing to console**
+**Print to console**
 
-The aggregations listed in the *Retrieving data* section above store data for each collection in maps with varying
+The aggregations listed in the *Retrieve data* section above store data for each collection in maps with varying
 structures. The `utils` directory contains convenience functions to print the map output to console as one or more
 tables.
 
@@ -53,18 +54,10 @@ tables.
 
 To perform operations with this project, you need:
 
-- The required dependencies
+- `Golang` installed. Refer to the [Go installation page](https://go.dev/doc/install) for details.
 - A `MONGODB_URI` key in your environment with a connection string
 
 ### Install project dependencies
-
-### Golang
-
-This project requires you to have `Golang` installed. If you do not yet
-have Go installed, refer to [the Go installation page](https://go.dev/doc/install)
-for details.
-
-### Go Dependencies
 
 From the `src` directory, run the following command to install
 dependencies:

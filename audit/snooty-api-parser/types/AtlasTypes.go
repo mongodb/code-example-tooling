@@ -18,6 +18,7 @@ type DocsPage struct {
 	ProjectName          string      `bson:"project_name"`
 	Product              string      `bson:"product"`
 	SubProduct           string      `bson:"sub_product,omitempty"`
+	Keywords             []string    `bson:"keywords,omitempty"`
 }
 
 // CodeNode captures metadata about a specific code example. The `Code` field contains the example itself.

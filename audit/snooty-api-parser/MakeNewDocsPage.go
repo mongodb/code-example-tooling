@@ -29,6 +29,7 @@ func MakeNewDocsPage(data types.PageWrapper, siteUrl string, projectName string,
 		newNode := snooty.MakeCodeNodeFromSnootyAST(node, llm, ctx, isDriversProject)
 		newCodeNodes = append(newCodeNodes, newNode)
 	}
+	maybeKeywords := snooty.GetMetaKeywords(data.Data.AST.Children)
 
 	// TODO: Populate Languages for page
 	return types.DocsPage{
@@ -44,5 +45,6 @@ func MakeNewDocsPage(data types.PageWrapper, siteUrl string, projectName string,
 		ProjectName:          projectName,
 		Product:              product,
 		SubProduct:           subProduct,
+		Keywords:             maybeKeywords,
 	}, projectCounter
 }

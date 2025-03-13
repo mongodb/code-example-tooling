@@ -26,6 +26,7 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 	} else {
 		isDriversProject = false
 	}
+	updatedDocsPage.Keywords = snooty.GetMetaKeywords(data.Data.AST.Children)
 
 	// If examples exist already and we are getting no incoming examples from the API, the existing examples have been removed from the incoming page
 	if existingPage.Nodes != nil && incomingCodeNodePageCount == 0 {

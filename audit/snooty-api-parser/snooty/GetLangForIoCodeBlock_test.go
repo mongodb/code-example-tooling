@@ -1,8 +1,8 @@
 package snooty
 
 import (
-	add_code_examples "snooty-api-parser/add-code-examples"
-	test_data "snooty-api-parser/snooty/test-data"
+	"snooty-api-parser/add-code-examples"
+	"snooty-api-parser/snooty/test-data"
 	"snooty-api-parser/types"
 	"testing"
 )
@@ -28,7 +28,7 @@ func TestGetLangForIoCodeBlock(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := GetLangForIoCodeBlock(tt.args.snootyNode); got != tt.want {
-				t.Errorf("GetLangForIoCodeBlock() = %v, want %v", got, tt.want)
+				t.Errorf("GetLangForIoCodeBlock() = got %v, want %v", got, tt.want)
 			}
 		})
 	}

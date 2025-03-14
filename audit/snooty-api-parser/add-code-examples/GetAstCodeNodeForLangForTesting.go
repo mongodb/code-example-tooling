@@ -2,7 +2,7 @@ package add_code_examples
 
 import "snooty-api-parser/types"
 
-func GetAstNodeForLangForTesting(lang string) types.ASTNode {
+func GetAstCodeNodeForLangForTesting(lang string) types.ASTNode {
 	return types.ASTNode{
 		Type:           "code",
 		Position:       types.Position{Start: types.PositionLine{Line: 51}},

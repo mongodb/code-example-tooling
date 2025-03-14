@@ -1,7 +1,7 @@
 package test_data
 
 import (
-	add_code_examples "snooty-api-parser/add-code-examples"
+	"snooty-api-parser/add-code-examples"
 	"snooty-api-parser/types"
 )
 

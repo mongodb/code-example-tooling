@@ -1,10 +1,6 @@
 package add_code_examples
 
-import (
-	"snooty-api-parser/types"
-)
-
-func GetNormalizedLanguage(snootyNode types.ASTNode) string {
+func GetNormalizedLanguageFromString(language string) string {
 	normalizeLanguagesMap := make(map[string]string)
 
 	// Add the canonical languages and their values
@@ -43,8 +39,7 @@ func GetNormalizedLanguage(snootyNode types.ASTNode) string {
 	normalizeLanguagesMap["json\\n :copyable: false"] = JSON
 	normalizeLanguagesMap["json\\n :copyable: true"] = JSON
 
-	snootyLanguageValue := snootyNode.Lang
-	canonicalLanguage, exists := normalizeLanguagesMap[snootyLanguageValue]
+	canonicalLanguage, exists := normalizeLanguagesMap[language]
 	if exists {
 		return canonicalLanguage
 	} else {

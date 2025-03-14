@@ -42,7 +42,7 @@ func MakeLiteralIncludeNodeForTesting(includeLang bool, language string, include
 		literalIncludeNode.Lang = language
 	}
 	if includeFilepath {
-		extension := add_code_examples.GetFileExtension(childCodeNode)
+		extension := add_code_examples.GetFileExtensionFromASTNode(childCodeNode)
 		value := "filename" + extension
 		argument := types.TextNode{
 			Type:     "text",

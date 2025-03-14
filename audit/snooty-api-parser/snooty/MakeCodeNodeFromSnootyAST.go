@@ -12,8 +12,8 @@ import (
 func MakeCodeNodeFromSnootyAST(snootyNode types.ASTNode, llm *ollama.LLM, ctx context.Context, isDriverProject bool) types.CodeNode {
 	whiteSpaceTrimmedNode := strings.TrimSpace(snootyNode.Value)
 	hashString := MakeSha256HashForCode(whiteSpaceTrimmedNode)
-	language := add_code_examples.GetNormalizedLanguage(snootyNode)
-	fileExtension := add_code_examples.GetFileExtension(snootyNode)
+	language := add_code_examples.GetNormalizedLanguageFromASTNode(snootyNode)
+	fileExtension := add_code_examples.GetFileExtensionFromASTNode(snootyNode)
 	category, llmCategorized := add_code_examples.GetCategory(whiteSpaceTrimmedNode, language, llm, ctx, isDriverProject)
 	return types.CodeNode{
 		Code:           whiteSpaceTrimmedNode,

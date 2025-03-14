@@ -8,7 +8,7 @@ import (
 
 func GetLangForLiteralInclude(snootyNode types.ASTNode) string {
 	// If the literalinclude node has a language value, just use the normalized version of it
-	language := add_code_examples.GetNormalizedLanguage(snootyNode)
+	language := add_code_examples.GetNormalizedLanguageFromASTNode(snootyNode)
 	// If the language is undefined, try to get it from the filepath
 	if language == add_code_examples.Undefined {
 		filepath := ""
@@ -27,7 +27,7 @@ func GetLangForLiteralInclude(snootyNode types.ASTNode) string {
 			for _, child := range snootyNode.Children {
 				if child.Type == "code" {
 					if child.Lang != "" {
-						language = add_code_examples.GetNormalizedLanguage(child)
+						language = add_code_examples.GetNormalizedLanguageFromASTNode(child)
 					}
 				}
 			}

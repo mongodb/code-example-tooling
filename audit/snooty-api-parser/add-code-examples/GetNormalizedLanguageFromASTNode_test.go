@@ -51,8 +51,8 @@ func TestGetLanguage(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetNormalizedLanguage(tt.args.snootyNode); got != tt.want {
-				t.Errorf("GetNormalizedLanguage() = %v, want %v", got, tt.want)
+			if got := GetNormalizedLanguageFromASTNode(tt.args.snootyNode); got != tt.want {
+				t.Errorf("GetNormalizedLanguageFromASTNode() = %v, want %v", got, tt.want)
 			}
 		})
 	}

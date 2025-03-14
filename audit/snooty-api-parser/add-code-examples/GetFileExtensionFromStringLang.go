@@ -1,8 +1,6 @@
 package add_code_examples
 
-import "snooty-api-parser/types"
-
-func GetFileExtension(snootyNode types.ASTNode) string {
+func GetFileExtensionFromStringLang(language string) string {
 	langExtensionMap := make(map[string]string)
 
 	// Add the canonical languages and their extensions
@@ -41,8 +39,7 @@ func GetFileExtension(snootyNode types.ASTNode) string {
 	langExtensionMap["json\\n :copyable: false"] = JSONExtension
 	langExtensionMap["json\\n :copyable: true"] = JSONExtension
 
-	snootyLanguageValue := snootyNode.Lang
-	extension, exists := langExtensionMap[snootyLanguageValue]
+	extension, exists := langExtensionMap[language]
 	if exists {
 		return extension
 	} else {

@@ -1,0 +1,1702 @@
+{
+  "type": "metadata",
+  "data": {
+    "_id": "67be0183e758bad4499133b6",
+    "project": "c",
+    "branch": "v1.30",
+    "title": "C Driver",
+    "eol": false,
+    "canonical": null,
+    "slugToTitle": {
+      "aggregation": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Transform Your Data with Aggregation"
+        }
+      ],
+      "compatibility": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Compatibility"
+        }
+      ],
+      "connect/connection-targets": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Choose a Connection Target"
+        }
+      ],
+      "connect/mongoclient": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Create a MongoClient"
+        }
+      ],
+      "connect/stable-api": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Stable API"
+        }
+      ],
+      "connect/tls": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Configure Transport Layer Security (TLS)"
+        }
+      ],
+      "connect": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Connect to MongoDB"
+        }
+      ],
+      "databases-collections/run-command": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Run a Database Command"
+        }
+      ],
+      "databases-collections/time-series": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Time Series Data"
+        }
+      ],
+      "databases-collections": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Databases and Collections"
+        }
+      ],
+      "get-started/connect-to-mongodb": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Connect to MongoDB"
+        }
+      ],
+      "get-started/create-a-connection-string": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Create a Connection String"
+        }
+      ],
+      "get-started/create-a-deployment": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Create a MongoDB Deployment"
+        }
+      ],
+      "get-started/download-and-install": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Download and Install"
+        }
+      ],
+      "get-started/next-steps": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Next Steps"
+        }
+      ],
+      "get-started": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Get Started with the C Driver"
+        }
+      ],
+      "index": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 2
+            }
+          },
+          "value": "MongoDB C Driver"
+        }
+      ],
+      "indexes/atlas-search-index": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Atlas Search Indexes"
+        }
+      ],
+      "indexes/compound-index": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Compound Indexes"
+        }
+      ],
+      "indexes/multikey-index": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Multikey Indexes"
+        }
+      ],
+      "indexes/single-field-index": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Single-Field Indexes"
+        }
+      ],
+      "indexes": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Optimize Queries by Using Indexes"
+        }
+      ],
+      "install-from-source": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Building the C Driver Libraries from Source"
+        }
+      ],
+      "monitoring/cluster-monitoring": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Cluster Monitoring"
+        }
+      ],
+      "monitoring": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Monitor Your Application"
+        }
+      ],
+      "read/change-streams": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Monitor Data Changes"
+        }
+      ],
+      "read/count": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Count Documents"
+        }
+      ],
+      "read/cursors": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Access Data From a Cursor"
+        }
+      ],
+      "read/distinct": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Retrieve Distinct Field Values"
+        }
+      ],
+      "read/project": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Specify Fields To Return"
+        }
+      ],
+      "read/retrieve": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Retrieve Data"
+        }
+      ],
+      "read/specify-a-query": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Specify a Query"
+        }
+      ],
+      "read/specify-documents-to-return": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Specify Documents to Return"
+        }
+      ],
+      "read-write-configuration": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Configure Operations on Replica Sets"
+        }
+      ],
+      "read": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Read Data from MongoDB"
+        }
+      ],
+      "security/authentication": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 3
+            }
+          },
+          "value": "Authentication Mechanisms"
+        }
+      ],
+      "security/enterprise-authentication": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Enterprise Authentication Mechanisms"
+        }
+      ],
+      "security": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Secure Your Data"
+        }
+      ],
+      "upgrade": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Upgrade Driver Versions"
+        }
+      ],
+      "whats-new": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "What's New"
+        }
+      ],
+      "work-with-indexes": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Work with Indexes"
+        }
+      ],
+      "write/bulk-write": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Bulk Write Operations"
+        }
+      ],
+      "write/delete": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Delete Documents"
+        }
+      ],
+      "write/gridfs": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Store Large Files"
+        }
+      ],
+      "write/insert": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Insert Documents"
+        }
+      ],
+      "write/replace": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Replace Documents"
+        }
+      ],
+      "write/transactions": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Transactions"
+        }
+      ],
+      "write/update": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Update Documents"
+        }
+      ],
+      "write": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "value": "Write Data to MongoDB"
+        }
+      ]
+    },
+    "slugToBreadcrumbLabel": {
+      "aggregation": "Data Aggregation",
+      "compatibility": "Compatibility",
+      "connect/connection-targets": "Choose a Connection Target",
+      "connect/mongoclient": "Create a MongoClient",
+      "connect/stable-api": "Stable API",
+      "connect/tls": "Configure TLS",
+      "connect": "Connect to MongoDB",
+      "databases-collections/run-command": "Run a Database Command",
+      "databases-collections/time-series": "Time Series",
+      "databases-collections": "Databases & Collections",
+      "get-started/connect-to-mongodb": "Connect to MongoDB",
+      "get-started/create-a-connection-string": "Create a Connection String",
+      "get-started/create-a-deployment": "Create a MongoDB Deployment",
+      "get-started/download-and-install": "Download and Install",
+      "get-started/next-steps": "Next Steps",
+      "get-started": "Get Started",
+      "index": "MongoDB C Driver",
+      "indexes/atlas-search-index": "Atlas Search",
+      "indexes/compound-index": "Compound Indexes",
+      "indexes/multikey-index": "Multikey Indexes",
+      "indexes/single-field-index": "Single Field Indexes",
+      "indexes": "Indexes",
+      "install-from-source": "Build the Driver",
+      "monitoring/cluster-monitoring": "Cluster Monitoring",
+      "monitoring": "Monitor Your Application",
+      "read/change-streams": "Monitor Changes",
+      "read/count": "Count Documents",
+      "read/cursors": "Access Data from a Cursor",
+      "read/distinct": "Distinct Field Values",
+      "read/project": "Specify Fields to Return",
+      "read/retrieve": "Retrieve Data",
+      "read/specify-a-query": "Specify a Query",
+      "read/specify-documents-to-return": "Specify Documents to Return",
+      "read-write-configuration": "Operations on Replica Sets",
+      "read": "Read Data",
+      "security/authentication": "Authentication",
+      "security/enterprise-authentication": "Enterprise Authentication",
+      "security": "Security",
+      "upgrade": "Upgrade",
+      "whats-new": "What's New",
+      "work-with-indexes": "Work with Indexes",
+      "write/bulk-write": "Bulk Write Operations",
+      "write/delete": "Delete",
+      "write/gridfs": "Store Large Files",
+      "write/insert": "Insert",
+      "write/replace": "Replace",
+      "write/transactions": "Transactions",
+      "write/update": "Update",
+      "write": "Write Data"
+    },
+    "toctree": {
+      "title": [
+        {
+          "type": "text",
+          "position": {
+            "start": {
+              "line": 0
+            }
+          },
+          "value": "C Driver"
+        }
+      ],
+      "slug": "/",
+      "children": [
+        {
+          "title": [
+            {
+              "type": "text",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "value": "Get Started"
+            }
+          ],
+          "slug": "get-started",
+          "children": [
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Download & Install"
+                }
+              ],
+              "slug": "get-started/download-and-install",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Create a Deployment"
+                }
+              ],
+              "slug": "get-started/create-a-deployment",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Create a Connection String"
+                }
+              ],
+              "slug": "get-started/create-a-connection-string",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Connect to MongoDB"
+                }
+              ],
+              "slug": "get-started/connect-to-mongodb",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Next Steps"
+                }
+              ],
+              "slug": "get-started/next-steps",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            }
+          ],
+          "options": {
+            "drawer": false
+          }
+        },
+        {
+          "title": [
+            {
+              "type": "text",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "value": "Connect to MongoDB"
+            }
+          ],
+          "slug": "connect",
+          "children": [
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Create a MongoClient"
+                }
+              ],
+              "slug": "connect/mongoclient",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Stable API"
+                }
+              ],
+              "slug": "connect/stable-api",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Choose a Connection Target"
+                }
+              ],
+              "slug": "connect/connection-targets",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Configure TLS"
+                }
+              ],
+              "slug": "connect/tls",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            }
+          ],
+          "options": {
+            "drawer": false
+          }
+        },
+        {
+          "title": [
+            {
+              "type": "text",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "value": "Databases & Collections"
+            }
+          ],
+          "slug": "databases-collections",
+          "children": [
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Time Series"
+                }
+              ],
+              "slug": "databases-collections/time-series",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Run a Database Command"
+                }
+              ],
+              "slug": "databases-collections/run-command",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            }
+          ],
+          "options": {
+            "drawer": false
+          }
+        },
+        {
+          "title": [
+            {
+              "type": "text",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "value": "Write Data"
+            }
+          ],
+          "slug": "write",
+          "children": [
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Insert"
+                }
+              ],
+              "slug": "write/insert",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Replace"
+                }
+              ],
+              "slug": "write/replace",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Update"
+                }
+              ],
+              "slug": "write/update",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Delete"
+                }
+              ],
+              "slug": "write/delete",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Bulk Write Operations"
+                }
+              ],
+              "slug": "write/bulk-write",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Transactions"
+                }
+              ],
+              "slug": "write/transactions",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Store Large Files"
+                }
+              ],
+              "slug": "write/gridfs",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            }
+          ],
+          "options": {
+            "drawer": false
+          }
+        },
+        {
+          "title": [
+            {
+              "type": "text",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "value": "Read Data"
+            }
+          ],
+          "slug": "read",
+          "children": [
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Specify a Query"
+                }
+              ],
+              "slug": "read/specify-a-query",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Retrieve Data"
+                }
+              ],
+              "slug": "read/retrieve",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Specify Fields to Return"
+                }
+              ],
+              "slug": "read/project",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Specify Documents to Return"
+                }
+              ],
+              "slug": "read/specify-documents-to-return",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Count Documents"
+                }
+              ],
+              "slug": "read/count",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Distinct Field Values"
+                }
+              ],
+              "slug": "read/distinct",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Access Data from a Cursor"
+                }
+              ],
+              "slug": "read/cursors",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Monitor Changes"
+                }
+              ],
+              "slug": "read/change-streams",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            }
+          ],
+          "options": {
+            "drawer": false
+          }
+        },
+        {
+          "title": [
+            {
+              "type": "text",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "value": "Indexes"
+            }
+          ],
+          "slug": "indexes",
+          "children": [
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Work with Indexes"
+                }
+              ],
+              "slug": "work-with-indexes",
+              "children": [
+                {
+                  "title": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 0
+                        }
+                      },
+                      "value": "Single Field Indexes"
+                    }
+                  ],
+                  "slug": "indexes/single-field-index",
+                  "children": [],
+                  "options": {
+                    "drawer": true
+                  }
+                },
+                {
+                  "title": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 0
+                        }
+                      },
+                      "value": "Compound Indexes"
+                    }
+                  ],
+                  "slug": "indexes/compound-index",
+                  "children": [],
+                  "options": {
+                    "drawer": true
+                  }
+                },
+                {
+                  "title": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 0
+                        }
+                      },
+                      "value": "Multikey Indexes"
+                    }
+                  ],
+                  "slug": "indexes/multikey-index",
+                  "children": [],
+                  "options": {
+                    "drawer": true
+                  }
+                },
+                {
+                  "title": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 0
+                        }
+                      },
+                      "value": "Atlas Search"
+                    }
+                  ],
+                  "slug": "indexes/atlas-search-index",
+                  "children": [],
+                  "options": {
+                    "drawer": true
+                  }
+                }
+              ],
+              "options": {
+                "drawer": false
+              }
+            }
+          ],
+          "options": {
+            "drawer": false
+          }
+        },
+        {
+          "title": [
+            {
+              "type": "text",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "value": "Monitor Your Application"
+            }
+          ],
+          "slug": "monitoring",
+          "children": [
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Cluster Monitoring"
+                }
+              ],
+              "slug": "monitoring/cluster-monitoring",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            }
+          ],
+          "options": {
+            "drawer": true
+          }
+        },
+        {
+          "title": [
+            {
+              "type": "text",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "value": "Security"
+            }
+          ],
+          "slug": "security",
+          "children": [
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Authentication"
+                }
+              ],
+              "slug": "security/authentication",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            },
+            {
+              "title": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 0
+                    }
+                  },
+                  "value": "Enterprise Authentication"
+                }
+              ],
+              "slug": "security/enterprise-authentication",
+              "children": [],
+              "options": {
+                "drawer": true
+              }
+            }
+          ],
+          "options": {
+            "drawer": false
+          }
+        },
+        {
+          "title": [
+            {
+              "type": "text",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "value": "Data Aggregation"
+            }
+          ],
+          "slug": "aggregation",
+          "children": [],
+          "options": {
+            "drawer": true
+          }
+        },
+        {
+          "title": [
+            {
+              "type": "text",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "value": "Build the Driver"
+            }
+          ],
+          "slug": "install-from-source",
+          "children": [],
+          "options": {
+            "drawer": true
+          }
+        },
+        {
+          "title": [
+            {
+              "type": "text",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "value": "Operations on Replica Sets"
+            }
+          ],
+          "slug": "read-write-configuration",
+          "children": [],
+          "options": {
+            "drawer": true
+          }
+        },
+        {
+          "title": [
+            {
+              "type": "text",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "value": "What's New"
+            }
+          ],
+          "slug": "whats-new",
+          "children": [],
+          "options": {
+            "drawer": true
+          }
+        },
+        {
+          "title": [
+            {
+              "type": "text",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "value": "Compatibility"
+            }
+          ],
+          "slug": "compatibility",
+          "children": [],
+          "options": {
+            "drawer": true
+          }
+        },
+        {
+          "title": [
+            {
+              "type": "text",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "value": "Upgrade"
+            }
+          ],
+          "slug": "upgrade",
+          "children": [],
+          "options": {
+            "drawer": true
+          }
+        },
+        {
+          "title": [
+            {
+              "type": "text",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "value": "libbson API Documentation"
+            }
+          ],
+          "url": "https://mongoc.org/libbson/current",
+          "children": []
+        },
+        {
+          "title": [
+            {
+              "type": "text",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "value": "libmongoc API Documentation"
+            }
+          ],
+          "url": "https://mongoc.org/libmongoc/current",
+          "children": []
+        }
+      ]
+    },
+    "toctreeOrder": [
+      "/",
+      "get-started",
+      "get-started/download-and-install",
+      "get-started/create-a-deployment",
+      "get-started/create-a-connection-string",
+      "get-started/connect-to-mongodb",
+      "get-started/next-steps",
+      "connect",
+      "connect/mongoclient",
+      "connect/stable-api",
+      "connect/connection-targets",
+      "connect/tls",
+      "databases-collections",
+      "databases-collections/time-series",
+      "databases-collections/run-command",
+      "write",
+      "write/insert",
+      "write/replace",
+      "write/update",
+      "write/delete",
+      "write/bulk-write",
+      "write/transactions",
+      "write/gridfs",
+      "read",
+      "read/specify-a-query",
+      "read/retrieve",
+      "read/project",
+      "read/specify-documents-to-return",
+      "read/count",
+      "read/distinct",
+      "read/cursors",
+      "read/change-streams",
+      "indexes",
+      "work-with-indexes",
+      "indexes/single-field-index",
+      "indexes/compound-index",
+      "indexes/multikey-index",
+      "indexes/atlas-search-index",
+      "monitoring",
+      "monitoring/cluster-monitoring",
+      "security",
+      "security/authentication",
+      "security/enterprise-authentication",
+      "aggregation",
+      "install-from-source",
+      "read-write-configuration",
+      "whats-new",
+      "compatibility",
+      "upgrade"
+    ],
+    "parentPaths": {
+      "get-started": [],
+      "get-started/download-and-install": [
+        "get-started"
+      ],
+      "get-started/create-a-deployment": [
+        "get-started"
+      ],
+      "get-started/create-a-connection-string": [
+        "get-started"
+      ],
+      "get-started/connect-to-mongodb": [
+        "get-started"
+      ],
+      "get-started/next-steps": [
+        "get-started"
+      ],
+      "connect": [],
+      "connect/mongoclient": [
+        "connect"
+      ],
+      "connect/stable-api": [
+        "connect"
+      ],
+      "connect/connection-targets": [
+        "connect"
+      ],
+      "connect/tls": [
+        "connect"
+      ],
+      "databases-collections": [],
+      "databases-collections/time-series": [
+        "databases-collections"
+      ],
+      "databases-collections/run-command": [
+        "databases-collections"
+      ],
+      "write": [],
+      "write/insert": [
+        "write"
+      ],
+      "write/replace": [
+        "write"
+      ],
+      "write/update": [
+        "write"
+      ],
+      "write/delete": [
+        "write"
+      ],
+      "write/bulk-write": [
+        "write"
+      ],
+      "write/transactions": [
+        "write"
+      ],
+      "write/gridfs": [
+        "write"
+      ],
+      "read": [],
+      "read/specify-a-query": [
+        "read"
+      ],
+      "read/retrieve": [
+        "read"
+      ],
+      "read/project": [
+        "read"
+      ],
+      "read/specify-documents-to-return": [
+        "read"
+      ],
+      "read/count": [
+        "read"
+      ],
+      "read/distinct": [
+        "read"
+      ],
+      "read/cursors": [
+        "read"
+      ],
+      "read/change-streams": [
+        "read"
+      ],
+      "indexes": [],
+      "work-with-indexes": [
+        "indexes"
+      ],
+      "indexes/single-field-index": [
+        "indexes",
+        "work-with-indexes"
+      ],
+      "indexes/compound-index": [
+        "indexes",
+        "work-with-indexes"
+      ],
+      "indexes/multikey-index": [
+        "indexes",
+        "work-with-indexes"
+      ],
+      "indexes/atlas-search-index": [
+        "indexes",
+        "work-with-indexes"
+      ],
+      "monitoring": [],
+      "monitoring/cluster-monitoring": [
+        "monitoring"
+      ],
+      "security": [],
+      "security/authentication": [
+        "security"
+      ],
+      "security/enterprise-authentication": [
+        "security"
+      ],
+      "aggregation": [],
+      "install-from-source": [],
+      "read-write-configuration": [],
+      "whats-new": [],
+      "compatibility": [],
+      "upgrade": []
+    },
+    "multiPageTutorials": {},
+    "static_files": {
+      "objects.inv": "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"
+    },
+    "github_username": "netlify",
+    "build_id": "67be0183e758bad449913384",
+    "created_at": "2025-02-25T17:44:35.776Z"
+  }
+}

@@ -1,0 +1,2639 @@
+{
+  "type": "page",
+  "data": {
+    "_id": "67af8035d71fd1013e19c384",
+    "github_username": "netlify",
+    "page_id": "c/docsworker-xlarge/v1.30/connect",
+    "ast": {
+      "type": "root",
+      "position": {
+        "start": {
+          "line": 0
+        }
+      },
+      "children": [
+        {
+          "type": "target",
+          "position": {
+            "start": {
+              "line": 0
+            }
+          },
+          "children": [
+            {
+              "type": "target_identifier",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 4
+                    }
+                  },
+                  "value": "Connect to MongoDB"
+                }
+              ],
+              "ids": [
+                "c-connect"
+              ]
+            }
+          ],
+          "domain": "std",
+          "name": "label",
+          "html_id": "std-label-c-connect"
+        },
+        {
+          "type": "section",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "children": [
+            {
+              "type": "heading",
+              "position": {
+                "start": {
+                  "line": 4
+                }
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 4
+                    }
+                  },
+                  "value": "Connect to MongoDB"
+                }
+              ],
+              "id": "connect-to-mongodb"
+            },
+            {
+              "type": "directive",
+              "position": {
+                "start": {
+                  "line": 6
+                }
+              },
+              "children": [],
+              "domain": "",
+              "name": "contents",
+              "argument": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 6
+                    }
+                  },
+                  "value": "On this page"
+                }
+              ],
+              "options": {
+                "local": true,
+                "backlinks": "none",
+                "depth": 2,
+                "class": "singlecol"
+              }
+            },
+            {
+              "type": "directive",
+              "position": {
+                "start": {
+                  "line": 12
+                }
+              },
+              "children": [],
+              "domain": "mongodb",
+              "name": "facet",
+              "argument": [],
+              "options": {
+                "name": "genre",
+                "values": "reference"
+              }
+            },
+            {
+              "type": "directive",
+              "position": {
+                "start": {
+                  "line": 16
+                }
+              },
+              "children": [],
+              "domain": "",
+              "name": "meta",
+              "argument": [],
+              "options": {
+                "description": "Learn how to use the C Driver to connect to MongoDB."
+              }
+            },
+            {
+              "type": "directive",
+              "position": {
+                "start": {
+                  "line": 20
+                }
+              },
+              "children": [],
+              "domain": "",
+              "name": "toctree",
+              "argument": [],
+              "options": {
+                "titlesonly": true,
+                "maxdepth": 1
+              },
+              "entries": [
+                {
+                  "title": "Create a MongoClient",
+                  "slug": "/connect/mongoclient"
+                },
+                {
+                  "title": "Stable API",
+                  "slug": "/connect/stable-api"
+                },
+                {
+                  "title": "Choose a Connection Target",
+                  "slug": "/connect/connection-targets"
+                },
+                {
+                  "title": "Configure TLS",
+                  "slug": "/connect/tls"
+                }
+              ]
+            },
+            {
+              "type": "comment",
+              "position": {
+                "start": {
+                  "line": 29
+                }
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 29
+                    }
+                  },
+                  "value": "/connect/server-selection"
+                }
+              ]
+            },
+            {
+              "type": "section",
+              "position": {
+                "start": {
+                  "line": 31
+                }
+              },
+              "children": [
+                {
+                  "type": "heading",
+                  "position": {
+                    "start": {
+                      "line": 31
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 31
+                        }
+                      },
+                      "value": "Overview"
+                    }
+                  ],
+                  "id": "overview"
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 33
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 33
+                        }
+                      },
+                      "value": "This page contains code examples that show how to use the\nC driver to connect your application to MongoDB by specifying\nvarious settings."
+                    }
+                  ]
+                },
+                {
+                  "type": "directive",
+                  "position": {
+                    "start": {
+                      "line": 37
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 39
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 39
+                            }
+                          },
+                          "value": "To learn more about the connection options on this page, see the link\nprovided in each section."
+                        }
+                      ]
+                    }
+                  ],
+                  "domain": "",
+                  "name": "tip",
+                  "argument": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 37
+                        }
+                      },
+                      "value": "Connection Options"
+                    }
+                  ]
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 42
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 42
+                        }
+                      },
+                      "value": "To use a connection example from this page, copy the code example into the\n"
+                    },
+                    {
+                      "type": "ref_role",
+                      "position": {
+                        "start": {
+                          "line": 42
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 42
+                            }
+                          },
+                          "value": "sample application"
+                        }
+                      ],
+                      "domain": "std",
+                      "name": "label",
+                      "target": "c-connect-sample",
+                      "flag": "",
+                      "fileid": [
+                        "connect",
+                        "std-label-c-connect-sample"
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 42
+                        }
+                      },
+                      "value": " or your own application.\nBe sure to replace all placeholders in the code examples, such as\n"
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 42
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 42
+                            }
+                          },
+                          "value": "<hostname>"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 42
+                        }
+                      },
+                      "value": ", with the relevant values for your MongoDB deployment."
+                    }
+                  ]
+                },
+                {
+                  "type": "target",
+                  "position": {
+                    "start": {
+                      "line": 47
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "target_identifier",
+                      "position": {
+                        "start": {
+                          "line": 47
+                        }
+                      },
+                      "children": [],
+                      "ids": [
+                        "c-connect-sample"
+                      ]
+                    }
+                  ],
+                  "domain": "std",
+                  "name": "label",
+                  "html_id": "std-label-c-connect-sample"
+                },
+                {
+                  "type": "directive",
+                  "position": {
+                    "start": {
+                      "line": 49
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "root",
+                      "position": {
+                        "start": {
+                          "line": 0
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "section",
+                          "position": {
+                            "start": {
+                              "line": 1
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "heading",
+                              "position": {
+                                "start": {
+                                  "line": 1
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 1
+                                    }
+                                  },
+                                  "value": "Sample Application"
+                                }
+                              ],
+                              "id": "sample-application"
+                            },
+                            {
+                              "type": "paragraph",
+                              "position": {
+                                "start": {
+                                  "line": 3
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 3
+                                    }
+                                  },
+                                  "value": "You can use the following sample application to test the code examples on this\npage. To use the sample application, perform the following steps:"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "list",
+                              "position": {
+                                "start": {
+                                  "line": 6
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "listItem",
+                                  "position": {
+                                    "start": {
+                                      "line": 6
+                                    }
+                                  },
+                                  "children": [
+                                    {
+                                      "type": "paragraph",
+                                      "position": {
+                                        "start": {
+                                          "line": 6
+                                        }
+                                      },
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "position": {
+                                            "start": {
+                                              "line": 6
+                                            }
+                                          },
+                                          "value": "Ensure you have the C driver installed."
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "listItem",
+                                  "position": {
+                                    "start": {
+                                      "line": 6
+                                    }
+                                  },
+                                  "children": [
+                                    {
+                                      "type": "paragraph",
+                                      "position": {
+                                        "start": {
+                                          "line": 7
+                                        }
+                                      },
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "position": {
+                                            "start": {
+                                              "line": 7
+                                            }
+                                          },
+                                          "value": "Copy the following code and paste it into a new "
+                                        },
+                                        {
+                                          "type": "literal",
+                                          "position": {
+                                            "start": {
+                                              "line": 7
+                                            }
+                                          },
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "position": {
+                                                "start": {
+                                                  "line": 7
+                                                }
+                                              },
+                                              "value": ".c"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "text",
+                                          "position": {
+                                            "start": {
+                                              "line": 7
+                                            }
+                                          },
+                                          "value": " file."
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "listItem",
+                                  "position": {
+                                    "start": {
+                                      "line": 6
+                                    }
+                                  },
+                                  "children": [
+                                    {
+                                      "type": "paragraph",
+                                      "position": {
+                                        "start": {
+                                          "line": 8
+                                        }
+                                      },
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "position": {
+                                            "start": {
+                                              "line": 8
+                                            }
+                                          },
+                                          "value": "Copy a code example from this page and paste it on the specified lines in the file."
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ],
+                              "enumtype": "arabic"
+                            }
+                          ]
+                        }
+                      ],
+                      "fileid": "includes/usage-examples/sample-app-intro.rst"
+                    }
+                  ],
+                  "domain": "",
+                  "name": "include",
+                  "argument": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 49
+                        }
+                      },
+                      "value": "/includes/usage-examples/sample-app-intro.rst"
+                    }
+                  ]
+                },
+                {
+                  "type": "directive",
+                  "position": {
+                    "start": {
+                      "line": 51
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "code",
+                      "position": {
+                        "start": {
+                          "line": 51
+                        }
+                      },
+                      "lang": "c",
+                      "copyable": true,
+                      "emphasize_lines": [
+                        [
+                          14,
+                          16
+                        ]
+                      ],
+                      "value": "#include <mongoc/mongoc.h>\n#include <bson/bson.h>\n\nint main(void) {\n\n  mongoc_uri_t* uri = NULL;\n  mongoc_client_t *client = NULL;\n  mongoc_database_t *database = NULL;\n  bson_t *ping = NULL, reply = BSON_INITIALIZER;\n  bson_error_t error;\n\n  mongoc_init();\n\n  // Start example code here\n\n  // End example code here\n\n  database = mongoc_client_get_database (client, \"admin\");\n    \n  ping = BCON_NEW (\"ping\", BCON_INT32 (1));\n   \n  if (!mongoc_client_command_simple (client, \"admin\", ping, NULL, &reply, &error)) {\n    fprintf (stderr, \"%s\\n\", error.message);\n    goto cleanup;\n  }\n  printf (\"Pinged your deployment. You successfully connected to MongoDB!\\n\");\n\n  cleanup:\n    bson_destroy (&reply);\n    bson_destroy (ping);\n    mongoc_database_destroy (database);\n    mongoc_client_destroy (client);\n    mongoc_uri_destroy (uri);\n    mongoc_cleanup ();\n}",
+                      "linenos": true
+                    }
+                  ],
+                  "domain": "",
+                  "name": "literalinclude",
+                  "argument": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 51
+                        }
+                      },
+                      "value": "/includes/usage-examples/connect-sample-app.c"
+                    }
+                  ],
+                  "options": {
+                    "language": "c",
+                    "copyable": true,
+                    "linenos": true,
+                    "emphasize-lines": "14-16"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "section",
+              "position": {
+                "start": {
+                  "line": 58
+                }
+              },
+              "children": [
+                {
+                  "type": "heading",
+                  "position": {
+                    "start": {
+                      "line": 58
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 58
+                        }
+                      },
+                      "value": "Connection"
+                    }
+                  ],
+                  "id": "connection"
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 60
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 60
+                        }
+                      },
+                      "value": "The following sections describe how to connect to different targets,\nsuch as a local instance of MongoDB or a cloud-hosted instance on Atlas."
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "position": {
+                    "start": {
+                      "line": 64
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "heading",
+                      "position": {
+                        "start": {
+                          "line": 64
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 64
+                            }
+                          },
+                          "value": "Local Deployment"
+                        }
+                      ],
+                      "id": "local-deployment"
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 66
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 66
+                            }
+                          },
+                          "value": "The following code shows the connection string to connect to a local\ninstance of MongoDB:"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "code",
+                      "position": {
+                        "start": {
+                          "line": 69
+                        }
+                      },
+                      "lang": "c",
+                      "copyable": true,
+                      "emphasize_lines": [],
+                      "value": "client = mongoc_client_new (\"mongodb://localhost:27017\");",
+                      "linenos": false
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 73
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 73
+                            }
+                          },
+                          "value": "To learn more about connecting to local deployments, see "
+                        },
+                        {
+                          "type": "ref_role",
+                          "position": {
+                            "start": {
+                              "line": 73
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 73
+                                }
+                              },
+                              "value": "Local Deployments"
+                            }
+                          ],
+                          "domain": "std",
+                          "name": "label",
+                          "target": "c-connect-local",
+                          "flag": "",
+                          "fileid": [
+                            "connect/connection-targets",
+                            "std-label-c-connect-local"
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 73
+                            }
+                          },
+                          "value": "\nin the Choose a Connection Target guide."
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "position": {
+                    "start": {
+                      "line": 77
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "heading",
+                      "position": {
+                        "start": {
+                          "line": 77
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 77
+                            }
+                          },
+                          "value": "Atlas"
+                        }
+                      ],
+                      "id": "atlas"
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 79
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 79
+                            }
+                          },
+                          "value": "The following code shows the connection string to connect to a\ndeployment hosted on Atlas:"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "code",
+                      "position": {
+                        "start": {
+                          "line": 82
+                        }
+                      },
+                      "lang": "c",
+                      "copyable": true,
+                      "emphasize_lines": [],
+                      "value": "client = mongoc_client_new (\"mongodb+srv://<db_username>:<db_password>@<hostname>/?<options>\");",
+                      "linenos": false
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 86
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 86
+                            }
+                          },
+                          "value": "To learn more about connecting to Atlas, see "
+                        },
+                        {
+                          "type": "ref_role",
+                          "position": {
+                            "start": {
+                              "line": 86
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 86
+                                }
+                              },
+                              "value": "Atlas"
+                            }
+                          ],
+                          "domain": "std",
+                          "name": "label",
+                          "target": "c-connect-atlas",
+                          "flag": "",
+                          "fileid": [
+                            "connect/connection-targets",
+                            "std-label-c-connect-atlas"
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 86
+                            }
+                          },
+                          "value": " in the\nChoose a Connection Target guide."
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "position": {
+                    "start": {
+                      "line": 90
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "heading",
+                      "position": {
+                        "start": {
+                          "line": 90
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 90
+                            }
+                          },
+                          "value": "Replica Set"
+                        }
+                      ],
+                      "id": "replica-set"
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 92
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 92
+                            }
+                          },
+                          "value": "The following code shows the connection string to connect to a\nreplica set:"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "code",
+                      "position": {
+                        "start": {
+                          "line": 95
+                        }
+                      },
+                      "lang": "c",
+                      "copyable": true,
+                      "emphasize_lines": [],
+                      "value": "client = mongoc_client_new (\"mongodb+srv://<replica-set-member>/?replicaSet=<replica_set_name>\");",
+                      "linenos": false
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 99
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 99
+                            }
+                          },
+                          "value": "To learn more about connecting to replica sets, see\n"
+                        },
+                        {
+                          "type": "ref_role",
+                          "position": {
+                            "start": {
+                              "line": 99
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 99
+                                }
+                              },
+                              "value": "Replica Sets"
+                            }
+                          ],
+                          "domain": "std",
+                          "name": "label",
+                          "target": "c-connect-replica-sets",
+                          "flag": "",
+                          "fileid": [
+                            "connect/connection-targets",
+                            "std-label-c-connect-replica-sets"
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 99
+                            }
+                          },
+                          "value": " in the Choose a Connection Target guide."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "section",
+              "position": {
+                "start": {
+                  "line": 103
+                }
+              },
+              "children": [
+                {
+                  "type": "heading",
+                  "position": {
+                    "start": {
+                      "line": 103
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 103
+                        }
+                      },
+                      "value": "Transport Layer Security (TLS)"
+                    }
+                  ],
+                  "id": "transport-layer-security--tls-"
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 105
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 105
+                        }
+                      },
+                      "value": "The following sections describe how to connect to MongoDB\nwhile enabling the TLS protocol."
+                    }
+                  ]
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 108
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 108
+                        }
+                      },
+                      "value": "To learn more about using TLS with the C driver,\nsee "
+                    },
+                    {
+                      "type": "ref_role",
+                      "position": {
+                        "start": {
+                          "line": 108
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 108
+                            }
+                          },
+                          "value": "Configure Transport Layer Security (TLS)"
+                        }
+                      ],
+                      "domain": "std",
+                      "name": "label",
+                      "target": "c-tls",
+                      "flag": "",
+                      "fileid": [
+                        "connect/tls",
+                        "std-label-c-tls"
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 108
+                        }
+                      },
+                      "value": "."
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "position": {
+                    "start": {
+                      "line": 112
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "heading",
+                      "position": {
+                        "start": {
+                          "line": 112
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 112
+                            }
+                          },
+                          "value": "Enable TLS"
+                        }
+                      ],
+                      "id": "enable-tls"
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 114
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 114
+                            }
+                          },
+                          "value": "The following tabs demonstrate how to enable TLS on a connection:"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "directive",
+                      "position": {
+                        "start": {
+                          "line": 116
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "root",
+                          "position": {
+                            "start": {
+                              "line": 0
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "directive",
+                              "position": {
+                                "start": {
+                                  "line": 0
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "directive",
+                                  "position": {
+                                    "start": {
+                                      "line": 2
+                                    }
+                                  },
+                                  "children": [
+                                    {
+                                      "type": "code",
+                                      "position": {
+                                        "start": {
+                                          "line": 5
+                                        }
+                                      },
+                                      "lang": "c",
+                                      "copyable": true,
+                                      "emphasize_lines": [],
+                                      "value": "client = mongoc_client_new(\"mongodb://<db_username>:<db_password>@<hostname>/?tls=true\");",
+                                      "linenos": false
+                                    }
+                                  ],
+                                  "domain": "",
+                                  "name": "tab",
+                                  "argument": [
+                                    {
+                                      "type": "text",
+                                      "position": {
+                                        "start": {
+                                          "line": 2
+                                        }
+                                      },
+                                      "value": "Connection String"
+                                    }
+                                  ],
+                                  "options": {
+                                    "tabid": "connectionstring"
+                                  }
+                                },
+                                {
+                                  "type": "directive",
+                                  "position": {
+                                    "start": {
+                                      "line": 9
+                                    }
+                                  },
+                                  "children": [
+                                    {
+                                      "type": "code",
+                                      "position": {
+                                        "start": {
+                                          "line": 12
+                                        }
+                                      },
+                                      "lang": "c",
+                                      "copyable": true,
+                                      "emphasize_lines": [],
+                                      "value": "uri = mongoc_uri_new (\"mongodb://localhost:27017\");\nmongoc_uri_set_option_as_bool (uri, MONGOC_URI_TLS, true);\n\nclient = mongoc_client_new_from_uri (uri);",
+                                      "linenos": false
+                                    }
+                                  ],
+                                  "domain": "",
+                                  "name": "tab",
+                                  "argument": [
+                                    {
+                                      "type": "text",
+                                      "position": {
+                                        "start": {
+                                          "line": 9
+                                        }
+                                      },
+                                      "value": "MongoC URI Options"
+                                    }
+                                  ],
+                                  "options": {
+                                    "tabid": "mongocurioptions"
+                                  }
+                                }
+                              ],
+                              "domain": "",
+                              "name": "tabs",
+                              "argument": []
+                            }
+                          ],
+                          "fileid": "includes/connect/tls-tabs.rst"
+                        }
+                      ],
+                      "domain": "",
+                      "name": "include",
+                      "argument": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 116
+                            }
+                          },
+                          "value": "/includes/connect/tls-tabs.rst"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 118
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 118
+                            }
+                          },
+                          "value": "To learn more about enabling TLS, see "
+                        },
+                        {
+                          "type": "ref_role",
+                          "position": {
+                            "start": {
+                              "line": 118
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 118
+                                }
+                              },
+                              "value": "Enable TLS"
+                            }
+                          ],
+                          "domain": "std",
+                          "name": "label",
+                          "target": "c-enable-tls",
+                          "flag": "",
+                          "fileid": [
+                            "connect/tls",
+                            "std-label-c-enable-tls"
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 118
+                            }
+                          },
+                          "value": " in\nthe TLS configuration guide."
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "position": {
+                    "start": {
+                      "line": 122
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "heading",
+                      "position": {
+                        "start": {
+                          "line": 122
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 122
+                            }
+                          },
+                          "value": "Disable Hostname Verification"
+                        }
+                      ],
+                      "id": "disable-hostname-verification"
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 124
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 124
+                            }
+                          },
+                          "value": "The following tabs demonstrate how to disable hostname verification when\nconnecting by using TLS:"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "directive",
+                      "position": {
+                        "start": {
+                          "line": 127
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "root",
+                          "position": {
+                            "start": {
+                              "line": 0
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "directive",
+                              "position": {
+                                "start": {
+                                  "line": 0
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "directive",
+                                  "position": {
+                                    "start": {
+                                      "line": 2
+                                    }
+                                  },
+                                  "children": [
+                                    {
+                                      "type": "code",
+                                      "position": {
+                                        "start": {
+                                          "line": 5
+                                        }
+                                      },
+                                      "lang": "c",
+                                      "copyable": true,
+                                      "emphasize_lines": [],
+                                      "value": "client = mongoc_client_new(\"mongodb://<db_username>:<db_password>@<hostname>/?tls=true&tlsAllowInvalidHostnames=true\");",
+                                      "linenos": false
+                                    }
+                                  ],
+                                  "domain": "",
+                                  "name": "tab",
+                                  "argument": [
+                                    {
+                                      "type": "text",
+                                      "position": {
+                                        "start": {
+                                          "line": 2
+                                        }
+                                      },
+                                      "value": "Connection String"
+                                    }
+                                  ],
+                                  "options": {
+                                    "tabid": "connectionstring"
+                                  }
+                                },
+                                {
+                                  "type": "directive",
+                                  "position": {
+                                    "start": {
+                                      "line": 9
+                                    }
+                                  },
+                                  "children": [
+                                    {
+                                      "type": "code",
+                                      "position": {
+                                        "start": {
+                                          "line": 12
+                                        }
+                                      },
+                                      "lang": "c",
+                                      "copyable": true,
+                                      "emphasize_lines": [],
+                                      "value": "uri = mongoc_uri_new (\"mongodb://localhost:27017\");\nmongoc_uri_set_option_as_bool (uri, MONGOC_URI_TLS, true);\nmongoc_uri_set_option_as_bool (uri, MONGOC_URI_TLSALLOWINVALIDHOSTNAMES, true);\n\nclient = mongoc_client_new_from_uri (uri);",
+                                      "linenos": false
+                                    }
+                                  ],
+                                  "domain": "",
+                                  "name": "tab",
+                                  "argument": [
+                                    {
+                                      "type": "text",
+                                      "position": {
+                                        "start": {
+                                          "line": 9
+                                        }
+                                      },
+                                      "value": "MongoC URI Options"
+                                    }
+                                  ],
+                                  "options": {
+                                    "tabid": "mongocurioptions"
+                                  }
+                                }
+                              ],
+                              "domain": "",
+                              "name": "tabs",
+                              "argument": []
+                            }
+                          ],
+                          "fileid": "includes/connect/disable-host-verification-tabs.rst"
+                        }
+                      ],
+                      "domain": "",
+                      "name": "include",
+                      "argument": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 127
+                            }
+                          },
+                          "value": "/includes/connect/disable-host-verification-tabs.rst"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 130
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 130
+                            }
+                          },
+                          "value": "To learn more about disabling hostname verification, see "
+                        },
+                        {
+                          "type": "ref_role",
+                          "position": {
+                            "start": {
+                              "line": 130
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 130
+                                }
+                              },
+                              "value": "Server Certificate Verification"
+                            }
+                          ],
+                          "domain": "std",
+                          "name": "label",
+                          "target": "c-certificate-revocation",
+                          "flag": "",
+                          "fileid": [
+                            "connect/tls",
+                            "std-label-c-certificate-revocation"
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 130
+                            }
+                          },
+                          "value": " in\nthe TLS configuration guide."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "section",
+              "position": {
+                "start": {
+                  "line": 134
+                }
+              },
+              "children": [
+                {
+                  "type": "heading",
+                  "position": {
+                    "start": {
+                      "line": 134
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 134
+                        }
+                      },
+                      "value": "Network Compression"
+                    }
+                  ],
+                  "id": "network-compression"
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 136
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 136
+                        }
+                      },
+                      "value": "The following sections describe how to connect to MongoDB\nwhile specifying network compression algorithms."
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "position": {
+                    "start": {
+                      "line": 140
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "heading",
+                      "position": {
+                        "start": {
+                          "line": 140
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 140
+                            }
+                          },
+                          "value": "Compression Algorithms"
+                        }
+                      ],
+                      "id": "compression-algorithms"
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 142
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 142
+                            }
+                          },
+                          "value": "The following tabs demonstrate how to specify all available compressors\nwhile connecting to MongoDB:"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "directive",
+                      "position": {
+                        "start": {
+                          "line": 145
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "root",
+                          "position": {
+                            "start": {
+                              "line": 0
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "directive",
+                              "position": {
+                                "start": {
+                                  "line": 0
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "directive",
+                                  "position": {
+                                    "start": {
+                                      "line": 2
+                                    }
+                                  },
+                                  "children": [
+                                    {
+                                      "type": "code",
+                                      "position": {
+                                        "start": {
+                                          "line": 5
+                                        }
+                                      },
+                                      "lang": "c",
+                                      "copyable": true,
+                                      "emphasize_lines": [],
+                                      "value": "client = mongoc_client_new(\"mongodb://<db_username>:<db_password>@<hostname>/?compressors=snappy,zlib,zstd\");",
+                                      "linenos": false
+                                    }
+                                  ],
+                                  "domain": "",
+                                  "name": "tab",
+                                  "argument": [
+                                    {
+                                      "type": "text",
+                                      "position": {
+                                        "start": {
+                                          "line": 2
+                                        }
+                                      },
+                                      "value": "Connection String"
+                                    }
+                                  ],
+                                  "options": {
+                                    "tabid": "connectionstring"
+                                  }
+                                },
+                                {
+                                  "type": "directive",
+                                  "position": {
+                                    "start": {
+                                      "line": 9
+                                    }
+                                  },
+                                  "children": [
+                                    {
+                                      "type": "code",
+                                      "position": {
+                                        "start": {
+                                          "line": 12
+                                        }
+                                      },
+                                      "lang": "c",
+                                      "copyable": true,
+                                      "emphasize_lines": [],
+                                      "value": "uri = mongoc_uri_new (\"mongodb://localhost:27017\");\nmongoc_uri_set_compressors (uri, \"snappy,zlib,zstd\");\n\nclient = mongoc_client_new_from_uri (uri);",
+                                      "linenos": false
+                                    }
+                                  ],
+                                  "domain": "",
+                                  "name": "tab",
+                                  "argument": [
+                                    {
+                                      "type": "text",
+                                      "position": {
+                                        "start": {
+                                          "line": 9
+                                        }
+                                      },
+                                      "value": "MongoC URI Options"
+                                    }
+                                  ],
+                                  "options": {
+                                    "tabid": "mongocurioptions"
+                                  }
+                                }
+                              ],
+                              "domain": "",
+                              "name": "tabs",
+                              "argument": []
+                            }
+                          ],
+                          "fileid": "includes/connect/compression-tabs.rst"
+                        }
+                      ],
+                      "domain": "",
+                      "name": "include",
+                      "argument": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 145
+                            }
+                          },
+                          "value": "/includes/connect/compression-tabs.rst"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "comment",
+                      "position": {
+                        "start": {
+                          "line": 147
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 147
+                            }
+                          },
+                          "value": "TODO, uncomment once TLS page is merged"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "comment",
+                      "position": {
+                        "start": {
+                          "line": 148
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 148
+                            }
+                          },
+                          "value": "To learn more about specifying compression algorithms, see"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "comment",
+                      "position": {
+                        "start": {
+                          "line": 150
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 150
+                            }
+                          },
+                          "value": ":ref:`c-enable-compression` in the Network Compression guide."
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "position": {
+                    "start": {
+                      "line": 152
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "heading",
+                      "position": {
+                        "start": {
+                          "line": 152
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 152
+                            }
+                          },
+                          "value": "zlib Compression Level"
+                        }
+                      ],
+                      "id": "zlib-compression-level"
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 154
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 154
+                            }
+                          },
+                          "value": "The following tabs demonstrate how to specify a compression level for\nthe "
+                        },
+                        {
+                          "type": "literal",
+                          "position": {
+                            "start": {
+                              "line": 154
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 154
+                                }
+                              },
+                              "value": "zlib"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 154
+                            }
+                          },
+                          "value": " compressor:"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "directive",
+                      "position": {
+                        "start": {
+                          "line": 157
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "root",
+                          "position": {
+                            "start": {
+                              "line": 0
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "directive",
+                              "position": {
+                                "start": {
+                                  "line": 0
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "directive",
+                                  "position": {
+                                    "start": {
+                                      "line": 2
+                                    }
+                                  },
+                                  "children": [
+                                    {
+                                      "type": "code",
+                                      "position": {
+                                        "start": {
+                                          "line": 5
+                                        }
+                                      },
+                                      "lang": "c",
+                                      "copyable": true,
+                                      "emphasize_lines": [],
+                                      "value": "client = mongoc_client_new(\"mongodb://<db_username>:<db_password>@<hostname>/?compressors=zlib&zlibCompressionLevel=<zlib_compression_level\");",
+                                      "linenos": false
+                                    }
+                                  ],
+                                  "domain": "",
+                                  "name": "tab",
+                                  "argument": [
+                                    {
+                                      "type": "text",
+                                      "position": {
+                                        "start": {
+                                          "line": 2
+                                        }
+                                      },
+                                      "value": "Connection String"
+                                    }
+                                  ],
+                                  "options": {
+                                    "tabid": "connectionstring"
+                                  }
+                                },
+                                {
+                                  "type": "directive",
+                                  "position": {
+                                    "start": {
+                                      "line": 9
+                                    }
+                                  },
+                                  "children": [
+                                    {
+                                      "type": "code",
+                                      "position": {
+                                        "start": {
+                                          "line": 12
+                                        }
+                                      },
+                                      "lang": "c",
+                                      "copyable": true,
+                                      "emphasize_lines": [],
+                                      "value": "uri = mongoc_uri_new (\"mongodb://localhost:27017\");\nmongoc_uri_set_option_as_int32 (uri, MONGOC_URI_ZLIBCOMPRESSIONLEVEL, <zlib-compression-level>);\n\nclient = mongoc_client_new_from_uri (uri);",
+                                      "linenos": false
+                                    }
+                                  ],
+                                  "domain": "",
+                                  "name": "tab",
+                                  "argument": [
+                                    {
+                                      "type": "text",
+                                      "position": {
+                                        "start": {
+                                          "line": 9
+                                        }
+                                      },
+                                      "value": "MongoC URI Options"
+                                    }
+                                  ],
+                                  "options": {
+                                    "tabid": "mongocurioptions"
+                                  }
+                                }
+                              ],
+                              "domain": "",
+                              "name": "tabs",
+                              "argument": []
+                            }
+                          ],
+                          "fileid": "includes/connect/zlib-level-tabs.rst"
+                        }
+                      ],
+                      "domain": "",
+                      "name": "include",
+                      "argument": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 157
+                            }
+                          },
+                          "value": "/includes/connect/zlib-level-tabs.rst"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "comment",
+                      "position": {
+                        "start": {
+                          "line": 159
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 159
+                            }
+                          },
+                          "value": "To learn more about setting the zlib compression level, see"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "comment",
+                      "position": {
+                        "start": {
+                          "line": 161
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 161
+                            }
+                          },
+                          "value": ":ref:`c-enable-compression` in the Network Compression guide."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "section",
+              "position": {
+                "start": {
+                  "line": 163
+                }
+              },
+              "children": [
+                {
+                  "type": "heading",
+                  "position": {
+                    "start": {
+                      "line": 163
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 163
+                        }
+                      },
+                      "value": "Server Selection"
+                    }
+                  ],
+                  "id": "server-selection"
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 165
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 165
+                        }
+                      },
+                      "value": "The following code shows a connection string that specifies a server\nselection function:"
+                    }
+                  ]
+                },
+                {
+                  "type": "code",
+                  "position": {
+                    "start": {
+                      "line": 168
+                    }
+                  },
+                  "lang": "c",
+                  "copyable": true,
+                  "emphasize_lines": [],
+                  "value": "client = mongoc_client_new(\"mongodb://<db_username>:<db_password>@<hostname>/?server_selector=<selector_function>\");",
+                  "linenos": false
+                },
+                {
+                  "type": "comment",
+                  "position": {
+                    "start": {
+                      "line": 172
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 172
+                        }
+                      },
+                      "value": "TODO, uncomment once server selection page is merged"
+                    }
+                  ]
+                },
+                {
+                  "type": "comment",
+                  "position": {
+                    "start": {
+                      "line": 173
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 173
+                        }
+                      },
+                      "value": "To learn more about customizing server selection, see"
+                    }
+                  ]
+                },
+                {
+                  "type": "comment",
+                  "position": {
+                    "start": {
+                      "line": 175
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 175
+                        }
+                      },
+                      "value": ":ref:`c-server-selection`."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "section",
+              "position": {
+                "start": {
+                  "line": 177
+                }
+              },
+              "children": [
+                {
+                  "type": "heading",
+                  "position": {
+                    "start": {
+                      "line": 177
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 177
+                        }
+                      },
+                      "value": "Stable API"
+                    }
+                  ],
+                  "id": "stable-api"
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 179
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 179
+                        }
+                      },
+                      "value": "The following code shows how to specify Stable API settings within a\n"
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 179
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 179
+                            }
+                          },
+                          "value": "mongoc_client_t"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 179
+                        }
+                      },
+                      "value": " instance:"
+                    }
+                  ]
+                },
+                {
+                  "type": "code",
+                  "position": {
+                    "start": {
+                      "line": 182
+                    }
+                  },
+                  "lang": "c",
+                  "copyable": true,
+                  "emphasize_lines": [],
+                  "value": "client = mongoc_client_new (\"mongodb+srv://<db_username>:<db_password>@<hostname>/?<options>\");\n\n// Set the version of the Stable API on the client\nmongoc_server_api_t *api = mongoc_server_api_new(MONGOC_SERVER_API_V1);\nmongoc_client_set_server_api(client, api, &error);\n\n// Do database work here\n\nmongoc_server_api_destroy (api);",
+                  "linenos": false
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 194
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 194
+                        }
+                      },
+                      "value": "To learn more about the Stable API, see "
+                    },
+                    {
+                      "type": "ref_role",
+                      "position": {
+                        "start": {
+                          "line": 194
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 194
+                            }
+                          },
+                          "value": "Stable API"
+                        }
+                      ],
+                      "domain": "std",
+                      "name": "label",
+                      "target": "c-stable-api",
+                      "flag": "",
+                      "fileid": [
+                        "connect/stable-api",
+                        "std-label-c-stable-api"
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 194
+                        }
+                      },
+                      "value": "."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "fileid": "connect.txt",
+      "options": {
+        "headings": [
+          {
+            "depth": 2,
+            "id": "overview",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 31
+                  }
+                },
+                "value": "Overview"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 3,
+            "id": "sample-application",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 1
+                  }
+                },
+                "value": "Sample Application"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 2,
+            "id": "connection",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 58
+                  }
+                },
+                "value": "Connection"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 3,
+            "id": "local-deployment",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 64
+                  }
+                },
+                "value": "Local Deployment"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 3,
+            "id": "atlas",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 77
+                  }
+                },
+                "value": "Atlas"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 3,
+            "id": "replica-set",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 90
+                  }
+                },
+                "value": "Replica Set"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 2,
+            "id": "transport-layer-security--tls-",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 103
+                  }
+                },
+                "value": "Transport Layer Security (TLS)"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 3,
+            "id": "enable-tls",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 112
+                  }
+                },
+                "value": "Enable TLS"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 3,
+            "id": "disable-hostname-verification",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 122
+                  }
+                },
+                "value": "Disable Hostname Verification"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 2,
+            "id": "network-compression",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 134
+                  }
+                },
+                "value": "Network Compression"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 3,
+            "id": "compression-algorithms",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 140
+                  }
+                },
+                "value": "Compression Algorithms"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 3,
+            "id": "zlib-compression-level",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 152
+                  }
+                },
+                "value": "zlib Compression Level"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 2,
+            "id": "server-selection",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 163
+                  }
+                },
+                "value": "Server Selection"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 2,
+            "id": "stable-api",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 177
+                  }
+                },
+                "value": "Stable API"
+              }
+            ],
+            "selector_ids": {}
+          }
+        ]
+      }
+    },
+    "build_id": "67af80354f5886dfc344f685",
+    "created_at": "2025-02-14T17:41:09.714Z",
+    "deleted": false,
+    "facets": [
+      {
+        "category": "genre",
+        "value": "reference",
+        "sub_facets": null,
+        "display_name": "Reference"
+      }
+    ],
+    "filename": "connect.txt",
+    "static_assets": [],
+    "updated_at": "2025-02-14T17:41:09.714Z"
+  }
+}

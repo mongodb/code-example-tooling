@@ -1,0 +1,3917 @@
+{
+  "type": "page",
+  "data": {
+    "_id": "67af8035d71fd1013e19c390",
+    "github_username": "netlify",
+    "page_id": "c/docsworker-xlarge/v1.30/databases-collections",
+    "ast": {
+      "type": "root",
+      "position": {
+        "start": {
+          "line": 0
+        }
+      },
+      "children": [
+        {
+          "type": "target",
+          "position": {
+            "start": {
+              "line": 0
+            }
+          },
+          "children": [
+            {
+              "type": "target_identifier",
+              "position": {
+                "start": {
+                  "line": 0
+                }
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 4
+                    }
+                  },
+                  "value": "Databases and Collections"
+                }
+              ],
+              "ids": [
+                "c-databases-collections"
+              ]
+            }
+          ],
+          "domain": "std",
+          "name": "label",
+          "html_id": "std-label-c-databases-collections"
+        },
+        {
+          "type": "section",
+          "position": {
+            "start": {
+              "line": 4
+            }
+          },
+          "children": [
+            {
+              "type": "heading",
+              "position": {
+                "start": {
+                  "line": 4
+                }
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 4
+                    }
+                  },
+                  "value": "Databases and Collections"
+                }
+              ],
+              "id": "databases-and-collections"
+            },
+            {
+              "type": "directive",
+              "position": {
+                "start": {
+                  "line": 6
+                }
+              },
+              "children": [],
+              "domain": "",
+              "name": "contents",
+              "argument": [
+                {
+                  "type": "text",
+                  "position": {
+                    "start": {
+                      "line": 6
+                    }
+                  },
+                  "value": "On this page"
+                }
+              ],
+              "options": {
+                "local": true,
+                "backlinks": "none",
+                "depth": 2,
+                "class": "singlecol"
+              }
+            },
+            {
+              "type": "directive",
+              "position": {
+                "start": {
+                  "line": 12
+                }
+              },
+              "children": [],
+              "domain": "mongodb",
+              "name": "facet",
+              "argument": [],
+              "options": {
+                "name": "genre",
+                "values": "reference"
+              }
+            },
+            {
+              "type": "directive",
+              "position": {
+                "start": {
+                  "line": 16
+                }
+              },
+              "children": [],
+              "domain": "",
+              "name": "meta",
+              "argument": [],
+              "options": {
+                "keywords": "table, row, organize, storage"
+              }
+            },
+            {
+              "type": "directive",
+              "position": {
+                "start": {
+                  "line": 19
+                }
+              },
+              "children": [],
+              "domain": "",
+              "name": "toctree",
+              "argument": [],
+              "options": {
+                "titlesonly": true,
+                "maxdepth": 1
+              },
+              "entries": [
+                {
+                  "title": "Time Series",
+                  "slug": "/databases-collections/time-series"
+                },
+                {
+                  "title": "Run a Database Command",
+                  "slug": "/databases-collections/run-command"
+                }
+              ]
+            },
+            {
+              "type": "section",
+              "position": {
+                "start": {
+                  "line": 27
+                }
+              },
+              "children": [
+                {
+                  "type": "heading",
+                  "position": {
+                    "start": {
+                      "line": 27
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 27
+                        }
+                      },
+                      "value": "Overview"
+                    }
+                  ],
+                  "id": "overview"
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 29
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 29
+                        }
+                      },
+                      "value": "In this guide, you can learn how to interact with MongoDB databases and\ncollections by using the C driver."
+                    }
+                  ]
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 32
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 32
+                        }
+                      },
+                      "value": "MongoDB organizes data into a hierarchy of the following levels:"
+                    }
+                  ]
+                },
+                {
+                  "type": "list",
+                  "position": {
+                    "start": {
+                      "line": 34
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 34
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 34
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "strong",
+                              "position": {
+                                "start": {
+                                  "line": 34
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 34
+                                    }
+                                  },
+                                  "value": "Databases"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 34
+                                }
+                              },
+                              "value": ": Top-level data structures in a MongoDB deployment that store collections."
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 34
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 35
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "strong",
+                              "position": {
+                                "start": {
+                                  "line": 35
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 35
+                                    }
+                                  },
+                                  "value": "Collections"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 35
+                                }
+                              },
+                              "value": ": Groups of MongoDB documents. They are analogous to tables in relational databases."
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 34
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 36
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "strong",
+                              "position": {
+                                "start": {
+                                  "line": 36
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 36
+                                    }
+                                  },
+                                  "value": "Documents"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 36
+                                }
+                              },
+                              "value": ": Units that store literal data such as string, numbers, dates, and other embedded documents.\nFor more information about document field types and structure, see the\n"
+                            },
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 36
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 36
+                                    }
+                                  },
+                                  "value": "Documents"
+                                }
+                              ],
+                              "refuri": "https://www.mongodb.com/docs/manual/core/document/"
+                            },
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 36
+                                }
+                              },
+                              "value": " guide in the MongoDB Server manual."
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "enumtype": "unordered"
+                }
+              ]
+            },
+            {
+              "type": "section",
+              "position": {
+                "start": {
+                  "line": 41
+                }
+              },
+              "children": [
+                {
+                  "type": "heading",
+                  "position": {
+                    "start": {
+                      "line": 41
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 41
+                        }
+                      },
+                      "value": "Access a Database"
+                    }
+                  ],
+                  "id": "access-a-database"
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 43
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 43
+                        }
+                      },
+                      "value": "Access a database by using the "
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 43
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 43
+                            }
+                          },
+                          "value": "mongoc_client_get_database()"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 43
+                        }
+                      },
+                      "value": " function."
+                    }
+                  ]
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 45
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 45
+                        }
+                      },
+                      "value": "The following example accesses a database named "
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 45
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 45
+                            }
+                          },
+                          "value": "\"test_database\""
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 45
+                        }
+                      },
+                      "value": ":"
+                    }
+                  ]
+                },
+                {
+                  "type": "directive",
+                  "position": {
+                    "start": {
+                      "line": 47
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "code",
+                      "position": {
+                        "start": {
+                          "line": 47
+                        }
+                      },
+                      "lang": "c",
+                      "copyable": true,
+                      "value": "mongoc_database_t *database = mongoc_client_get_database (client, \"test_database\");",
+                      "linenos": false
+                    }
+                  ],
+                  "domain": "",
+                  "name": "literalinclude",
+                  "argument": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 47
+                        }
+                      },
+                      "value": "/includes/databases-collections/databases-collections.c"
+                    }
+                  ],
+                  "options": {
+                    "start-after": "start-access-database",
+                    "end-before": "end-access-database",
+                    "language": "c",
+                    "copyable": true,
+                    "dedent": true
+                  }
+                }
+              ]
+            },
+            {
+              "type": "section",
+              "position": {
+                "start": {
+                  "line": 55
+                }
+              },
+              "children": [
+                {
+                  "type": "heading",
+                  "position": {
+                    "start": {
+                      "line": 55
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 55
+                        }
+                      },
+                      "value": "Access a Collection"
+                    }
+                  ],
+                  "id": "access-a-collection"
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 57
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 57
+                        }
+                      },
+                      "value": "Access a collection by using the "
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 57
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 57
+                            }
+                          },
+                          "value": "mongoc_client_get_collection()"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 57
+                        }
+                      },
+                      "value": " or "
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 57
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 57
+                            }
+                          },
+                          "value": "mongoc_database_get_collection()"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 57
+                        }
+                      },
+                      "value": "\nfunctions."
+                    }
+                  ]
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 60
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 60
+                        }
+                      },
+                      "value": "The following example accesses a collection named "
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 60
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 60
+                            }
+                          },
+                          "value": "\"test_collection\""
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 60
+                        }
+                      },
+                      "value": " by using the\n"
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 60
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 60
+                            }
+                          },
+                          "value": "mongoc_database_get_collection()"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 60
+                        }
+                      },
+                      "value": " function:"
+                    }
+                  ]
+                },
+                {
+                  "type": "directive",
+                  "position": {
+                    "start": {
+                      "line": 63
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "code",
+                      "position": {
+                        "start": {
+                          "line": 63
+                        }
+                      },
+                      "lang": "c",
+                      "copyable": true,
+                      "value": "mongoc_collection_t *collection = mongoc_database_get_collection (database, \"test_collection\");",
+                      "linenos": false
+                    }
+                  ],
+                  "domain": "",
+                  "name": "literalinclude",
+                  "argument": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 63
+                        }
+                      },
+                      "value": "/includes/databases-collections/databases-collections.c"
+                    }
+                  ],
+                  "options": {
+                    "start-after": "start-access-collection",
+                    "end-before": "end-access-collection",
+                    "language": "c",
+                    "copyable": true,
+                    "dedent": true
+                  }
+                },
+                {
+                  "type": "directive",
+                  "position": {
+                    "start": {
+                      "line": 70
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 72
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 72
+                            }
+                          },
+                          "value": "If the provided collection name does not already exist in the database,\nMongoDB implicitly creates the collection when you first insert data\ninto it."
+                        }
+                      ]
+                    }
+                  ],
+                  "domain": "",
+                  "name": "tip",
+                  "argument": []
+                }
+              ]
+            },
+            {
+              "type": "section",
+              "position": {
+                "start": {
+                  "line": 77
+                }
+              },
+              "children": [
+                {
+                  "type": "heading",
+                  "position": {
+                    "start": {
+                      "line": 77
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 77
+                        }
+                      },
+                      "value": "Create a Collection"
+                    }
+                  ],
+                  "id": "create-a-collection"
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 79
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 79
+                        }
+                      },
+                      "value": "Use the "
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 79
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 79
+                            }
+                          },
+                          "value": "mongoc_database_create_collection()"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 79
+                        }
+                      },
+                      "value": " function to explicitly create a collection in a\nMongoDB database."
+                    }
+                  ]
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 82
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 82
+                        }
+                      },
+                      "value": "The following example creates a collection called "
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 82
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 82
+                            }
+                          },
+                          "value": "\"example_collection\""
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 82
+                        }
+                      },
+                      "value": ":"
+                    }
+                  ]
+                },
+                {
+                  "type": "directive",
+                  "position": {
+                    "start": {
+                      "line": 84
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "code",
+                      "position": {
+                        "start": {
+                          "line": 84
+                        }
+                      },
+                      "lang": "c",
+                      "copyable": true,
+                      "value": "mongoc_collection_t *new_collection = mongoc_database_create_collection (database, \"example_collection\", NULL, &error);",
+                      "linenos": false
+                    }
+                  ],
+                  "domain": "",
+                  "name": "literalinclude",
+                  "argument": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 84
+                        }
+                      },
+                      "value": "/includes/databases-collections/databases-collections.c"
+                    }
+                  ],
+                  "options": {
+                    "start-after": "start-create-collection",
+                    "end-before": "end-create-collection",
+                    "language": "c",
+                    "copyable": true,
+                    "dedent": true
+                  }
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 91
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 91
+                        }
+                      },
+                      "value": "You can specify collection options, such as maximum size and document\nvalidation rules, by passing them inside a "
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 91
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 91
+                            }
+                          },
+                          "value": "bson_t"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 91
+                        }
+                      },
+                      "value": " structure as the third parameter\nto the "
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 91
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 91
+                            }
+                          },
+                          "value": "mongoc_database_create_collection()"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 91
+                        }
+                      },
+                      "value": " function. For a full list of\noptional parameters, see the "
+                    },
+                    {
+                      "type": "reference",
+                      "position": {
+                        "start": {
+                          "line": 91
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 91
+                            }
+                          },
+                          "value": "create command"
+                        }
+                      ],
+                      "refuri": "https://www.mongodb.com/docs/manual/reference/command/create/"
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 91
+                        }
+                      },
+                      "value": "\ndocumentation in the MongoDB Server manual."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "section",
+              "position": {
+                "start": {
+                  "line": 98
+                }
+              },
+              "children": [
+                {
+                  "type": "heading",
+                  "position": {
+                    "start": {
+                      "line": 98
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 98
+                        }
+                      },
+                      "value": "Get a List of Collections"
+                    }
+                  ],
+                  "id": "get-a-list-of-collections"
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 100
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 100
+                        }
+                      },
+                      "value": "You can query for a list of collections in a database by calling the\n"
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 100
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 100
+                            }
+                          },
+                          "value": "mongoc_database_find_collections_with_opts()"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 100
+                        }
+                      },
+                      "value": " function. The function returns a cursor containing all\ncollections in the database and their associated metadata."
+                    }
+                  ]
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 104
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 104
+                        }
+                      },
+                      "value": "The following example calls the "
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 104
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 104
+                            }
+                          },
+                          "value": "mongoc_database_find_collections_with_opts()"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 104
+                        }
+                      },
+                      "value": " function and iterates over\nthe cursor to print the results:"
+                    }
+                  ]
+                },
+                {
+                  "type": "directive",
+                  "position": {
+                    "start": {
+                      "line": 107
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "directive",
+                      "position": {
+                        "start": {
+                          "line": 110
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "code",
+                          "position": {
+                            "start": {
+                              "line": 110
+                            }
+                          },
+                          "lang": "c",
+                          "copyable": true,
+                          "value": "mongoc_cursor_t *cursor = mongoc_database_find_collections_with_opts (database, NULL);\n\nconst bson_t *doc;\nwhile (mongoc_cursor_next (cursor, &doc))\n{\n    char *str = bson_as_canonical_extended_json (doc, NULL);\n    printf (\"Collection: %s\\n\", str);\n    bson_free (str);\n}",
+                          "linenos": false
+                        }
+                      ],
+                      "domain": "",
+                      "name": "input",
+                      "argument": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 110
+                            }
+                          },
+                          "value": "/includes/databases-collections/databases-collections.c"
+                        }
+                      ],
+                      "options": {
+                        "language": "c",
+                        "start-after": "start-find-collections",
+                        "end-before": "end-find-collections",
+                        "dedent": true
+                      }
+                    },
+                    {
+                      "type": "directive",
+                      "position": {
+                        "start": {
+                          "line": 116
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "code",
+                          "position": {
+                            "start": {
+                              "line": 116
+                            }
+                          },
+                          "lang": "console",
+                          "copyable": true,
+                          "emphasize_lines": [],
+                          "value": "Collection: { \"name\" : \"test_collection\", \"type\" : \"collection\", ...}\nCollection: { \"name\" : \"example_collection\", \"type\" : \"collection\", ... }",
+                          "linenos": false
+                        }
+                      ],
+                      "domain": "",
+                      "name": "output",
+                      "argument": [],
+                      "options": {
+                        "language": "console",
+                        "visible": false
+                      }
+                    }
+                  ],
+                  "domain": "",
+                  "name": "io-code-block",
+                  "argument": [],
+                  "options": {
+                    "copyable": true
+                  }
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 123
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 123
+                        }
+                      },
+                      "value": "To query for only the names of the collections in the database, call the\n"
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 123
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 123
+                            }
+                          },
+                          "value": "mongoc_database_get_collection_names_with_opts()"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 123
+                        }
+                      },
+                      "value": " function as follows:"
+                    }
+                  ]
+                },
+                {
+                  "type": "directive",
+                  "position": {
+                    "start": {
+                      "line": 126
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "directive",
+                      "position": {
+                        "start": {
+                          "line": 129
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "code",
+                          "position": {
+                            "start": {
+                              "line": 129
+                            }
+                          },
+                          "lang": "c",
+                          "copyable": true,
+                          "value": "char **strv;\nunsigned i;\n\nif ((strv = mongoc_database_get_collection_names_with_opts (database, NULL, &error)))\n{\n    for (i = 0; strv[i]; i++)\n        printf (\"%s\\n\", strv[i]);\n\n    bson_strfreev (strv);\n}\nelse\n{\n    fprintf (stderr, \"Command failed: %s\\n\", error.message);\n}",
+                          "linenos": false
+                        }
+                      ],
+                      "domain": "",
+                      "name": "input",
+                      "argument": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 129
+                            }
+                          },
+                          "value": "/includes/databases-collections/databases-collections.c"
+                        }
+                      ],
+                      "options": {
+                        "language": "c",
+                        "start-after": "start-find-collection-names",
+                        "end-before": "end-find-collection-names",
+                        "dedent": true
+                      }
+                    },
+                    {
+                      "type": "directive",
+                      "position": {
+                        "start": {
+                          "line": 135
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "code",
+                          "position": {
+                            "start": {
+                              "line": 135
+                            }
+                          },
+                          "lang": "console",
+                          "copyable": true,
+                          "emphasize_lines": [],
+                          "value": "test_collection\nexample_collection",
+                          "linenos": false
+                        }
+                      ],
+                      "domain": "",
+                      "name": "output",
+                      "argument": [],
+                      "options": {
+                        "language": "console",
+                        "visible": false
+                      }
+                    }
+                  ],
+                  "domain": "",
+                  "name": "io-code-block",
+                  "argument": [],
+                  "options": {
+                    "copyable": true
+                  }
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 142
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 142
+                        }
+                      },
+                      "value": "For more information about iterating over a cursor, see "
+                    },
+                    {
+                      "type": "ref_role",
+                      "position": {
+                        "start": {
+                          "line": 142
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 142
+                            }
+                          },
+                          "value": "Access Data From a Cursor"
+                        }
+                      ],
+                      "domain": "std",
+                      "name": "label",
+                      "target": "c-cursors",
+                      "flag": "",
+                      "fileid": [
+                        "read/cursors",
+                        "std-label-c-cursors"
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 142
+                        }
+                      },
+                      "value": "."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "section",
+              "position": {
+                "start": {
+                  "line": 145
+                }
+              },
+              "children": [
+                {
+                  "type": "heading",
+                  "position": {
+                    "start": {
+                      "line": 145
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 145
+                        }
+                      },
+                      "value": "Delete a Collection"
+                    }
+                  ],
+                  "id": "delete-a-collection"
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 147
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 147
+                        }
+                      },
+                      "value": "You can delete a collection from the database by using the "
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 147
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 147
+                            }
+                          },
+                          "value": "mongoc_collection_drop()"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 147
+                        }
+                      },
+                      "value": "\nfunction."
+                    }
+                  ]
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 150
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 150
+                        }
+                      },
+                      "value": "The following example deletes the "
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 150
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 150
+                            }
+                          },
+                          "value": "\"test_collection\""
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 150
+                        }
+                      },
+                      "value": " collection:"
+                    }
+                  ]
+                },
+                {
+                  "type": "directive",
+                  "position": {
+                    "start": {
+                      "line": 152
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "code",
+                      "position": {
+                        "start": {
+                          "line": 152
+                        }
+                      },
+                      "lang": "c",
+                      "copyable": true,
+                      "value": "mongoc_collection_t *collection = mongoc_database_get_collection (database, \"test_collection\");\nmongoc_collection_drop (collection, NULL);",
+                      "linenos": false
+                    }
+                  ],
+                  "domain": "",
+                  "name": "literalinclude",
+                  "argument": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 152
+                        }
+                      },
+                      "value": "/includes/databases-collections/databases-collections.c"
+                    }
+                  ],
+                  "options": {
+                    "start-after": "start-delete-collection",
+                    "end-before": "end-delete-collection",
+                    "language": "c",
+                    "copyable": true,
+                    "dedent": true
+                  }
+                },
+                {
+                  "type": "directive",
+                  "position": {
+                    "start": {
+                      "line": 159
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 161
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 161
+                            }
+                          },
+                          "value": "Dropping a collection from your database permanently deletes all\ndocuments and all indexes within that collection."
+                        }
+                      ]
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 164
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 164
+                            }
+                          },
+                          "value": "Drop a collection only if the data in it is no longer needed."
+                        }
+                      ]
+                    }
+                  ],
+                  "domain": "",
+                  "name": "warning",
+                  "argument": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 159
+                        }
+                      },
+                      "value": "Dropping a Collection Deletes All Data in the Collection"
+                    }
+                  ]
+                },
+                {
+                  "type": "target",
+                  "position": {
+                    "start": {
+                      "line": 166
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "target_identifier",
+                      "position": {
+                        "start": {
+                          "line": 166
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 169
+                            }
+                          },
+                          "value": "Configure Read and Write Operations"
+                        }
+                      ],
+                      "ids": [
+                        "c-config-read-write"
+                      ]
+                    }
+                  ],
+                  "domain": "std",
+                  "name": "label",
+                  "html_id": "std-label-c-config-read-write"
+                }
+              ]
+            },
+            {
+              "type": "section",
+              "position": {
+                "start": {
+                  "line": 169
+                }
+              },
+              "children": [
+                {
+                  "type": "heading",
+                  "position": {
+                    "start": {
+                      "line": 169
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 169
+                        }
+                      },
+                      "value": "Configure Read and Write Operations"
+                    }
+                  ],
+                  "id": "configure-read-and-write-operations"
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 171
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 171
+                        }
+                      },
+                      "value": "You can control how the driver routes read operations by setting a "
+                    },
+                    {
+                      "type": "strong",
+                      "position": {
+                        "start": {
+                          "line": 171
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 171
+                            }
+                          },
+                          "value": "read preference"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 171
+                        }
+                      },
+                      "value": ".\nYou can also control options for how the driver waits for acknowledgment of\nread and write operations on a replica set by setting a "
+                    },
+                    {
+                      "type": "strong",
+                      "position": {
+                        "start": {
+                          "line": 171
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 171
+                            }
+                          },
+                          "value": "read concern"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 171
+                        }
+                      },
+                      "value": " and a\n"
+                    },
+                    {
+                      "type": "strong",
+                      "position": {
+                        "start": {
+                          "line": 171
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 171
+                            }
+                          },
+                          "value": "write concern"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 171
+                        }
+                      },
+                      "value": "."
+                    }
+                  ]
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 176
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 176
+                        }
+                      },
+                      "value": "By default, databases inherit these settings from the "
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 176
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 176
+                            }
+                          },
+                          "value": "mongoc_client_t"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 176
+                        }
+                      },
+                      "value": " instance,\nand collections inherit them from the database. However, you can change these\nsettings on your database by using one of the following functions:"
+                    }
+                  ]
+                },
+                {
+                  "type": "list",
+                  "position": {
+                    "start": {
+                      "line": 180
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 180
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 180
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "literal",
+                              "position": {
+                                "start": {
+                                  "line": 180
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 180
+                                    }
+                                  },
+                                  "value": "mongoc_database_set_read_prefs()"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 180
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 181
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "literal",
+                              "position": {
+                                "start": {
+                                  "line": 181
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 181
+                                    }
+                                  },
+                                  "value": "mongoc_database_set_read_concern()"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 180
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 182
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "literal",
+                              "position": {
+                                "start": {
+                                  "line": 182
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 182
+                                    }
+                                  },
+                                  "value": "mongoc_database_set_write_concern()"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "enumtype": "unordered"
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 184
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 184
+                        }
+                      },
+                      "value": "The following example shows how to change the read preference of a database by using the\n"
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 184
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 184
+                            }
+                          },
+                          "value": "mongoc_database_set_read_prefs()"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 184
+                        }
+                      },
+                      "value": " function:"
+                    }
+                  ]
+                },
+                {
+                  "type": "directive",
+                  "position": {
+                    "start": {
+                      "line": 187
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "code",
+                      "position": {
+                        "start": {
+                          "line": 187
+                        }
+                      },
+                      "lang": "c",
+                      "copyable": true,
+                      "value": "mongoc_read_prefs_t *read_prefs = mongoc_read_prefs_new (MONGOC_READ_PRIMARY_PREFERRED);\nmongoc_database_set_read_prefs (database, read_prefs);",
+                      "linenos": false
+                    }
+                  ],
+                  "domain": "",
+                  "name": "literalinclude",
+                  "argument": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 187
+                        }
+                      },
+                      "value": "/includes/databases-collections/databases-collections.c"
+                    }
+                  ],
+                  "options": {
+                    "start-after": "start-database-read-prefs",
+                    "end-before": "end-database-read-prefs",
+                    "language": "c",
+                    "copyable": true,
+                    "dedent": true
+                  }
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 194
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 194
+                        }
+                      },
+                      "value": "You can change the read and write settings on your collections by using one of the following functions:"
+                    }
+                  ]
+                },
+                {
+                  "type": "list",
+                  "position": {
+                    "start": {
+                      "line": 196
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 196
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 196
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "literal",
+                              "position": {
+                                "start": {
+                                  "line": 196
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 196
+                                    }
+                                  },
+                                  "value": "mongoc_collection_set_read_prefs()"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 196
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 197
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "literal",
+                              "position": {
+                                "start": {
+                                  "line": 197
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 197
+                                    }
+                                  },
+                                  "value": "mongoc_collection_set_read_concern()"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 196
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 198
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "literal",
+                              "position": {
+                                "start": {
+                                  "line": 198
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 198
+                                    }
+                                  },
+                                  "value": "mongoc_collection_set_write_concern()"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "enumtype": "unordered"
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 200
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 200
+                        }
+                      },
+                      "value": "The following example shows how to change the read preference of a collection by using the\n"
+                    },
+                    {
+                      "type": "literal",
+                      "position": {
+                        "start": {
+                          "line": 200
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 200
+                            }
+                          },
+                          "value": "mongoc_collection_set_read_prefs()"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 200
+                        }
+                      },
+                      "value": " function:"
+                    }
+                  ]
+                },
+                {
+                  "type": "directive",
+                  "position": {
+                    "start": {
+                      "line": 203
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "code",
+                      "position": {
+                        "start": {
+                          "line": 203
+                        }
+                      },
+                      "lang": "c",
+                      "copyable": true,
+                      "value": "mongoc_read_prefs_t *read_prefs = mongoc_read_prefs_new (MONGOC_READ_PRIMARY_PREFERRED);\nmongoc_collection_set_read_prefs(collection, read_prefs);",
+                      "linenos": false
+                    }
+                  ],
+                  "domain": "",
+                  "name": "literalinclude",
+                  "argument": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 203
+                        }
+                      },
+                      "value": "/includes/databases-collections/databases-collections.c"
+                    }
+                  ],
+                  "options": {
+                    "start-after": "start-collection-read-prefs",
+                    "end-before": "end-collection-read-prefs",
+                    "language": "c",
+                    "copyable": true,
+                    "dedent": true
+                  }
+                },
+                {
+                  "type": "directive",
+                  "position": {
+                    "start": {
+                      "line": 210
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 212
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 212
+                            }
+                          },
+                          "value": "To see the types of available read preferences, see the\n"
+                        },
+                        {
+                          "type": "reference",
+                          "position": {
+                            "start": {
+                              "line": 212
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 212
+                                }
+                              },
+                              "value": "API documentation"
+                            }
+                          ],
+                          "refuri": "https://mongoc.org/libmongoc/current/mongoc_read_prefs_t.html#read-modes"
+                        },
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 212
+                            }
+                          },
+                          "value": "."
+                        }
+                      ]
+                    }
+                  ],
+                  "domain": "",
+                  "name": "tip",
+                  "argument": []
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 215
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 215
+                        }
+                      },
+                      "value": "To learn more about the read and write settings, see the following guides in the\nMongoDB Server manual:"
+                    }
+                  ]
+                },
+                {
+                  "type": "list",
+                  "position": {
+                    "start": {
+                      "line": 218
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 218
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 218
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 218
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 218
+                                    }
+                                  },
+                                  "value": "Read Preference"
+                                }
+                              ],
+                              "refuri": "https://www.mongodb.com/docs/manual/core/read-preference/"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 218
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 219
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 219
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 219
+                                    }
+                                  },
+                                  "value": "Read Concern"
+                                }
+                              ],
+                              "refuri": "https://www.mongodb.com/docs/manual/reference/read-concern/"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 218
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 220
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 220
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 220
+                                    }
+                                  },
+                                  "value": "Write Concern"
+                                }
+                              ],
+                              "refuri": "https://www.mongodb.com/docs/manual/reference/write-concern/"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "enumtype": "unordered"
+                },
+                {
+                  "type": "section",
+                  "position": {
+                    "start": {
+                      "line": 223
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "heading",
+                      "position": {
+                        "start": {
+                          "line": 223
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 223
+                            }
+                          },
+                          "value": "Tag Sets"
+                        }
+                      ],
+                      "id": "tag-sets"
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 225
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 225
+                            }
+                          },
+                          "value": "In the MongoDB Server, you can apply key-value "
+                        },
+                        {
+                          "type": "reference",
+                          "position": {
+                            "start": {
+                              "line": 225
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 225
+                                }
+                              },
+                              "value": "tags"
+                            }
+                          ],
+                          "refuri": "https://www.mongodb.com/docs/manual/core/read-preference-tags/"
+                        },
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 225
+                            }
+                          },
+                          "value": " to replica-set\nmembers according to any criteria you choose. You can then use\nthose tags to target one or more members for a read operation."
+                        }
+                      ]
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 230
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 230
+                            }
+                          },
+                          "value": "By default, the C driver ignores tags\nwhen choosing a member to read from. To instruct the C driver\nto prefer certain tags, use the "
+                        },
+                        {
+                          "type": "literal",
+                          "position": {
+                            "start": {
+                              "line": 230
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 230
+                                }
+                              },
+                              "value": "mongoc_read_prefs_set_tags()"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 230
+                            }
+                          },
+                          "value": " function to set the\ntags in an instance of "
+                        },
+                        {
+                          "type": "literal",
+                          "position": {
+                            "start": {
+                              "line": 230
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 230
+                                }
+                              },
+                              "value": "mongoc_read_prefs_t"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 230
+                            }
+                          },
+                          "value": "."
+                        }
+                      ]
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 235
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 235
+                            }
+                          },
+                          "value": "In the following code example, the tag set passed to the "
+                        },
+                        {
+                          "type": "literal",
+                          "position": {
+                            "start": {
+                              "line": 235
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 235
+                                }
+                              },
+                              "value": "mongoc_read_prefs_set_tags()"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 235
+                            }
+                          },
+                          "value": "\nfunction instructs the C driver to prefer reads from the\nNew York data center ("
+                        },
+                        {
+                          "type": "literal",
+                          "position": {
+                            "start": {
+                              "line": 235
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 235
+                                }
+                              },
+                              "value": "'dc': 'ny'"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 235
+                            }
+                          },
+                          "value": ") and to fall back to the San Francisco data\ncenter ("
+                        },
+                        {
+                          "type": "literal",
+                          "position": {
+                            "start": {
+                              "line": 235
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 235
+                                }
+                              },
+                              "value": "'dc': 'sf'"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 235
+                            }
+                          },
+                          "value": "):"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "directive",
+                      "position": {
+                        "start": {
+                          "line": 240
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "code",
+                          "position": {
+                            "start": {
+                              "line": 240
+                            }
+                          },
+                          "lang": "c",
+                          "copyable": true,
+                          "value": "mongoc_read_prefs_t *read_prefs = mongoc_read_prefs_new (MONGOC_READ_SECONDARY_PREFERRED);\nbson_t *tags = BCON_NEW (\"DC\", BCON_UTF8(\"ny\"), \"DC\", BCON_UTF8(\"sf\"));",
+                          "linenos": false
+                        }
+                      ],
+                      "domain": "",
+                      "name": "literalinclude",
+                      "argument": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 240
+                            }
+                          },
+                          "value": "/includes/databases-collections/databases-collections.c"
+                        }
+                      ],
+                      "options": {
+                        "start-after": "start-tags",
+                        "end-before": "end-tags",
+                        "language": "c",
+                        "copyable": true,
+                        "dedent": true
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "position": {
+                    "start": {
+                      "line": 248
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "heading",
+                      "position": {
+                        "start": {
+                          "line": 248
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 248
+                            }
+                          },
+                          "value": "Local Threshold"
+                        }
+                      ],
+                      "id": "local-threshold"
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 250
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 250
+                            }
+                          },
+                          "value": "If multiple replica-set members match the read preference and tag sets you specify,\nthe C driver reads from the nearest replica-set members, chosen according to\ntheir ping time."
+                        }
+                      ]
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 254
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 254
+                            }
+                          },
+                          "value": "By default, the driver uses only those members whose ping times are within 15 milliseconds\nof the nearest member for queries. To distribute reads between members with\nhigher latencies, include the "
+                        },
+                        {
+                          "type": "literal",
+                          "position": {
+                            "start": {
+                              "line": 254
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 254
+                                }
+                              },
+                              "value": "localThresholdMS"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 254
+                            }
+                          },
+                          "value": " parameter in your connection string URI."
+                        }
+                      ]
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 258
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 258
+                            }
+                          },
+                          "value": "The following example connects to a MongoDB deployment running on "
+                        },
+                        {
+                          "type": "literal",
+                          "position": {
+                            "start": {
+                              "line": 258
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "text",
+                              "position": {
+                                "start": {
+                                  "line": 258
+                                }
+                              },
+                              "value": "localhost:27017"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 258
+                            }
+                          },
+                          "value": "\nand specifies a local threshold of 35 milliseconds:"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "directive",
+                      "position": {
+                        "start": {
+                          "line": 261
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "code",
+                          "position": {
+                            "start": {
+                              "line": 261
+                            }
+                          },
+                          "lang": "c",
+                          "copyable": true,
+                          "value": "const char *uri_string = \"mongodb://localhost:27017/?localThresholdMS=35\";\nmongoc_client_t *client = mongoc_client_new (uri_string);",
+                          "linenos": false
+                        }
+                      ],
+                      "domain": "",
+                      "name": "literalinclude",
+                      "argument": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 261
+                            }
+                          },
+                          "value": "/includes/databases-collections/databases-collections.c"
+                        }
+                      ],
+                      "options": {
+                        "start-after": "start-local-threshold",
+                        "end-before": "end-local-threshold",
+                        "language": "c",
+                        "copyable": true,
+                        "dedent": true
+                      }
+                    },
+                    {
+                      "type": "paragraph",
+                      "position": {
+                        "start": {
+                          "line": 268
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "position": {
+                            "start": {
+                              "line": 268
+                            }
+                          },
+                          "value": "In the preceding example, the C driver distributes reads between matching members\nwithin 35 milliseconds of the closest member's ping time."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "section",
+              "position": {
+                "start": {
+                  "line": 272
+                }
+              },
+              "children": [
+                {
+                  "type": "heading",
+                  "position": {
+                    "start": {
+                      "line": 272
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 272
+                        }
+                      },
+                      "value": "API Documentation"
+                    }
+                  ],
+                  "id": "api-documentation"
+                },
+                {
+                  "type": "paragraph",
+                  "position": {
+                    "start": {
+                      "line": 274
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "position": {
+                        "start": {
+                          "line": 274
+                        }
+                      },
+                      "value": "To learn more about any of the functions discussed in this\nguide, see the following API documentation:"
+                    }
+                  ]
+                },
+                {
+                  "type": "list",
+                  "position": {
+                    "start": {
+                      "line": 277
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 277
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 277
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 277
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 277
+                                    }
+                                  },
+                                  "value": "mongoc_database_create_collection()"
+                                }
+                              ],
+                              "refuri": "https://mongoc.org/libmongoc/current/mongoc_database_create_collection.html"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 277
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 278
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 278
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 278
+                                    }
+                                  },
+                                  "value": "mongoc_database_find_collections_with_opts()"
+                                }
+                              ],
+                              "refuri": "https://mongoc.org/libmongoc/current/mongoc_database_find_collections_with_opts.html"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 277
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 279
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 279
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 279
+                                    }
+                                  },
+                                  "value": "mongoc_database_get_collection_names_with_opts()"
+                                }
+                              ],
+                              "refuri": "https://mongoc.org/libmongoc/current/mongoc_database_get_collection_names_with_opts.html"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 277
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 280
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 280
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 280
+                                    }
+                                  },
+                                  "value": "mongoc_client_get_database()"
+                                }
+                              ],
+                              "refuri": "https://mongoc.org/libmongoc/current/mongoc_client_get_database.html"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 277
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 281
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 281
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 281
+                                    }
+                                  },
+                                  "value": "mongoc_client_get_collection()"
+                                }
+                              ],
+                              "refuri": "https://mongoc.org/libmongoc/current/mongoc_client_get_collection.html"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 277
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 282
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 282
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 282
+                                    }
+                                  },
+                                  "value": "mongoc_database_get_collection()"
+                                }
+                              ],
+                              "refuri": "https://mongoc.org/libmongoc/current/mongoc_database_get_collection.html"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 277
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 283
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 283
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 283
+                                    }
+                                  },
+                                  "value": "mongoc_collection_drop()"
+                                }
+                              ],
+                              "refuri": "https://mongoc.org/libmongoc/current/mongoc_collection_drop.html"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 277
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 284
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 284
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 284
+                                    }
+                                  },
+                                  "value": "mongoc_database_set_read_prefs()"
+                                }
+                              ],
+                              "refuri": "https://mongoc.org/libmongoc/current/mongoc_database_set_read_prefs.html"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 277
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 285
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 285
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 285
+                                    }
+                                  },
+                                  "value": "mongoc_database_set_read_concern()"
+                                }
+                              ],
+                              "refuri": "https://mongoc.org/libmongoc/current/mongoc_database_set_read_concern.html"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 277
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 286
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 286
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 286
+                                    }
+                                  },
+                                  "value": "mongoc_database_set_write_concern()"
+                                }
+                              ],
+                              "refuri": "https://mongoc.org/libmongoc/current/mongoc_database_set_write_concern.html"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 277
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 287
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 287
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 287
+                                    }
+                                  },
+                                  "value": "mongoc_collection_set_read_prefs()"
+                                }
+                              ],
+                              "refuri": "https://mongoc.org/libmongoc/current/mongoc_collection_set_read_prefs.html"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 277
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 288
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 288
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 288
+                                    }
+                                  },
+                                  "value": "mongoc_collection_set_read_concern()"
+                                }
+                              ],
+                              "refuri": "https://mongoc.org/libmongoc/current/mongoc_collection_set_read_concern.html"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 277
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 289
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 289
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 289
+                                    }
+                                  },
+                                  "value": "mongoc_collection_set_write_concern()"
+                                }
+                              ],
+                              "refuri": "https://mongoc.org/libmongoc/current/mongoc_collection_set_write_concern.html"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "listItem",
+                      "position": {
+                        "start": {
+                          "line": 277
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "paragraph",
+                          "position": {
+                            "start": {
+                              "line": 290
+                            }
+                          },
+                          "children": [
+                            {
+                              "type": "reference",
+                              "position": {
+                                "start": {
+                                  "line": 290
+                                }
+                              },
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "position": {
+                                    "start": {
+                                      "line": 290
+                                    }
+                                  },
+                                  "value": "mongoc_read_prefs_set_tags()"
+                                }
+                              ],
+                              "refuri": "https://mongoc.org/libmongoc/current/mongoc_read_prefs_set_tags.html"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "enumtype": "unordered"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "fileid": "databases-collections.txt",
+      "options": {
+        "headings": [
+          {
+            "depth": 2,
+            "id": "overview",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 27
+                  }
+                },
+                "value": "Overview"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 2,
+            "id": "access-a-database",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 41
+                  }
+                },
+                "value": "Access a Database"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 2,
+            "id": "access-a-collection",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 55
+                  }
+                },
+                "value": "Access a Collection"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 2,
+            "id": "create-a-collection",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 77
+                  }
+                },
+                "value": "Create a Collection"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 2,
+            "id": "get-a-list-of-collections",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 98
+                  }
+                },
+                "value": "Get a List of Collections"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 2,
+            "id": "delete-a-collection",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 145
+                  }
+                },
+                "value": "Delete a Collection"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 2,
+            "id": "configure-read-and-write-operations",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 169
+                  }
+                },
+                "value": "Configure Read and Write Operations"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 3,
+            "id": "tag-sets",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 223
+                  }
+                },
+                "value": "Tag Sets"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 3,
+            "id": "local-threshold",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 248
+                  }
+                },
+                "value": "Local Threshold"
+              }
+            ],
+            "selector_ids": {}
+          },
+          {
+            "depth": 2,
+            "id": "api-documentation",
+            "title": [
+              {
+                "type": "text",
+                "position": {
+                  "start": {
+                    "line": 272
+                  }
+                },
+                "value": "API Documentation"
+              }
+            ],
+            "selector_ids": {}
+          }
+        ]
+      }
+    },
+    "build_id": "67af80354f5886dfc344f685",
+    "created_at": "2025-02-14T17:41:09.714Z",
+    "deleted": false,
+    "facets": [
+      {
+        "category": "genre",
+        "value": "reference",
+        "sub_facets": null,
+        "display_name": "Reference"
+      }
+    ],
+    "filename": "databases-collections.txt",
+    "static_assets": [],
+    "updated_at": "2025-02-14T17:41:09.714Z"
+  }
+}

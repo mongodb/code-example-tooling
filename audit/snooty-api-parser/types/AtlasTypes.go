@@ -19,6 +19,8 @@ type DocsPage struct {
 	Product              string      `bson:"product"`
 	SubProduct           string      `bson:"sub_product,omitempty"`
 	Keywords             []string    `bson:"keywords,omitempty"`
+	DateRemoved          time.Time   `bson:"date_removed,omitempty"`
+	IsRemoved            bool        `bson:"is_removed,omitempty"`
 }
 
 // CodeNode captures metadata about a specific code example. The `Code` field contains the example itself.

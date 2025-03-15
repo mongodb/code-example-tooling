@@ -13,10 +13,11 @@ import (
 // to track various project counts. This function compares the existing code examples with the incoming code examples
 // to find unchanged, updated, new, and removed nodes. It appends these nodes into an updated []types.CodeNode slice,
 // which it returns to the call site for making updates to Atlas. It also returns the updated types.ProjectCounts.
-func CompareExistingIncomingCodeExampleSlices(existingNodes []types.CodeNode, incomingNodes []types.ASTNode, projectCounter types.ProjectCounts, pageId string, llm *ollama.LLM, ctx context.Context, isDriversProject bool) ([]types.CodeNode, types.ProjectCounts) {
+func CompareExistingIncomingCodeExampleSlices(existingNodes []types.CodeNode, incomingNodes []types.ASTNode, report types.ProjectReport, pageId string, llm *ollama.LLM, ctx context.Context, isDriversProject bool) ([]types.CodeNode, types.ProjectReport) {
 	var updatedPageNodes []types.ASTNode
 	var newPageNodes []types.ASTNode
 	var unchangedPageNodes []types.ASTNode
+	incomingCount := len(incomingNodes)
 
 	snootySha256Hashes := make(map[string]int)
 	existingSha256Hashes := make(map[string]int)
@@ -55,10 +56,8 @@ func CompareExistingIncomingCodeExampleSlices(existingNodes []types.CodeNode, in
 	removedNodes := FindRemovedNodes(existingSha256ToCodeNodeMap, unchangedPageNodes, updatedPageNodes, newPageNodes)
 
 	codeNodesToReturn := make([]types.CodeNode, 0)
-	codeNodesToReturn, projectCounter = MakeUpdatedCodeNodesArray(removedNodes, unchangedPageNodes, incomingUnchangedSha256ToCodeNodeMap, updatedPageNodes, incomingUpdatedSha256ToCodeNodeMap, newPageNodes, existingNodes, projectCounter, pageId, llm, ctx, isDriversProject)
-	codeNodeChangesMinusRemoved := len(codeNodesToReturn) - len(removedNodes)
-	if codeNodeChangesMinusRemoved != len(incomingNodes) {
-		log.Printf("ISSUE: page %s, code node changes minus removed: %d does not match incoming node count %d\n", pageId, codeNodeChangesMinusRemoved, len(incomingNodes))
-	}
-	return codeNodesToReturn, projectCounter
+	codeNodesToReturn, report = MakeUpdatedCodeNodesArray(removedNodes, unchangedPageNodes,
+		incomingUnchangedSha256ToCodeNodeMap, updatedPageNodes, incomingUpdatedSha256ToCodeNodeMap, newPageNodes,
+		existingNodes, incomingCount, report, pageId, llm, ctx, isDriversProject)
+	return codeNodesToReturn, report
 }

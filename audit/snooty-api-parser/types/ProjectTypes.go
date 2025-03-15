@@ -90,16 +90,3 @@ func (t *TimestampData) UnmarshalJSON(b []byte) error {
 	}
 	return nil
 }
-
-type ProjectCounts struct {
-	IncomingCodeNodesCount      int
-	IncomingLiteralIncludeCount int
-	IncomingIoCodeBlockCount    int
-	RemovedCodeNodesCount       int
-	UpdatedCodeNodesCount       int
-	UnchangedCodeNodesCount     int
-	NewCodeNodesCount           int
-	ExistingCodeNodesCount      int
-	ExistingLiteralIncludeCount int
-	ExistingIoCodeBlockCount    int
-}

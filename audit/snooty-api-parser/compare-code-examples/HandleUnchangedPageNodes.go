@@ -1,7 +1,6 @@
 package compare_code_examples
 
 import (
-	"log"
 	"snooty-api-parser/snooty"
 	"snooty-api-parser/types"
 	"time"
@@ -13,13 +12,12 @@ import (
 // times it appears on the incoming page, and add or remove instances to the []types.CodeNode array to match the existing
 // page count. We return the updated []types.CodeNode array. We append all the "Handle" function results to a slice,
 // and overwrite the document in the DB with the updated code nodes.
-func HandleUnchangedPageNodes(existingHashCountMap map[string]int, unchangedIncomingPageNodes []types.ASTNode, unchangedPageNodesSha256CodeNodeLookup map[string]types.CodeNode, pageId string) ([]types.CodeNode, int, int, int) {
+func HandleUnchangedPageNodes(existingHashCountMap map[string]int, unchangedIncomingPageNodes []types.ASTNode, unchangedPageNodesSha256CodeNodeLookup map[string]types.CodeNode, pageId string) []types.CodeNode {
 	codeNodesMatchingIncomingNodes := make([]types.CodeNode, 0)
 	unchangedIncomingHashCountMap := make(map[string]int)
 	unchangedCount := 0
 	removedCount := 0
 	newCount := 0
-	totalCount := len(unchangedIncomingPageNodes)
 	for _, node := range unchangedIncomingPageNodes {
 		hash := snooty.MakeSha256HashForCode(node.Value)
 		unchangedIncomingHashCountMap[hash]++
@@ -65,9 +63,5 @@ func HandleUnchangedPageNodes(existingHashCountMap map[string]int, unchangedInco
 			}
 		}
 	}
-	sum := unchangedCount + removedCount + newCount
-	if totalCount != sum {
-		log.Printf("ISSUE: page %s, in HandleUnchangedPageNodes, unchangedCount %d, removedCount %d, newCount %d, sum %d, does not equal total incoming unchanged node count %d\n", pageId, unchangedCount, removedCount, newCount, sum, totalCount)
-	}
-	return codeNodesMatchingIncomingNodes, unchangedCount, newCount, removedCount
+	return codeNodesMatchingIncomingNodes
 }

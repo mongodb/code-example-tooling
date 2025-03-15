@@ -24,7 +24,7 @@ func TestIncrementProjectCounterCorrectlyUpdatesUnchangedCounts(t *testing.T) {
 	newCount := 0
 	removedCount := 0
 
-	updatedCounter := IncrementProjectCounterForUpdatedCodeNodes(projectCounter, unchangedCount, updatedCount, newCount, removedCount)
+	updatedCounter := UpdateProjectReportForUpdatedCodeNodes(projectCounter, unchangedCount, updatedCount, newCount, removedCount)
 
 	wantUnchanged := 15
 	wantUpdated := 10
@@ -64,7 +64,7 @@ func TestIncrementProjectCounterCorrectlyUpdatesUpdatedCounts(t *testing.T) {
 	newCount := 0
 	removedCount := 0
 
-	updatedCounter := IncrementProjectCounterForUpdatedCodeNodes(projectCounter, unchangedCount, updatedCount, newCount, removedCount)
+	updatedCounter := UpdateProjectReportForUpdatedCodeNodes(projectCounter, unchangedCount, updatedCount, newCount, removedCount)
 
 	wantUnchanged := 10
 	wantUpdated := 15
@@ -104,7 +104,7 @@ func TestIncrementProjectCounterCorrectlyUpdatesNewCounts(t *testing.T) {
 	newCount := 5
 	removedCount := 0
 
-	updatedCounter := IncrementProjectCounterForUpdatedCodeNodes(projectCounter, unchangedCount, updatedCount, newCount, removedCount)
+	updatedCounter := UpdateProjectReportForUpdatedCodeNodes(projectCounter, unchangedCount, updatedCount, newCount, removedCount)
 
 	wantUnchanged := 10
 	wantUpdated := 10
@@ -144,7 +144,7 @@ func TestIncrementProjectCounterCorrectlyUpdatesRemovedCounts(t *testing.T) {
 	newCount := 0
 	removedCount := 5
 
-	updatedCounter := IncrementProjectCounterForUpdatedCodeNodes(projectCounter, unchangedCount, updatedCount, newCount, removedCount)
+	updatedCounter := UpdateProjectReportForUpdatedCodeNodes(projectCounter, unchangedCount, updatedCount, newCount, removedCount)
 
 	wantUnchanged := 10
 	wantUpdated := 10

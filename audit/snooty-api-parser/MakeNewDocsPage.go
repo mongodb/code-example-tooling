@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/tmc/langchaingo/llms/ollama"
 	"snooty-api-parser/snooty"
 	"snooty-api-parser/types"
@@ -9,15 +10,14 @@ import (
 	"time"
 )
 
-func MakeNewDocsPage(data types.PageWrapper, siteUrl string, projectName string, projectCounter types.ProjectCounts, llm *ollama.LLM, ctx context.Context) (types.DocsPage, types.ProjectCounts) {
+func MakeNewDocsPage(data types.PageWrapper, siteUrl string, report types.ProjectReport, llm *ollama.LLM, ctx context.Context) (types.DocsPage, types.ProjectReport) {
 	incomingCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes := snooty.GetCodeExamplesFromIncomingData(data.Data.AST)
 	incomingCodeNodeCount := len(incomingCodeNodes)
 	incomingLiteralIncludeNodeCount := len(incomingLiteralIncludeNodes)
 	incomingIoCodeNodeCount := len(incomingIoCodeBlockNodes)
-	projectCounter = IncrementProjectCountsForNewPage(incomingCodeNodeCount, incomingLiteralIncludeNodeCount, incomingIoCodeNodeCount, projectCounter)
-	pageId := getPageId(data.Data.PageID)
+	pageId := utils.ConvertSnootyPageIdToAtlasPageId(data.Data.PageID)
 	pageUrl := utils.ConvertSnootyPageIdToProductionUrl(data.Data.PageID, siteUrl)
-	product, subProduct := GetProductSubProduct(projectName, pageUrl)
+	product, subProduct := GetProductSubProduct(report.ProjectName, pageUrl)
 	var isDriversProject bool
 	if product == "Drivers" {
 		isDriversProject = true
@@ -33,6 +33,31 @@ func MakeNewDocsPage(data types.PageWrapper, siteUrl string, projectName string,
 
 	languagesArrayValues := MakeLanguagesArray(newCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes)
 
+	// Report relevant details for the new page
+	report.Counter = IncrementProjectCountsForNewPage(incomingCodeNodeCount, incomingLiteralIncludeNodeCount, incomingIoCodeNodeCount, report.Counter)
+
+	report.Counter.NewPagesCount += 1
+	newPageChange := types.Change{
+		Type: types.PageCreated,
+		Data: fmt.Sprintf("Page ID: %s", pageId),
+	}
+	report.Changes = append(report.Changes, newPageChange)
+
+	newCodeExamplesChange := types.Change{
+		Type: types.PageCreated,
+		Data: fmt.Sprintf("Page ID: %s, created %d new code examples", pageId, len(newCodeNodes)),
+	}
+	report.Changes = append(report.Changes, newCodeExamplesChange)
+
+	newCodeNodeCount := len(newCodeNodes)
+	if incomingIoCodeNodeCount != newCodeNodeCount {
+		issue := types.Issue{
+			Type: 1,
+			Data: fmt.Sprintf("Page ID: %s, incoming code node count: %d, does not match new code node count: %d", pageId, incomingCodeNodeCount, newCodeNodeCount),
+		}
+		report.Issues = append(report.Issues, issue)
+	}
+
 	return types.DocsPage{
 		ID:                   pageId,
 		CodeNodesTotal:       incomingCodeNodeCount,
@@ -43,9 +68,9 @@ func MakeNewDocsPage(data types.PageWrapper, siteUrl string, projectName string,
 		LiteralIncludesTotal: incomingLiteralIncludeNodeCount,
 		Nodes:                &newCodeNodes,
 		PageURL:              pageUrl,
-		ProjectName:          projectName,
+		ProjectName:          report.ProjectName,
 		Product:              product,
 		SubProduct:           subProduct,
 		Keywords:             maybeKeywords,
-	}, projectCounter
+	}, report
 }

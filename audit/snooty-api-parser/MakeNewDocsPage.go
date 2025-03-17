@@ -34,7 +34,7 @@ func MakeNewDocsPage(data types.PageWrapper, siteUrl string, report types.Projec
 	languagesArrayValues := MakeLanguagesArray(newCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes)
 
 	// Report relevant details for the new page
-	report.Counter = IncrementProjectCountsForNewPage(incomingCodeNodeCount, incomingLiteralIncludeNodeCount, incomingIoCodeNodeCount, report.Counter)
+	report.Counter = IncrementProjectCountsForNewPage(incomingCodeNodeCount, incomingLiteralIncludeNodeCount, incomingIoCodeNodeCount, len(newCodeNodes), report.Counter)
 
 	report.Counter.NewPagesCount += 1
 	newPageChange := types.Change{
@@ -50,7 +50,7 @@ func MakeNewDocsPage(data types.PageWrapper, siteUrl string, report types.Projec
 	report.Changes = append(report.Changes, newCodeExamplesChange)
 
 	newCodeNodeCount := len(newCodeNodes)
-	if incomingIoCodeNodeCount != newCodeNodeCount {
+	if incomingCodeNodeCount != newCodeNodeCount {
 		issue := types.Issue{
 			Type: 1,
 			Data: fmt.Sprintf("Page ID: %s, incoming code node count: %d, does not match new code node count: %d", pageId, incomingCodeNodeCount, newCodeNodeCount),

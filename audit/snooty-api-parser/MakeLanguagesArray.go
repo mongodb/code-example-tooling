@@ -7,7 +7,7 @@ import (
 )
 
 func MakeLanguagesArray(codeNodes []types.CodeNode, literalIncludeNodes []types.ASTNode, ioCodeBlockNodes []types.ASTNode) map[string]types.LanguageCounts {
-	languages := make(map[string]types.LanguageCounts, 0)
+	languages := make(map[string]types.LanguageCounts)
 	canonicalLanguages := add_code_examples.CanonicalLanguages
 	for _, language := range canonicalLanguages {
 		languages[language] = types.LanguageCounts{}

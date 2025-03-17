@@ -27,7 +27,7 @@ func GetAtlasPageData(collectionName string, docId string) *types.DocsPage {
 		log.Printf("Failed to connect to MongoDB: %v", err)
 	}
 	defer func() {
-		if err = client.Disconnect(context.TODO()); err != nil {
+		if err = client.Disconnect(ctx); err != nil {
 			log.Printf("Failed to disconnect from MongoDB: %v", err)
 		}
 	}()
@@ -40,8 +40,10 @@ func GetAtlasPageData(collectionName string, docId string) *types.DocsPage {
 	err = collection.FindOne(ctx, filter).Decode(&result)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			log.Printf("Didn't find matching document for page %v - need to make a new one\n", docId)
+			// If we return nil here, the app will just make a new page and that's fine
+			return nil
 		} else {
+			// TODO: if it's some other type of error that is preventing us from finding a matching page, we don't want to just create a new page - we want to try again, maybe?
 			log.Printf("Error: can't find a matching document for page %v, %v\n", docId, err)
 		}
 	}

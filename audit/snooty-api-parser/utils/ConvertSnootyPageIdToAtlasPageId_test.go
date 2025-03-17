@@ -21,3 +21,13 @@ func TestConversionFuncCorrectlyCreatesAtlasPageIdFromMultiElementPageID(t *test
 		t.Errorf("FAILED: got %s for the Atlas Page ID, want %s", atlasPageId, expectedPageId)
 	}
 }
+
+func TestConversionFuncCorrectlyCreatesArchCtrPageId(t *testing.T) {
+	// This is the `page_id` field that comes in from the Snooty Data API documents response.
+	snootyPageId := "atlas-architecture/docsworker-xlarge/main/auth"
+	atlasPageId := ConvertSnootyPageIdToAtlasPageId(snootyPageId)
+	expectedPageId := "auth"
+	if atlasPageId != expectedPageId {
+		t.Errorf("FAILED: got %s for the Atlas Page ID, want %s", atlasPageId, expectedPageId)
+	}
+}

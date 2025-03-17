@@ -8,6 +8,7 @@ func GetProductSubProduct(project string, page string) (string, string) {
 	collectionProducts := map[string]string{
 		"atlas-cli":             "Atlas",
 		"atlas-operator":        "Atlas",
+		"atlas-architecture":    "Atlas",
 		"bi-connector":          "BI Connector",
 		"c":                     "Drivers",
 		"charts":                "Atlas",

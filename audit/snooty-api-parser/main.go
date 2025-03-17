@@ -31,7 +31,7 @@ func main() {
 		Timeout: 30 * time.Second, // Set a timeout
 	}
 	// Uncomment to parse all projects
-	projectsToParse := snooty.GetProjects(client)
+	//projectsToParse := snooty.GetProjects(client)
 
 	// Uncomment to parse a single project during testing
 	//sparkConnector := types.DocsProjectDetails{
@@ -57,6 +57,13 @@ func main() {
 	//}
 	//projectsToParse := []types.DocsProjectDetails{node}
 
+	architectureCenter := types.DocsProjectDetails{
+		ProjectName:  "atlas-architecture",
+		ActiveBranch: "main",
+		ProdUrl:      "https://mongodb.com/docs/atlas/architecture",
+	}
+	projectsToParse := []types.DocsProjectDetails{architectureCenter}
+
 	// Finish setting up console display to show progress during run
 	totalProjects := len(projectsToParse)
 	fmt.Printf("%d projects to parse\n", totalProjects)
@@ -71,31 +78,35 @@ func main() {
 	// Process docs pages for every project in the projectsToParse array
 	firstProject := true
 	for _, project := range projectsToParse {
+		// Get docs pages from the API
 		docsPages := snooty.GetProjectDocuments(project, client)
-		log.Printf("Found %d docs pages for project %s\n", len(docsPages), project.ProjectName)
+		docsPageCount := len(docsPages)
+		log.Printf("Found %d docs pages for project %s\n", docsPageCount, project.ProjectName)
 		report := types.ProjectReport{
 			ProjectName: project.ProjectName,
 			Changes:     nil,
 			Issues:      nil,
-			Counter:     types.ProjectCounts{},
+			Counter: types.ProjectCounts{
+				TotalCurrentPageCount: docsPageCount,
+			},
 		}
-		if len(docsPages) == 0 {
+		if docsPageCount > 0 {
+			if firstProject {
+				utils.SetUpProgressDisplay(totalProjects, docsPageCount, project.ProjectName)
+				firstProject = false
+			} else {
+				utils.SetNewSecondaryTarget(docsPageCount, project.ProjectName)
+			}
+			CheckDocsForUpdates(docsPages, project, llm, ctx, report)
+			utils.UpdatePrimaryTarget()
+		} else {
 			noPagesIssue := types.Issue{
 				Type: types.PagesNotFoundIssue,
 				Data: fmt.Sprintf("No documents found for project %s", project.ProjectName),
 			}
 			report.Issues = append(report.Issues, noPagesIssue)
 			utils.UpdatePrimaryTarget()
-			continue
 		}
-		if firstProject {
-			utils.SetUpProgressDisplay(totalProjects, len(docsPages), project.ProjectName)
-			firstProject = false
-		} else {
-			utils.SetNewSecondaryTarget(len(docsPages), project.ProjectName)
-		}
-		CheckDocsForUpdates(docsPages, project, llm, ctx, report)
-		utils.UpdatePrimaryTarget()
 	}
 
 	// Log some completion details to console

@@ -49,6 +49,8 @@ func GetProjectDocuments(docsProject types.DocsProjectDetails, client *http.Clie
 	// When this DOP ticket is resolved, we can remove this logic: https://jira.mongodb.org/browse/DOP-5440
 	projectsWithOldDeploy := []string{
 		"spark-connector",
+		"charts",
+		"bi-connector",
 		"cloudgov",
 		"docs",
 		"compass",
@@ -64,6 +66,20 @@ func GetProjectDocuments(docsProject types.DocsProjectDetails, client *http.Clie
 		"cpp-driver",
 		"scala",
 		"pymongo-arrow",
+		"mongodb-shell",
+		"mongocli",
+		"cloud-docs",
+		"mongoid",
+		"kotlin",
+		"docs-relational-migrator",
+		"ops-manager",
+		"cloud-manager",
+		"laravel",
+		"pymongo",
+		"c",
+		"kotlin-sync",
+		"atlas-architecture",
+		"django",
 	}
 
 	var projectDocuments []types.PageWrapper

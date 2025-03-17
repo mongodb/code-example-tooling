@@ -27,7 +27,7 @@ func GetAtlasProjectSummaryData(collectionName string) *types.CollectionReport {
 		log.Printf("Failed to connect to MongoDB: %v", err)
 	}
 	defer func() {
-		if err = client.Disconnect(context.TODO()); err != nil {
+		if err = client.Disconnect(ctx); err != nil {
 			log.Printf("Failed to disconnect from MongoDB: %v", err)
 		}
 	}()
@@ -40,7 +40,7 @@ func GetAtlasProjectSummaryData(collectionName string) *types.CollectionReport {
 	err = collection.FindOne(ctx, filter).Decode(&result)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			log.Printf("Didn't find a summary for project %v - need to make a new one\n", collectionName)
+			return nil
 		} else {
 			log.Printf("Error: can't find a project summary for %v, %v\n", collectionName, err)
 		}

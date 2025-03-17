@@ -55,10 +55,19 @@ func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjec
 			updatedPages = append(updatedPages, *removedDocument)
 		}
 	}
+
 	summaryDoc := db.GetAtlasProjectSummaryData(project.ProjectName)
 	var latestCollectionInfo types.CollectionInfoView
 	collectionVersionKey := ""
-	if summaryDoc != nil {
+	// If we haven't audited this collection before, there will be no collection info document
+	if summaryDoc == nil {
+		summaryDocPointer := db.MakeSummariesDocument(project, report)
+		summaryDoc = &summaryDocPointer
+		// If we're making a new summaries document, the only key is the current active branch
+		latestCollectionInfo = summaryDoc.Version[project.ActiveBranch]
+		collectionVersionKey = project.ActiveBranch
+	} else {
+		// If we have retrieved a summary doc from the DB, it may contain more than one version
 		elementIndex := 0
 		for version, info := range summaryDoc.Version {
 			if elementIndex == 0 {
@@ -79,9 +88,13 @@ func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjec
 		}
 	}
 	if project.ActiveBranch != collectionVersionKey {
-		// TODO: If the active branch doesn't match the most recent version, need to make a whole new version document
+		// If the active branch doesn't match the most recent version, need to make a new CollectionInfoView for this document
+		updatedSummaryDoc := db.MakeNewCollectionVersionDocument(*summaryDoc, project, report)
+		summaryDoc = &updatedSummaryDoc
 	} else {
-		// TODO: If the active branch does match the most recent version, just need to update this version document's last updated date and counts
+		// If the active branch does match the most recent version, just need to update this version document's last updated date and counts
+		updatedSummaryDoc := db.UpdateCollectionVersionDocument(*summaryDoc, project, report)
+		summaryDoc = &updatedSummaryDoc
 	}
 
 	// TODO: Move report updates out to a separate func
@@ -132,4 +145,7 @@ func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjec
 	} else if len(report.Issues) == 0 {
 		log.Printf("\nNo issues with data in project %s\n", project.ProjectName)
 	}
+
+	// At this point, we have all the updated pages and an updated summary. Write updates to Atlas.
+	db.BatchUpdateCollection(project.ProjectName, newPages, updatedPages, *summaryDoc)
 }

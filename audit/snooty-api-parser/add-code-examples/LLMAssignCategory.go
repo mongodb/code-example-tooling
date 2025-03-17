@@ -3,6 +3,7 @@ package add_code_examples
 import (
 	"context"
 	"github.com/tmc/langchaingo/llms/ollama"
+	"log"
 	"snooty-api-parser/add-code-examples/utils"
 )
 
@@ -20,6 +21,10 @@ func LLMAssignCategory(contents string, langCategory string, llm *ollama.LLM, ct
 		}
 	} else if langCategory == utils.Shell {
 		category = CategorizeShellSnippet(contents, llm, ctx)
+	} else if langCategory == Undefined {
+		category = CategorizeTextSnippet(contents, llm, ctx)
+	} else {
+		log.Printf("Lang category is not one of the recognized ones - it's %s", langCategory)
 	}
 	return category
 }

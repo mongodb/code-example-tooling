@@ -13,6 +13,7 @@ type ProjectCounts struct {
 	ExistingLiteralIncludeCount int
 	ExistingIoCodeBlockCount    int
 	RemovedPagesCount           int
+	TotalCurrentPageCount       int
 }
 
 // ChangeType represents the type of change.

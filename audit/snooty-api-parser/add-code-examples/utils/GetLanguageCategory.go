@@ -39,7 +39,9 @@ func GetLanguageCategory(lang string) string {
 		return JavaScript
 	} else if lang == Text {
 		return Text
+	} else if lang == Undefined {
+		return Undefined
 	} else {
-		return "Unknown language"
+		return ""
 	}
 }

@@ -63,7 +63,7 @@ func HasStringMatchPrefix(contents string, langCategory string) (string, bool) {
 			}
 		}
 		return "Uncategorized", false
-	} else if langCategory == Text {
+	} else if langCategory == Text || langCategory == Undefined {
 		for _, prefix := range syntaxExamplePrefixes {
 			if strings.HasPrefix(contents, prefix) {
 				return SyntaxExample, true

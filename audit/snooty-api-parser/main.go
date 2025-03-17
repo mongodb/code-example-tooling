@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	add_code_examples "snooty-api-parser/add-code-examples"
+	"snooty-api-parser/add-code-examples"
 	"snooty-api-parser/snooty"
 	"snooty-api-parser/types"
 	"snooty-api-parser/utils"

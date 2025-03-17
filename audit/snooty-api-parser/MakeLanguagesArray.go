@@ -6,7 +6,7 @@ import (
 	"snooty-api-parser/types"
 )
 
-func MakeLanguagesArray(codeNodes []types.CodeNode, literalIncludeNodes []types.ASTNode, ioCodeBlockNodes []types.ASTNode) map[string]types.LanguageCounts {
+func MakeLanguagesArray(codeNodes []types.CodeNode, literalIncludeNodes []types.ASTNode, ioCodeBlockNodes []types.ASTNode) types.LanguagesArray {
 	languages := make(map[string]types.LanguageCounts)
 	canonicalLanguages := add_code_examples.CanonicalLanguages
 	for _, language := range canonicalLanguages {
@@ -44,5 +44,12 @@ func MakeLanguagesArray(codeNodes []types.CodeNode, literalIncludeNodes []types.
 			languages[add_code_examples.Undefined] = countsForLang
 		}
 	}
-	return languages
+
+	// Convert languages map to LanguagesArray
+	var languagesArray types.LanguagesArray
+	for lang, counts := range languages {
+		languagesArray = append(languagesArray, map[string]types.LanguageCounts{lang: counts})
+	}
+
+	return languagesArray
 }

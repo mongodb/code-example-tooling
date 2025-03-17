@@ -6,12 +6,13 @@ import (
 )
 
 type DocsPage struct {
-	ID                   string    `bson:"_id"`
-	CodeNodesTotal       int       `bson:"code_nodes_total"`
-	DateAdded            time.Time `bson:"date_added"`
-	DateLastUpdated      time.Time `bson:"date_last_updated"`
-	IoCodeBlocksTotal    int       `bson:"io_code_blocks_total"`
-	Languages            map[string]LanguageCounts
+	ID                string         `bson:"_id"`
+	CodeNodesTotal    int            `bson:"code_nodes_total"`
+	DateAdded         time.Time      `bson:"date_added"`
+	DateLastUpdated   time.Time      `bson:"date_last_updated"`
+	IoCodeBlocksTotal int            `bson:"io_code_blocks_total"`
+	Languages         LanguagesArray `bson:"languages"`
+	//Languages            map[string]types.LanguageCounts
 	LiteralIncludesTotal int         `bson:"literal_includes_total"`
 	Nodes                *[]CodeNode `bson:"nodes"`
 	PageURL              string      `bson:"page_url"`
@@ -45,9 +46,6 @@ type LanguageCounts struct {
 	Total           int `bson:"total" json:"total"`
 }
 
-// The new languages array is a simpler structure
-type Languages map[string]LanguageCounts
-
 // LanguagesArray is a custom type to handle unmarshalling languages.
 type LanguagesArray []map[string]LanguageCounts
 
@@ -65,19 +63,18 @@ func (languages LanguagesArray) ToMap() map[string]LanguageCounts {
 // UnmarshalBSON handles the custom unmarshalling of the languages field.
 func (d *DocsPage) UnmarshalBSON(data []byte) error {
 	aux := struct {
-		ID                string    `bson:"_id"`
-		CodeNodesTotal    int       `bson:"code_nodes_total"`
-		DateAdded         time.Time `bson:"date_added"`
-		DateLastUpdated   time.Time `bson:"date_last_updated"`
-		IoCodeBlocksTotal int       `bson:"io_code_blocks_total"`
-		Languages         Languages `bson:"languages"`
-		//Languages            LanguagesArray `bson:"languages"`
-		LiteralIncludesTotal int         `bson:"literal_includes_total"`
-		Nodes                *[]CodeNode `bson:"nodes"`
-		PageURL              string      `bson:"page_url"`
-		ProjectName          string      `bson:"project_name"`
-		Product              string      `bson:"product"`
-		SubProduct           string      `bson:"sub_product,omitempty"`
+		ID                   string         `bson:"_id"`
+		CodeNodesTotal       int            `bson:"code_nodes_total"`
+		DateAdded            time.Time      `bson:"date_added"`
+		DateLastUpdated      time.Time      `bson:"date_last_updated"`
+		IoCodeBlocksTotal    int            `bson:"io_code_blocks_total"`
+		Languages            LanguagesArray `bson:"languages"`
+		LiteralIncludesTotal int            `bson:"literal_includes_total"`
+		Nodes                *[]CodeNode    `bson:"nodes"`
+		PageURL              string         `bson:"page_url"`
+		ProjectName          string         `bson:"project_name"`
+		Product              string         `bson:"product"`
+		SubProduct           string         `bson:"sub_product,omitempty"`
 	}{}
 	if err := bson.Unmarshal(data, &aux); err != nil {
 		return err
@@ -88,7 +85,6 @@ func (d *DocsPage) UnmarshalBSON(data []byte) error {
 	d.DateAdded = aux.DateAdded
 	d.DateLastUpdated = aux.DateLastUpdated
 	d.IoCodeBlocksTotal = aux.IoCodeBlocksTotal
-	d.Languages = aux.Languages
 	//d.Languages = aux.Languages.ToMap()
 	d.LiteralIncludesTotal = aux.LiteralIncludesTotal
 	d.Nodes = aux.Nodes

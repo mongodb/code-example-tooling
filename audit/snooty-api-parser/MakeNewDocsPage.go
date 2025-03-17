@@ -43,11 +43,13 @@ func MakeNewDocsPage(data types.PageWrapper, siteUrl string, report types.Projec
 	}
 	report.Changes = append(report.Changes, newPageChange)
 
-	newCodeExamplesChange := types.Change{
-		Type: types.PageCreated,
-		Data: fmt.Sprintf("Page ID: %s, created %d new code examples", pageId, len(newCodeNodes)),
+	if len(newCodeNodes) > 0 {
+		newCodeExamplesChange := types.Change{
+			Type: types.CodeExampleCreated,
+			Data: fmt.Sprintf("Page ID: %s, created %d new code examples", pageId, len(newCodeNodes)),
+		}
+		report.Changes = append(report.Changes, newCodeExamplesChange)
 	}
-	report.Changes = append(report.Changes, newCodeExamplesChange)
 
 	newCodeNodeCount := len(newCodeNodes)
 	if incomingCodeNodeCount != newCodeNodeCount {

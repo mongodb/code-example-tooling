@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/tmc/langchaingo/llms/ollama"
+	add_code_examples "snooty-api-parser/add-code-examples"
 	"snooty-api-parser/compare-code-examples"
 	"snooty-api-parser/snooty"
 	"snooty-api-parser/types"
@@ -13,27 +14,46 @@ import (
 func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper, report types.ProjectReport, llm *ollama.LLM, ctx context.Context) (*types.DocsPage, types.ProjectReport) {
 	atlasDocCodeNodeCount := existingPage.CodeNodesTotal
 	incomingCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes := snooty.GetCodeExamplesFromIncomingData(data.Data.AST)
+	maybePageKeywords := snooty.GetMetaKeywords(data.Data.AST.Children)
+	newAppliedUsageExampleCount := 0
 	incomingCodeNodePageCount := len(incomingCodeNodes)
 	incomingLiteralIncludeNodeCount := len(incomingLiteralIncludeNodes)
 	incomingIoCodeBlockNodeCount := len(incomingIoCodeBlockNodes)
 	report = IncrementProjectCountsForExistingPage(incomingCodeNodePageCount, incomingLiteralIncludeNodeCount, incomingIoCodeBlockNodeCount, existingPage, report)
+	var pageWithUpdatedKeywords *types.DocsPage
+	if len(maybePageKeywords) > 0 {
+		// If the page has keywords, and it's not the same number of keywords that are coming in from Snooty, update the keywords
+		if len(existingPage.Keywords) != len(maybePageKeywords) {
+			pageWithUpdatedKeywords = &existingPage
+			pageWithUpdatedKeywords.Keywords = maybePageKeywords
+			pageWithUpdatedKeywords.DateLastUpdated = time.Now()
+			keywordsUpdatedChange := types.Change{
+				Type: types.KeywordsUpdated,
+				Data: fmt.Sprintf("Page ID: %s", existingPage.ID),
+			}
+			report.Changes = append(report.Changes, keywordsUpdatedChange)
+		}
+	}
+
 	if incomingCodeNodePageCount == atlasDocCodeNodeCount {
-		// TODO: update keywords for the page even if there are no code nodes changes (should also update date updated date)
-		// TODO: Add new change type for keywords update
-		// The page doesn't have any changes - don't bother returning the page, but do return the updated project counter
+		// The page doesn't have any code changes we can return a page with updated keywords (if it exists) and an updated report
 		report.Counter.UnchangedCodeNodesCount += atlasDocCodeNodeCount
-		return nil, report
+		return pageWithUpdatedKeywords, report
 	}
 
 	// If the incoming page node count does not equal the existing atlas doc node count, we need to update the page
-	updatedDocsPage := existingPage
+	var updatedDocsPage types.DocsPage
+	if pageWithUpdatedKeywords != nil {
+		updatedDocsPage = *pageWithUpdatedKeywords
+	} else {
+		updatedDocsPage = existingPage
+	}
 	var isDriversProject bool
 	if existingPage.Product == "Drivers" {
 		isDriversProject = true
 	} else {
 		isDriversProject = false
 	}
-	updatedDocsPage.Keywords = snooty.GetMetaKeywords(data.Data.AST.Children)
 
 	// If examples exist already and we are getting no incoming examples from the API, the existing examples have been removed from the incoming page
 	if existingPage.Nodes != nil && incomingCodeNodePageCount == 0 {
@@ -107,6 +127,9 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 		for _, snootyNode := range incomingCodeNodes {
 			newNode := snooty.MakeCodeNodeFromSnootyAST(snootyNode, llm, ctx, isDriversProject)
 			newCodeNodes = append(newCodeNodes, newNode)
+			if add_code_examples.IsNewAppliedUsageExample(newNode) {
+				newAppliedUsageExampleCount++
+			}
 		}
 		newCodeNodeCount := len(newCodeNodes)
 		updatedDocsPage.Nodes = &newCodeNodes
@@ -135,6 +158,14 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 				Type: types.CodeExampleCreated,
 				Data: fmt.Sprintf("Page ID: %s, %d new code examples added", existingPage.ID, newCodeNodeCount)}
 			report.Changes = append(report.Changes, newExamplesChange)
+		}
+		if newAppliedUsageExampleCount > 0 {
+			report.Counter.NewAppliedUsageExamplesCount += newAppliedUsageExampleCount
+			newAppliedUsageExampleChange := types.Change{
+				Type: types.AppliedUsageExampleAdded,
+				Data: fmt.Sprintf("Page ID: %s, %d new applied usage examples added", existingPage.ID, newAppliedUsageExampleCount),
+			}
+			report.Changes = append(report.Changes, newAppliedUsageExampleChange)
 		}
 	} else if existingPage.Nodes == nil && incomingCodeNodePageCount == 0 {
 		// No code examples to deal with here - just return nil and the unchanged report

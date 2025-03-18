@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/tmc/langchaingo/llms/ollama"
+	add_code_examples "snooty-api-parser/add-code-examples"
 	"snooty-api-parser/snooty"
 	"snooty-api-parser/types"
 	"snooty-api-parser/utils"
@@ -24,10 +25,14 @@ func MakeNewDocsPage(data types.PageWrapper, siteUrl string, report types.Projec
 	} else {
 		isDriversProject = false
 	}
+	newAppliedUsageExampleCount := 0
 	var newCodeNodes []types.CodeNode
 	for _, node := range incomingCodeNodes {
 		newNode := snooty.MakeCodeNodeFromSnootyAST(node, llm, ctx, isDriversProject)
 		newCodeNodes = append(newCodeNodes, newNode)
+		if add_code_examples.IsNewAppliedUsageExample(newNode) {
+			newAppliedUsageExampleCount++
+		}
 	}
 	maybeKeywords := snooty.GetMetaKeywords(data.Data.AST.Children)
 
@@ -49,6 +54,15 @@ func MakeNewDocsPage(data types.PageWrapper, siteUrl string, report types.Projec
 			Data: fmt.Sprintf("Page ID: %s, created %d new code examples", pageId, len(newCodeNodes)),
 		}
 		report.Changes = append(report.Changes, newCodeExamplesChange)
+	}
+
+	if newAppliedUsageExampleCount > 0 {
+		report.Counter.NewAppliedUsageExamplesCount += newAppliedUsageExampleCount
+		newAppliedUsageExampleChange := types.Change{
+			Type: types.AppliedUsageExampleAdded,
+			Data: fmt.Sprintf("Page ID: %s, created %d new applied usage examples", pageId, newAppliedUsageExampleCount),
+		}
+		report.Changes = append(report.Changes, newAppliedUsageExampleChange)
 	}
 
 	newCodeNodeCount := len(newCodeNodes)

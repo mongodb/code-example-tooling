@@ -1,19 +1,20 @@
 package types
 
 type ProjectCounts struct {
-	NewPagesCount               int
-	IncomingCodeNodesCount      int
-	IncomingLiteralIncludeCount int
-	IncomingIoCodeBlockCount    int
-	RemovedCodeNodesCount       int
-	UpdatedCodeNodesCount       int
-	UnchangedCodeNodesCount     int
-	NewCodeNodesCount           int
-	ExistingCodeNodesCount      int
-	ExistingLiteralIncludeCount int
-	ExistingIoCodeBlockCount    int
-	RemovedPagesCount           int
-	TotalCurrentPageCount       int
+	NewPagesCount                int
+	IncomingCodeNodesCount       int
+	IncomingLiteralIncludeCount  int
+	IncomingIoCodeBlockCount     int
+	RemovedCodeNodesCount        int
+	UpdatedCodeNodesCount        int
+	UnchangedCodeNodesCount      int
+	NewCodeNodesCount            int
+	ExistingCodeNodesCount       int
+	ExistingLiteralIncludeCount  int
+	ExistingIoCodeBlockCount     int
+	RemovedPagesCount            int
+	TotalCurrentPageCount        int
+	NewAppliedUsageExamplesCount int
 }
 
 // ChangeType represents the type of change.
@@ -25,6 +26,7 @@ const (
 	PageCreated ChangeType = iota
 	PageUpdated
 	PageRemoved
+	KeywordsUpdated
 	CodeExampleCreated
 	CodeExampleUpdated
 	CodeExampleRemoved
@@ -56,7 +58,7 @@ type Issue struct {
 
 // String returns a string representation of the ChangeType for easier readability.
 func (ct ChangeType) String() string {
-	return [...]string{"Page created", "Page updated", "Page removed", "Code example created", "Code example updated", "Code example removed", "Code node count change", "literalinclude count change", "io-code-block count change", "Project summary node count change", "Project summary page count change", "Applied usage example added"}[ct]
+	return [...]string{"Page created", "Page updated", "Page removed", "Keywords updated", "Code example created", "Code example updated", "Code example removed", "Code node count change", "literalinclude count change", "io-code-block count change", "Project summary node count change", "Project summary page count change", "Applied usage example added"}[ct]
 }
 
 // String returns a string representation of the IssueType for easier readability.

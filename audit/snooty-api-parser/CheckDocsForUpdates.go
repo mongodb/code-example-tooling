@@ -145,6 +145,9 @@ func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjec
 	} else if len(report.Issues) == 0 {
 		log.Printf("\nNo issues with data in project %s\n", project.ProjectName)
 	}
+	if report.Counter.NewAppliedUsageExamplesCount > 0 {
+		log.Printf("\nNew applied usage examples for %s: %d\n", project.ProjectName, report.Counter.NewAppliedUsageExamplesCount)
+	}
 
 	// At this point, we have all the updated pages and an updated summary. Write updates to Atlas.
 	db.BatchUpdateCollection(project.ProjectName, newPages, updatedPages, *summaryDoc)

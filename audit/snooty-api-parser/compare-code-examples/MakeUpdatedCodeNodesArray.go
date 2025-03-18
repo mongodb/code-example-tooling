@@ -3,6 +3,7 @@ package compare_code_examples
 import (
 	"context"
 	"github.com/tmc/langchaingo/llms/ollama"
+	add_code_examples "snooty-api-parser/add-code-examples"
 	"snooty-api-parser/types"
 )
 
@@ -31,12 +32,21 @@ func MakeUpdatedCodeNodesArray(removedCodeNodes []types.CodeNode,
 		existingHashCountMap[existingNode.Code]++
 	}
 	var unchangedCodeNodes []types.CodeNode
+	newAppliedUsageExampleCounts := 0
 
 	// Call all the 'Handle' functions in sequence
 	unchangedCodeNodes = HandleUnchangedPageNodes(existingHashCountMap, unchangedPageNodes, unchangedPageNodesSha256CodeNodeLookup)
 	updatedCodeNodes := HandleUpdatedPageNodes(updatedPageNodes, updatedPageNodesSha256CodeNodeLookup)
 	newCodeNodes := HandleNewPageNodes(newPageNodes, llm, ctx, isDriversProject)
 	removedCodeNodesUpdatedForRemoval := HandleRemovedCodeNodes(removedCodeNodes)
+	
+	if len(newCodeNodes) > 0 {
+		for _, node := range newCodeNodes {
+			if add_code_examples.IsNewAppliedUsageExample(node) {
+				newAppliedUsageExampleCounts++
+			}
+		}
+	}
 
 	// Make the updated []types.CodeNode array
 	aggregateCodeNodeChanges = append(aggregateCodeNodeChanges, unchangedCodeNodes...)
@@ -45,6 +55,6 @@ func MakeUpdatedCodeNodesArray(removedCodeNodes []types.CodeNode,
 	aggregateCodeNodeChanges = append(aggregateCodeNodeChanges, removedCodeNodesUpdatedForRemoval...)
 
 	// Increment project counters
-	report = UpdateProjectReportForUpdatedCodeNodes(report, pageId, incomingCount, existingNodeCount, len(unchangedCodeNodes), len(updatedCodeNodes), len(newCodeNodes), len(removedCodeNodesUpdatedForRemoval), len(aggregateCodeNodeChanges))
+	report = UpdateProjectReportForUpdatedCodeNodes(report, pageId, incomingCount, existingNodeCount, len(unchangedCodeNodes), len(updatedCodeNodes), len(newCodeNodes), len(removedCodeNodesUpdatedForRemoval), len(aggregateCodeNodeChanges), newAppliedUsageExampleCounts)
 	return aggregateCodeNodeChanges, report
 }

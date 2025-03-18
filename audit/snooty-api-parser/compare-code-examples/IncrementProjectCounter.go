@@ -5,7 +5,7 @@ import (
 	"snooty-api-parser/types"
 )
 
-func UpdateProjectReportForUpdatedCodeNodes(report types.ProjectReport, pageId string, incomingCount int, existingCount int, unchangedCount int, updatedCount int, newCount int, removedCount int, aggregateCodeNodeChangeCount int) types.ProjectReport {
+func UpdateProjectReportForUpdatedCodeNodes(report types.ProjectReport, pageId string, incomingCount int, existingCount int, unchangedCount int, updatedCount int, newCount int, removedCount int, aggregateCodeNodeChangeCount int, newAppliedUsageExampleCount int) types.ProjectReport {
 	if newCount > 0 {
 		report.Counter.NewCodeNodesCount += newCount
 		newChange := types.Change{
@@ -32,6 +32,14 @@ func UpdateProjectReportForUpdatedCodeNodes(report types.ProjectReport, pageId s
 			Data: fmt.Sprintf("Page ID: %s, removed %d code examples", pageId, removedCount),
 		}
 		report.Changes = append(report.Changes, removedChange)
+	}
+	if newAppliedUsageExampleCount > 0 {
+		report.Counter.NewAppliedUsageExamplesCount += newAppliedUsageExampleCount
+		newAppliedUsageExamplesChange := types.Change{
+			Type: types.AppliedUsageExampleAdded,
+			Data: fmt.Sprintf("Page ID: %s, %d new applied usage examples", pageId, newAppliedUsageExampleCount),
+		}
+		report.Changes = append(report.Changes, newAppliedUsageExamplesChange)
 	}
 	countForIncomingChanges := unchangedCount + updatedCount + newCount
 	if countForIncomingChanges != incomingCount {

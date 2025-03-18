@@ -25,6 +25,10 @@ func moveCursorUp(lines int) {
 	fmt.Printf("\033[%dF", lines) // ANSI escape code to move the cursor up 'lines' lines
 }
 
+func moveCursorDown(lines int) {
+	fmt.Printf("\033[%dB", lines) // ANSI escape code to move the cursor down 'lines' lines
+}
+
 func SetUpProgressDisplay(totalProjects int, docsPages int, name string) {
 	primaryProgress = 0
 	primaryTarget = totalProjects
@@ -72,6 +76,10 @@ func PrintSecondaryProgressIndicator() {
 	secondaryBar := fmt.Sprintf("[%s%s]", repeat(completedProgressCharacter, secondaryNumHashes), repeat(incompleteProgressCharacter, barWidth-secondaryNumHashes))
 	indicator := fmt.Sprintf("Pages in %s progress: %s %.2f%%", projectName, secondaryBar, secondaryPercent)
 	fmt.Println(padOutput(indicator))
+}
+
+func FinishPrintingProgressIndicators() {
+	moveCursorDown(2)
 }
 
 func repeat(s string, count int) string {

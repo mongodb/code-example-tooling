@@ -57,28 +57,28 @@ func main() {
 	//projectsToParse := snooty.GetProjects(client)
 
 	// Uncomment to parse a single project during testing
-	//sparkConnector := types.DocsProjectDetails{
-	//	ProjectName:  "spark-connector",
-	//	ActiveBranch: "v10.4",
-	//	ProdUrl:      "https://mongodb.com/docs/spark-connector/current",
-	//}
-	//pyMongo := types.DocsProjectDetails{
-	//	ProjectName:  "pymongo",
-	//	ActiveBranch: "v4.11",
-	//	ProdUrl:      "https://mongodb.com/docs/languages/python/pymongo-driver/current",
-	//}
-	//cDriver := types.DocsProjectDetails{
-	//	ProjectName:  "c",
-	//	ActiveBranch: "v1.30",
-	//	ProdUrl:      "https://mongodb.com/docs/languages/c/c-driver/current",
-	//}
-	//
+	sparkConnector := types.DocsProjectDetails{
+		ProjectName:  "spark-connector",
+		ActiveBranch: "v10.4",
+		ProdUrl:      "https://mongodb.com/docs/spark-connector/current",
+	}
+	pyMongo := types.DocsProjectDetails{
+		ProjectName:  "pymongo",
+		ActiveBranch: "v4.11",
+		ProdUrl:      "https://mongodb.com/docs/languages/python/pymongo-driver/current",
+	}
+	cDriver := types.DocsProjectDetails{
+		ProjectName:  "c",
+		ActiveBranch: "v1.30",
+		ProdUrl:      "https://mongodb.com/docs/languages/c/c-driver/current",
+	}
+
 	node := types.DocsProjectDetails{
 		ProjectName:  "node",
 		ActiveBranch: "v6.14",
 		ProdUrl:      "https://mongodb.com/docs/drivers/node/current",
 	}
-	projectsToParse := []types.DocsProjectDetails{node}
+	projectsToParse := []types.DocsProjectDetails{sparkConnector, pyMongo, cDriver, node}
 
 	//architectureCenter := types.DocsProjectDetails{
 	//	ProjectName:  "atlas-architecture",
@@ -131,6 +131,7 @@ func main() {
 			utils.UpdatePrimaryTarget()
 		}
 	}
+	utils.FinishPrintingProgressIndicators()
 
 	// Log some completion details to console
 	endTime := time.Now()

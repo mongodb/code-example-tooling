@@ -11,6 +11,7 @@ import (
 // of []types.CodeNode for inserting into Atlas. Because the code examples don't have a unique identifier to perform an
 // effective upsert operation, we'll replace the entire array of code examples every time there are updates.
 func MakeUpdatedCodeNodesArray(removedCodeNodes []types.CodeNode,
+	existingRemovedCodeNodes []types.CodeNode,
 	unchangedPageNodes []types.ASTNode,
 	unchangedPageNodesSha256CodeNodeLookup map[string]types.CodeNode,
 	updatedPageNodes []types.ASTNode,
@@ -39,7 +40,7 @@ func MakeUpdatedCodeNodesArray(removedCodeNodes []types.CodeNode,
 	updatedCodeNodes := HandleUpdatedPageNodes(updatedPageNodes, updatedPageNodesSha256CodeNodeLookup)
 	newCodeNodes := HandleNewPageNodes(newPageNodes, llm, ctx, isDriversProject)
 	removedCodeNodesUpdatedForRemoval := HandleRemovedCodeNodes(removedCodeNodes)
-	
+
 	if len(newCodeNodes) > 0 {
 		for _, node := range newCodeNodes {
 			if add_code_examples.IsNewAppliedUsageExample(node) {
@@ -56,5 +57,8 @@ func MakeUpdatedCodeNodesArray(removedCodeNodes []types.CodeNode,
 
 	// Increment project counters
 	report = UpdateProjectReportForUpdatedCodeNodes(report, pageId, incomingCount, existingNodeCount, len(unchangedCodeNodes), len(updatedCodeNodes), len(newCodeNodes), len(removedCodeNodesUpdatedForRemoval), len(aggregateCodeNodeChanges), newAppliedUsageExampleCounts)
+	// We don't want to report on any of the removed code nodes that were already on the page, but we do want to keep them
+	// around, so append them to the Nodes array after adding and reporting on the new stuff
+	aggregateCodeNodeChanges = append(aggregateCodeNodeChanges, existingRemovedCodeNodes...)
 	return aggregateCodeNodeChanges, report
 }

@@ -4,15 +4,26 @@ import (
 	"context"
 	"fmt"
 	"github.com/tmc/langchaingo/llms/ollama"
+	"log"
 	add_code_examples "snooty-api-parser/add-code-examples"
 	"snooty-api-parser/compare-code-examples"
+	"snooty-api-parser/db"
 	"snooty-api-parser/snooty"
 	"snooty-api-parser/types"
 	"time"
 )
 
 func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper, report types.ProjectReport, llm *ollama.LLM, ctx context.Context) (*types.DocsPage, types.ProjectReport) {
-	atlasDocCodeNodeCount := existingPage.CodeNodesTotal
+	var existingCurrentCodeNodes []types.CodeNode
+	var existingRemovedCodeNodes []types.CodeNode
+	// Some of the existing Nodes on the page could have been previously removed from the page. So we need to know which
+	// nodes are "currently" on the page, and which nodes have already been removed. The ones that are "currently" on the
+	// page should be used to compare code examples, but the ones that have already been removed from the page will be
+	// appended to the Nodes array without changes after making all the other updates.
+	if existingPage.Nodes != nil {
+		existingCurrentCodeNodes, existingRemovedCodeNodes = db.GetCurrentRemovedAtlasCodeNodes(*existingPage.Nodes)
+	}
+	atlasDocCurrentCodeNodeCount := len(existingCurrentCodeNodes)
 	incomingCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes := snooty.GetCodeExamplesFromIncomingData(data.Data.AST)
 	maybePageKeywords := snooty.GetMetaKeywords(data.Data.AST.Children)
 	newAppliedUsageExampleCount := 0
@@ -24,6 +35,8 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 	if len(maybePageKeywords) > 0 {
 		// If the page has keywords, and it's not the same number of keywords that are coming in from Snooty, update the keywords
 		if len(existingPage.Keywords) != len(maybePageKeywords) {
+			log.Printf("I am in UpdateExistingDocsPage, the existing page %s has %d keywords, the incoming page has %d keywords\n", existingPage.ID, len(existingPage.Keywords), len(maybePageKeywords))
+			log.Printf("Existing keywords are %v, incoming keywords are %v\n", existingPage.Keywords, maybePageKeywords)
 			pageWithUpdatedKeywords = &existingPage
 			pageWithUpdatedKeywords.Keywords = maybePageKeywords
 			pageWithUpdatedKeywords.DateLastUpdated = time.Now()
@@ -35,9 +48,9 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 		}
 	}
 
-	if incomingCodeNodePageCount == atlasDocCodeNodeCount {
+	if incomingCodeNodePageCount == atlasDocCurrentCodeNodeCount {
 		// The page doesn't have any code changes we can return a page with updated keywords (if it exists) and an updated report
-		report.Counter.UnchangedCodeNodesCount += atlasDocCodeNodeCount
+		report.Counter.UnchangedCodeNodesCount += atlasDocCurrentCodeNodeCount
 		return pageWithUpdatedKeywords, report
 	}
 
@@ -56,14 +69,21 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 	}
 
 	// If examples exist already and we are getting no incoming examples from the API, the existing examples have been removed from the incoming page
-	if existingPage.Nodes != nil && incomingCodeNodePageCount == 0 {
-		removedNodeCount := len(*existingPage.Nodes)
+	if existingCurrentCodeNodes != nil && incomingCodeNodePageCount == 0 {
+		newRemovedNodeCount := len(existingCurrentCodeNodes)
 		// Mark all nodes as removed
 		updatedCodeNodes := make([]types.CodeNode, 0)
-		for _, node := range *existingPage.Nodes {
+		for _, node := range existingCurrentCodeNodes {
 			node.DateRemoved = time.Now()
 			node.IsRemoved = true
 			updatedCodeNodes = append(updatedCodeNodes, node)
+		}
+		// Some removed nodes may already exist on the page. We don't want to count those in the "new removed nodes" count,
+		// but we do need to add them to the `Nodes` array if we don't want them to disappear.
+		if existingRemovedCodeNodes != nil && len(existingRemovedCodeNodes) > 0 {
+			for _, node := range existingRemovedCodeNodes {
+				updatedCodeNodes = append(updatedCodeNodes, node)
+			}
 		}
 		updatedDocsPage.Nodes = &updatedCodeNodes
 
@@ -90,11 +110,11 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 		}
 		report.Changes = append(report.Changes, pageUpdatedChange)
 
-		if removedNodeCount > 0 {
-			report.Counter.RemovedCodeNodesCount += removedNodeCount
+		if newRemovedNodeCount > 0 {
+			report.Counter.RemovedCodeNodesCount += newRemovedNodeCount
 			removedExamplesChange := types.Change{
 				Type: types.CodeExampleRemoved,
-				Data: fmt.Sprintf("Page ID: %s, removed %d examples, now %d", existingPage.ID, atlasDocCodeNodeCount, incomingCodeNodePageCount),
+				Data: fmt.Sprintf("Page ID: %s, removed %d examples, now %d", existingPage.ID, atlasDocCurrentCodeNodeCount, incomingCodeNodePageCount),
 			}
 			report.Changes = append(report.Changes, removedExamplesChange)
 		}
@@ -121,7 +141,7 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 			report.Changes = append(report.Changes, ioCodeBlockCountChange)
 		}
 
-	} else if existingPage.Nodes == nil && incomingCodeNodePageCount > 0 {
+	} else if atlasDocCurrentCodeNodeCount == 0 && incomingCodeNodePageCount > 0 {
 		// There are no existing code examples - they're all new - so just make new code examples
 		newCodeNodes := make([]types.CodeNode, 0)
 		for _, snootyNode := range incomingCodeNodes {
@@ -167,7 +187,7 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 			}
 			report.Changes = append(report.Changes, newAppliedUsageExampleChange)
 		}
-	} else if existingPage.Nodes == nil && incomingCodeNodePageCount == 0 {
+	} else if atlasDocCurrentCodeNodeCount == 0 && incomingCodeNodePageCount == 0 {
 		// No code examples to deal with here - just return nil and the unchanged report
 		return nil, report
 	} else {
@@ -183,7 +203,7 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 		// If some examples exist already, and some examples are coming in from snooty, they might be updated, new, removed, or unchanged.
 		// Handle those distinct cases.
 		var updatedCodeNodes []types.CodeNode
-		updatedCodeNodes, report = compare_code_examples.CompareExistingIncomingCodeExampleSlices(*existingPage.Nodes, incomingCodeNodes, report, existingPage.ID, llm, ctx, isDriversProject)
+		updatedCodeNodes, report = compare_code_examples.CompareExistingIncomingCodeExampleSlices(existingCurrentCodeNodes, existingRemovedCodeNodes, incomingCodeNodes, report, existingPage.ID, llm, ctx, isDriversProject)
 		updatedDocsPage.Nodes = &updatedCodeNodes
 
 		// Update the code node count, io-block-count and literalinclude count

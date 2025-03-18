@@ -75,6 +75,9 @@ func (d *DocsPage) UnmarshalBSON(data []byte) error {
 		ProjectName          string         `bson:"project_name"`
 		Product              string         `bson:"product"`
 		SubProduct           string         `bson:"sub_product,omitempty"`
+		Keywords             []string       `bson:"keywords,omitempty"`
+		DateRemoved          time.Time      `bson:"date_removed,omitempty"`
+		IsRemoved            bool           `bson:"is_removed,omitempty"`
 	}{}
 	if err := bson.Unmarshal(data, &aux); err != nil {
 		return err
@@ -92,6 +95,9 @@ func (d *DocsPage) UnmarshalBSON(data []byte) error {
 	d.ProjectName = aux.ProjectName
 	d.Product = aux.Product
 	d.SubProduct = aux.SubProduct
+	d.Keywords = aux.Keywords
+	d.DateRemoved = aux.DateRemoved
+	d.IsRemoved = aux.IsRemoved
 	return nil
 }
 

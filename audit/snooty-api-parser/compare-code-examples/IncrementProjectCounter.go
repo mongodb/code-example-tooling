@@ -20,7 +20,7 @@ func UpdateProjectReportForUpdatedCodeNodes(report types.ProjectReport, pageId s
 	if updatedCount > 0 {
 		report.Counter.UpdatedCodeNodesCount += updatedCount
 		removedChange := types.Change{
-			Type: types.CodeExampleRemoved,
+			Type: types.CodeExampleUpdated,
 			Data: fmt.Sprintf("Page ID: %s, updated %d code examples", pageId, updatedCount),
 		}
 		report.Changes = append(report.Changes, removedChange)

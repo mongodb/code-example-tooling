@@ -21,7 +21,7 @@ func GetAtlasPageData(collectionName string, docId string) *types.DocsPage {
 	}
 	client, err := mongo.Connect(options.Client().
 		ApplyURI(uri))
-	var dbName = "code_metrics"
+	var dbName = os.Getenv("DB_NAME")
 	var ctx = context.Background()
 	if err != nil {
 		log.Printf("Failed to connect to MongoDB: %v", err)

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"snooty-api-parser/types"
+	"strings"
 )
 
 func contains(slice []string, target string) bool {
@@ -18,10 +19,23 @@ func contains(slice []string, target string) bool {
 	return false // The target string is not found
 }
 
+func removeTrailingSlash(input string) string {
+	if strings.HasSuffix(input, "/") {
+		return input[:len(input)-1]
+	}
+	return input
+}
+
 func GetProjects(client *http.Client) []types.DocsProjectDetails {
 	env := os.Getenv("APP_ENV")
 	var response types.Response
-	if env == "production" {
+	if env == "testing" {
+		stubbedResponse := LoadJsonTestDataFromFile("projects-stub.json")
+		err := json.Unmarshal(stubbedResponse, &response)
+		if err != nil {
+			log.Fatalf("failed to unmarshal JSON: %s", err)
+		}
+	} else {
 		apiURL := "https://snooty-data-api.mongodb.com/prod/projects/"
 		resp, err := client.Get(apiURL)
 		if err != nil {
@@ -40,12 +54,6 @@ func GetProjects(client *http.Client) []types.DocsProjectDetails {
 			log.Fatalf("failed to read response body: %s", err)
 		}
 		err = json.Unmarshal(body, &response)
-		if err != nil {
-			log.Fatalf("failed to unmarshal JSON: %s", err)
-		}
-	} else {
-		stubbedResponse := LoadJsonTestDataFromFile("projects-stub.json")
-		err := json.Unmarshal(stubbedResponse, &response)
 		if err != nil {
 			log.Fatalf("failed to unmarshal JSON: %s", err)
 		}
@@ -73,8 +81,12 @@ func GetProjects(client *http.Client) []types.DocsProjectDetails {
 		if !contains(ignoreProjectNames, docsProject.Project) {
 			for _, branch := range docsProject.Branches {
 				if branch.Active && branch.IsStableBranch {
+					// Some of the FullUrl fields have trailing slashes, and some don't. When we use the ProdUrl to make
+					// the PageUrl, we add a slash, so we need to remove a trailing slash if one exists here so we don't
+					// have double slashes.
+					urlWithNoTrailingSlash := removeTrailingSlash(branch.FullUrl)
 					activeBranch = branch.GitBranchName
-					prodUrl = branch.FullUrl
+					prodUrl = urlWithNoTrailingSlash
 					break
 				}
 			}

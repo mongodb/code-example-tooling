@@ -15,6 +15,7 @@ func ConvertSnootyPageIdToProductionUrl(pageId string, siteUrl string) string {
 		// Join the remaining parts back into a string with "/" separator
 		result := strings.Join(remainingParts, "/")
 		// Append the page path to the production site URL
+
 		pageUrl = siteUrl + "/" + result
 	} else {
 		log.Println("The path", pageId, "does not have more than three parts to omit.")

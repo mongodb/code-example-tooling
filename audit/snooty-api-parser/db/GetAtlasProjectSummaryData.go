@@ -21,7 +21,7 @@ func GetAtlasProjectSummaryData(collectionName string) *types.CollectionReport {
 	}
 	client, err := mongo.Connect(options.Client().
 		ApplyURI(uri))
-	var dbName = "code_metrics"
+	var dbName = os.Getenv("DB_NAME")
 	var ctx = context.Background()
 	if err != nil {
 		log.Printf("Failed to connect to MongoDB: %v", err)

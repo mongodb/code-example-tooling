@@ -12,7 +12,7 @@ import (
 // times it appears on the incoming page, and add or remove instances to the []types.CodeNode array to match the existing
 // page count. We return the updated []types.CodeNode array. We append all the "Handle" function results to a slice,
 // and overwrite the document in the DB with the updated code nodes.
-func HandleUnchangedPageNodes(existingHashCountMap map[string]int, unchangedIncomingPageNodes []types.ASTNode, unchangedPageNodesSha256CodeNodeLookup map[string]types.CodeNode, pageId string) []types.CodeNode {
+func HandleUnchangedPageNodes(existingHashCountMap map[string]int, unchangedIncomingPageNodes []types.ASTNode, unchangedPageNodesSha256CodeNodeLookup map[string]types.CodeNode) []types.CodeNode {
 	codeNodesMatchingIncomingNodes := make([]types.CodeNode, 0)
 	unchangedIncomingHashCountMap := make(map[string]int)
 	unchangedCount := 0

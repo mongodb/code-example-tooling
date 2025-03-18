@@ -21,11 +21,8 @@ func padOutput(s string) string {
 	return fmt.Sprintf("%-*s", lineMaxWidth, s)
 }
 
-func moveCursorUp() {
-	fmt.Print("\033[F") // ANSI escape code to move the cursor up one line
-}
-func moveCursorUpToPrimary() {
-	fmt.Print("\033[F\033[F") // Move up two lines to reach the primary progress
+func moveCursorUp(lines int) {
+	fmt.Printf("\033[%dF", lines) // ANSI escape code to move the cursor up 'lines' lines
 }
 
 func SetUpProgressDisplay(totalProjects int, docsPages int, name string) {
@@ -41,7 +38,7 @@ func SetUpProgressDisplay(totalProjects int, docsPages int, name string) {
 func UpdateSecondaryTarget() {
 	if secondaryProgress < secondaryTarget {
 		secondaryProgress++
-		moveCursorUp()
+		moveCursorUp(1)
 		PrintSecondaryProgressIndicator()
 	}
 }
@@ -56,7 +53,7 @@ func SetNewSecondaryTarget(docsPages int, name string) {
 func UpdatePrimaryTarget() {
 	if primaryProgress < primaryTarget {
 		primaryProgress++
-		moveCursorUpToPrimary()
+		moveCursorUp(2)
 		PrintPrimaryProgressIndicator()
 	}
 }

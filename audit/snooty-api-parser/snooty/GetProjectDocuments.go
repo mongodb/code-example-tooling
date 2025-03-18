@@ -18,7 +18,17 @@ func GetProjectDocuments(docsProject types.DocsProjectDetails, client *http.Clie
 	env := os.Getenv("APP_ENV")
 	apiURL := fmt.Sprintf("https://snooty-data-api.mongodb.com/prod/projects/%s/%s/documents", docsProject.ProjectName, docsProject.ActiveBranch)
 	var reader bufio.Reader
-	if env == "production" {
+
+	if env == "testing" {
+		var stubbedResponse []byte
+		if docsProject.ProjectName == "spark-connector" {
+			stubbedResponse = LoadJsonTestDataFromFile("spark-connector-project-documents-stub.json")
+		} else if docsProject.ProjectName == "c" {
+			stubbedResponse = LoadJsonTestDataFromFile("c-driver-project-documents-stub.json")
+		}
+		body := io.NopCloser(strings.NewReader(string(stubbedResponse)))
+		reader = *bufio.NewReader(body)
+	} else {
 		resp, err := client.Get(apiURL)
 		if err != nil {
 			log.Fatalf("Failed to make request for docs project %s: %v", docsProject.ProjectName, err)
@@ -31,15 +41,6 @@ func GetProjectDocuments(docsProject types.DocsProjectDetails, client *http.Clie
 		}
 		log.Printf("Successfully retrieved a Snooty response for docs project %s. Deserializing to PageWrapper now.", docsProject.ProjectName)
 		reader = *bufio.NewReader(resp.Body)
-	} else {
-		var stubbedResponse []byte
-		if docsProject.ProjectName == "spark-connector" {
-			stubbedResponse = LoadJsonTestDataFromFile("spark-connector-project-documents-stub.json")
-		} else if docsProject.ProjectName == "c" {
-			stubbedResponse = LoadJsonTestDataFromFile("c-driver-project-documents-stub.json")
-		}
-		body := io.NopCloser(strings.NewReader(string(stubbedResponse)))
-		reader = *bufio.NewReader(body)
 	}
 
 	// A DOP bug has introduced duplicate pages for some projects - one page with a GitHub username "netlify", and one with
@@ -80,6 +81,7 @@ func GetProjectDocuments(docsProject types.DocsProjectDetails, client *http.Clie
 		"kotlin-sync",
 		"atlas-architecture",
 		"django",
+		"java-rs",
 	}
 
 	var projectDocuments []types.PageWrapper

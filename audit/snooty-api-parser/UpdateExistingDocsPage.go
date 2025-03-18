@@ -18,6 +18,8 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 	incomingIoCodeBlockNodeCount := len(incomingIoCodeBlockNodes)
 	report = IncrementProjectCountsForExistingPage(incomingCodeNodePageCount, incomingLiteralIncludeNodeCount, incomingIoCodeBlockNodeCount, existingPage, report)
 	if incomingCodeNodePageCount == atlasDocCodeNodeCount {
+		// TODO: update keywords for the page even if there are no code nodes changes (should also update date updated date)
+		// TODO: Add new change type for keywords update
 		// The page doesn't have any changes - don't bother returning the page, but do return the updated project counter
 		report.Counter.UnchangedCodeNodesCount += atlasDocCodeNodeCount
 		return nil, report
@@ -68,12 +70,14 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 		}
 		report.Changes = append(report.Changes, pageUpdatedChange)
 
-		report.Counter.RemovedCodeNodesCount += removedNodeCount
-		removedExamplesChange := types.Change{
-			Type: types.CodeExampleRemoved,
-			Data: fmt.Sprintf("Page ID: %s, removed %d examples, now %d", existingPage.ID, atlasDocCodeNodeCount, incomingCodeNodePageCount),
+		if removedNodeCount > 0 {
+			report.Counter.RemovedCodeNodesCount += removedNodeCount
+			removedExamplesChange := types.Change{
+				Type: types.CodeExampleRemoved,
+				Data: fmt.Sprintf("Page ID: %s, removed %d examples, now %d", existingPage.ID, atlasDocCodeNodeCount, incomingCodeNodePageCount),
+			}
+			report.Changes = append(report.Changes, removedExamplesChange)
 		}
-		report.Changes = append(report.Changes, removedExamplesChange)
 
 		if oldCodeNodeCount != 0 {
 			codeNodeCountChange := types.Change{
@@ -125,11 +129,13 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 			Data: fmt.Sprintf("Page ID: %s", existingPage.ID),
 		}
 		report.Changes = append(report.Changes, pageUpdatedChange)
-		report.Counter.NewCodeNodesCount += len(newCodeNodes)
-		newExamplesChange := types.Change{
-			Type: types.CodeExampleCreated,
-			Data: fmt.Sprintf("Page ID: %s, %d new code examples added", existingPage.ID, newCodeNodeCount)}
-		report.Changes = append(report.Changes, newExamplesChange)
+		if newCodeNodeCount > 0 {
+			report.Counter.NewCodeNodesCount += newCodeNodeCount
+			newExamplesChange := types.Change{
+				Type: types.CodeExampleCreated,
+				Data: fmt.Sprintf("Page ID: %s, %d new code examples added", existingPage.ID, newCodeNodeCount)}
+			report.Changes = append(report.Changes, newExamplesChange)
+		}
 	} else if existingPage.Nodes == nil && incomingCodeNodePageCount == 0 {
 		// No code examples to deal with here - just return nil and the unchanged report
 		return nil, report

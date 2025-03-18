@@ -57,7 +57,7 @@ func CompareExistingIncomingCodeExampleSlices(existingNodes []types.CodeNode, in
 
 	codeNodesToReturn := make([]types.CodeNode, 0)
 	codeNodesToReturn, report = MakeUpdatedCodeNodesArray(removedNodes, unchangedPageNodes,
-		incomingUnchangedSha256ToCodeNodeMap, updatedPageNodes, incomingUpdatedSha256ToCodeNodeMap, newPageNodes,
+		existingSha256ToCodeNodeMap, updatedPageNodes, incomingUpdatedSha256ToCodeNodeMap, newPageNodes,
 		existingNodes, incomingCount, report, pageId, llm, ctx, isDriversProject)
 	return codeNodesToReturn, report
 }

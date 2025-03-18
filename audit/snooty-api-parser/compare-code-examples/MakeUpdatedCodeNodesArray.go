@@ -33,7 +33,7 @@ func MakeUpdatedCodeNodesArray(removedCodeNodes []types.CodeNode,
 	var unchangedCodeNodes []types.CodeNode
 
 	// Call all the 'Handle' functions in sequence
-	unchangedCodeNodes = HandleUnchangedPageNodes(existingHashCountMap, unchangedPageNodes, unchangedPageNodesSha256CodeNodeLookup, pageId)
+	unchangedCodeNodes = HandleUnchangedPageNodes(existingHashCountMap, unchangedPageNodes, unchangedPageNodesSha256CodeNodeLookup)
 	updatedCodeNodes := HandleUpdatedPageNodes(updatedPageNodes, updatedPageNodesSha256CodeNodeLookup)
 	newCodeNodes := HandleNewPageNodes(newPageNodes, llm, ctx, isDriversProject)
 	removedCodeNodesUpdatedForRemoval := HandleRemovedCodeNodes(removedCodeNodes)

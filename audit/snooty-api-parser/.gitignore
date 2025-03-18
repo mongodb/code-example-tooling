@@ -1,1 +1,3 @@
 app.log
+.env.development
+.env.production

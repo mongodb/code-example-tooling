@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/joho/godotenv"
 	"github.com/tmc/langchaingo/llms/ollama"
 	"log"
 	"net/http"
@@ -15,7 +16,7 @@ import (
 )
 
 func main() {
-	// Set up logging + a console display as this can take a long time
+	// Set up logging + a console display as this tool can take a long time to run
 	startTime := time.Now()
 	formattedTime := startTime.Format("2006-01-02 15:04:05")
 	fmt.Println("Starting at ", formattedTime)
@@ -25,6 +26,28 @@ func main() {
 	}
 	defer file.Close()
 	log.SetOutput(file)
+
+	// Determine the environment
+	env := os.Getenv("APP_ENV")
+	if env == "" {
+		log.Fatal("APP_ENV is not set")
+	}
+	log.Println("Running the tool for APP_ENV:", env)
+	// Load the appropriate .env file
+	var envFile string
+	switch env {
+	case "development":
+		envFile = ".env.development"
+	case "production":
+		envFile = ".env.production"
+	default:
+		log.Fatalf("Unknown environment: %s", env)
+	}
+	// Load the .env file
+	err = godotenv.Load(envFile)
+	if err != nil {
+		log.Fatalf("Error loading %s file", envFile)
+	}
 
 	// Set up the HTTP client to reuse across API calls
 	client := &http.Client{
@@ -50,19 +73,19 @@ func main() {
 	//	ProdUrl:      "https://mongodb.com/docs/languages/c/c-driver/current",
 	//}
 	//
-	//node := types.DocsProjectDetails{
-	//	ProjectName:  "node",
-	//	ActiveBranch: "v6.14",
-	//	ProdUrl:      "https://mongodb.com/docs/drivers/node/current",
-	//}
-	//projectsToParse := []types.DocsProjectDetails{node}
-
-	architectureCenter := types.DocsProjectDetails{
-		ProjectName:  "atlas-architecture",
-		ActiveBranch: "main",
-		ProdUrl:      "https://mongodb.com/docs/atlas/architecture",
+	node := types.DocsProjectDetails{
+		ProjectName:  "node",
+		ActiveBranch: "v6.14",
+		ProdUrl:      "https://mongodb.com/docs/drivers/node/current",
 	}
-	projectsToParse := []types.DocsProjectDetails{architectureCenter}
+	projectsToParse := []types.DocsProjectDetails{node}
+
+	//architectureCenter := types.DocsProjectDetails{
+	//	ProjectName:  "atlas-architecture",
+	//	ActiveBranch: "main",
+	//	ProdUrl:      "https://mongodb.com/docs/atlas/architecture",
+	//}
+	//projectsToParse := []types.DocsProjectDetails{architectureCenter}
 
 	// Finish setting up console display to show progress during run
 	totalProjects := len(projectsToParse)

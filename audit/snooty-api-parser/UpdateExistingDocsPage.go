@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/tmc/langchaingo/llms/ollama"
-	"log"
 	add_code_examples "snooty-api-parser/add-code-examples"
 	"snooty-api-parser/compare-code-examples"
 	"snooty-api-parser/db"
@@ -35,8 +34,6 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 	if len(maybePageKeywords) > 0 {
 		// If the page has keywords, and it's not the same number of keywords that are coming in from Snooty, update the keywords
 		if len(existingPage.Keywords) != len(maybePageKeywords) {
-			log.Printf("I am in UpdateExistingDocsPage, the existing page %s has %d keywords, the incoming page has %d keywords\n", existingPage.ID, len(existingPage.Keywords), len(maybePageKeywords))
-			log.Printf("Existing keywords are %v, incoming keywords are %v\n", existingPage.Keywords, maybePageKeywords)
 			pageWithUpdatedKeywords = &existingPage
 			pageWithUpdatedKeywords.Keywords = maybePageKeywords
 			pageWithUpdatedKeywords.DateLastUpdated = time.Now()

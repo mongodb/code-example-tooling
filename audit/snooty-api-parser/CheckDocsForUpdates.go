@@ -2,153 +2,62 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/tmc/langchaingo/llms/ollama"
-	"log"
 	"snooty-api-parser/db"
 	"snooty-api-parser/types"
 	"snooty-api-parser/utils"
 )
 
+// CheckDocsForUpdates takes the slice of incoming pages for a given project that we got from the Snooty Data API, plus
+// other things initialized in main() that are needed here. We iterate through the pages in the project, checking for
+// things that need to be added, removed, or updated. We compile a report for the project, which we're currently outputting
+// to a log file on the local file system. Then, we perform a batch update with all the changes for this project.
 func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjectDetails, llm *ollama.LLM, ctx context.Context, report types.ProjectReport) {
-	incomingPageIds := make(map[string]bool)
+	incomingPageIdsMatchingExistingPages := make(map[string]bool)
 	incomingPageCount := len(docsPages)
 	var newPageIds []string
 	var newPages []types.DocsPage
 	var updatedPages []types.DocsPage
 	for _, page := range docsPages {
-		atlasDocId := utils.ConvertSnootyPageIdToAtlasPageId(page.Data.PageID)
-		incomingPageIds[atlasDocId] = true
-		atlasDocument := db.GetAtlasPageData(project.ProjectName, atlasDocId)
-		// If there is no existing document in Atlas that matches the page, we need to make a new page
-		if atlasDocument == nil {
-			var newPage types.DocsPage
-			newPage, report = MakeNewDocsPage(page, project.ProdUrl, report, llm, ctx)
-			newPageIds = append(newPageIds, atlasDocId)
-			newPages = append(newPages, newPage)
+		// The Snooty Data API returns pages that may have been deleted. If the page is deleted, we want to check and see
+		// if it exists already in the DB, and delete it if it does. If we haven't already made an entry for it, we
+		// don't need to do anything else.
+		if page.Data.Deleted {
+			HandleDeletedIncomingPages(project.ProjectName, page)
 		} else {
-			// If there is an existing document in Atlas, update the existing page
-			// If the code example counts are the same on the incoming page as they are on the existing page,
-			// we treat that as an unchanged page and it does not return an updated page - it returns nil
-			var updatedPage *types.DocsPage
-			updatedPage, report = UpdateExistingDocsPage(*atlasDocument, page, report, llm, ctx)
-			if updatedPage != nil {
-				updatedPages = append(updatedPages, *updatedPage)
+			maybeExistingPage := CheckForExistingPage(project.ProjectName, page)
+			if maybeExistingPage != nil {
+				// If there is an existing document in Atlas, update the existing page
+				// If the code example counts are the same on the incoming page as they are on the existing page,
+				// we treat that as an unchanged page and it does not return an updated page - it returns nil
+				incomingPageIdsMatchingExistingPages[maybeExistingPage.ID] = true
+				var updatedPage *types.DocsPage
+				updatedPage, report = UpdateExistingDocsPage(*maybeExistingPage, page, report, llm, ctx)
+				if updatedPage != nil {
+					updatedPages = append(updatedPages, *updatedPage)
+				}
+			} else {
+				// If there is no existing document in Atlas that matches the page, we need to make a new page
+				var newPage types.DocsPage
+				newPage, report = MakeNewDocsPage(page, project.ProdUrl, report, llm, ctx)
+				newPageIds = append(newPageIds, newPage.ID)
+				newPages = append(newPages, newPage)
 			}
 		}
 		utils.UpdateSecondaryTarget()
 	}
-	existingPageIds := db.GetAtlasPageIDs(project.ProjectName)
-	var removedPageIds []string
-	if existingPageIds != nil {
-		for _, existingId := range existingPageIds {
-			if !incomingPageIds[existingId] {
-				removedPageIds = append(removedPageIds, existingId)
-			}
-		}
-	}
-	for _, removedPageId := range removedPageIds {
-		atlasDocument := db.GetAtlasPageData(project.ProjectName, removedPageId)
-		if atlasDocument == nil {
-			var removedDocument *types.DocsPage
-			removedDocument, report = RemoveExistingPage(atlasDocument, report)
-			updatedPages = append(updatedPages, *removedDocument)
-		}
-	}
 
-	summaryDoc := db.GetAtlasProjectSummaryData(project.ProjectName)
-	var latestCollectionInfo types.CollectionInfoView
-	collectionVersionKey := ""
-	// If we haven't audited this collection before, there will be no collection info document
-	if summaryDoc == nil {
-		summaryDocPointer := db.MakeSummariesDocument(project, report)
-		summaryDoc = &summaryDocPointer
-		// If we're making a new summaries document, the only key is the current active branch
-		latestCollectionInfo = summaryDoc.Version[project.ActiveBranch]
-		collectionVersionKey = project.ActiveBranch
-	} else {
-		// If we have retrieved a summary doc from the DB, it may contain more than one version
-		elementIndex := 0
-		for version, info := range summaryDoc.Version {
-			if elementIndex == 0 {
-				latestCollectionInfo = info
-				collectionVersionKey = version
-				if len(summaryDoc.Version) > 1 {
-					elementIndex++
-				}
-			} else {
-				if info.LastUpdatedAtUTC.After(latestCollectionInfo.LastUpdatedAtUTC) {
-					latestCollectionInfo = info
-					collectionVersionKey = version
-					if elementIndex > len(summaryDoc.Version) {
-						elementIndex++
-					}
-				}
-			}
-		}
-	}
-	if project.ActiveBranch != collectionVersionKey {
-		// If the active branch doesn't match the most recent version, need to make a new CollectionInfoView for this document
-		updatedSummaryDoc := db.MakeNewCollectionVersionDocument(*summaryDoc, project, report)
-		summaryDoc = &updatedSummaryDoc
-	} else {
-		// If the active branch does match the most recent version, just need to update this version document's last updated date and counts
-		updatedSummaryDoc := db.UpdateCollectionVersionDocument(*summaryDoc, project, report)
-		summaryDoc = &updatedSummaryDoc
-	}
+	// After iterating through the incoming pages from the Snooty Data API, we need to figure out if any of the page IDs
+	// we had in the DB are not coming in from the incoming response. If so, we should delete those entries.
+	existingPageCount := db.HandleMissingPageIds(project.ProjectName, incomingPageIdsMatchingExistingPages)
 
-	// TODO: Move report updates out to a separate func
-	if latestCollectionInfo.TotalCodeCount != report.Counter.IncomingCodeNodesCount {
-		codeNodeCountChange := types.Change{
-			Type: types.ProjectSummaryCodeNodeCountChange,
-			Data: fmt.Sprintf("Project %s: code node count from summary was %d, now %d", project.ProjectName, latestCollectionInfo.TotalCodeCount, report.Counter.IncomingCodeNodesCount),
-		}
-		report.Changes = append(report.Changes, codeNodeCountChange)
-	}
-	sumOfExpectedCodeNodes := report.Counter.UpdatedCodeNodesCount + report.Counter.UnchangedCodeNodesCount + report.Counter.NewCodeNodesCount
-	if sumOfExpectedCodeNodes != report.Counter.IncomingCodeNodesCount {
-		codeNodeIssue := types.Issue{
-			Type: types.CodeNodeCountIssue,
-			Data: fmt.Sprintf("Project %s: expected code node sum %d, got %d - updatedCount: %d + unchangedCount %d + newCount %d", project.ProjectName, sumOfExpectedCodeNodes, report.Counter.IncomingCodeNodesCount, report.Counter.UpdatedCodeNodesCount, report.Counter.UnchangedCodeNodesCount, report.Counter.NewCodeNodesCount),
-		}
-		report.Issues = append(report.Issues, codeNodeIssue)
-	}
-	if latestCollectionInfo.TotalPageCount != incomingPageCount {
-		pageCountChange := types.Change{
-			Type: types.ProjectSummaryPageCountChange,
-			Data: fmt.Sprintf("Project %s: page count from summary was %d, now %d", project.ProjectName, latestCollectionInfo.TotalPageCount, incomingPageCount),
-		}
-		report.Changes = append(report.Changes, pageCountChange)
-	}
-	sumOfExpectedPages := len(existingPageIds) + report.Counter.NewPagesCount - report.Counter.RemovedPagesCount
-	if sumOfExpectedPages != incomingPageCount {
-		pageCountIssue := types.Issue{
-			Type: types.PageCountIssue,
-			Data: fmt.Sprintf("Project %s: expected current pages from summing changes is %d, got %d", project.ProjectName, sumOfExpectedPages, incomingPageCount),
-		}
-		report.Issues = append(report.Issues, pageCountIssue)
-	}
-	if len(report.Changes) > 0 {
-		log.Printf("\nProject changes for %s\n", project.ProjectName)
-		for _, change := range report.Changes {
-			log.Printf("%s: %s", change.Type.String(), change.Data.(string))
-		}
-	} else if len(report.Changes) == 0 {
-		log.Printf("\nProject changes for %s\n", project.ProjectName)
-		log.Println("No changes in project")
-	}
-	if len(report.Issues) > 0 {
-		log.Printf("\nIssues with data in project %s\n", project.ProjectName)
-		for _, issue := range report.Issues {
-			log.Printf("%s: %s", issue.Type.String(), issue.Data.(string))
-		}
-	} else if len(report.Issues) == 0 {
-		log.Printf("\nNo issues with data in project %s\n", project.ProjectName)
-	}
-	if report.Counter.NewAppliedUsageExamplesCount > 0 {
-		log.Printf("\nNew applied usage examples for %s: %d\n", project.ProjectName, report.Counter.NewAppliedUsageExamplesCount)
-	}
+	// Get the existing "summaries" document from the DB, and update it.
+	var summaryDoc types.CollectionReport
+	summaryDoc, report = HandleCollectionSummariesDocument(project, report, incomingPageCount, existingPageCount)
 
-	// At this point, we have all the updated pages and an updated summary. Write updates to Atlas.
-	db.BatchUpdateCollection(project.ProjectName, newPages, updatedPages, *summaryDoc)
+	// Output the project report to the log
+	LogReportForProject(project.ProjectName, report)
+
+	// At this point, we have all the new and updated pages and an updated summary. Write updates to Atlas.
+	db.BatchUpdateCollection(project.ProjectName, newPages, updatedPages, summaryDoc)
 }

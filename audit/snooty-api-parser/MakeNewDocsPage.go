@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/tmc/langchaingo/llms/ollama"
 	add_code_examples "snooty-api-parser/add-code-examples"
 	"snooty-api-parser/snooty"
@@ -40,38 +39,19 @@ func MakeNewDocsPage(data types.PageWrapper, siteUrl string, report types.Projec
 
 	// Report relevant details for the new page
 	report.Counter = IncrementProjectCountsForNewPage(incomingCodeNodeCount, incomingLiteralIncludeNodeCount, incomingIoCodeNodeCount, len(newCodeNodes), report.Counter)
-
-	report.Counter.NewPagesCount += 1
-	newPageChange := types.Change{
-		Type: types.PageCreated,
-		Data: fmt.Sprintf("Page ID: %s", pageId),
-	}
-	report.Changes = append(report.Changes, newPageChange)
-
+	report = utils.ReportChanges(types.PageCreated, report, pageId)
 	if len(newCodeNodes) > 0 {
-		newCodeExamplesChange := types.Change{
-			Type: types.CodeExampleCreated,
-			Data: fmt.Sprintf("Page ID: %s, created %d new code examples", pageId, len(newCodeNodes)),
-		}
-		report.Changes = append(report.Changes, newCodeExamplesChange)
+		report = utils.ReportChanges(types.CodeExampleCreated, report, pageId, len(newCodeNodes))
 	}
 
 	if newAppliedUsageExampleCount > 0 {
 		report.Counter.NewAppliedUsageExamplesCount += newAppliedUsageExampleCount
-		newAppliedUsageExampleChange := types.Change{
-			Type: types.AppliedUsageExampleAdded,
-			Data: fmt.Sprintf("Page ID: %s, created %d new applied usage examples", pageId, newAppliedUsageExampleCount),
-		}
-		report.Changes = append(report.Changes, newAppliedUsageExampleChange)
+		report = utils.ReportChanges(types.AppliedUsageExampleAdded, report, pageId, newAppliedUsageExampleCount)
 	}
 
 	newCodeNodeCount := len(newCodeNodes)
 	if incomingCodeNodeCount != newCodeNodeCount {
-		issue := types.Issue{
-			Type: 1,
-			Data: fmt.Sprintf("Page ID: %s, incoming code node count: %d, does not match new code node count: %d", pageId, incomingCodeNodeCount, newCodeNodeCount),
-		}
-		report.Issues = append(report.Issues, issue)
+		report = utils.ReportIssues(types.CodeNodeCountIssue, report, pageId, incomingCodeNodeCount, newCodeNodeCount)
 	}
 
 	return types.DocsPage{

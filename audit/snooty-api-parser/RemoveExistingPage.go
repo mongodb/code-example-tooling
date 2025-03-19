@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"snooty-api-parser/types"
+	"snooty-api-parser/utils"
 	"time"
 )
 
@@ -39,18 +39,9 @@ func RemoveExistingPage(page *types.DocsPage, report types.ProjectReport) (*type
 	// Update report for removed page
 	report.Counter.RemovedPagesCount += 1
 	report.Counter.RemovedCodeNodesCount += nodeIterationCount
-	removedPageChange := types.Change{
-		Type: types.PageRemoved,
-		Data: fmt.Sprintf("Page ID: %s", page.ID),
-	}
-	report.Changes = append(report.Changes, removedPageChange)
-
+	report = utils.ReportChanges(types.PageRemoved, report, page.ID)
 	if nodeIterationCount != removedNodeCount {
-		nodeCountIssue := types.Issue{
-			Type: types.CodeNodeCountIssue,
-			Data: fmt.Sprintf("Page ID: %s, nodes on page count %d does not match count after iterating to mark nodes removed %d", page.ID, removedNodeCount, nodeIterationCount),
-		}
-		report.Issues = append(report.Issues, nodeCountIssue)
+		report = utils.ReportIssues(types.CodeNodeCountIssue, report, page.ID, nodeIterationCount, removedNodeCount)
 	}
 	return page, report
 }

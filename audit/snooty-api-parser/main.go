@@ -54,7 +54,7 @@ func main() {
 		Timeout: 30 * time.Second, // Set a timeout
 	}
 	// Uncomment to parse all projects
-	projectsToParse := snooty.GetProjects(client)
+	//projectsToParse := snooty.GetProjects(client)
 
 	// Uncomment to parse a single project during testing
 	//sparkConnector := types.DocsProjectDetails{
@@ -73,12 +73,12 @@ func main() {
 	//	ProdUrl:      "https://mongodb.com/docs/languages/c/c-driver/current",
 	//}
 	//
-	//node := types.DocsProjectDetails{
-	//	ProjectName:  "node",
-	//	ActiveBranch: "v6.14",
-	//	ProdUrl:      "https://mongodb.com/docs/drivers/node/current",
-	//}
-	//projectsToParse := []types.DocsProjectDetails{sparkConnector, pyMongo, cDriver, node}
+	node := types.DocsProjectDetails{
+		ProjectName:  "node",
+		ActiveBranch: "v6.14",
+		ProdUrl:      "https://mongodb.com/docs/drivers/node/current",
+	}
+	projectsToParse := []types.DocsProjectDetails{node}
 
 	//architectureCenter := types.DocsProjectDetails{
 	//	ProjectName:  "atlas-architecture",
@@ -123,11 +123,7 @@ func main() {
 			CheckDocsForUpdates(docsPages, project, llm, ctx, report)
 			utils.UpdatePrimaryTarget()
 		} else {
-			noPagesIssue := types.Issue{
-				Type: types.PagesNotFoundIssue,
-				Data: fmt.Sprintf("No documents found for project %s", project.ProjectName),
-			}
-			report.Issues = append(report.Issues, noPagesIssue)
+			report = utils.ReportIssues(types.PagesNotFoundIssue, report, project.ProjectName)
 			utils.UpdatePrimaryTarget()
 		}
 	}

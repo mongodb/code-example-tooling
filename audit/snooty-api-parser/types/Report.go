@@ -53,7 +53,7 @@ type Change struct {
 
 type Issue struct {
 	Type IssueType   // The type of change
-	Data interface{} // The data associated with the change
+	Data interface{} // The data associated with the issue
 }
 
 // String returns a string representation of the ChangeType for easier readability.

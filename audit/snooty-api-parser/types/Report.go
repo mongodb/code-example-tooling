@@ -43,6 +43,7 @@ const (
 	PagesNotFoundIssue IssueType = iota
 	CodeNodeCountIssue
 	PageCountIssue
+	PageNotRemovedIssue
 )
 
 // Change represents a change happening to data.
@@ -63,7 +64,7 @@ func (ct ChangeType) String() string {
 
 // String returns a string representation of the IssueType for easier readability.
 func (it IssueType) String() string {
-	return [...]string{"Pages not found", "Code node count issue", "Page count issue"}[it]
+	return [...]string{"Pages not found", "Code node count issue", "Page count issue", "Page not removed issue"}[it]
 }
 
 type ProjectReport struct {

@@ -53,5 +53,5 @@ func BatchUpdateCollection(collectionName string, newPages []types.DocsPage, upd
 	if err != nil {
 		log.Printf("Failed to perform bulk write for collection %s: %v", collectionName, err)
 	}
-	log.Printf("For collection %s: Inserted %v documents, modified %v documents\n", collectionName, result.InsertedCount, result.ModifiedCount)
+	log.Printf("Atlas: For collection %s: Inserted %v documents, modified %v documents\n", collectionName, result.InsertedCount, result.ModifiedCount)
 }

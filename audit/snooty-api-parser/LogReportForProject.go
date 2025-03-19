@@ -21,9 +21,9 @@ func LogReportForProject(projectName string, report types.ProjectReport) {
 			log.Printf("%s: %s", issue.Type.String(), issue.Data.(string))
 		}
 	} else if len(report.Issues) == 0 {
-		log.Printf("\nNo issues with data in project %s\n", projectName)
+		log.Printf("No issues with data in project %s\n", projectName)
 	}
 	if report.Counter.NewAppliedUsageExamplesCount > 0 {
-		log.Printf("\nNew applied usage examples for %s: %d\n", projectName, report.Counter.NewAppliedUsageExamplesCount)
+		log.Printf("New applied usage examples for %s: %d\n", projectName, report.Counter.NewAppliedUsageExamplesCount)
 	}
 }

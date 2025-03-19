@@ -15,6 +15,7 @@ import (
 func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjectDetails, llm *ollama.LLM, ctx context.Context, report types.ProjectReport) {
 	incomingPageIdsMatchingExistingPages := make(map[string]bool)
 	incomingPageCount := len(docsPages)
+	incomingDeletedPageCount := 0
 	var newPageIds []string
 	var newPages []types.DocsPage
 	var updatedPages []types.DocsPage
@@ -23,7 +24,8 @@ func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjec
 		// if it exists already in the DB, and delete it if it does. If we haven't already made an entry for it, we
 		// don't need to do anything else.
 		if page.Data.Deleted {
-			HandleDeletedIncomingPages(project.ProjectName, page)
+			report = HandleDeletedIncomingPages(project.ProjectName, page, report)
+			incomingDeletedPageCount++
 		} else {
 			maybeExistingPage := CheckForExistingPage(project.ProjectName, page)
 			if maybeExistingPage != nil {
@@ -49,11 +51,13 @@ func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjec
 
 	// After iterating through the incoming pages from the Snooty Data API, we need to figure out if any of the page IDs
 	// we had in the DB are not coming in from the incoming response. If so, we should delete those entries.
-	existingPageCount := db.HandleMissingPageIds(project.ProjectName, incomingPageIdsMatchingExistingPages)
+	var existingPageCount int
+	existingPageCount, report = db.HandleMissingPageIds(project.ProjectName, incomingPageIdsMatchingExistingPages, report)
 
 	// Get the existing "summaries" document from the DB, and update it.
 	var summaryDoc types.CollectionReport
-	summaryDoc, report = HandleCollectionSummariesDocument(project, report, incomingPageCount, existingPageCount)
+	expectedPageCount := incomingPageCount - incomingDeletedPageCount
+	summaryDoc, report = HandleCollectionSummariesDocument(project, report, expectedPageCount, existingPageCount)
 
 	// Output the project report to the log
 	LogReportForProject(project.ProjectName, report)

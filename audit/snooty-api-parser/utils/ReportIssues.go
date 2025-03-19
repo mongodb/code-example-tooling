@@ -27,6 +27,8 @@ func ReportIssues(issueType types.IssueType, report types.ProjectReport, stringA
 		message = fmt.Sprintf("Project %s: expected %d code nodes, got %d", stringArg, count1, count2)
 	case types.PageCountIssue:
 		message = fmt.Sprintf("Project %s: expected current pages from summing changes is %d, got %d", stringArg, count1, count2)
+	case types.PageNotRemovedIssue:
+		message = fmt.Sprintf("Page ID: %s - tried to remove page but had an issue", stringArg)
 	default:
 		message = "Change type not handled in ReportChanges function"
 	}

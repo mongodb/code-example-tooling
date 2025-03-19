@@ -1,6 +1,11 @@
 package db
 
-func HandleMissingPageIds(collectionName string, incomingPageIds map[string]bool) int {
+import (
+	"snooty-api-parser/types"
+	"snooty-api-parser/utils"
+)
+
+func HandleMissingPageIds(collectionName string, incomingPageIds map[string]bool, report types.ProjectReport) (int, types.ProjectReport) {
 	// Get a slice of all the page IDs for pages that are currently in Atlas
 	existingPageIds := GetAtlasPageIDs(collectionName)
 	var missingPageIds []string
@@ -14,7 +19,12 @@ func HandleMissingPageIds(collectionName string, incomingPageIds map[string]bool
 		}
 	}
 	for _, missingPageId := range missingPageIds {
-		RemovePageFromAtlas(collectionName, missingPageId)
+		pageRemoved := RemovePageFromAtlas(collectionName, missingPageId)
+		if pageRemoved {
+			report = utils.ReportChanges(types.PageRemoved, report, missingPageId)
+		} else {
+			report = utils.ReportIssues(types.PageNotRemovedIssue, report, missingPageId)
+		}
 	}
-	return len(existingPageIds)
+	return len(existingPageIds), report
 }

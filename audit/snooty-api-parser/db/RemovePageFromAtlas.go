@@ -11,7 +11,7 @@ import (
 
 // RemovePageFromAtlas deletes a types.DocsPage from Atlas. We don't need to update the collection summaries document,
 // because that will be overwritten with existing page count and code node count at the end of this run.
-func RemovePageFromAtlas(collectionName string, pageId string) {
+func RemovePageFromAtlas(collectionName string, pageId string) bool {
 	uri := os.Getenv("MONGODB_URI")
 	docs := "www.mongodb.com/docs/drivers/go/current/"
 	if uri == "" {
@@ -36,8 +36,14 @@ func RemovePageFromAtlas(collectionName string, pageId string) {
 	coll := db.Collection(collectionName)
 	filter := bson.M{"_id": pageId}
 	// Delete the document
-	_, err = coll.DeleteOne(ctx, filter)
+	var deleteResult *mongo.DeleteResult
+	deleteResult, err = coll.DeleteOne(ctx, filter)
 	if err != nil {
 		log.Printf("Failed to delete MongoDB document for pageId %s: %v\n", pageId, err)
+	}
+	if deleteResult.DeletedCount == 1 {
+		return true
+	} else {
+		return false
 	}
 }

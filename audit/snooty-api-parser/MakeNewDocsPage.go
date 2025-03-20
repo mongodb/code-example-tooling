@@ -38,21 +38,7 @@ func MakeNewDocsPage(data types.PageWrapper, siteUrl string, report types.Projec
 	languagesArrayValues := MakeLanguagesArray(newCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes)
 
 	// Report relevant details for the new page
-	report.Counter = IncrementProjectCountsForNewPage(incomingCodeNodeCount, incomingLiteralIncludeNodeCount, incomingIoCodeNodeCount, len(newCodeNodes), report.Counter)
-	report = utils.ReportChanges(types.PageCreated, report, pageId)
-	if len(newCodeNodes) > 0 {
-		report = utils.ReportChanges(types.CodeExampleCreated, report, pageId, len(newCodeNodes))
-	}
-
-	if newAppliedUsageExampleCount > 0 {
-		report.Counter.NewAppliedUsageExamplesCount += newAppliedUsageExampleCount
-		report = utils.ReportChanges(types.AppliedUsageExampleAdded, report, pageId, newAppliedUsageExampleCount)
-	}
-
-	newCodeNodeCount := len(newCodeNodes)
-	if incomingCodeNodeCount != newCodeNodeCount {
-		report = utils.ReportIssues(types.CodeNodeCountIssue, report, pageId, incomingCodeNodeCount, newCodeNodeCount)
-	}
+	report = UpdateProjectReportForNewPage(incomingCodeNodeCount, incomingLiteralIncludeNodeCount, incomingIoCodeNodeCount, len(newCodeNodes), newAppliedUsageExampleCount, pageId, report)
 
 	return types.DocsPage{
 		ID:                   pageId,

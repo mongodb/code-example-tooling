@@ -59,40 +59,28 @@ func main() {
 	//projectsToParse := snooty.GetProjects(client)
 
 	// Uncomment to parse a single project during testing
-	//sparkConnector := types.DocsProjectDetails{
-	//	ProjectName:  "spark-connector",
-	//	ActiveBranch: "v10.4",
-	//	ProdUrl:      "https://mongodb.com/docs/spark-connector/current",
-	//}
-	//pyMongo := types.DocsProjectDetails{
-	//	ProjectName:  "pymongo",
-	//	ActiveBranch: "v4.11",
-	//	ProdUrl:      "https://mongodb.com/docs/languages/python/pymongo-driver/current",
-	//}
-	//cDriver := types.DocsProjectDetails{
-	//	ProjectName:  "c",
-	//	ActiveBranch: "v1.30",
-	//	ProdUrl:      "https://mongodb.com/docs/languages/c/c-driver/current",
-	//}
-	//
+	csharp := types.DocsProjectDetails{
+		ProjectName:  "csharp",
+		ActiveBranch: "v3.2",
+		ProdUrl:      "https://mongodb.com/docs/drivers/csharp/current",
+	}
+	atlasOperator := types.DocsProjectDetails{
+		ProjectName:  "atlas-operator",
+		ActiveBranch: "v2.8",
+		ProdUrl:      "https://mongodb.com/docs/atlas/operator/current",
+	}
+	cDriver := types.DocsProjectDetails{
+		ProjectName:  "c",
+		ActiveBranch: "v1.30",
+		ProdUrl:      "https://mongodb.com/docs/languages/c/c-driver/current",
+	}
+
 	//node := types.DocsProjectDetails{
 	//	ProjectName:  "node",
 	//	ActiveBranch: "v6.14",
 	//	ProdUrl:      "https://mongodb.com/docs/drivers/node/current",
 	//}
-	clusterSync := types.DocsProjectDetails{
-		ProjectName:  "cluster-sync",
-		ActiveBranch: "v1.12",
-		ProdUrl:      "https://mongodb.com/docs/cluster-to-cluster-sync/current",
-	}
-	projectsToParse := []types.DocsProjectDetails{clusterSync}
-
-	//architectureCenter := types.DocsProjectDetails{
-	//	ProjectName:  "atlas-architecture",
-	//	ActiveBranch: "main",
-	//	ProdUrl:      "https://mongodb.com/docs/atlas/architecture",
-	//}
-	//projectsToParse := []types.DocsProjectDetails{architectureCenter}
+	projectsToParse := []types.DocsProjectDetails{csharp, atlasOperator, cDriver}
 
 	// Finish setting up console display to show progress during run
 	totalProjects := len(projectsToParse)

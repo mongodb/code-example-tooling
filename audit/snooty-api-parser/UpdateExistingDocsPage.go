@@ -100,6 +100,7 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 		projectReport = utils.ReportChanges(types.PageUpdated, projectReport, existingPage.ID)
 
 		if newRemovedNodeCount > 0 {
+			projectReport.Counter.RemovedCodeNodesCount += newRemovedNodeCount
 			projectReport = utils.ReportChanges(types.CodeExampleRemoved, projectReport, existingPage.ID, newRemovedNodeCount)
 		}
 
@@ -140,9 +141,11 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 		// Add relevant entries to the project projectReport
 		projectReport = utils.ReportChanges(types.PageUpdated, projectReport, existingPage.ID)
 		if newCodeNodeCount > 0 {
+			projectReport.Counter.NewCodeNodesCount += newCodeNodeCount
 			projectReport = utils.ReportChanges(types.CodeExampleCreated, projectReport, existingPage.ID, newCodeNodeCount)
 		}
 		if newAppliedUsageExampleCount > 0 {
+			projectReport.Counter.NewAppliedUsageExamplesCount += newAppliedUsageExampleCount
 			projectReport = utils.ReportChanges(types.AppliedUsageExampleAdded, projectReport, existingPage.ID, newAppliedUsageExampleCount)
 		}
 	} else if atlasDocCurrentCodeNodeCount == 0 && incomingCodeNodePageCount == 0 {

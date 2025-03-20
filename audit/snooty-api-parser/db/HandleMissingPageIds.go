@@ -19,9 +19,25 @@ func HandleMissingPageIds(collectionName string, incomingPageIds map[string]bool
 		}
 	}
 	for _, missingPageId := range missingPageIds {
+		// We want to report details for the page we're about to delete, so we need to pull up the page to get the details
+		existingPage := GetAtlasPageData(collectionName, missingPageId)
+		codeNodeCount := existingPage.CodeNodesTotal
+		literalIncludeCount := existingPage.LiteralIncludesTotal
+		ioCodeBlockCount := existingPage.IoCodeBlocksTotal
 		pageRemoved := RemovePageFromAtlas(collectionName, missingPageId)
 		if pageRemoved {
+			report.Counter.RemovedPagesCount += 1
 			report = utils.ReportChanges(types.PageRemoved, report, missingPageId)
+			if codeNodeCount > 0 {
+				report = utils.ReportChanges(types.CodeExampleRemoved, report, missingPageId, codeNodeCount)
+				report.Counter.RemovedCodeNodesCount += codeNodeCount
+			}
+			if literalIncludeCount > 0 {
+				report = utils.ReportChanges(types.LiteralIncludeCountChange, report, missingPageId, literalIncludeCount, 0)
+			}
+			if ioCodeBlockCount > 0 {
+				report = utils.ReportChanges(types.IoCodeBlockCountChange, report, missingPageId, ioCodeBlockCount, 0)
+			}
 		} else {
 			report = utils.ReportIssues(types.PageNotRemovedIssue, report, missingPageId)
 		}

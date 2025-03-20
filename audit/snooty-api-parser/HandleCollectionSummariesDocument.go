@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"snooty-api-parser/db"
 	"snooty-api-parser/types"
 	"snooty-api-parser/utils"
@@ -13,26 +12,27 @@ func HandleCollectionSummariesDocument(project types.DocsProjectDetails, report 
 	collectionVersionKey := ""
 	// If we haven't audited this collection before, there will be no collection info document
 	if summaryDoc == nil {
-		summaryDocPointer := db.MakeSummariesDocument(project, report)
-		summaryDoc = &summaryDocPointer
-		// If we're making a new summaries document, the only key is the current active branch
-		latestCollectionInfo = summaryDoc.Version[project.ActiveBranch]
-		collectionVersionKey = project.ActiveBranch
+		return db.MakeSummariesDocument(project, report), report
 	} else {
 		// If we have retrieved a summary doc from the DB, it may contain more than one version
 		elementIndex := 0
 		for version, info := range summaryDoc.Version {
+			// Iterate through the version list. Set the collection info and version key for the first value in the list.
 			if elementIndex == 0 {
 				latestCollectionInfo = info
 				collectionVersionKey = version
+				// If there is more than one version in the version list, increment the element index and continue checking versions
 				if len(summaryDoc.Version) > 1 {
 					elementIndex++
 				}
 			} else {
+				// If we are looking at the 2nd or later element in the list, compare the LastUpdatedAtUTC date to the one
+				// that is currently set. If this version has been updated more recently, set this version as the "latest"
+				// collection info.
 				if info.LastUpdatedAtUTC.After(latestCollectionInfo.LastUpdatedAtUTC) {
 					latestCollectionInfo = info
 					collectionVersionKey = version
-					if elementIndex > len(summaryDoc.Version) {
+					if elementIndex < len(summaryDoc.Version) {
 						elementIndex++
 					}
 				}
@@ -46,11 +46,9 @@ func HandleCollectionSummariesDocument(project types.DocsProjectDetails, report 
 	} else {
 		// If the active branch does match the most recent version, just need to update this version document's last updated date and counts
 		pageCountBeforeUpdating := summaryDoc.Version[project.ActiveBranch].TotalPageCount
-		log.Printf("I am in HandleCollectionSummariesDocument and the pageCountBeforeUpdating (from summary doc) is %d, incomingPageCount (from snooty API) is %d\n", pageCountBeforeUpdating, incomingPageCount)
 		updatedSummaryDoc := db.UpdateCollectionVersionDocument(*summaryDoc, project, report)
 		summaryDoc = &updatedSummaryDoc
 		sumOfExpectedPages := pageCountBeforeUpdating + report.Counter.NewPagesCount - report.Counter.RemovedPagesCount
-		log.Printf("I am in HandleCollectionSummariesDocument and the sumOfExpectedPages is %d\n", sumOfExpectedPages)
 		if sumOfExpectedPages != incomingPageCount {
 			report = utils.ReportIssues(types.PageCountIssue, report, project.ProjectName, sumOfExpectedPages, incomingPageCount)
 		}

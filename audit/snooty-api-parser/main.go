@@ -56,31 +56,25 @@ func main() {
 		Timeout: 30 * time.Second, // Set a timeout
 	}
 	// Uncomment to parse all projects
-	//projectsToParse := snooty.GetProjects(client)
+	projectsToParse := snooty.GetProjects(client)
 
 	// Uncomment to parse a single project during testing
-	csharp := types.DocsProjectDetails{
-		ProjectName:  "csharp",
-		ActiveBranch: "v3.2",
-		ProdUrl:      "https://mongodb.com/docs/drivers/csharp/current",
-	}
-	atlasOperator := types.DocsProjectDetails{
-		ProjectName:  "atlas-operator",
-		ActiveBranch: "v2.8",
-		ProdUrl:      "https://mongodb.com/docs/atlas/operator/current",
-	}
-	cDriver := types.DocsProjectDetails{
-		ProjectName:  "c",
-		ActiveBranch: "v1.30",
-		ProdUrl:      "https://mongodb.com/docs/languages/c/c-driver/current",
-	}
-
+	//atlasOperator := types.DocsProjectDetails{
+	//	ProjectName:  "atlas-operator",
+	//	ActiveBranch: "v2.8",
+	//	ProdUrl:      "https://mongodb.com/docs/atlas/operator/current",
+	//}
+	//cDriver := types.DocsProjectDetails{
+	//	ProjectName:  "c",
+	//	ActiveBranch: "v1.30",
+	//	ProdUrl:      "https://mongodb.com/docs/languages/c/c-driver/current",
+	//}
 	//node := types.DocsProjectDetails{
 	//	ProjectName:  "node",
 	//	ActiveBranch: "v6.14",
 	//	ProdUrl:      "https://mongodb.com/docs/drivers/node/current",
 	//}
-	projectsToParse := []types.DocsProjectDetails{csharp, atlasOperator, cDriver}
+	//projectsToParse := []types.DocsProjectDetails{atlasOperator}
 
 	// Finish setting up console display to show progress during run
 	totalProjects := len(projectsToParse)

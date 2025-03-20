@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"snooty-api-parser/db"
 	"snooty-api-parser/types"
 	"snooty-api-parser/utils"
@@ -38,16 +39,21 @@ func HandleCollectionSummariesDocument(project types.DocsProjectDetails, report 
 			}
 		}
 	}
-	var pageCountBeforeUpdating int
 	if project.ActiveBranch != collectionVersionKey {
 		// If the active branch doesn't match the most recent version, need to make a new CollectionInfoView for this document
 		updatedSummaryDoc := db.MakeNewCollectionVersionDocument(*summaryDoc, project, report)
 		summaryDoc = &updatedSummaryDoc
 	} else {
 		// If the active branch does match the most recent version, just need to update this version document's last updated date and counts
-		pageCountBeforeUpdating = summaryDoc.Version[project.ActiveBranch].TotalPageCount
+		pageCountBeforeUpdating := summaryDoc.Version[project.ActiveBranch].TotalPageCount
+		log.Printf("I am in HandleCollectionSummariesDocument and the pageCountBeforeUpdating (from summary doc) is %d, incomingPageCount (from snooty API) is %d\n", pageCountBeforeUpdating, incomingPageCount)
 		updatedSummaryDoc := db.UpdateCollectionVersionDocument(*summaryDoc, project, report)
 		summaryDoc = &updatedSummaryDoc
+		sumOfExpectedPages := pageCountBeforeUpdating + report.Counter.NewPagesCount - report.Counter.RemovedPagesCount
+		log.Printf("I am in HandleCollectionSummariesDocument and the sumOfExpectedPages is %d\n", sumOfExpectedPages)
+		if sumOfExpectedPages != incomingPageCount {
+			report = utils.ReportIssues(types.PageCountIssue, report, project.ProjectName, sumOfExpectedPages, incomingPageCount)
+		}
 	}
 
 	if latestCollectionInfo.TotalCodeCount != report.Counter.IncomingCodeNodesCount {
@@ -59,10 +65,6 @@ func HandleCollectionSummariesDocument(project types.DocsProjectDetails, report 
 	}
 	if latestCollectionInfo.TotalPageCount != incomingPageCount {
 		report = utils.ReportChanges(types.ProjectSummaryPageCountChange, report, project.ProjectName, latestCollectionInfo.TotalPageCount, incomingPageCount)
-	}
-	sumOfExpectedPages := pageCountBeforeUpdating + report.Counter.NewPagesCount - report.Counter.RemovedPagesCount
-	if sumOfExpectedPages != incomingPageCount {
-		report = utils.ReportIssues(types.PageCountIssue, report, project.ProjectName, sumOfExpectedPages, incomingPageCount)
 	}
 	return *summaryDoc, report
 }

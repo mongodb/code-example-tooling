@@ -19,8 +19,10 @@ func main() {
 	// Set up logging + a console display as this tool can take a long time to run
 	startTime := time.Now()
 	formattedTime := startTime.Format("2006-01-02 15:04:05")
+	filenameFormattedTime := startTime.Format("2006-01-02-15-04-05")
 	fmt.Println("Starting at ", formattedTime)
-	file, err := os.Create("app.log")
+	filename := filenameFormattedTime + "app.log"
+	file, err := os.Create("./logs/" + filename)
 	if err != nil {
 		log.Print(err)
 	}

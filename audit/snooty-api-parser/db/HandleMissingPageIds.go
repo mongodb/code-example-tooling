@@ -5,7 +5,7 @@ import (
 	"snooty-api-parser/utils"
 )
 
-func HandleMissingPageIds(collectionName string, incomingPageIds map[string]bool, report types.ProjectReport) (int, types.ProjectReport) {
+func HandleMissingPageIds(collectionName string, incomingPageIds map[string]bool, report types.ProjectReport) types.ProjectReport {
 	// Get a slice of all the page IDs for pages that are currently in Atlas
 	existingPageIds := GetAtlasPageIDs(collectionName)
 	var missingPageIds []string
@@ -42,5 +42,5 @@ func HandleMissingPageIds(collectionName string, incomingPageIds map[string]bool
 			report = utils.ReportIssues(types.PageNotRemovedIssue, report, missingPageId)
 		}
 	}
-	return len(existingPageIds), report
+	return report
 }

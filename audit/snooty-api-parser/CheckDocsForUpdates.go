@@ -51,12 +51,11 @@ func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjec
 
 	// After iterating through the incoming pages from the Snooty Data API, we need to figure out if any of the page IDs
 	// we had in the DB are not coming in from the incoming response. If so, we should delete those entries.
-	var existingPageCount int
-	existingPageCount, report = db.HandleMissingPageIds(project.ProjectName, incomingPageIdsMatchingExistingPages, report)
+	report = db.HandleMissingPageIds(project.ProjectName, incomingPageIdsMatchingExistingPages, report)
 
 	// Get the existing "summaries" document from the DB, and update it.
 	var summaryDoc types.CollectionReport
-	summaryDoc, report = HandleCollectionSummariesDocument(project, report, incomingPageCount, existingPageCount)
+	summaryDoc, report = HandleCollectionSummariesDocument(project, report, incomingPageCount)
 
 	// Output the project report to the log
 	LogReportForProject(project.ProjectName, report)

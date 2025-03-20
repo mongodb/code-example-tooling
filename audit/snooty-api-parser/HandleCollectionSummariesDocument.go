@@ -6,7 +6,7 @@ import (
 	"snooty-api-parser/utils"
 )
 
-func HandleCollectionSummariesDocument(project types.DocsProjectDetails, report types.ProjectReport, incomingPageCount int, existingPageCount int) (types.CollectionReport, types.ProjectReport) {
+func HandleCollectionSummariesDocument(project types.DocsProjectDetails, report types.ProjectReport, incomingPageCount int) (types.CollectionReport, types.ProjectReport) {
 	summaryDoc := db.GetAtlasProjectSummaryData(project.ProjectName)
 	var latestCollectionInfo types.CollectionInfoView
 	collectionVersionKey := ""
@@ -38,12 +38,14 @@ func HandleCollectionSummariesDocument(project types.DocsProjectDetails, report 
 			}
 		}
 	}
+	var pageCountBeforeUpdating int
 	if project.ActiveBranch != collectionVersionKey {
 		// If the active branch doesn't match the most recent version, need to make a new CollectionInfoView for this document
 		updatedSummaryDoc := db.MakeNewCollectionVersionDocument(*summaryDoc, project, report)
 		summaryDoc = &updatedSummaryDoc
 	} else {
 		// If the active branch does match the most recent version, just need to update this version document's last updated date and counts
+		pageCountBeforeUpdating = summaryDoc.Version[project.ActiveBranch].TotalPageCount
 		updatedSummaryDoc := db.UpdateCollectionVersionDocument(*summaryDoc, project, report)
 		summaryDoc = &updatedSummaryDoc
 	}
@@ -58,7 +60,7 @@ func HandleCollectionSummariesDocument(project types.DocsProjectDetails, report 
 	if latestCollectionInfo.TotalPageCount != incomingPageCount {
 		report = utils.ReportChanges(types.ProjectSummaryPageCountChange, report, project.ProjectName, latestCollectionInfo.TotalPageCount, incomingPageCount)
 	}
-	sumOfExpectedPages := existingPageCount + report.Counter.NewPagesCount - report.Counter.RemovedPagesCount
+	sumOfExpectedPages := pageCountBeforeUpdating + report.Counter.NewPagesCount - report.Counter.RemovedPagesCount
 	if sumOfExpectedPages != incomingPageCount {
 		report = utils.ReportIssues(types.PageCountIssue, report, project.ProjectName, sumOfExpectedPages, incomingPageCount)
 	}

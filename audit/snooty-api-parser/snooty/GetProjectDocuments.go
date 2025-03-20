@@ -43,53 +43,7 @@ func GetProjectDocuments(docsProject types.DocsProjectDetails, client *http.Clie
 		reader = *bufio.NewReader(resp.Body)
 	}
 
-	// A DOP bug has introduced duplicate pages for some projects - one page with a GitHub username "netlify", and one with
-	// a GitHub username "docs-builder-bot". We don't want to double-count pages/code examples, so this logic should only
-	// count pages once depending on the GitHub username. Not all projects have duplicate usernames - I've created a
-	// manual mapping here in `projectsWithOldDeploy` for whether to process as "docs-builder-bot" or "netlify".
-	// When this DOP ticket is resolved, we can remove this logic: https://jira.mongodb.org/browse/DOP-5440
-	projectsWithOldDeploy := []string{
-		"spark-connector",
-		"charts",
-		"bi-connector",
-		"cloudgov",
-		"docs",
-		"compass",
-		"database-tools",
-		"java",
-		"atlas-cli",
-		"cluster-sync",
-		"ruby-driver",
-		"csharp",
-		"rust",
-		"entity-framework",
-		"atlas-operator",
-		"cpp-driver",
-		"scala",
-		"pymongo-arrow",
-		"mongodb-shell",
-		"mongocli",
-		"cloud-docs",
-		"mongoid",
-		"kotlin",
-		"docs-relational-migrator",
-		"ops-manager",
-		"cloud-manager",
-		"laravel",
-		"pymongo",
-		"c",
-		"kotlin-sync",
-		"atlas-architecture",
-		"django",
-		"java-rs",
-	}
-
-	var projectDocuments []types.PageWrapper
-	if contains(projectsWithOldDeploy, docsProject.ProjectName) {
-		projectDocuments = ReadDocsForGitHubUser(reader, GitHubUsernameDocsBuilderBot)
-	} else {
-		projectDocuments = ReadDocsForGitHubUser(reader, GitHubUsernameNetlify)
-	}
+	projectDocuments := ReadDocsForGitHubUser(reader)
 	if len(projectDocuments) == 0 {
 		log.Printf("No docs found for project %s using url %s", docsProject.ProjectName, apiURL)
 	}

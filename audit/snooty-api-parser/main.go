@@ -54,7 +54,7 @@ func main() {
 		Timeout: 30 * time.Second, // Set a timeout
 	}
 	// Uncomment to parse all projects
-	projectsToParse := snooty.GetProjects(client)
+	//projectsToParse := snooty.GetProjects(client)
 
 	// Uncomment to parse a single project during testing
 	//sparkConnector := types.DocsProjectDetails{
@@ -78,7 +78,12 @@ func main() {
 	//	ActiveBranch: "v6.14",
 	//	ProdUrl:      "https://mongodb.com/docs/drivers/node/current",
 	//}
-	//projectsToParse := []types.DocsProjectDetails{node}
+	clusterSync := types.DocsProjectDetails{
+		ProjectName:  "cluster-sync",
+		ActiveBranch: "v1.12",
+		ProdUrl:      "https://mongodb.com/docs/cluster-to-cluster-sync/current",
+	}
+	projectsToParse := []types.DocsProjectDetails{clusterSync}
 
 	//architectureCenter := types.DocsProjectDetails{
 	//	ProjectName:  "atlas-architecture",

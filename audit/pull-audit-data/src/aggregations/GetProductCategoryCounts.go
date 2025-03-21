@@ -18,7 +18,13 @@ func GetProductCategoryCounts(db *mongo.Database, collectionName string, product
 			{"nodes", bson.D{{"$ne", nil}}}, // Ensure nodes is not null
 		}}},
 		{{"$unwind", bson.D{{"path", "$nodes"}}}},
-		// Filter for nodes with a non-empty, existing code field
+		// Filter to omit nodes that have been removed from a docs page
+		{{"$match", bson.D{
+			{"$or", bson.A{
+				bson.D{{"nodes.is_removed", bson.D{{"$exists", false}}}},
+				bson.D{{"nodes.is_removed", false}},
+			}},
+		}}},
 		{{
 			"$group", bson.D{
 				{"_id", bson.D{

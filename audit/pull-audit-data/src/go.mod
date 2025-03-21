@@ -14,4 +14,7 @@ require (
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
+	common v0.0.0
 )
+
+replace common => ../../common

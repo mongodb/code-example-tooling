@@ -1,6 +1,7 @@
 package aggregations
 
 import (
+	"common"
 	"context"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -20,6 +21,13 @@ func GetCategoryCounts(db *mongo.Database, collectionName string, categoryCountM
 			{"nodes", bson.D{{"$ne", nil}}}, // Ensure nodes is not null
 		}}},
 		{{"$unwind", bson.D{{"path", "$nodes"}}}},
+		// Filter to omit nodes that have been removed from a docs page
+		{{"$match", bson.D{
+			{"$or", bson.A{
+				bson.D{{"nodes.is_removed", bson.D{{"$exists", false}}}},
+				bson.D{{"nodes.is_removed", false}},
+			}},
+		}}},
 		// Filter for nodes with a non-empty, existing code field
 		{{"$match", bson.D{
 			{"nodes.code", bson.D{
@@ -35,7 +43,7 @@ func GetCategoryCounts(db *mongo.Database, collectionName string, categoryCountM
 				{"$cond", bson.A{
 					bson.D{
 						{"$and", bson.A{
-							bson.D{{"$eq", bson.A{"$nodes.category", types.UsageExample}}},
+							bson.D{{"$eq", bson.A{"$nodes.category", common.UsageExample}}},
 							"$isLongCode",
 						}},
 					},

@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"log"
 	"os"
+	"pull-audit-data/updates"
 )
 
 func main() {
@@ -25,19 +26,24 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	ctx := context.Background()
 	defer func() {
-		if err := client.Disconnect(context.TODO()); err != nil {
+		if err := client.Disconnect(ctx); err != nil {
 			panic(err)
 		}
 	}()
-	ctx := context.Background()
-	db := client.Database("code_metrics")
 
-	// To add product names to new docs pages
-	//updates.AddProductNames(db, ctx)
+	dbName := os.Getenv("DB_NAME")
+	if dbName == "" {
+		log.Fatal("Set your 'DB_NAME' environment variable. ")
+	}
+	//db := client.Database(dbName)
+
+	// To copy the DB for testing
+	updates.CopyDBForTesting(client, ctx)
 
 	// To perform aggregations
-	PerformAggregation(db, ctx)
+	//PerformAggregation(db, ctx)
 
 	// To rename a field in the document
 	//updates.RenameField(db, ctx)

@@ -32,14 +32,14 @@ func GetLanguageCounts(db *mongo.Database, collectionName string, languageCountM
 			ID    string `bson:"_id"`
 			Count int    `bson:"count"`
 		}
-		if err := cursor.Decode(&result); err != nil {
+		if err = cursor.Decode(&result); err != nil {
 			log.Fatalf("Failed to decode result: %v", err)
 		}
 		// Accumulate the counts for each _id
 		languageCountMap[result.ID] += result.Count
 		langCount += result.Count
 	}
-	if err := cursor.Err(); err != nil {
+	if err = cursor.Err(); err != nil {
 		log.Fatalf("Cursor error in collection %s: %v", collectionName, err)
 	}
 	if _, exists := languageCountMap[types.Total]; exists {

@@ -1,6 +1,7 @@
 package aggregations
 
 import (
+	"common"
 	"context"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -27,7 +28,7 @@ func GetOneLineUsageExampleCounts(db *mongo.Database, collectionName string, one
 				{"$exists", true},
 				{"$type", "string"}, // Ensure code is a string
 			}},
-			{"nodes.category", types.UsageExample}, // Ensure category is "Usage Example"
+			{"nodes.category", common.UsageExample}, // Ensure category is "Usage Example"
 		}}},
 		{{"$project", bson.D{
 			{"codeLength", bson.D{{"$strLenCP", "$nodes.code"}}},

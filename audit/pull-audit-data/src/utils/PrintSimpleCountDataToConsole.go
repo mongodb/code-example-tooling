@@ -16,7 +16,7 @@ func PrintSimpleCountDataToConsole(simpleMap map[string]int, tableLable string, 
 	if len(columnNames) != len(columnWidths) {
 		log.Fatalf("Got %d column names, but %d column widths - can't print the table unless we have the same number of names and widths", len(columnNames), len(columnWidths))
 	}
-	totalValue, totalExists := simpleMap["total"]
+	totalValue, totalExists := simpleMap[types.Total]
 	var totalCount int
 	if totalExists {
 		totalCount = totalValue
@@ -29,7 +29,7 @@ func PrintSimpleCountDataToConsole(simpleMap map[string]int, tableLable string, 
 	var elementCounts []types.KeyCount
 	// Sort keys by count
 	for key, value := range simpleMap {
-		if key != "total" {
+		if key != types.Total {
 			elementCounts = append(elementCounts, types.KeyCount{Key: key, Count: value})
 		}
 		if key == "" {

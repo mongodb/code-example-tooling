@@ -63,23 +63,22 @@ func UpdateExistingDocsPage(existingPage common.DocsPage, data types.PageWrapper
 	}
 
 	// If examples exist already and we are getting no incoming examples from the API, the existing examples have been removed from the incoming page
-	if existingCurrentCodeNodes != nil && incomingCodeNodePageCount == 0 {
-		newRemovedNodeCount := len(existingCurrentCodeNodes)
+	if atlasDocCurrentCodeNodeCount > 0 && incomingCodeNodePageCount == 0 {
+		newRemovedNodeCount := 0
 		// Mark all nodes as removed
 		updatedCodeNodes := make([]common.CodeNode, 0)
-		for _, node := range existingCurrentCodeNodes {
-			node.DateRemoved = time.Now()
-			node.IsRemoved = true
-			updatedCodeNodes = append(updatedCodeNodes, node)
-		}
-		// Some removed nodes may already exist on the page. We don't want to count those in the "new removed nodes" count,
-		// but we do need to add them to the `Nodes` array if we don't want them to disappear.
-		if existingRemovedCodeNodes != nil && len(existingRemovedCodeNodes) > 0 {
-			for _, node := range existingRemovedCodeNodes {
+		for _, node := range *existingPage.Nodes {
+			// Some removed nodes may already exist on the page. We don't want to count those in the "new removed nodes" count,
+			// but we do need to add them to the `Nodes` array if we don't want them to disappear.
+			if !node.IsRemoved {
+				node.DateRemoved = time.Now()
+				node.IsRemoved = true
+				updatedCodeNodes = append(updatedCodeNodes, node)
+				newRemovedNodeCount++
+			} else {
 				updatedCodeNodes = append(updatedCodeNodes, node)
 			}
 		}
-		updatedDocsPage.Nodes = &updatedCodeNodes
 
 		oldCodeNodeCount := existingPage.CodeNodesTotal
 		oldLiteralIncludeCount := existingPage.LiteralIncludesTotal
@@ -91,8 +90,7 @@ func UpdateExistingDocsPage(existingPage common.DocsPage, data types.PageWrapper
 		updatedDocsPage.IoCodeBlocksTotal = 0
 
 		// Update the language counts array (set all values for the page to 0)
-		updatedLanguagesArray := MakeLanguagesArray([]common.CodeNode{}, []types.ASTNode{}, []types.ASTNode{})
-		updatedDocsPage.Languages = updatedLanguagesArray
+		updatedDocsPage.Languages = MakeEmptyLanguagesArray()
 
 		// Update the date_last_updated time
 		updatedDocsPage.DateLastUpdated = time.Now()

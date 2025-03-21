@@ -21,6 +21,13 @@ func GetCategoryLanguageCounts(db *mongo.Database, collectionName string, catego
 			}},
 		}}},
 		{{"$unwind", bson.D{{"path", "$nodes"}, {"preserveNullAndEmptyArrays", false}}}},
+		// Filter to omit nodes that have been removed from a docs page
+		{{"$match", bson.D{
+			{"$or", bson.A{
+				bson.D{{"nodes.is_removed", bson.D{{"$exists", false}}}},
+				bson.D{{"nodes.is_removed", false}},
+			}},
+		}}},
 		{{"$group", bson.D{
 			{"_id", bson.D{
 				{"category", "$nodes.category"},

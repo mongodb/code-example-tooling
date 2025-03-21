@@ -5,7 +5,7 @@ import (
 	"gdcd/utils"
 )
 
-func UpdateProjectReportForUpdatedCodeNodes(report types.ProjectReport, pageId string, incomingCount int, existingCount int, unchangedCount int, updatedCount int, newCount int, removedCount int, aggregateCodeNodeChangeCount int, newAppliedUsageExampleCount int) types.ProjectReport {
+func UpdateProjectReportForUpdatedCodeNodes(report types.ProjectReport, pageId string, incomingCount int, unchangedCount int, updatedCount int, newCount int, removedCount int, aggregateCodeNodeChangeCount int, newAppliedUsageExampleCount int) types.ProjectReport {
 	if newCount > 0 {
 		report.Counter.NewCodeNodesCount += newCount
 		report = utils.ReportChanges(types.CodeExampleCreated, report, pageId, newCount)

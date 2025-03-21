@@ -1,6 +1,7 @@
 package compare_code_examples
 
 import (
+	"common"
 	"gdcd/compare-code-examples/data"
 	"gdcd/snooty"
 	"gdcd/types"
@@ -11,7 +12,7 @@ import (
 
 func TestHandleUpdatedPageNodesCorrectlyUpdatesValues(t *testing.T) {
 	codeNode, astNode := data.GetUpdatedNodes()
-	sha256HashCodeNodeLookupMap := make(map[string]types.CodeNode)
+	sha256HashCodeNodeLookupMap := make(map[string]common.CodeNode)
 	whitespaceTrimmedString := strings.TrimSpace(astNode.Value)
 	incomingSha26Hash := snooty.MakeSha256HashForCode(whitespaceTrimmedString)
 	sha256HashCodeNodeLookupMap[incomingSha26Hash] = codeNode

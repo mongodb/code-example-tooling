@@ -1,46 +1,31 @@
 package utils
 
+import (
+	"common"
+)
+
+// This is a redeclaration of the constants in add-code-examples.Constants. Redeclaring them here to avoid import cycle error.
+// There's probably a better place to put these but brain can only so much brain right now so these are dups currently.
 const (
-	Bash             = "bash"
-	C                = "c"
-	CPP              = "cpp"
-	CSharp           = "csharp"
-	Go               = "go"
-	Java             = "java"
-	JavaScript       = "javascript"
-	JSON             = "json"
-	Kotlin           = "kotlin"
-	PHP              = "php"
-	Python           = "python"
-	Ruby             = "ruby"
-	Rust             = "rust"
-	Scala            = "scala"
-	Shell            = "shell"
-	Swift            = "swift"
-	Text             = "text"
-	TypeScript       = "typescript"
-	Undefined        = "undefined"
-	XML              = "xml"
-	YAML             = "yaml"
-	JSON_LIKE        = "json-like"
-	DRIVERS_MINUS_JS = "drivers-minus-js"
+	JsonLike       = "json-like"
+	DriversMinusJs = "drivers-minus-js"
 )
 
 func GetLanguageCategory(lang string) string {
-	jsonLike := []string{JSON, XML, YAML}
-	driversLanguagesMinusJS := []string{C, CPP, CSharp, Go, Java, Kotlin, PHP, Python, Ruby, Rust, Scala, Swift, TypeScript}
-	if SliceContainsString([]string{Bash, Shell}, lang) {
-		return Shell
+	jsonLike := []string{common.JSON, common.XML, common.YAML}
+	driversLanguagesMinusJS := []string{common.C, common.CPP, common.CSharp, common.Go, common.Java, common.Kotlin, common.PHP, common.Python, common.Ruby, common.Rust, common.Scala, common.Swift, common.TypeScript}
+	if SliceContainsString([]string{common.Bash, common.Shell}, lang) {
+		return common.Shell
 	} else if SliceContainsString(jsonLike, lang) {
-		return JSON_LIKE
+		return JsonLike
 	} else if SliceContainsString(driversLanguagesMinusJS, lang) {
-		return DRIVERS_MINUS_JS
-	} else if lang == JavaScript {
-		return JavaScript
-	} else if lang == Text {
-		return Text
-	} else if lang == Undefined {
-		return Undefined
+		return DriversMinusJs
+	} else if lang == common.JavaScript {
+		return common.JavaScript
+	} else if lang == common.Text {
+		return common.Text
+	} else if lang == common.Undefined {
+		return common.Undefined
 	} else {
 		return ""
 	}

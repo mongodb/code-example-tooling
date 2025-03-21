@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-// RemovePageFromAtlas deletes a types.DocsPage from Atlas. We don't need to update the collection summaries document,
+// RemovePageFromAtlas deletes a common.DocsPage from Atlas. We don't need to update the collection summaries document,
 // because that will be overwritten with existing page count and code node count at the end of this run.
 func RemovePageFromAtlas(collectionName string, pageId string) bool {
 	uri := os.Getenv("MONGODB_URI")

@@ -1,6 +1,7 @@
 package compare_code_examples
 
 import (
+	"common"
 	"gdcd/snooty"
 	"gdcd/types"
 	"strings"
@@ -18,7 +19,7 @@ const (
 // code example. If the SHA256 hash is an exact match for a code example already on the page, it is unchanged. If it is
 // within the matching percentage we accept, we consider it "updated" - otherwise, we consider it "new."
 // If it's an updated example, we also hand back the existing node so we can update it.
-func ChooseBucketForNode(existingNodes []types.CodeNode, existingSha256Hashes map[string]int, node types.ASTNode) (string, *types.CodeNode) {
+func ChooseBucketForNode(existingNodes []common.CodeNode, existingSha256Hashes map[string]int, node types.ASTNode) (string, *common.CodeNode) {
 	whitespaceTrimmedString := strings.TrimSpace(node.Value)
 	hash := snooty.MakeSha256HashForCode(whitespaceTrimmedString)
 	_, exists := existingSha256Hashes[hash]

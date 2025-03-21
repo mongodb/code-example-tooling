@@ -1,12 +1,13 @@
 package data
 
 import (
+	"common"
 	"gdcd/types"
 	"time"
 )
 
-func GetNewNodes() (types.CodeNode, types.ASTNode) {
-	codeNode := types.CodeNode{
+func GetNewNodes() (common.CodeNode, types.ASTNode) {
+	codeNode := common.CodeNode{
 		Code:           "",
 		Language:       "",
 		FileExtension:  "",

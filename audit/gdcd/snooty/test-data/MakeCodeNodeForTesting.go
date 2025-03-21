@@ -1,17 +1,17 @@
 package test_data
 
 import (
+	"common"
 	"gdcd/add-code-examples"
 	"gdcd/snooty"
-	"gdcd/types"
 	"time"
 )
 
-func MakeCodeNodeForTesting(language string, category string) types.CodeNode {
+func MakeCodeNodeForTesting(language string, category string) common.CodeNode {
 	code := "Some code goes here"
 	fileExtension := add_code_examples.GetFileExtensionFromStringLang(language)
 	sha256Hash := snooty.MakeSha256HashForCode(code)
-	return types.CodeNode{
+	return common.CodeNode{
 		Code:           code,
 		Language:       language,
 		FileExtension:  fileExtension,

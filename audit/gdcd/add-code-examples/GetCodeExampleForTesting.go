@@ -1,5 +1,7 @@
 package add_code_examples
 
+import "common"
+
 func GetCodeExampleForTesting(category string, languageCategory string) string {
 	driverUsageExample := `const bson_t *doc;
 bson_t *pipeline = BCON_NEW ("pipeline",
@@ -267,80 +269,80 @@ commonName_max = 64`
 dn:CN=admin,CN=Users,dc=example,dc=com`
 
 	switch category {
-	case UsageExample:
+	case common.UsageExample:
 
 		switch languageCategory {
 		case DriversMinusJs:
 			return driverUsageExample
-		case Shell:
+		case common.Shell:
 			return shellUsageExample
-		case JavaScript:
+		case common.JavaScript:
 			return javaScriptUsageExample
 		case JsonLike:
 			return jsonLikeUsageExample
-		case Text:
+		case common.Text:
 			return textUsageExample
 		default:
 			return ""
 		}
 
-	case SyntaxExample:
+	case common.SyntaxExample:
 
 		switch languageCategory {
 		case DriversMinusJs:
 			return driverSyntaxExample
-		case Shell:
+		case common.Shell:
 			return shellSyntaxExample
-		case JavaScript:
+		case common.JavaScript:
 			return javaScriptSyntaxExample
 		case JsonLike:
 			return jsonLikeSyntaxExample
-		case Text:
+		case common.Text:
 			return textSyntaxExample
 		default:
 			return ""
 		}
 
-	case ExampleReturnObject:
+	case common.ExampleReturnObject:
 
 		switch languageCategory {
 		case DriversMinusJs:
 			return driverReturnExample
-		case Shell:
+		case common.Shell:
 			return shellReturnExample
-		case JavaScript:
+		case common.JavaScript:
 			return javaScriptReturnExample
 		case JsonLike:
 			return jsonLikeReturnExample
-		case Text:
+		case common.Text:
 			return textReturnExample
 		default:
 			return ""
 		}
 
-	case ExampleConfigurationObject:
+	case common.ExampleConfigurationObject:
 
 		switch languageCategory {
 		case DriversMinusJs:
 			return ""
-		case Shell:
+		case common.Shell:
 			return shellConfigurationExample
-		case JavaScript:
+		case common.JavaScript:
 			return javaScriptConfigurationExample
 		case JsonLike:
 			return jsonLikeConfigurationExample
-		case Text:
+		case common.Text:
 			return textConfigurationExample
 		default:
 			return ""
 		}
 
-	case NonMongoCommand:
+	case common.NonMongoCommand:
 
 		switch languageCategory {
-		case Shell:
+		case common.Shell:
 			return shellNonMongoDBCommandExample
-		case Text:
+		case common.Text:
 			return textNonMongoDBCommandExample
 		default:
 			return ""

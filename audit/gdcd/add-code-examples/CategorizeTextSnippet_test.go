@@ -1,6 +1,7 @@
 package add_code_examples
 
 import (
+	"common"
 	"context"
 	"github.com/tmc/langchaingo/llms/ollama"
 	"log"
@@ -23,12 +24,11 @@ func TestCategorizeTextSnippet(t *testing.T) {
 		args args
 		want string
 	}{
-		// TODO: Add test cases.
-		{NonMongoCommand, args{contents: GetCodeExampleForTesting(NonMongoCommand, Text), llm: llm, ctx: ctx}, NonMongoCommand},
-		{UsageExample, args{contents: GetCodeExampleForTesting(UsageExample, Text), llm: llm, ctx: ctx}, UsageExample},
-		{SyntaxExample, args{contents: GetCodeExampleForTesting(SyntaxExample, Text), llm: llm, ctx: ctx}, SyntaxExample},
-		{ExampleConfigurationObject, args{contents: GetCodeExampleForTesting(ExampleConfigurationObject, Text), llm: llm, ctx: ctx}, ExampleConfigurationObject},
-		{ExampleReturnObject, args{contents: GetCodeExampleForTesting(ExampleReturnObject, Text), llm: llm, ctx: ctx}, ExampleReturnObject},
+		{common.NonMongoCommand, args{contents: GetCodeExampleForTesting(common.NonMongoCommand, common.Text), llm: llm, ctx: ctx}, common.NonMongoCommand},
+		{common.UsageExample, args{contents: GetCodeExampleForTesting(common.UsageExample, common.Text), llm: llm, ctx: ctx}, common.UsageExample},
+		{common.SyntaxExample, args{contents: GetCodeExampleForTesting(common.SyntaxExample, common.Text), llm: llm, ctx: ctx}, common.SyntaxExample},
+		{common.ExampleConfigurationObject, args{contents: GetCodeExampleForTesting(common.ExampleConfigurationObject, common.Text), llm: llm, ctx: ctx}, common.ExampleConfigurationObject},
+		{common.ExampleReturnObject, args{contents: GetCodeExampleForTesting(common.ExampleReturnObject, common.Text), llm: llm, ctx: ctx}, common.ExampleReturnObject},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

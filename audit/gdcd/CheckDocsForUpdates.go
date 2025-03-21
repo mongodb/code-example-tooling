@@ -1,6 +1,7 @@
 package main
 
 import (
+	"common"
 	"context"
 	"gdcd/db"
 	"gdcd/types"
@@ -17,8 +18,8 @@ func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjec
 	incomingPageCount := len(docsPages)
 	incomingDeletedPageCount := 0
 	var newPageIds []string
-	var newPages []types.DocsPage
-	var updatedPages []types.DocsPage
+	var newPages []common.DocsPage
+	var updatedPages []common.DocsPage
 	for _, page := range docsPages {
 		// The Snooty Data API returns pages that may have been deleted. If the page is deleted, we want to check and see
 		// if it exists already in the DB, and delete it if it does. If we haven't already made an entry for it, we
@@ -33,14 +34,14 @@ func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjec
 				// If the code example counts are the same on the incoming page as they are on the existing page,
 				// we treat that as an unchanged page and it does not return an updated page - it returns nil
 				incomingPageIdsMatchingExistingPages[maybeExistingPage.ID] = true
-				var updatedPage *types.DocsPage
+				var updatedPage *common.DocsPage
 				updatedPage, report = UpdateExistingDocsPage(*maybeExistingPage, page, report, llm, ctx)
 				if updatedPage != nil {
 					updatedPages = append(updatedPages, *updatedPage)
 				}
 			} else {
 				// If there is no existing document in Atlas that matches the page, we need to make a new page
-				var newPage types.DocsPage
+				var newPage common.DocsPage
 				newPage, report = MakeNewDocsPage(page, project.ProdUrl, report, llm, ctx)
 				newPageIds = append(newPageIds, newPage.ID)
 				newPages = append(newPages, newPage)
@@ -54,7 +55,7 @@ func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjec
 	report = db.HandleMissingPageIds(project.ProjectName, incomingPageIdsMatchingExistingPages, report)
 
 	// Get the existing "summaries" document from the DB, and update it.
-	var summaryDoc types.CollectionReport
+	var summaryDoc common.CollectionReport
 	expectedPageCountFromIncomingPages := incomingPageCount - incomingDeletedPageCount
 	summaryDoc, report = HandleCollectionSummariesDocument(project, report, expectedPageCountFromIncomingPages)
 

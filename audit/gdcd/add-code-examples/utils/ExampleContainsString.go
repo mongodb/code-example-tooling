@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"common"
 	"log"
 	"regexp"
 	"strings"
@@ -30,33 +31,33 @@ func ExampleContainsString(contents string) (string, bool) {
 		substring := contents[:substringLengthToCheck]
 		for _, exampleString := range usageExampleSubstringsToEvaluate {
 			if strings.Contains(substring, exampleString) {
-				return UsageExample, true
+				return common.UsageExample, true
 			}
 		}
 		for _, exampleString := range returnObjectStringsToEvaluate {
 			if strings.Contains(substring, exampleString) {
-				return ExampleReturnObject, true
+				return common.ExampleReturnObject, true
 			}
 		}
 		for _, exampleString := range nonMongoDBStringsToEvaluate {
 			if strings.Contains(substring, exampleString) {
-				return NonMongoCommand, true
+				return common.NonMongoCommand, true
 			}
 		}
 	} else {
 		for _, exampleString := range usageExampleSubstringsToEvaluate {
 			if strings.Contains(contents, exampleString) {
-				return UsageExample, true
+				return common.UsageExample, true
 			}
 		}
 		for _, exampleString := range returnObjectStringsToEvaluate {
 			if strings.Contains(contents, exampleString) {
-				return ExampleReturnObject, true
+				return common.ExampleReturnObject, true
 			}
 		}
 		for _, exampleString := range nonMongoDBStringsToEvaluate {
 			if strings.Contains(contents, exampleString) {
-				return NonMongoCommand, true
+				return common.NonMongoCommand, true
 			}
 		}
 	}
@@ -81,9 +82,9 @@ func ExampleContainsString(contents string) (string, bool) {
 	matchLength := len(regExpMatches)
 	if matchLength > 1 {
 		if regExpMatches[1] != "" {
-			return SyntaxExample, true
+			return common.SyntaxExample, true
 		} else {
-			return UsageExample, true
+			return common.UsageExample, true
 		}
 	} else {
 		return "Uncategorized", false

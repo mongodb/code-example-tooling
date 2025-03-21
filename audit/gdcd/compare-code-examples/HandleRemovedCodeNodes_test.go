@@ -1,8 +1,8 @@
 package compare_code_examples
 
 import (
+	"common"
 	"gdcd/compare-code-examples/data"
-	"gdcd/types"
 	"testing"
 	"time"
 )
@@ -14,7 +14,7 @@ func IsApproximatelyNow(t time.Time, tolerance time.Duration) bool {
 
 func TestHandleRemovedNodesCorrectlySetsRemovedValues(t *testing.T) {
 	codeNode, _ := data.GetRemovedNodes()
-	updatedRemovedNodes := HandleRemovedCodeNodes([]types.CodeNode{codeNode})
+	updatedRemovedNodes := HandleRemovedCodeNodes([]common.CodeNode{codeNode})
 	removedNode := updatedRemovedNodes[0]
 	tolerance := 2 * time.Second // Define tolerance of 2 seconds
 	if !IsApproximatelyNow(removedNode.DateRemoved, tolerance) {

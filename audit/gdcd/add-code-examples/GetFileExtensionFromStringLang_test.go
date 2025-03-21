@@ -1,6 +1,9 @@
 package add_code_examples
 
-import "testing"
+import (
+	"common"
+	"testing"
+)
 
 func TestGetFileExtensionFromStringLang(t *testing.T) {
 	type args struct {
@@ -11,39 +14,39 @@ func TestGetFileExtensionFromStringLang(t *testing.T) {
 		args args
 		want string
 	}{
-		{Bash, args{Bash}, BashExtension},
-		{C, args{C}, CExtension},
-		{CPP, args{CPP}, CPPExtension},
-		{CSharp, args{CSharp}, CSharpExtension},
-		{Go, args{Go}, GoExtension},
-		{Java, args{Java}, JavaExtension},
-		{JavaScript, args{JavaScript}, JavaScriptExtension},
-		{JSON, args{JSON}, JSONExtension},
-		{Kotlin, args{Kotlin}, KotlinExtension},
-		{PHP, args{PHP}, PHPExtension},
-		{Python, args{Python}, PythonExtension},
-		{Ruby, args{Ruby}, RubyExtension},
-		{Rust, args{Rust}, RustExtension},
-		{Scala, args{Scala}, ScalaExtension},
-		{Shell, args{Shell}, ShellExtension},
-		{Swift, args{Swift}, SwiftExtension},
-		{Text, args{Text}, TextExtension},
-		{TypeScript, args{TypeScript}, TypeScriptExtension},
-		{Undefined, args{Undefined}, UndefinedExtension},
-		{XML, args{XML}, XMLExtension},
-		{YAML, args{YAML}, YAMLExtension},
-		{"Empty string", args{""}, UndefinedExtension},
-		{"console", args{"console"}, ShellExtension},
-		{"cs", args{"cs"}, CSharpExtension},
-		{"golang", args{"golang"}, GoExtension},
-		{"http", args{"http"}, TextExtension},
-		{"ini", args{"ini"}, TextExtension},
-		{"js", args{"js"}, JavaScriptExtension},
-		{"none", args{"none"}, UndefinedExtension},
-		{"sh", args{"sh"}, ShellExtension},
-		{"json\\n :copyable: false", args{"json\\n :copyable: false"}, JSONExtension},
-		{"json\\n :copyable: true", args{"json\\n :copyable: true"}, JSONExtension},
-		{"Some other non-normalized lang", args{"Some other non-normalized lang"}, UndefinedExtension},
+		{common.Bash, args{common.Bash}, common.BashExtension},
+		{common.C, args{common.C}, common.CExtension},
+		{common.CPP, args{common.CPP}, common.CPPExtension},
+		{common.CSharp, args{common.CSharp}, common.CSharpExtension},
+		{common.Go, args{common.Go}, common.GoExtension},
+		{common.Java, args{common.Java}, common.JavaExtension},
+		{common.JavaScript, args{common.JavaScript}, common.JavaScriptExtension},
+		{common.JSON, args{common.JSON}, common.JSONExtension},
+		{common.Kotlin, args{common.Kotlin}, common.KotlinExtension},
+		{common.PHP, args{common.PHP}, common.PHPExtension},
+		{common.Python, args{common.Python}, common.PythonExtension},
+		{common.Ruby, args{common.Ruby}, common.RubyExtension},
+		{common.Rust, args{common.Rust}, common.RustExtension},
+		{common.Scala, args{common.Scala}, common.ScalaExtension},
+		{common.Shell, args{common.Shell}, common.ShellExtension},
+		{common.Swift, args{common.Swift}, common.SwiftExtension},
+		{common.Text, args{common.Text}, common.TextExtension},
+		{common.TypeScript, args{common.TypeScript}, common.TypeScriptExtension},
+		{common.Undefined, args{common.Undefined}, common.UndefinedExtension},
+		{common.XML, args{common.XML}, common.XMLExtension},
+		{common.YAML, args{common.YAML}, common.YAMLExtension},
+		{"Empty string", args{""}, common.UndefinedExtension},
+		{"console", args{"console"}, common.ShellExtension},
+		{"cs", args{"cs"}, common.CSharpExtension},
+		{"golang", args{"golang"}, common.GoExtension},
+		{"http", args{"http"}, common.TextExtension},
+		{"ini", args{"ini"}, common.TextExtension},
+		{"js", args{"js"}, common.JavaScriptExtension},
+		{"none", args{"none"}, common.UndefinedExtension},
+		{"sh", args{"sh"}, common.ShellExtension},
+		{"json\\n :copyable: false", args{"json\\n :copyable: false"}, common.JSONExtension},
+		{"json\\n :copyable: true", args{"json\\n :copyable: true"}, common.JSONExtension},
+		{"Some other non-normalized lang", args{"Some other non-normalized lang"}, common.UndefinedExtension},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

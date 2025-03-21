@@ -1,8 +1,8 @@
 package db
 
 import (
+	"common"
 	"context"
-	"gdcd/types"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-func BatchUpdateCollection(collectionName string, newPages []types.DocsPage, updatedPages []types.DocsPage, updatedSummaries types.CollectionReport) {
+func BatchUpdateCollection(collectionName string, newPages []common.DocsPage, updatedPages []common.DocsPage, updatedSummaries common.CollectionReport) {
 	uri := os.Getenv("MONGODB_URI")
 	docs := "www.mongodb.com/docs/drivers/go/current/"
 	if uri == "" {

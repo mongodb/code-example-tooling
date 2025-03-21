@@ -7,7 +7,10 @@ require (
 	github.com/sergi/go-diff v1.3.1
 	github.com/tmc/langchaingo v0.1.13
 	go.mongodb.org/mongo-driver/v2 v2.1.0
+	common v0.0.0
 )
+
+replace common => ../common
 
 require (
 	github.com/Masterminds/goutils v1.1.1 // indirect

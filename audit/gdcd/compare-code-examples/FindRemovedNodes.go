@@ -1,6 +1,7 @@
 package compare_code_examples
 
 import (
+	"common"
 	"gdcd/snooty"
 	"gdcd/types"
 )
@@ -10,9 +11,9 @@ import (
 // examples against SHA256 hashes from the incoming buckets. If the SHA256 hash doesn't match any of the incoming examples,
 // the example has been removed from the page. Append it to an array of removed nodes and hand it back to the call
 // site for handling in the DB.
-func FindRemovedNodes(existingNodeHashMap map[string]types.CodeNode, unchangedBucket []types.ASTNode, updatedBucket []types.ASTNode, newBucket []types.ASTNode) []types.CodeNode {
+func FindRemovedNodes(existingNodeHashMap map[string]common.CodeNode, unchangedBucket []types.ASTNode, updatedBucket []types.ASTNode, newBucket []types.ASTNode) []common.CodeNode {
 	unchangedHashBool := make(map[string]bool)
-	removedNodes := make([]types.CodeNode, 0)
+	removedNodes := make([]common.CodeNode, 0)
 	for _, node := range unchangedBucket {
 		hash := snooty.MakeSha256HashForCode(node.Value)
 		unchangedHashBool[hash] = true

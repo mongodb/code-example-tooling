@@ -12,7 +12,7 @@ func TestDocsBuilderBotStubShouldReturnPages(t *testing.T) {
 	inputJSON := LoadJsonTestDataFromFile("spark-connector-project-documents-stub.json")
 	body := io.NopCloser(strings.NewReader(string(inputJSON)))
 	reader := *bufio.NewReader(body)
-	pages := ReadDocsForGitHubUser(reader, GitHubUsernameDocsBuilderBot)
+	pages := ReadDocsForGitHubUser(reader)
 	pageCount := len(pages)
 	expectedPageCount := 13
 	if pageCount != expectedPageCount {
@@ -24,7 +24,7 @@ func TestNetlifyStubShouldReturnPages(t *testing.T) {
 	inputJSON := LoadJsonTestDataFromFile("c-driver-project-documents-stub.json")
 	body := io.NopCloser(strings.NewReader(string(inputJSON)))
 	reader := *bufio.NewReader(body)
-	pages := ReadDocsForGitHubUser(reader, GitHubUsernameNetlify)
+	pages := ReadDocsForGitHubUser(reader)
 	pageCount := len(pages)
 	expectedPageCount := 10
 	if pageCount != expectedPageCount {
@@ -36,7 +36,7 @@ func TestWrongUsernameShouldReturnNoPages(t *testing.T) {
 	inputJSON := LoadJsonTestDataFromFile("c-driver-project-documents-stub.json")
 	body := io.NopCloser(strings.NewReader(string(inputJSON)))
 	reader := *bufio.NewReader(body)
-	pages := ReadDocsForGitHubUser(reader, GitHubUsernameDocsBuilderBot)
+	pages := ReadDocsForGitHubUser(reader)
 	pageCount := len(pages)
 	expectedPageCount := 0
 	if pageCount != expectedPageCount {

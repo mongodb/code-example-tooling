@@ -1,13 +1,8 @@
 package utils
 
-import "strings"
-
-const (
-	SyntaxExample              = "Syntax example"
-	NonMongoCommand            = "Non-MongoDB command"
-	ExampleReturnObject        = "Example return object"
-	ExampleConfigurationObject = "Example configuration object"
-	UsageExample               = "Usage example"
+import (
+	"common"
+	"strings"
 )
 
 func HasStringMatchPrefix(contents string, langCategory string) (string, bool) {
@@ -51,39 +46,39 @@ func HasStringMatchPrefix(contents string, langCategory string) (string, bool) {
 	usageExamplePrefixes := []string{importPrefix, fromPrefix, namespacePrefix, packagePrefix, usingPrefix, mongoConnectionStringPrefix, alternoConnectionStringPrefix}
 	nonMongoPrefixes := []string{mkdir, cd, docker, dockerCompose, dockerCompose, brew, yum, apt, npm, pip, goRun, node, dotnet, export, sudo, copyPrefix, tar, jq, vi, cmake, syft, choco}
 
-	if langCategory == Shell {
+	if langCategory == common.Shell {
 		for _, prefix := range syntaxExamplePrefixes {
 			if strings.HasPrefix(contents, prefix) {
-				return SyntaxExample, true
+				return common.SyntaxExample, true
 			}
 		}
 		for _, prefix := range nonMongoPrefixes {
 			if strings.HasPrefix(contents, prefix) {
-				return NonMongoCommand, true
+				return common.NonMongoCommand, true
 			}
 		}
 		return "Uncategorized", false
-	} else if langCategory == Text || langCategory == Undefined {
+	} else if langCategory == common.Text || langCategory == common.Undefined {
 		for _, prefix := range syntaxExamplePrefixes {
 			if strings.HasPrefix(contents, prefix) {
-				return SyntaxExample, true
+				return common.SyntaxExample, true
 			}
 		}
 		for _, prefix := range nonMongoPrefixes {
 			if strings.HasPrefix(contents, prefix) {
-				return NonMongoCommand, true
+				return common.NonMongoCommand, true
 			}
 		}
 		for _, prefix := range usageExamplePrefixes {
 			if strings.HasPrefix(contents, prefix) {
-				return UsageExample, true
+				return common.UsageExample, true
 			}
 		}
 		return "Uncategorized", false
 	} else {
 		for _, prefix := range usageExamplePrefixes {
 			if strings.HasPrefix(contents, prefix) {
-				return UsageExample, true
+				return common.UsageExample, true
 			}
 		}
 		return "Uncategorized", false

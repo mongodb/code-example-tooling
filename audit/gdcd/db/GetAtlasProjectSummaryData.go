@@ -1,9 +1,9 @@
 package db
 
 import (
+	"common"
 	"context"
 	"errors"
-	"gdcd/types"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -11,7 +11,7 @@ import (
 	"os"
 )
 
-func GetAtlasProjectSummaryData(collectionName string) *types.CollectionReport {
+func GetAtlasProjectSummaryData(collectionName string) *common.CollectionReport {
 	uri := os.Getenv("MONGODB_URI")
 	docs := "www.mongodb.com/docs/drivers/go/current/"
 	if uri == "" {
@@ -35,7 +35,7 @@ func GetAtlasProjectSummaryData(collectionName string) *types.CollectionReport {
 	collection := client.Database(dbName).Collection(collectionName)
 	filter := bson.D{{Key: "_id", Value: "summaries"}}
 	// Create a DocsPage object to hold the result
-	var result types.CollectionReport
+	var result common.CollectionReport
 	// Execute the query
 	err = collection.FindOne(ctx, filter).Decode(&result)
 	if err != nil {

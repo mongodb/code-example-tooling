@@ -1,6 +1,7 @@
 package add_code_examples
 
 import (
+	"common"
 	"context"
 	"github.com/tmc/langchaingo/llms/ollama"
 	"log"
@@ -24,8 +25,8 @@ func TestCategorizeDriverLanguageSnippet(t *testing.T) {
 		want string
 	}{
 		// This function only returns two possible values - UsageExample or SyntaxExample
-		{UsageExample, args{contents: GetCodeExampleForTesting(UsageExample, DriversMinusJs), llm: llm, ctx: ctx}, UsageExample},
-		{SyntaxExample, args{contents: GetCodeExampleForTesting(SyntaxExample, DriversMinusJs), llm: llm, ctx: ctx}, SyntaxExample},
+		{common.UsageExample, args{contents: GetCodeExampleForTesting(common.UsageExample, DriversMinusJs), llm: llm, ctx: ctx}, common.UsageExample},
+		{common.SyntaxExample, args{contents: GetCodeExampleForTesting(common.SyntaxExample, DriversMinusJs), llm: llm, ctx: ctx}, common.SyntaxExample},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

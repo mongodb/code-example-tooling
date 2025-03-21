@@ -1,6 +1,7 @@
 package add_code_examples
 
 import (
+	"common"
 	"context"
 	"fmt"
 	"github.com/tmc/langchaingo/llms"
@@ -19,10 +20,10 @@ func CategorizeDriverLanguageSnippet(contents string, llm *ollama.LLM, ctx conte
 		%s: Longer code snippet that establishes parameters, performs basic set up code, and includes the larger context to demonstrate how to accomplish a task. If an example shows parameters but does not show initializing parameters, it is a syntax example, not a usage example.
 		Using these definitions, which category applies to this code example? Don't list an explanation, only list the category name.`
 	question := fmt.Sprintf(questionTemplate,
-		SyntaxExample,
-		UsageExample,
-		SyntaxExample,
-		UsageExample,
+		common.SyntaxExample,
+		common.UsageExample,
+		common.SyntaxExample,
+		common.UsageExample,
 	)
 	template := prompts.NewPromptTemplate(
 		`Use the following pieces of context to answer the question at the end.

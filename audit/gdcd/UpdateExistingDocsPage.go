@@ -1,6 +1,7 @@
 package main
 
 import (
+	"common"
 	"context"
 	"gdcd/add-code-examples"
 	"gdcd/compare-code-examples"
@@ -12,9 +13,9 @@ import (
 	"time"
 )
 
-func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper, projectReport types.ProjectReport, llm *ollama.LLM, ctx context.Context) (*types.DocsPage, types.ProjectReport) {
-	var existingCurrentCodeNodes []types.CodeNode
-	var existingRemovedCodeNodes []types.CodeNode
+func UpdateExistingDocsPage(existingPage common.DocsPage, data types.PageWrapper, projectReport types.ProjectReport, llm *ollama.LLM, ctx context.Context) (*common.DocsPage, types.ProjectReport) {
+	var existingCurrentCodeNodes []common.CodeNode
+	var existingRemovedCodeNodes []common.CodeNode
 	// Some of the existing Nodes on the page could have been previously removed from the page. So we need to know which
 	// nodes are "currently" on the page, and which nodes have already been removed. The ones that are "currently" on the
 	// page should be used to compare code examples, but the ones that have already been removed from the page will be
@@ -30,7 +31,7 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 	incomingLiteralIncludeNodeCount := len(incomingLiteralIncludeNodes)
 	incomingIoCodeBlockNodeCount := len(incomingIoCodeBlockNodes)
 	projectReport = IncrementProjectCountsForExistingPage(incomingCodeNodePageCount, incomingLiteralIncludeNodeCount, incomingIoCodeBlockNodeCount, existingPage, projectReport)
-	var pageWithUpdatedKeywords *types.DocsPage
+	var pageWithUpdatedKeywords *common.DocsPage
 	if len(maybePageKeywords) > 0 {
 		// If the page has keywords, and it's not the same number of keywords that are coming in from Snooty, update the keywords
 		if len(existingPage.Keywords) != len(maybePageKeywords) {
@@ -48,7 +49,7 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 	}
 
 	// If the incoming page node count does not equal the existing atlas doc node count, we need to update the page
-	var updatedDocsPage types.DocsPage
+	var updatedDocsPage common.DocsPage
 	if pageWithUpdatedKeywords != nil {
 		updatedDocsPage = *pageWithUpdatedKeywords
 	} else {
@@ -65,7 +66,7 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 	if existingCurrentCodeNodes != nil && incomingCodeNodePageCount == 0 {
 		newRemovedNodeCount := len(existingCurrentCodeNodes)
 		// Mark all nodes as removed
-		updatedCodeNodes := make([]types.CodeNode, 0)
+		updatedCodeNodes := make([]common.CodeNode, 0)
 		for _, node := range existingCurrentCodeNodes {
 			node.DateRemoved = time.Now()
 			node.IsRemoved = true
@@ -90,7 +91,7 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 		updatedDocsPage.IoCodeBlocksTotal = 0
 
 		// Update the language counts array (set all values for the page to 0)
-		updatedLanguagesArray := MakeLanguagesArray([]types.CodeNode{}, []types.ASTNode{}, []types.ASTNode{})
+		updatedLanguagesArray := MakeLanguagesArray([]common.CodeNode{}, []types.ASTNode{}, []types.ASTNode{})
 		updatedDocsPage.Languages = updatedLanguagesArray
 
 		// Update the date_last_updated time
@@ -115,7 +116,7 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 		}
 	} else if atlasDocCurrentCodeNodeCount == 0 && incomingCodeNodePageCount > 0 {
 		// There are no existing code examples - they're all new - so just make new code examples
-		newCodeNodes := make([]types.CodeNode, 0)
+		newCodeNodes := make([]common.CodeNode, 0)
 		for _, snootyNode := range incomingCodeNodes {
 			newNode := snooty.MakeCodeNodeFromSnootyAST(snootyNode, llm, ctx, isDriversProject)
 			newCodeNodes = append(newCodeNodes, newNode)
@@ -159,7 +160,7 @@ func UpdateExistingDocsPage(existingPage types.DocsPage, data types.PageWrapper,
 
 		// If some examples exist already, and some examples are coming in from snooty, they might be updated, new, removed, or unchanged.
 		// Handle those distinct cases.
-		var updatedCodeNodes []types.CodeNode
+		var updatedCodeNodes []common.CodeNode
 		updatedCodeNodes, projectReport = compare_code_examples.CompareExistingIncomingCodeExampleSlices(existingCurrentCodeNodes, existingRemovedCodeNodes, incomingCodeNodes, projectReport, existingPage.ID, llm, ctx, isDriversProject)
 		updatedDocsPage.Nodes = &updatedCodeNodes
 

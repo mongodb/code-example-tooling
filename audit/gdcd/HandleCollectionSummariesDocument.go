@@ -1,14 +1,15 @@
 package main
 
 import (
+	"common"
 	"gdcd/db"
 	"gdcd/types"
 	"gdcd/utils"
 )
 
-func HandleCollectionSummariesDocument(project types.DocsProjectDetails, report types.ProjectReport, incomingPageCount int) (types.CollectionReport, types.ProjectReport) {
+func HandleCollectionSummariesDocument(project types.DocsProjectDetails, report types.ProjectReport, incomingPageCount int) (common.CollectionReport, types.ProjectReport) {
 	summaryDoc := db.GetAtlasProjectSummaryData(project.ProjectName)
-	var latestCollectionInfo types.CollectionInfoView
+	var latestCollectionInfo common.CollectionInfoView
 	collectionVersionKey := ""
 	// If we haven't audited this collection before, there will be no collection info document
 	if summaryDoc == nil {

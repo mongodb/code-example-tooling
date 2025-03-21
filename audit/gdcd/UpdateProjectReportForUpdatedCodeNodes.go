@@ -1,8 +1,11 @@
 package main
 
-import "gdcd/types"
+import (
+	"common"
+	"gdcd/types"
+)
 
-func IncrementProjectCountsForExistingPage(incomingCodeNodeCount int, incomingLiteralIncludeNodeCount int, incomingIoCodeBlockNodeCount int, existingPage types.DocsPage, report types.ProjectReport) types.ProjectReport {
+func IncrementProjectCountsForExistingPage(incomingCodeNodeCount int, incomingLiteralIncludeNodeCount int, incomingIoCodeBlockNodeCount int, existingPage common.DocsPage, report types.ProjectReport) types.ProjectReport {
 	report.Counter.IncomingCodeNodesCount += incomingCodeNodeCount
 	report.Counter.IncomingLiteralIncludeCount += incomingLiteralIncludeNodeCount
 	report.Counter.IncomingIoCodeBlockCount += incomingIoCodeBlockNodeCount

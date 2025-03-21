@@ -1,6 +1,7 @@
 package add_code_examples
 
 import (
+	"common"
 	"context"
 	"gdcd/add-code-examples/utils"
 	"github.com/tmc/langchaingo/llms/ollama"
@@ -8,7 +9,7 @@ import (
 
 func GetCategory(contents string, lang string, llm *ollama.LLM, ctx context.Context, isDriverProject bool) (string, bool) {
 	var category string
-	validCategories := []string{ExampleReturnObject, ExampleConfigurationObject, NonMongoCommand, SyntaxExample, UsageExample}
+	validCategories := []string{common.ExampleReturnObject, common.ExampleConfigurationObject, common.NonMongoCommand, common.SyntaxExample, common.UsageExample}
 
 	/* If the start characters of the code example match a pattern we have defined for a given category,
 	 * return the category - no need to get the LLM involved.

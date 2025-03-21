@@ -1,9 +1,9 @@
 package db
 
 import (
+	"common"
 	"context"
 	"errors"
-	"gdcd/types"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -11,7 +11,7 @@ import (
 	"os"
 )
 
-func GetAtlasPageData(collectionName string, docId string) *types.DocsPage {
+func GetAtlasPageData(collectionName string, docId string) *common.DocsPage {
 	uri := os.Getenv("MONGODB_URI")
 	docs := "www.mongodb.com/docs/drivers/go/current/"
 	if uri == "" {
@@ -35,7 +35,7 @@ func GetAtlasPageData(collectionName string, docId string) *types.DocsPage {
 	collection := client.Database(dbName).Collection(collectionName)
 	filter := bson.D{{Key: "_id", Value: docId}}
 	// Create a DocsPage object to hold the result
-	var result types.DocsPage
+	var result common.DocsPage
 	// Execute the query
 	err = collection.FindOne(ctx, filter).Decode(&result)
 	if err != nil {

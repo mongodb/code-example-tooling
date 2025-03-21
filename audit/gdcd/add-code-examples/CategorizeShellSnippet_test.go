@@ -1,6 +1,7 @@
 package add_code_examples
 
 import (
+	"common"
 	"context"
 	"github.com/tmc/langchaingo/llms/ollama"
 	"log"
@@ -23,10 +24,10 @@ func TestCategorizeShellSnippet(t *testing.T) {
 		args args
 		want string
 	}{
-		{NonMongoCommand, args{contents: GetCodeExampleForTesting(NonMongoCommand, Shell), llm: llm, ctx: ctx}, NonMongoCommand},
-		{SyntaxExample, args{contents: GetCodeExampleForTesting(SyntaxExample, Shell), llm: llm, ctx: ctx}, SyntaxExample},
-		{ExampleConfigurationObject, args{contents: GetCodeExampleForTesting(ExampleConfigurationObject, Shell), llm: llm, ctx: ctx}, ExampleConfigurationObject},
-		{ExampleReturnObject, args{contents: GetCodeExampleForTesting(ExampleReturnObject, Shell), llm: llm, ctx: ctx}, ExampleReturnObject},
+		{common.NonMongoCommand, args{contents: GetCodeExampleForTesting(common.NonMongoCommand, common.Shell), llm: llm, ctx: ctx}, common.NonMongoCommand},
+		{common.SyntaxExample, args{contents: GetCodeExampleForTesting(common.SyntaxExample, common.Shell), llm: llm, ctx: ctx}, common.SyntaxExample},
+		{common.ExampleConfigurationObject, args{contents: GetCodeExampleForTesting(common.ExampleConfigurationObject, common.Shell), llm: llm, ctx: ctx}, common.ExampleConfigurationObject},
+		{common.ExampleReturnObject, args{contents: GetCodeExampleForTesting(common.ExampleReturnObject, common.Shell), llm: llm, ctx: ctx}, common.ExampleReturnObject},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -1,6 +1,7 @@
 package compare_code_examples
 
 import (
+	"common"
 	"gdcd/snooty"
 	"gdcd/types"
 	"time"
@@ -9,11 +10,11 @@ import (
 // HandleUnchangedPageNodes takes a map that counts the number of times the existing hash appears on the page, a slice
 // of []types.ASTNode, and a lookup map that maps SHA256 hashes to types.CodeNode. If an example appears more than once
 // on a page, we check the count of how many times it already exists on the page, compare it to the count of how many
-// times it appears on the incoming page, and add or remove instances to the []types.CodeNode array to match the existing
-// page count. We return the updated []types.CodeNode array. We append all the "Handle" function results to a slice,
+// times it appears on the incoming page, and add or remove instances to the []common.CodeNode array to match the existing
+// page count. We return the updated []common.CodeNode array. We append all the "Handle" function results to a slice,
 // and overwrite the document in the DB with the updated code nodes.
-func HandleUnchangedPageNodes(existingHashCountMap map[string]int, unchangedIncomingPageNodes []types.ASTNode, unchangedPageNodesSha256CodeNodeLookup map[string]types.CodeNode) []types.CodeNode {
-	codeNodesMatchingIncomingNodes := make([]types.CodeNode, 0)
+func HandleUnchangedPageNodes(existingHashCountMap map[string]int, unchangedIncomingPageNodes []types.ASTNode, unchangedPageNodesSha256CodeNodeLookup map[string]common.CodeNode) []common.CodeNode {
+	codeNodesMatchingIncomingNodes := make([]common.CodeNode, 0)
 	unchangedIncomingHashCountMap := make(map[string]int)
 	unchangedCount := 0
 	removedCount := 0

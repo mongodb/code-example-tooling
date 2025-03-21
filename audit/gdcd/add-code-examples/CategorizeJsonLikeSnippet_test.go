@@ -1,6 +1,7 @@
 package add_code_examples
 
 import (
+	"common"
 	"context"
 	"github.com/tmc/langchaingo/llms/ollama"
 	"log"
@@ -24,8 +25,8 @@ func TestCategorizeJsonLikeSnippet(t *testing.T) {
 		want string
 	}{
 		// This function only returns two possible values - ExampleConfigurationObject or ExampleReturnObject
-		{ExampleConfigurationObject, args{contents: GetCodeExampleForTesting(ExampleConfigurationObject, JsonLike), llm: llm, ctx: ctx}, ExampleConfigurationObject},
-		{ExampleReturnObject, args{contents: GetCodeExampleForTesting(ExampleReturnObject, JsonLike), llm: llm, ctx: ctx}, ExampleReturnObject},
+		{common.ExampleConfigurationObject, args{contents: GetCodeExampleForTesting(common.ExampleConfigurationObject, JsonLike), llm: llm, ctx: ctx}, common.ExampleConfigurationObject},
+		{common.ExampleReturnObject, args{contents: GetCodeExampleForTesting(common.ExampleReturnObject, JsonLike), llm: llm, ctx: ctx}, common.ExampleReturnObject},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

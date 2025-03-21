@@ -1,6 +1,7 @@
 package snooty
 
 import (
+	"common"
 	"gdcd/add-code-examples"
 	"gdcd/types"
 	"gdcd/utils"
@@ -21,7 +22,7 @@ func GetLangForIoCodeBlock(snootyNode types.ASTNode) string {
 			}
 		}
 		// If we don't have a valid language yet, we can try checking the code node of the input block for its language
-		if language == "" || language == add_code_examples.Undefined {
+		if language == "" || language == common.Undefined {
 			codeNode := FindNodesByName(inputNode, "code")
 			if codeNode != nil && len(codeNode) > 0 {
 				language = add_code_examples.GetNormalizedLanguageFromASTNode(codeNode[0])
@@ -29,7 +30,7 @@ func GetLangForIoCodeBlock(snootyNode types.ASTNode) string {
 		}
 		// If we don't have a valid language yet, we can try checking whether the input directive had a filepath, and use
 		// that to try to figure out the language
-		if language == "" || language == add_code_examples.Undefined {
+		if language == "" || language == common.Undefined {
 			filepath := ""
 			inputNodeArgs := inputNode[0].Argument
 			// If the input node has at least one argument, we can assume that the first argument's value is the filepath
@@ -44,7 +45,7 @@ func GetLangForIoCodeBlock(snootyNode types.ASTNode) string {
 	// If we still don't have a language at this point, there's nothing we can do to figure out the language, so return
 	// undefined.
 	if language == "" {
-		language = add_code_examples.Undefined
+		language = common.Undefined
 	}
 	return language
 }

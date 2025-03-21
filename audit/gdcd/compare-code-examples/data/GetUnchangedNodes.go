@@ -1,11 +1,12 @@
 package data
 
 import (
+	"common"
 	"gdcd/types"
 	"time"
 )
 
-func GetUnchangedNodes() (types.CodeNode, types.ASTNode) {
+func GetUnchangedNodes() (common.CodeNode, types.ASTNode) {
 	codeText := `
 #include <mongoc/mongoc.h>
 #include <bson/bson.h>
@@ -43,7 +44,7 @@ int main(void) {
     mongoc_cleanup ();
 }`
 
-	codeNode := types.CodeNode{
+	codeNode := common.CodeNode{
 		Code:           codeText,
 		Language:       "c",
 		FileExtension:  ".c",

@@ -1,7 +1,7 @@
 package compare_code_examples
 
 import (
-	"gdcd/types"
+	"common"
 	"time"
 )
 
@@ -10,8 +10,8 @@ import (
 // updated code nodes. We don't just remove the nodes directly because we want to maintain a count of codes that we
 // have removed - i.e. if we remove removed nodes, and add new nodes, the count stays the same and we can't track
 // net new code examples.
-func HandleRemovedCodeNodes(removedCodeNodes []types.CodeNode) []types.CodeNode {
-	updatedRemovedNodes := make([]types.CodeNode, 0)
+func HandleRemovedCodeNodes(removedCodeNodes []common.CodeNode) []common.CodeNode {
+	updatedRemovedNodes := make([]common.CodeNode, 0)
 	for _, node := range removedCodeNodes {
 		node.IsRemoved = true
 		node.DateUpdated = time.Now()

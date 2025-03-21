@@ -1,8 +1,9 @@
 package main
 
 import (
+	"common"
 	"context"
-	add_code_examples "gdcd/add-code-examples"
+	"gdcd/add-code-examples"
 	"gdcd/snooty"
 	"gdcd/types"
 	"gdcd/utils"
@@ -10,7 +11,7 @@ import (
 	"time"
 )
 
-func MakeNewDocsPage(data types.PageWrapper, siteUrl string, report types.ProjectReport, llm *ollama.LLM, ctx context.Context) (types.DocsPage, types.ProjectReport) {
+func MakeNewDocsPage(data types.PageWrapper, siteUrl string, report types.ProjectReport, llm *ollama.LLM, ctx context.Context) (common.DocsPage, types.ProjectReport) {
 	incomingCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes := snooty.GetCodeExamplesFromIncomingData(data.Data.AST)
 	incomingCodeNodeCount := len(incomingCodeNodes)
 	incomingLiteralIncludeNodeCount := len(incomingLiteralIncludeNodes)
@@ -25,7 +26,7 @@ func MakeNewDocsPage(data types.PageWrapper, siteUrl string, report types.Projec
 		isDriversProject = false
 	}
 	newAppliedUsageExampleCount := 0
-	var newCodeNodes []types.CodeNode
+	var newCodeNodes []common.CodeNode
 	for _, node := range incomingCodeNodes {
 		newNode := snooty.MakeCodeNodeFromSnootyAST(node, llm, ctx, isDriversProject)
 		newCodeNodes = append(newCodeNodes, newNode)
@@ -40,7 +41,7 @@ func MakeNewDocsPage(data types.PageWrapper, siteUrl string, report types.Projec
 	// Report relevant details for the new page
 	report = UpdateProjectReportForNewPage(incomingCodeNodeCount, incomingLiteralIncludeNodeCount, incomingIoCodeNodeCount, len(newCodeNodes), newAppliedUsageExampleCount, pageId, report)
 
-	return types.DocsPage{
+	return common.DocsPage{
 		ID:                   pageId,
 		CodeNodesTotal:       incomingCodeNodeCount,
 		DateAdded:            time.Now(),

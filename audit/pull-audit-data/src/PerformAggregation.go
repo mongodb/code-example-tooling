@@ -45,9 +45,8 @@ func PerformAggregation(db *mongo.Database, ctx context.Context) {
 		//simpleMap = aggregations.GetSpecificCategoryByProduct(db, collectionName, types.UsageExample, simpleMap, ctx)
 		//langCount := aggregations.GetSpecificLanguageCount(db, collectionName, common.Go, ctx)
 		//pageIdChangesCountMap = aggregations.GetDocsIdsWithRecentActivity(db, collectionName, pageIdChangesCountMap, ctx)
-		if collectionName == "node" {
-			pageIdsWithNodeLangCountMismatch = aggregations.GetPagesWithNodeLangCountMismatch(db, collectionName, pageIdsWithNodeLangCountMismatch, ctx)
-		}
+		//pageIdsWithNodeLangCountMismatch = aggregations.GetPagesWithNodeLangCountMismatch(db, collectionName, pageIdsWithNodeLangCountMismatch, ctx)
+		pageIdsWithNodeLangCountMismatch = aggregations.FindDocsMissingProduct(db, collectionName, pageIdsWithNodeLangCountMismatch, ctx)
 	}
 
 	//simpleTableLabel := "Language"

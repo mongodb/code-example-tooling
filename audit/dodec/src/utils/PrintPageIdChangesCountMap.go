@@ -1,8 +1,8 @@
 package utils
 
 import (
+	"dodec/types"
 	"fmt"
-	"pull-audit-data/types"
 )
 
 func PrintPageIdChangesCountMap(mapToPrint map[string][]types.PageIdChangedCounts) {

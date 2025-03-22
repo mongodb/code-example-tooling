@@ -1,4 +1,4 @@
-module pull-audit-data
+module dodec
 
 go 1.23.1
 

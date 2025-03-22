@@ -3,10 +3,10 @@ package aggregations
 import (
 	"common"
 	"context"
+	"dodec/types"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"log"
-	"pull-audit-data/types"
 )
 
 // GetCategoryCounts returns a `simpleMap` data structure as defined in the PerformAggregation function. Each key

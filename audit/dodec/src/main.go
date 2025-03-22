@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
+	"dodec/updates"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"log"
 	"os"
-	"pull-audit-data/updates"
 )
 
 func main() {

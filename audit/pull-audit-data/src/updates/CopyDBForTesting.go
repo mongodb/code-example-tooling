@@ -9,7 +9,7 @@ import (
 
 func CopyDBForTesting(client *mongo.Client, ctx context.Context) {
 	sourceDb := client.Database("code_metrics")
-	targetDb := client.Database("dup_code_metrics")
+	targetDb := client.Database("backup_code_metrics")
 	// List all collections in the source database
 	collectionNames, err := sourceDb.ListCollectionNames(ctx, bson.D{})
 	if err != nil {

@@ -19,6 +19,13 @@ func GetSpecificCategoryByProduct(db *mongo.Database, collectionName string, cat
 			{"nodes.category", categoryName},
 		}}},
 		{{"$unwind", "$nodes"}},
+		// Filter to omit nodes that have been removed from a docs page
+		{{"$match", bson.D{
+			{"$or", bson.A{
+				bson.D{{"nodes.is_removed", bson.D{{"$exists", false}}}},
+				bson.D{{"nodes.is_removed", false}},
+			}},
+		}}},
 		{{"$match", bson.D{{"nodes.category", categoryName}}}},
 		{{"$group", bson.D{
 			{"_id", "$product"},

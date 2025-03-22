@@ -18,6 +18,14 @@ func GetSubProductCategoryCounts(db *mongo.Database, collectionName string, subP
 			{"nodes", bson.D{{"$ne", nil}}}, // Ensure nodes is not null
 		}}},
 		{{"$unwind", bson.D{{"path", "$nodes"}}}},
+		// Filter to omit nodes that have been removed from a docs page
+		{{"$match", bson.D{
+			{"$or", bson.A{
+				bson.D{{"nodes.is_removed", bson.D{{"$exists", false}}}},
+				bson.D{{"nodes.is_removed", false}},
+			}},
+		}}},
+		// Filter to omit nodes that have no sub_product field
 		{{
 			"$match", bson.D{
 				{"sub_product", bson.D{{"$exists", true}}},

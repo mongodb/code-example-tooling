@@ -30,6 +30,13 @@ func GetOneLineUsageExampleCounts(db *mongo.Database, collectionName string, one
 			}},
 			{"nodes.category", common.UsageExample}, // Ensure category is "Usage Example"
 		}}},
+		// Filter to omit nodes that have been removed from a docs page
+		{{"$match", bson.D{
+			{"$or", bson.A{
+				bson.D{{"nodes.is_removed", bson.D{{"$exists", false}}}},
+				bson.D{{"nodes.is_removed", false}},
+			}},
+		}}},
 		{{"$project", bson.D{
 			{"codeLength", bson.D{{"$strLenCP", "$nodes.code"}}},
 		}}},

@@ -2,6 +2,7 @@ package aggregations
 
 import (
 	"context"
+	"fmt"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"log"
@@ -18,12 +19,9 @@ func GetCollectionCount(db *mongo.Database, collectionName string, collectionSum
 			{"_id", bson.D{{"$ne", "summaries"}}},
 			{"nodes", bson.D{{"$ne", nil}}}, // Ensure nodes is not null
 		}}},
-		{{"$project", bson.D{
-			{"nodeCount", bson.D{{"$size", "$nodes"}}},
-		}}},
 		{{"$group", bson.D{
 			{"_id", nil},
-			{"totalNodes", bson.D{{"$sum", "$nodeCount"}}},
+			{"totalCodeNodes", bson.D{{"$sum", "$code_nodes_total"}}},
 		}}},
 	}
 	cursor, err := collection.Aggregate(ctx, countPipeline)
@@ -39,12 +37,15 @@ func GetCollectionCount(db *mongo.Database, collectionName string, collectionSum
 	}
 
 	if len(results) > 0 {
-		count := results[0]["totalNodes"].(int32)
-		collectionSums[collectionName] = int(count)
-		if collectionSums[types.Total] > 0 {
-			collectionSums[types.Total] += int(count)
+		if total, ok := results[0]["totalCodeNodes"].(int32); ok {
+			collectionSums[collectionName] = int(total)
+			if collectionSums[types.Total] > 0 {
+				collectionSums[types.Total] += int(total)
+			} else {
+				collectionSums[types.Total] = int(total)
+			}
 		} else {
-			collectionSums[types.Total] = int(count)
+			fmt.Println("Error: Could not read total code nodes.")
 		}
 	}
 	return collectionSums

@@ -25,6 +25,13 @@ func GetCodeLengths(db *mongo.Database, collectionName string, lengthCountMap ma
 		{{"$match", bson.D{
 			{"nodes.code", bson.D{{"$type", "string"}}}, // Ensure code is a string
 		}}},
+		// Filter to omit nodes that have been removed from a docs page
+		{{"$match", bson.D{
+			{"$or", bson.A{
+				bson.D{{"nodes.is_removed", bson.D{{"$exists", false}}}},
+				bson.D{{"nodes.is_removed", false}},
+			}},
+		}}},
 		{{"$project", bson.D{
 			{"codeLength", bson.D{{"$strLenCP", "$nodes.code"}}},
 			{"shortCode", bson.D{{"$lt", bson.A{bson.D{{"$strLenCP", "$nodes.code"}}, 80}}}}, // Determine if code length < 80

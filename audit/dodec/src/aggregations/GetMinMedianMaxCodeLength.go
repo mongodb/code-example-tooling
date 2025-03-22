@@ -2,10 +2,10 @@ package aggregations
 
 import (
 	"context"
+	"dodec/types"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"log"
-	"pull-audit-data/types"
 )
 
 // GetCodeLengths returns a `lengthCountMap` data structure as defined in the PerformAggregation function.
@@ -24,6 +24,13 @@ func GetCodeLengths(db *mongo.Database, collectionName string, lengthCountMap ma
 		{{"$unwind", bson.D{{"path", "$nodes"}}}},
 		{{"$match", bson.D{
 			{"nodes.code", bson.D{{"$type", "string"}}}, // Ensure code is a string
+		}}},
+		// Filter to omit nodes that have been removed from a docs page
+		{{"$match", bson.D{
+			{"$or", bson.A{
+				bson.D{{"nodes.is_removed", bson.D{{"$exists", false}}}},
+				bson.D{{"nodes.is_removed", false}},
+			}},
 		}}},
 		{{"$project", bson.D{
 			{"codeLength", bson.D{{"$strLenCP", "$nodes.code"}}},

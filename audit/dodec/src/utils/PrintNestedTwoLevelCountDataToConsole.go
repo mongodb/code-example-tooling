@@ -1,9 +1,9 @@
 package utils
 
 import (
+	"dodec/types"
 	"fmt"
 	"log"
-	"pull-audit-data/types"
 	"sort"
 )
 

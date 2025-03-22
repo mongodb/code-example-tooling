@@ -1,9 +1,10 @@
-# Work with Code Example Audit Database
+# Database of Devoured Example Code (DoDEC)
 
-## Overview
+This project contains scaffold and several aggregation pipelines to work with the Database of Devoured Example Code.
+The Database of Devoured Example Code contains code examples and related metadata that has been ingested by the [Great
+Docs Code Devourer](https://github.com/mongodb/code-example-tooling/tree/main/audit/gdcd).
 
-This project contains scaffold and several aggregation pipelines to work with the code example audit database. This
-project currently supports the following functionality:
+This README needs updating to reflect new funcs - documented funcs (non-exhaustive list) include:
 
 **Retrieve data**
 
@@ -63,7 +64,7 @@ From the `src` directory, run the following command to install
 dependencies:
 
 ```shell
-go get pull-audit-data
+go get dodec
 ```
 
 ### Create a `MONGODB_URI` key in your environment
@@ -109,11 +110,8 @@ your IDE.
 ## Database and Collection data structure
 
 The `code_metrics` database currently consists of 37 collections that represent 37 docs projects. Our list of curated
-docs projects to parse for the audit contains 39 projects, but 2 of them (Atlas Architecture Center and Rails MongoDB)
-had no live, published documentation pages at the time of the audit.
-
-Atlas Architecture Center has gone live since the audit was completed, so a new collection will be added for this project
-the next time we run the audit tooling. Rails MongoDB is currently on hold.
+docs projects to parse for the audit contains 39 projects, but 1 of them (Rails MongoDB) has no live, published
+documentation pages. Rails MongoDB is currently on hold.
 
 **Work with all collections in the database**
 
@@ -138,12 +136,13 @@ Every collection contains documents that map to one of two schemas:
 
 #### Summary document
 
-The summary document has a schema that conforms to the [Summary](src/types/Summary.go) type.
+The summary document has a schema that conforms to the
+[CollectionReport](https://github.com/mongodb/code-example-tooling/blob/main/audit/common/CollectionReport.go) type.
 
 #### Docs page document
 
 The remaining documents in the collection each map to an individual docs page. The docs page documents have a schema that
-conforms to the [DocsPage](src/types/DocsPage.go) type.
+conforms to the [DocsPage](https://github.com/mongodb/code-example-tooling/blob/main/audit/common/DocsPage.go) type.
 
 Each docs page has a `nodes` array, which may be `null`, or may contain `CodeNode` elements. The `CodeNode` elements
 contain metadata about the code examples, as well as the examples themselves.

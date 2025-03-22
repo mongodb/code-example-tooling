@@ -1,11 +1,12 @@
 package aggregations
 
 import (
+	"common"
 	"context"
+	"dodec/types"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"log"
-	"pull-audit-data/types"
 )
 
 // GetOneLineUsageExampleCounts returns a `simpleMap` data structure as defined in the PerformAggregation function. The
@@ -27,7 +28,14 @@ func GetOneLineUsageExampleCounts(db *mongo.Database, collectionName string, one
 				{"$exists", true},
 				{"$type", "string"}, // Ensure code is a string
 			}},
-			{"nodes.category", types.UsageExample}, // Ensure category is "Usage Example"
+			{"nodes.category", common.UsageExample}, // Ensure category is "Usage Example"
+		}}},
+		// Filter to omit nodes that have been removed from a docs page
+		{{"$match", bson.D{
+			{"$or", bson.A{
+				bson.D{{"nodes.is_removed", bson.D{{"$exists", false}}}},
+				bson.D{{"nodes.is_removed", false}},
+			}},
 		}}},
 		{{"$project", bson.D{
 			{"codeLength", bson.D{{"$strLenCP", "$nodes.code"}}},

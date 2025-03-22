@@ -13,13 +13,18 @@ func MakeLanguagesArray(codeNodes []common.CodeNode, literalIncludeNodes []types
 		languages[language] = common.LanguageCounts{}
 	}
 	for _, node := range codeNodes {
-		if languageCounts, exists := languages[node.Language]; exists {
-			languageCounts.Total += 1
-			languages[node.Language] = languageCounts
+		if node.IsRemoved {
+			// If the node is removed, we don't want to count it in the languages array, so just continue the loop
+			continue
 		} else {
-			countsForLang := languages[common.Undefined]
-			countsForLang.LiteralIncludes += 1
-			languages[common.Undefined] = countsForLang
+			if languageCounts, exists := languages[node.Language]; exists {
+				languageCounts.Total += 1
+				languages[node.Language] = languageCounts
+			} else {
+				countsForLang := languages[common.Undefined]
+				countsForLang.LiteralIncludes += 1
+				languages[common.Undefined] = countsForLang
+			}
 		}
 	}
 	for _, node := range literalIncludeNodes {

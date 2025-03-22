@@ -1,12 +1,12 @@
 package updates
 
 import (
+	"common"
 	"context"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"log"
-	"pull-audit-data/types"
 )
 
 // RenameValue looks for any document where a field whose name and old value match the filter you define, and sets the
@@ -19,7 +19,7 @@ func RenameValue(db *mongo.Database, ctx context.Context) {
 	}
 
 	oldValue := "Task-based usage"
-	newValue := types.UsageExample
+	newValue := common.UsageExample
 	// Define the filter and update document
 	// The filter matches documents that have a 'nodes' array with at least one element with a fieldName matching the oldValue
 	filter := bson.M{"nodes": bson.M{"$elemMatch": bson.M{"category": oldValue}}}

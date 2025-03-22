@@ -1,8 +1,8 @@
 package utils
 
 import (
+	"dodec/types"
 	"fmt"
-	"pull-audit-data/types"
 )
 
 // PrintCodeLengthMapToConsole prints a nicely-formatted table with columns for the docs project name, columns for the

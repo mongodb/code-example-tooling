@@ -22,8 +22,8 @@ code and metadata enables us get interesting information about the code examples
 - List of docs projects or pages that have code examples in a given language
 
 The Great Docs Code Devourer does not do any of this querying itself - it only devours code. If you want to get information
-from the musings stored by the Great Docs Code Devourer, you want the much more mundane
-[pull-audit-data](https://github.com/mongodb/code-example-tooling/tree/main/audit/pull-audit-data) tooling.
+from the musings stored by the Great Docs Code Devourer, you want the companion project,
+[Database of Devoured Example Code (DODEC)](https://github.com/mongodb/code-example-tooling/tree/main/audit/dodec).
 
 ## How it works
 

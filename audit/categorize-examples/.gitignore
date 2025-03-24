@@ -1,8 +1,0 @@
-# JetBrains IDE files
-*.idea
-
-# Reports
-/output
-
-# macOS files
-.DS_Store

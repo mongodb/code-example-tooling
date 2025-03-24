@@ -2,22 +2,24 @@ package main
 
 import (
 	"context"
+	"dodec/aggregations"
+	"dodec/types"
+	"dodec/utils"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
-	"pull-audit-data/aggregations"
-	"pull-audit-data/utils"
 )
 
 // PerformAggregation executes several different aggregation operations for every collection in the DB, and logs the output to console.
 func PerformAggregation(db *mongo.Database, ctx context.Context) {
 	// The aggregations in this project use one of these data structures. Uncomment the corresponding data structure,
 	// or make duplicates with appropriate names as needed
-	simpleMap := make(map[string]int)
+	//simpleMap := make(map[string]int)
 	//codeLengthMap := make(map[string]types.CodeLengthStats)
 	//nestedOneLevelMap := make(map[string]map[string]int)
 	//nestedTwoLevelMap := make(map[string]map[string]map[string]int)
 	//pageIdChangesCountMap := make(map[string][]types.PageIdChangedCounts)
 	//pageIdsWithNodeLangCountMismatch := make(map[string][]string)
+	pageIdWithNewAppliedUsageExampleCountMap := make(map[string][]types.PageIdNewAppliedUsageExamples)
 
 	// If you just need to get data for a single collection, perform the aggregation using the collection name
 	//simpleMap = aggregations.GetLanguageCounts(db, "pymongo", simpleMap, ctx)
@@ -41,18 +43,19 @@ func PerformAggregation(db *mongo.Database, ctx context.Context) {
 		//simpleMap = aggregations.GetOneLineUsageExampleCounts(db, collectionName, simpleMap, ctx)
 		//nestedOneLevelMap = aggregations.GetProductLanguageCounts(db, collectionName, nestedOneLevelMap, ctx)
 		//nestedTwoLevelMap = aggregations.GetSubProductLanguageCounts(db, collectionName, nestedTwoLevelMap, ctx)
-		simpleMap = aggregations.GetCollectionCount(db, collectionName, simpleMap, ctx)
+		//simpleMap = aggregations.GetCollectionCount(db, collectionName, simpleMap, ctx)
 		//simpleMap = aggregations.GetSpecificCategoryByProduct(db, collectionName, common.UsageExample, simpleMap, ctx)
 		//langCount := aggregations.GetSpecificLanguageCount(db, collectionName, common.Go, ctx)
 		//pageIdChangesCountMap = aggregations.GetDocsIdsWithRecentActivity(db, collectionName, pageIdChangesCountMap, ctx)
 		//pageIdsWithNodeLangCountMismatch = aggregations.GetPagesWithNodeLangCountMismatch(db, collectionName, pageIdsWithNodeLangCountMismatch, ctx)
 		//pageIdsWithNodeLangCountMismatch = aggregations.FindDocsMissingProduct(db, collectionName, pageIdsWithNodeLangCountMismatch, ctx)
+		pageIdWithNewAppliedUsageExampleCountMap = aggregations.FindNewAppliedUsageExamples(db, collectionName, pageIdWithNewAppliedUsageExampleCountMap, ctx)
 	}
 
-	simpleTableLabel := "Collection"
-	simpleTableColumnNames := []interface{}{"Collection", "Count"}
-	simpleTableColumnWidths := []int{30, 15}
-	utils.PrintSimpleCountDataToConsole(simpleMap, simpleTableLabel, simpleTableColumnNames, simpleTableColumnWidths)
+	//simpleTableLabel := "Collection"
+	//simpleTableColumnNames := []interface{}{"Collection", "Count"}
+	//simpleTableColumnWidths := []int{30, 15}
+	//utils.PrintSimpleCountDataToConsole(simpleMap, simpleTableLabel, simpleTableColumnNames, simpleTableColumnWidths)
 
 	//nestedOneLevelTableLabel := "Product Language"
 	//nestedOneLevelTableColumnNames := []interface{}{"Language", "Count"}
@@ -68,4 +71,5 @@ func PerformAggregation(db *mongo.Database, ctx context.Context) {
 	//utils.PrintCodeLengthMapToConsole(codeLengthMap)
 	//utils.PrintPageIdChangesCountMap(pageIdChangesCountMap)
 	//utils.PrintPageIdsWithNodeLangCountMismatch(pageIdsWithNodeLangCountMismatch)
+	utils.PrintPageIdNewAppliedUsageExampleCounts(pageIdWithNewAppliedUsageExampleCountMap)
 }

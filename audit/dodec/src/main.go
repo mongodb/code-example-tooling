@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"dodec/updates"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -37,13 +36,13 @@ func main() {
 	if dbName == "" {
 		log.Fatal("Set your 'DB_NAME' environment variable. ")
 	}
-	//db := client.Database(dbName)
+	db := client.Database(dbName)
 
 	// To copy the DB for testing
-	updates.CopyDBForTesting(client, ctx)
+	//updates.CopyDBForTesting(client, ctx)
 
 	// To perform aggregations
-	//PerformAggregation(db, ctx)
+	PerformAggregation(db, ctx)
 
 	// To rename a field in the document
 	//updates.RenameField(db, ctx)

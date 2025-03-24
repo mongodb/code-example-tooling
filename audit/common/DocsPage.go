@@ -52,7 +52,7 @@ func (d *DocsPage) UnmarshalBSON(data []byte) error {
 	d.DateAdded = aux.DateAdded
 	d.DateLastUpdated = aux.DateLastUpdated
 	d.IoCodeBlocksTotal = aux.IoCodeBlocksTotal
-	//d.Languages = aux.Languages.ToMap()
+	d.Languages = aux.Languages
 	d.LiteralIncludesTotal = aux.LiteralIncludesTotal
 	d.Nodes = aux.Nodes
 	d.PageURL = aux.PageURL

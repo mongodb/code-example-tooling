@@ -1,1 +1,0 @@
-[ { $match: { accommodates: { $gte: 3 } } }, { $project: { address: 0 } } ]

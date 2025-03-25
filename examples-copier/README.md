@@ -1,7 +1,7 @@
 # GitHub Docs Code Example Copier
 
 A GitHub app that copies generated code snippets and examples from a source repository
-(currently https://github.com/mongodb/docs-code-examples)
+(currently https://GitHub.com/mongodb/docs-code-examples)
 to multiple target repositories. Driven by a single `config.json` file in the source repo,
 it can copy and modify:
 
@@ -19,7 +19,7 @@ broken.
 There are two primary steps for installing the app on a new target repository.
 
 ### Choose a new target repository
-Go to the [App's Repository Access page](https://github.com/apps/go-github-mdb-app/installations/62138132).
+Go to the [App's Repository Access page](https://GitHub.com/apps/go-GitHub-mdb-app/installations/62138132).
 You'll see the following screen:
 
 !["gui request tag"](./readme_files/configure_app.png)
@@ -34,8 +34,8 @@ to complete the next steps. You will know this if the repository you selected ha
 
 ### Confirm the new target repository
 In the new repository's settings, go to the 
-[GitHub Apps section](https://github.com/mongodb/stitch-tutorial-todo-backend/settings/installations).
-Scroll down and confirm that `go-github-mdb-app` is installed.
+[GitHub Apps section](https://GitHub.com/mongodb/stitch-tutorial-todo-backend/settings/installations).
+Scroll down and confirm that `go-GitHub-mdb-app` is installed.
 
 
 ## Install the App on a new Source Repo
@@ -45,7 +45,7 @@ do the following:
 ### Set Up A Webhook
 
 Go to the source repo's 
-[webhooks settings page](https://github.com/mongodb/docs-code-examples/settings/hooks/).
+[webhooks settings page](https://GitHub.com/mongodb/docs-code-examples/settings/hooks/).
 - Add the new `Payload URL`.
 - Set the `Content Type` to `application/json`
 - Enable SSL Verification
@@ -87,16 +87,23 @@ deprecated_examples.json should just be an empty array:
 
 ### Configure Permissions for the Web App
 To run the web app on a new repo, you have to go to the web app's 
-[configuration page](https://github.com/apps/docs-examples-copier/installations/62138132)
+[configuration page](https://GitHub.com/apps/docs-examples-copier/installations/62138132)
 and select the repo from the list of available repos. Save the channges, and then in the 
 new repo's list of web apps, you should see it listed:
 
 !["list of web apps"](./readme_files/webapps.png)
 
-## Change Where the App is Hosted
+## Hosting
+
+This app is hosted in a Google Cloud App Engine, in the organization owned by MongoDB.
+The PEM file needed for GitHub Authentication is stored as a secret in the Google Secrets Manager.
+For testing locally, you will need to download the auth file from gcloud and store it locally.
+See [this page](https://cloud.google.com/docs/authentication/application-default-credentials#GAC)
+for more information.
+
+### Change Where the App is Hosted
 If you deploy this app to a new host/server, you will need to create a new webhook 
 in the source repo. See [Set Up A Webhook](#Set Up A Webhook)
-
 
 
 ## How to Modify and Test
@@ -111,7 +118,7 @@ To make changes to this app:
    because it is entirely self-contained within this Go app. 
 
 ### Testing notes
-As of this writing, the source repo (https://github.com/mongodb/docs-code-examples) has 
+As of this writing, the source repo (https://GitHub.com/mongodb/docs-code-examples) has 
 two webhooks configured: one points to the production version of this application, and 
 the other points to a [smee.io proxy](https://smee.io/5Zchxoa1xH7WfYo). 
 
@@ -146,20 +153,21 @@ as they come in. Handling the messages means:
 
 ## Logic Flow
 
-1. Configure github permissions (`services/github_auth.go`)
+1. Configure GitHub permissions (`services/GitHub_auth.go`)
 2. Listen for PR payloads from the GitHub webhook. (`services/web_server.go`)
 3. Is the PR closed and merged? If no, ignore. (`services/webhook_handler.go`)
-4. Parse the payload to get the list of changed files. (`services/github_download.go`)
+4. Parse the payload to get the list of changed files. (`services/GitHub_download.go`)
 5. Read the config file from the source repo.
 6. If the path to a changed file is defined in the config file, and it is not a 
-   "DELETE" action, copy the file to the specified target repo(s). (`services/github_upload.go`)
+   "DELETE" action, copy the file to the specified target repo(s). (`services/GitHub_upload.go`)
 7. If the path to a changed file is defined in the config file, and it *is* a "DELETE" 
    action, add the deleted file's name and path to the `deprecated_examples.json` file.
-   (`services/github_download.go`)
+   (`services/GitHub_download.go`)
 8. Sit idle until the next payload arrives. Rinse and repeat.
 
 ## Future Work
 
+- BUG/SECURITY: Move .pem to google secret.
 - ~~Where do we view the log for the app when it hits a snag?~~
      Fixed in 112c8953cbb54d3743b25744fe01f6649f783faa. Added Google 
      Logging and centralized logging service for terminal logging.

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/go-github/v48/github"
+	"github.com/mongodb/code-example-tooling/code-copier/configs"
+	. "github.com/mongodb/code-example-tooling/code-copier/types"
 	"github.com/pkg/errors"
-	"github.com/thompsch/app-tester/configs"
-	. "github.com/thompsch/app-tester/types"
 )
 
 // FilesToUpload is a map where the key is the repo name

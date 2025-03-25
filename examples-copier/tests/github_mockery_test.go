@@ -3,9 +3,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/go-github/v48/github"
+	"github.com/mongodb/code-example-tooling/code-copier/services"
+	"github.com/mongodb/code-example-tooling/code-copier/types"
 	"github.com/pkg/errors"
-	"github.com/thompsch/app-tester/services"
-	"github.com/thompsch/app-tester/types"
 
 	"testing"
 )

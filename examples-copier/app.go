@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/thompsch/app-tester/configs"
-	. "github.com/thompsch/app-tester/services"
+	"github.com/mongodb/code-example-tooling/code-copier/configs"
+	. "github.com/mongodb/code-example-tooling/code-copier/services"
 )
 
 func main() {
@@ -19,6 +19,8 @@ func main() {
 
 	configs.EnvFile = envFile
 	configs.LoadEnvironment()
+
+	ConfigurePermissions()
 	SetupWebServerAndListen()
 
 }

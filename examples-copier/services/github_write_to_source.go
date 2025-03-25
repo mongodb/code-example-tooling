@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/go-github/v48/github"
-	"github.com/thompsch/app-tester/configs"
-	. "github.com/thompsch/app-tester/types"
+	"github.com/mongodb/code-example-tooling/code-copier/configs"
+	. "github.com/mongodb/code-example-tooling/code-copier/types"
 	"time"
 )
 

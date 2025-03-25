@@ -2,8 +2,8 @@ package services
 
 import (
 	"fmt"
+	"github.com/mongodb/code-example-tooling/code-copier/configs"
 	"github.com/pkg/errors"
-	"github.com/thompsch/app-tester/configs"
 	"net/http"
 )
 

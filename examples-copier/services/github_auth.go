@@ -1,42 +1,39 @@
 package services
 
 import (
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
 	"context"
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/go-github/v48/github"
+	"github.com/mongodb/code-example-tooling/code-copier/configs"
 	"github.com/shurcooL/graphql"
-	. "github.com/thompsch/app-tester/configs"
 	"golang.org/x/oauth2"
+	"log"
 	"net/http"
-	"os"
 	"time"
 )
 
 var InstallationAccessToken string
 
 func ConfigurePermissions() {
-	LoadEnvironment()
-	privateKeyPath := "go-github-mdb-app.2025-03-04.private-key.pem"
-	// Read the private key file
-	privateKeyBytes, err := os.ReadFile(privateKeyPath)
-	if err != nil {
-		LogError(fmt.Sprintf("Unable to read private key: %v", err))
-	}
-	// Parse RSA private key
-	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyBytes)
+	configs.LoadEnvironment()
+	pemKey := getPrivateKeyFromSecret()
+
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(pemKey)
 	if err != nil {
 		LogError(fmt.Sprintf("Unable to parse RSA private key: %v", err))
 	}
 	// Generate JWT
-	token, err := generateGitHubJWT(AppClientId, privateKey)
+	token, err := generateGitHubJWT(configs.AppClientId, privateKey)
 	if err != nil {
 		LogError(fmt.Sprintf("Error generating JWT: %v", err))
 	}
-	installation_token := getInstallationAccessToken(InstallationId, token)
-	InstallationAccessToken = installation_token
+	installationToken := getInstallationAccessToken(configs.InstallationId, token)
+	InstallationAccessToken = installationToken
 }
 
 func generateGitHubJWT(appID string, privateKey *rsa.PrivateKey) (string, error) {
@@ -56,6 +53,25 @@ func generateGitHubJWT(appID string, privateKey *rsa.PrivateKey) (string, error)
 	return signedToken, nil
 }
 
+func getPrivateKeyFromSecret() []byte {
+	ctx := context.Background()
+	client, err := secretmanager.NewClient(ctx)
+
+	if err != nil {
+		log.Fatalf("Failed to create Secret Manager client: %v", err)
+	}
+	defer client.Close()
+
+	req := &secretmanagerpb.AccessSecretVersionRequest{
+		Name: "projects/1054147886816/secrets/CODE_COPIER_PEM/versions/latest",
+	}
+	result, err := client.AccessSecretVersion(ctx, req)
+	if err != nil {
+		log.Fatalf("Failed to access secret version: %v", err)
+	}
+
+	return result.Payload.Data
+}
 func getInstallationAccessToken(installationId, jwtToken string) string {
 	url := fmt.Sprintf("https://api.github.com/app/installations/%s/access_tokens", installationId)
 

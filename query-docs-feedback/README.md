@@ -72,3 +72,9 @@ go run .
 To run the project from an IDE, press the `play` button next to the `main()`
 func in `main.go`. Alternately, press the `Build` button in the top right of
 your IDE.
+
+## TODO
+
+This project currently gets *all* matching feedback; suitable for the initial
+audit. For subsequent audits, we may want to add filtering for a date range to
+get only "new" feedback related to code examples.

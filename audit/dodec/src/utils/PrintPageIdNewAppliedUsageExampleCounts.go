@@ -11,6 +11,7 @@ func PrintPageIdNewAppliedUsageExampleCounts(mapToPrint map[string][]types.PageI
 	columnWidths := []int{70, 15}
 	aggregateCount := 0
 	for collectionName, pagesToPrintInCollection := range mapToPrint {
+		collectionCount := 0
 		fmt.Printf("\nNew Applied Usage Example Counts by Page in Collection %s\n", collectionName)
 		printSeparator(columnWidths...)
 		printRow(columnWidths, columnNames...)
@@ -20,8 +21,10 @@ func PrintPageIdNewAppliedUsageExampleCounts(mapToPrint map[string][]types.PageI
 		for _, page := range pagesToPrintInCollection {
 			printRow(columnWidths, page.ID, page.Count)
 			aggregateCount += page.Count
+			collectionCount += page.Count
 		}
 		printSeparator(columnWidths...)
+		fmt.Printf("\nTotal new applied usage example counts in %s: %d\n", collectionName, collectionCount)
 	}
 	fmt.Printf("\nTotal New Applied Usage Example Counts in Last Week: %d\n", aggregateCount)
 }

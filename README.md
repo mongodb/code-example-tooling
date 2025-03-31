@@ -16,3 +16,5 @@ corpus.
 - `query-docs-feedback`: A Go project and type definitions to query the MongoDB
   docs feedback for feedback related to code examples, and output the result
   to a report as .csv.
+- `examples-copier`: a Go app that runs as a GitHub App and copies files from the 
+   source code repo (generated code examples) to multiple target repos and branches.

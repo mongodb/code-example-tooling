@@ -13,5 +13,8 @@ corpus.
     writes the info to a database in Atlas.
   - `dodec`: The Database of Devoured Example Code: query and perform a few
     manual updates on the database of code examples and related metadata.
+- `query-docs-feedback`: A Go project and type definitions to query the MongoDB
+  docs feedback for feedback related to code examples, and output the result
+  to a report as .csv.
 - `examples-copier`: a Go app that runs as a GitHub App and copies files from the 
    source code repo (generated code examples) to multiple target repos and branches.

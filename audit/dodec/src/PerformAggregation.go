@@ -19,7 +19,12 @@ func PerformAggregation(db *mongo.Database, ctx context.Context) {
 	//nestedTwoLevelMap := make(map[string]map[string]map[string]int)
 	//pageIdChangesCountMap := make(map[string][]types.PageIdChangedCounts)
 	//pageIdsWithNodeLangCountMismatch := make(map[string][]string)
-	pageIdWithNewAppliedUsageExampleCountMap := make(map[string][]types.PageIdNewAppliedUsageExamples)
+	newAppliedUsageExampleCounter := types.NewAppliedUsageExampleCounter{
+		ProductCounts:      make(map[string]int),
+		SubProductCounts:   make(map[string]int),
+		AggregateCount:     0,
+		PagesInCollections: make(map[string][]types.PageIdNewAppliedUsageExamples),
+	}
 
 	// If you just need to get data for a single collection, perform the aggregation using the collection name
 	//simpleMap = aggregations.GetLanguageCounts(db, "pymongo", simpleMap, ctx)
@@ -49,7 +54,7 @@ func PerformAggregation(db *mongo.Database, ctx context.Context) {
 		//pageIdChangesCountMap = aggregations.GetDocsIdsWithRecentActivity(db, collectionName, pageIdChangesCountMap, ctx)
 		//pageIdsWithNodeLangCountMismatch = aggregations.GetPagesWithNodeLangCountMismatch(db, collectionName, pageIdsWithNodeLangCountMismatch, ctx)
 		//pageIdsWithNodeLangCountMismatch = aggregations.FindDocsMissingProduct(db, collectionName, pageIdsWithNodeLangCountMismatch, ctx)
-		pageIdWithNewAppliedUsageExampleCountMap = aggregations.FindNewAppliedUsageExamples(db, collectionName, pageIdWithNewAppliedUsageExampleCountMap, ctx)
+		newAppliedUsageExampleCounter = aggregations.FindNewAppliedUsageExamples(db, collectionName, newAppliedUsageExampleCounter, ctx)
 	}
 
 	//simpleTableLabel := "Collection"
@@ -71,5 +76,5 @@ func PerformAggregation(db *mongo.Database, ctx context.Context) {
 	//utils.PrintCodeLengthMapToConsole(codeLengthMap)
 	//utils.PrintPageIdChangesCountMap(pageIdChangesCountMap)
 	//utils.PrintPageIdsWithNodeLangCountMismatch(pageIdsWithNodeLangCountMismatch)
-	utils.PrintPageIdNewAppliedUsageExampleCounts(pageIdWithNewAppliedUsageExampleCountMap)
+	utils.PrintPageIdNewAppliedUsageExampleCounts(newAppliedUsageExampleCounter)
 }

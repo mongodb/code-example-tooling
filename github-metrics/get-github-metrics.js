@@ -16,30 +16,39 @@ class TopPaths {
     }
 }
 
+class MetricsDoc {
+    constructor({owner, repo, clones, pageViews, metricCounts, referralSources, topPaths}) {
+        this.date = new Date().toISOString();
+        this.owner = owner;
+        this.repo = repo;
+        this.clones = clones;
+        this.viewCount = pageViews.viewCount;
+        this.uniqueViews = pageViews.uniqueViews;
+        this.stars = metricCounts.stars;
+        this.forks = metricCounts.forks;
+        this.watchers = metricCounts.watchers;
+        this.referralSources = referralSources;
+        this.topPaths = topPaths;
+    }
+}
+
 async function getGitHubMetrics(owner, repo) {
     const apiToken = process.env.GITHUB_TOKEN
     const octokit = new Octokit({
         auth: apiToken,
     });
     await octokit.rest.users.getAuthenticated();
-    const clones = await getRepoClones(octokit, owner, repo);
-    const pageViews = await getPageViews(octokit, owner, repo);
-    const metricCounts = await getRepoMetricCounts(octokit, owner, repo);
-    const referralSources = await getReferralSources(octokit, owner, repo);
-    const topPaths = await getTopPaths(octokit, owner, repo);
-    return {
-        date: new Date().toISOString(),
+
+    const metricsData = {
         owner: owner,
         repo: repo,
-        clones: clones,
-        totalViews: pageViews.viewCount,
-        uniqueViews: pageViews.uniqueViews,
-        stars: metricCounts.stars,
-        forks: metricCounts.forks,
-        watchers: metricCounts.watchers,
-        referralSources: referralSources,
-        topPaths: topPaths,
+        clones: await getRepoClones(octokit, owner, repo),
+        pageViews: await getPageViews(octokit, owner, repo),
+        metricCounts: await getRepoMetricCounts(octokit, owner, repo),
+        referralSources: await getReferralSources(octokit, owner, repo),
+        topPaths: await getTopPaths(octokit, owner, repo),
     }
+    return new MetricsDoc(metricsData);
 }
 
 async function getRepoClones(octokit, owner, repo) {

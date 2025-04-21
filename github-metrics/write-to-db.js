@@ -1,14 +1,19 @@
 import { MongoClient } from 'mongodb';
+import {getGitHubMetrics} from "./get-github-metrics.js";
 
-async function addMetricsToAtlas(metricsDoc) {
+async function addMetricsToAtlas(metricsDocs) {
     const uri =  process.env.ATLAS_CONNECTION_STRING;
     const client = new MongoClient(uri);
     try {
         await client.connect();
         const database = client.db("github_metrics");
-        const coll = database.collection(metricsDoc.owner + "_" + metricsDoc.repo);
-        const result = await coll.insertOne(metricsDoc);
-        console.log(`A document was inserted with the _id: ${result.insertedId}`);
+
+        for (const doc of metricsDocs) {
+            const collName = doc.owner + "_" + doc.repo;
+            const coll = database.collection(collName);
+            const result = await coll.insertOne(doc);
+            console.log(`A document was inserted into ${collName} with the _id: ${result.insertedId}`);
+        }
     } finally {
         await client.close();
     }

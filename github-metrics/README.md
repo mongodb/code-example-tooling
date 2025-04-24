@@ -37,6 +37,17 @@ This code is in the `get-github-metrics.js` file.
 > this data for the trailing 14 day period, fixed. We'll need to re-run this job regularly, and in the future, we
 > may want to set up a server to run this job since we cannot specify a date range.
 
+### Change repos to track
+
+This project uses `RepoDetails` declared in the `index.js` file to track the owner and repo name for a given project
+whose metrics we want to track.
+
+Declare as many `RepoDetails` as you need, and add them to the `repos` array in ln 19 of the `index.js` file. The code
+handles tracking and writing to Atlas for multiple repos.
+
+Inserting a new repo automatically creates a new corresponding collection in Atlas. You will need to manually create
+Charts to correspond to the new collection.
+
 ### Write metrics to Atlas
 
 This PoC uses the [MongoDB Node.js Driver](https://www.mongodb.com/docs/drivers/node/current/) to write the data to the
@@ -61,8 +72,7 @@ Contact a member of the Developer Docs team to be added to this project and get 
 
 **GitHub**:
 
-- A [GitHub Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) (PAT)
-  with `repo` permissions
+- A [GitHub Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) (PAT) with `repo` permissions
 
 For this project, as a MongoDB org member, you must also auth your PAT with SSO.
 
@@ -104,5 +114,5 @@ For this project, as a MongoDB org member, you must also auth your PAT with SSO.
    You should see output similar to:
 
    ```
-   A document was inserted with the _id: 678197a0ffe1539ff213bd86
+   A document was inserted into mongodb_docs-notebooks with the _id: 678197a0ffe1539ff213bd86
    ```

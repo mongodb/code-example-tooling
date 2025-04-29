@@ -27,6 +27,8 @@ Get counts broken down in the following ways:
 - Complexity counts:
   - [One line usage examples by docs property](src/aggregations/GetOneLineUsageExampleCounts.go)
   - [Minimum, median, maximum character counts for code examples in the collection, and one-liner counts](src/aggregations/GetMinMedianMaxCodeLength.go)
+- Code example content counts:
+  - [Code examples containing a specific substring](src/aggregations/GetStringInCodeNodeCounts.go)
 
 Get IDs for pages based on various criteria:
 - [Find docs pages in Atlas that have had code examples added, updated, or removed within the last week](/src/aggregations/GetDocsIdsWithRecentActivity.go)

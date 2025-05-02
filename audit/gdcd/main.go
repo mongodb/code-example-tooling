@@ -59,22 +59,22 @@ func main() {
 	projectsToParse := snooty.GetProjects(client)
 
 	// Uncomment to parse a single project during testing
-	//atlasOperator := types.DocsProjectDetails{
-	//	ProjectName:  "atlas-operator",
-	//	ActiveBranch: "v2.8",
-	//	ProdUrl:      "https://mongodb.com/docs/atlas/operator/current",
+	//compass := types.DocsProjectDetails{
+	//	ProjectName:  "compass",
+	//	ActiveBranch: "master",
+	//	ProdUrl:      "https://mongodb.com/docs/compass/current",
 	//}
-	//cDriver := types.DocsProjectDetails{
-	//	ProjectName:  "c",
-	//	ActiveBranch: "v1.30",
-	//	ProdUrl:      "https://mongodb.com/docs/languages/c/c-driver/current",
+	//opsManager := types.DocsProjectDetails{
+	//	ProjectName:  "ops-manager",
+	//	ActiveBranch: "v8.0",
+	//	ProdUrl:      "https://mongodb.com/docs/ops-manager/current",
 	//}
-	//node := types.DocsProjectDetails{
-	//	ProjectName:  "node",
-	//	ActiveBranch: "v6.14",
-	//	ProdUrl:      "https://mongodb.com/docs/drivers/node/current",
+	//cloudManager := types.DocsProjectDetails{
+	//	ProjectName:  "cloud-manager",
+	//	ActiveBranch: "master",
+	//	ProdUrl:      "https://mongodb.com/docs/cloud-manager/",
 	//}
-	//projectsToParse := []types.DocsProjectDetails{node}
+	//projectsToParse := []types.DocsProjectDetails{compass}
 
 	// Finish setting up console display to show progress during run
 	totalProjects := len(projectsToParse)

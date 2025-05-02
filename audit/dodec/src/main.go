@@ -36,12 +36,15 @@ func main() {
 	if dbName == "" {
 		log.Fatal("Set your 'DB_NAME' environment variable. ")
 	}
-	db := client.Database(dbName)
 
-	// To copy the DB for testing
+	/* To copy the DB for testing, uncomment the following line.
+	 * Optionally, comment out lines 46-47 below to skip performing an aggregation after copying the DB.
+	 * NOTE: Update the DB name in the CopyDBForTesting func.
+	 */
 	//updates.CopyDBForTesting(client, ctx)
 
 	// To perform aggregations
+	db := client.Database(dbName)
 	PerformAggregation(db, ctx)
 
 	// To rename a field in the document

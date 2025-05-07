@@ -3,9 +3,10 @@ package aggregations
 import (
 	"common"
 	"context"
+	"log"
+
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
-	"log"
 )
 
 func GetLangCountFromLangArrayManually(db *mongo.Database, collectionName string, languageCountMap map[string]int, ctx context.Context) map[string]int {

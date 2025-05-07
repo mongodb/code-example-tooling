@@ -92,8 +92,18 @@ func PrintPageIdNewAppliedUsageExampleCounts(productSubProductCounter types.NewA
 		}
 	}
 
-	// Sort entries by product name
+	// Sort entries by product name, then put "None" sub-product last within its group
 	sort.Slice(allEntries, func(i, j int) bool {
+		if allEntries[i].ProductName == allEntries[j].ProductName {
+			// Within the same product name, prioritize "None" to appear last
+			if allEntries[i].SubProductName == "None" {
+				return false // i should come after j
+			} else if allEntries[j].SubProductName == "None" {
+				return true // j should come after i
+			}
+			// Otherwise, sort sub-products by name
+			return allEntries[i].SubProductName < allEntries[j].SubProductName
+		}
 		return allEntries[i].ProductName < allEntries[j].ProductName
 	})
 
@@ -104,7 +114,12 @@ func PrintPageIdNewAppliedUsageExampleCounts(productSubProductCounter types.NewA
 	printSeparator(appliedUsageExampleCountsColumnWidths...)
 
 	var lastProductName string
-	for _, entry := range allEntries {
+	for i, entry := range allEntries {
+		// Print separator before a new product group
+		if entry.ProductName != lastProductName && i > 0 {
+			printSeparator(appliedUsageExampleCountsColumnWidths...)
+		}
+
 		productNameToDisplay := ""
 		aggregateCountToDisplay := ""
 

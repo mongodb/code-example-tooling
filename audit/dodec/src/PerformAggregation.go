@@ -19,11 +19,10 @@ func PerformAggregation(db *mongo.Database, ctx context.Context) {
 	//nestedTwoLevelMap := make(map[string]map[string]map[string]int)
 	//pageIdChangesCountMap := make(map[string][]types.PageIdChangedCounts)
 	//pageIdsWithNodeLangCountMismatch := make(map[string][]string)
-	newAppliedUsageExampleCounter := types.NewAppliedUsageExampleCounter{
-		ProductCounts:      make(map[string]int),
-		SubProductCounts:   make(map[string]int),
-		AggregateCount:     0,
-		PagesInCollections: make(map[string][]types.PageIdNewAppliedUsageExamples),
+	productSubProductCounter := types.NewAppliedUsageExampleCounterByProductSubProduct{
+		ProductSubProductCounts: make(map[string]map[string]int),
+		ProductAggregateCount:   make(map[string]int),
+		PagesInCollections:      make(map[string][]types.PageIdNewAppliedUsageExamples),
 	}
 
 	// If you just need to get data for a single collection, perform the aggregation using the collection name
@@ -56,7 +55,7 @@ func PerformAggregation(db *mongo.Database, ctx context.Context) {
 		//pageIdChangesCountMap = aggregations.GetDocsIdsWithRecentActivity(db, collectionName, pageIdChangesCountMap, ctx)
 		//pageIdsWithNodeLangCountMismatch = aggregations.GetPagesWithNodeLangCountMismatch(db, collectionName, pageIdsWithNodeLangCountMismatch, ctx)
 		//pageIdsWithNodeLangCountMismatch = aggregations.FindDocsMissingProduct(db, collectionName, pageIdsWithNodeLangCountMismatch, ctx)
-		newAppliedUsageExampleCounter = aggregations.FindNewAppliedUsageExamples(db, collectionName, newAppliedUsageExampleCounter, ctx)
+		productSubProductCounter = aggregations.FindNewAppliedUsageExamples(db, collectionName, productSubProductCounter, ctx)
 	}
 
 	//simpleTableLabel := "Collection"
@@ -78,5 +77,5 @@ func PerformAggregation(db *mongo.Database, ctx context.Context) {
 	//utils.PrintCodeLengthMapToConsole(codeLengthMap)
 	//utils.PrintPageIdChangesCountMap(pageIdChangesCountMap)
 	//utils.PrintPageIdsWithNodeLangCountMismatch(pageIdsWithNodeLangCountMismatch)
-	utils.PrintPageIdNewAppliedUsageExampleCounts(newAppliedUsageExampleCounter)
+	utils.PrintPageIdNewAppliedUsageExampleCounts(productSubProductCounter)
 }

@@ -15,7 +15,7 @@ import (
 // where the usage example character count is over 300 characters. We use this is a proxy for determining "new applied
 // usage example". We get a count of new usage examples matching this criteria, return the count and the page_id, and
 // track the product and sub-product in the types.NewAppliedUsageExampleCounter
-func FindNewAppliedUsageExamples(db *mongo.Database, collectionName string, appliedUsageExampleCounter types.NewAppliedUsageExampleCounter, ctx context.Context) types.NewAppliedUsageExampleCounter {
+func FindNewAppliedUsageExamples(db *mongo.Database, collectionName string, productSubProductCounter types.NewAppliedUsageExampleCounterByProductSubProduct, ctx context.Context) types.NewAppliedUsageExampleCounterByProductSubProduct {
 	// Calculate last week's date range
 	now := time.Now()
 	oneWeekAgo := now.AddDate(0, 0, -7)
@@ -66,7 +66,7 @@ func FindNewAppliedUsageExamples(db *mongo.Database, collectionName string, appl
 				{"subProduct", "$_id.subProduct"},
 				{"documentId", "$nodesPerProduct._id"},
 			}},
-			{"matchingNodes", bson.D{{"$push", "$nodesPerProduct.nodes"}}},
+			{"new_applied_usage_examples", bson.D{{"$push", "$nodesPerProduct.nodes"}}},
 			{"count", bson.D{{"$sum", 1}}},
 		}}},
 		// Optionally sort by count in descending order
@@ -77,7 +77,7 @@ func FindNewAppliedUsageExamples(db *mongo.Database, collectionName string, appl
 	cursor, err := collection.Aggregate(ctx, pipeline)
 	if err != nil {
 		println(fmt.Errorf("failed to execute aggregate query: %v", err))
-		return appliedUsageExampleCounter
+		return productSubProductCounter
 	}
 	defer cursor.Close(ctx)
 	collectionPagesWithNewAppliedUsageExamples := make([]types.PageIdNewAppliedUsageExamples, 0)
@@ -85,26 +85,37 @@ func FindNewAppliedUsageExamples(db *mongo.Database, collectionName string, appl
 		var result types.PageIdNewAppliedUsageExamples
 		if err = cursor.Decode(&result); err != nil {
 			println(fmt.Errorf("failed to decode result document: %v", err))
-			return appliedUsageExampleCounter
+			return productSubProductCounter
 		}
-		appliedUsageExampleCounter.AggregateCount += result.Count
-		appliedUsageExampleCounter.ProductCounts[result.ID.Product] += result.Count
+
+		// If a sub-product map for the product does not exist yet, create one
+		if _, ok := productSubProductCounter.ProductSubProductCounts[result.ID.Product]; !ok {
+			productSubProductCounter.ProductSubProductCounts[result.ID.Product] = make(map[string]int)
+		}
 
 		// The docs org would like to see a breakdown of focus areas. For the purpose of reporting this result, I'm arbitrarily
 		// assigning some of the key focus areas as "sub-product" if a page ID contains a substring related to these focus
 		// areas. That makes it easy to report on these things as sub-products even if they're not officially sub-products.
 		resultAdjustedForFocusAreas := utils.GetFocusAreaAsSubProduct(result)
 		if resultAdjustedForFocusAreas.ID.SubProduct != "None" {
-			appliedUsageExampleCounter.SubProductCounts[resultAdjustedForFocusAreas.ID.SubProduct] += resultAdjustedForFocusAreas.Count
+			productSubProductCounter.ProductSubProductCounts[result.ID.Product][resultAdjustedForFocusAreas.ID.SubProduct] += resultAdjustedForFocusAreas.Count
+
+			// Add the adjusted for focus area count to the product accumulator
+			productSubProductCounter.ProductAggregateCount[result.ID.Product] += resultAdjustedForFocusAreas.Count
+		} else {
+			// If the subproduct is "None", just append the original count
+			productSubProductCounter.ProductSubProductCounts[result.ID.Product][result.ID.SubProduct] += result.Count
+			// Add the non-adjusted subproduct count to the product accumulator
+			productSubProductCounter.ProductAggregateCount[result.ID.Product] += result.Count
 		}
 		collectionPagesWithNewAppliedUsageExamples = append(collectionPagesWithNewAppliedUsageExamples, resultAdjustedForFocusAreas)
 	}
 	if err = cursor.Err(); err != nil {
 		println(fmt.Errorf("cursor encountered an error: %v", err))
-		return appliedUsageExampleCounter
+		return productSubProductCounter
 	}
 	if collectionPagesWithNewAppliedUsageExamples != nil && len(collectionPagesWithNewAppliedUsageExamples) > 0 {
-		appliedUsageExampleCounter.PagesInCollections[collectionName] = collectionPagesWithNewAppliedUsageExamples
+		productSubProductCounter.PagesInCollections[collectionName] = collectionPagesWithNewAppliedUsageExamples
 	}
-	return appliedUsageExampleCounter
+	return productSubProductCounter
 }

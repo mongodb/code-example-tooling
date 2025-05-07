@@ -6,9 +6,10 @@ import (
 	"dodec/types"
 	"dodec/utils"
 	"fmt"
+	"time"
+
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
-	"time"
 )
 
 // FindNewAppliedUsageExamples looks for docs pages in Atlas that have had a new usage example added within the last week,

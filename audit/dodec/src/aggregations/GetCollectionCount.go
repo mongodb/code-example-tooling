@@ -4,9 +4,10 @@ import (
 	"context"
 	"dodec/types"
 	"fmt"
+	"log"
+
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
-	"log"
 )
 
 // GetCollectionCount returns a `simpleMap` data structure as defined in the PerformAggregation function. Each key is

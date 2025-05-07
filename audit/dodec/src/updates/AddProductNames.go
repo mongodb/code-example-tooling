@@ -3,10 +3,11 @@ package updates
 import (
 	"context"
 	"fmt"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 	"log"
 	"regexp"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 // AddProductNames adds `product` and `sub_product` (where applicable) fields to documents with values that correspond

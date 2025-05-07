@@ -3,9 +3,10 @@ package updates
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
-	"log"
 )
 
 // RenameField changes a field name from oldFieldName to newFieldName for every document in all the collections.

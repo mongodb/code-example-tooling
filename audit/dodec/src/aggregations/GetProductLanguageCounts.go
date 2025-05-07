@@ -2,9 +2,10 @@ package aggregations
 
 import (
 	"context"
+	"log"
+
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
-	"log"
 )
 
 // GetProductLanguageCounts returns a `nestedOneLevelMap` data structure in the as defined in the PerformAggregation function.

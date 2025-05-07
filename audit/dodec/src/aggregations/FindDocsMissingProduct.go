@@ -2,10 +2,11 @@ package aggregations
 
 import (
 	"context"
+	"log"
+
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
-	"log"
 )
 
 func FindDocsMissingProduct(db *mongo.Database, collectionName string, pageIdsMissingProduct map[string][]string, ctx context.Context) map[string][]string {

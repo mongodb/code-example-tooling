@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -37,16 +38,38 @@ func GetAtlasPageData(collectionName string, docId string) *common.DocsPage {
 	filter := bson.D{{Key: "_id", Value: docId}}
 	// Create a DocsPage object to hold the result
 	var result common.DocsPage
-	// Execute the query
-	err = collection.FindOne(ctx, filter).Decode(&result)
-	if err != nil {
+
+	const maxRetries = 3
+	const retryDelay = 2 * time.Second
+	retryableErrorPrefix := "connection() error occurred during connection handshake"
+
+	for attempts := 0; attempts < maxRetries; attempts++ {
+		err := collection.FindOne(ctx, filter).Decode(&result)
+
+		if err == nil {
+			// Successful fetch
+			return &result
+		}
+
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			// If we return nil here, the app will just make a new page and that's fine
 			return nil
+		}
+
+		if isRetryableError(err, retryableErrorPrefix) {
+			log.Printf("Attempt %d: transient error occurred, retrying: %v", attempts+1, err)
+			time.Sleep(retryDelay)
+			continue
 		} else {
-			// TODO: if it's some other type of error that is preventing us from finding a matching page, we don't want to just create a new page - we want to try again, maybe?
 			log.Printf("Error: can't find a matching document for page %v, %v\n", docId, err)
+			return nil
 		}
 	}
-	return &result
+
+	log.Printf("Failed after %d attempts to find document for page %v", maxRetries, docId)
+	return nil
+}
+
+// Helper function to determine if an error is transient and retryable
+func isRetryableError(err error, prefix string) bool {
+	return err != nil && err.Error()[:len(prefix)] == prefix
 }

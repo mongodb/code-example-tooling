@@ -5,6 +5,7 @@ import (
 	"context"
 	"gdcd/snooty"
 	"gdcd/types"
+
 	"github.com/tmc/langchaingo/llms/ollama"
 )
 

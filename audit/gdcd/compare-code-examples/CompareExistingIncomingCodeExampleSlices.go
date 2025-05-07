@@ -5,8 +5,9 @@ import (
 	"context"
 	"gdcd/snooty"
 	"gdcd/types"
-	"github.com/tmc/langchaingo/llms/ollama"
 	"log"
+
+	"github.com/tmc/langchaingo/llms/ollama"
 )
 
 // CompareExistingIncomingCodeExampleSlices takes []common.CodeNode, which represents the existing code example nodes from

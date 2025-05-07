@@ -2,7 +2,7 @@ package snooty
 
 import (
 	"common"
-	"gdcd/add-code-examples"
+	add_code_examples "gdcd/add-code-examples"
 	"gdcd/types"
 	"gdcd/utils"
 )

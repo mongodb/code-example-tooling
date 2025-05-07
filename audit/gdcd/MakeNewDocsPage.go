@@ -3,12 +3,13 @@ package main
 import (
 	"common"
 	"context"
-	"gdcd/add-code-examples"
+	add_code_examples "gdcd/add-code-examples"
 	"gdcd/snooty"
 	"gdcd/types"
 	"gdcd/utils"
-	"github.com/tmc/langchaingo/llms/ollama"
 	"time"
+
+	"github.com/tmc/langchaingo/llms/ollama"
 )
 
 func MakeNewDocsPage(data types.PageWrapper, siteUrl string, report types.ProjectReport, llm *ollama.LLM, ctx context.Context) (common.DocsPage, types.ProjectReport) {

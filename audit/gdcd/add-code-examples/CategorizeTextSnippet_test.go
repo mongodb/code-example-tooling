@@ -3,9 +3,10 @@ package add_code_examples
 import (
 	"common"
 	"context"
-	"github.com/tmc/langchaingo/llms/ollama"
 	"log"
 	"testing"
+
+	"github.com/tmc/langchaingo/llms/ollama"
 )
 
 func TestCategorizeTextSnippet(t *testing.T) {

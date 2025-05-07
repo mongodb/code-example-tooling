@@ -3,11 +3,12 @@ package db
 import (
 	"common"
 	"context"
+	"log"
+	"os"
+
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
-	"log"
-	"os"
 )
 
 func BatchUpdateCollection(collectionName string, newPages []common.DocsPage, updatedPages []common.DocsPage, updatedSummaries common.CollectionReport) {

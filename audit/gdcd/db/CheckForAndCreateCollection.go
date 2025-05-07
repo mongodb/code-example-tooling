@@ -2,9 +2,10 @@ package db
 
 import (
 	"context"
+	"log"
+
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
-	"log"
 )
 
 func CheckForAndCreateCollection(db *mongo.Database, collectionName string, ctx context.Context) {

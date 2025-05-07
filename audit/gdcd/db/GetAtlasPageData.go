@@ -52,9 +52,12 @@ func GetAtlasPageData(collectionName string, docId string) *common.DocsPage {
 		}
 
 		if errors.Is(err, mongo.ErrNoDocuments) {
+			// If we return nil here, the app will just make a new page and that's fine
 			return nil
 		}
 
+		// We have seen transient connection errors in the log. For that type of error, try again to retrieve the page
+		// before giving up and creating a new one.
 		if isRetryableError(err, retryableErrorPrefix) {
 			log.Printf("Attempt %d: transient error occurred, retrying: %v", attempts+1, err)
 			time.Sleep(retryDelay)

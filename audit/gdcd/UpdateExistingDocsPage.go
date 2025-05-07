@@ -3,14 +3,15 @@ package main
 import (
 	"common"
 	"context"
-	"gdcd/add-code-examples"
-	"gdcd/compare-code-examples"
+	add_code_examples "gdcd/add-code-examples"
+	compare_code_examples "gdcd/compare-code-examples"
 	"gdcd/db"
 	"gdcd/snooty"
 	"gdcd/types"
 	"gdcd/utils"
-	"github.com/tmc/langchaingo/llms/ollama"
 	"time"
+
+	"github.com/tmc/langchaingo/llms/ollama"
 )
 
 func UpdateExistingDocsPage(existingPage common.DocsPage, data types.PageWrapper, projectReport types.ProjectReport, llm *ollama.LLM, ctx context.Context) (*common.DocsPage, types.ProjectReport) {

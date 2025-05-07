@@ -3,8 +3,9 @@ package add_code_examples
 import (
 	"common"
 	"context"
-	"github.com/tmc/langchaingo/llms/ollama"
 	"log"
+
+	"github.com/tmc/langchaingo/llms/ollama"
 )
 
 func LLMAssignCategory(contents string, langCategory string, llm *ollama.LLM, ctx context.Context, isDriverProject bool) string {

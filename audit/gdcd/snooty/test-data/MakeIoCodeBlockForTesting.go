@@ -1,7 +1,7 @@
 package test_data
 
 import (
-	"gdcd/add-code-examples"
+	add_code_examples "gdcd/add-code-examples"
 	"gdcd/types"
 )
 

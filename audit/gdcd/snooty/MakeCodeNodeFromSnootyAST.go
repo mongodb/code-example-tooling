@@ -3,11 +3,12 @@ package snooty
 import (
 	"common"
 	"context"
-	"gdcd/add-code-examples"
+	add_code_examples "gdcd/add-code-examples"
 	"gdcd/types"
-	"github.com/tmc/langchaingo/llms/ollama"
 	"strings"
 	"time"
+
+	"github.com/tmc/langchaingo/llms/ollama"
 )
 
 func MakeCodeNodeFromSnootyAST(snootyNode types.ASTNode, llm *ollama.LLM, ctx context.Context, isDriverProject bool) common.CodeNode {

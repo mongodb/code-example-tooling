@@ -4,10 +4,11 @@ import (
 	"common"
 	"context"
 	"fmt"
+	"log"
+
 	"github.com/tmc/langchaingo/llms"
 	"github.com/tmc/langchaingo/llms/ollama"
 	"github.com/tmc/langchaingo/prompts"
-	"log"
 )
 
 func CategorizeShellSnippet(contents string, llm *ollama.LLM, ctx context.Context) string {

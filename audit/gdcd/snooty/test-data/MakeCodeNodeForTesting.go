@@ -2,7 +2,7 @@ package test_data
 
 import (
 	"common"
-	"gdcd/add-code-examples"
+	add_code_examples "gdcd/add-code-examples"
 	"gdcd/snooty"
 	"time"
 )

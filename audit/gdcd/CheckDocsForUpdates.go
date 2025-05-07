@@ -6,6 +6,7 @@ import (
 	"gdcd/db"
 	"gdcd/types"
 	"gdcd/utils"
+
 	"github.com/tmc/langchaingo/llms/ollama"
 )
 

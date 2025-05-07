@@ -2,7 +2,7 @@ package snooty
 
 import (
 	"common"
-	"gdcd/snooty/test-data"
+	test_data "gdcd/snooty/test-data"
 	"gdcd/types"
 	"testing"
 )

@@ -7,7 +7,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/sergi/go-diff v1.3.1
 	github.com/tmc/langchaingo v0.1.13
-	go.mongodb.org/mongo-driver/v2 v2.2.0
+	go.mongodb.org/mongo-driver/v2 v2.2.1
 )
 
 replace common => ../common

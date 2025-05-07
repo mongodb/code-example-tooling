@@ -7,12 +7,13 @@ import (
 	"gdcd/snooty"
 	"gdcd/types"
 	"gdcd/utils"
-	"github.com/joho/godotenv"
-	"github.com/tmc/langchaingo/llms/ollama"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/joho/godotenv"
+	"github.com/tmc/langchaingo/llms/ollama"
 )
 
 func main() {

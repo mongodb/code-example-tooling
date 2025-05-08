@@ -1,3 +1,4 @@
 .env.development
 .env.production
-logs/
+/temp/
+/logs/

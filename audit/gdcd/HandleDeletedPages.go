@@ -6,8 +6,8 @@ import (
 	"gdcd/utils"
 )
 
-// HandleDeletedIncomingPages checks whether a page that has the `"deleted":true` flag when it comes in from the Snooty Data API
-// has a corresponding page in Atlas. If it does, we delete it.
+// HandleDeletedIncomingPages checks whether a page showing as deleted in the Snooty Data API has a corresponding page
+// in Atlas. If it does, we delete it.
 func HandleDeletedIncomingPages(collectionName string, deletedPage types.PageWrapper, report types.ProjectReport) types.ProjectReport {
 	maybeAtlasId := utils.ConvertSnootyPageIdToAtlasPageId(deletedPage.Data.PageID)
 	maybeAtlasDocument := db.GetAtlasPageData(collectionName, maybeAtlasId)

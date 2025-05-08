@@ -17,18 +17,21 @@ import (
 )
 
 func main() {
-	// Set up logging + a console display as this tool can take a long time to run
+	// Set up logging + a console display to show progress
+	// NOTE: this tool can take a long time to run (~1.5-2hrs, depending on your machine)
 	startTime := time.Now()
 	formattedTime := startTime.Format("2006-01-02 15:04:05")
-	filenameFormattedTime := startTime.Format("2006-01-02-15-04-05")
-	fmt.Println("Starting at ", formattedTime)
-	filename := filenameFormattedTime + "app.log"
-	file, err := os.Create("./logs/" + filename)
+	logDir := "./logs"
+
+	logFile, err := utils.InitLogger(logDir)
 	if err != nil {
-		log.Print(err)
+		fmt.Fprintf(os.Stderr, "Error initializing logger: %v\n", err)
+		os.Exit(1)
+	} else {
+		fmt.Println("Log file created:", logFile.Name())
 	}
-	defer file.Close()
-	log.SetOutput(file)
+	defer logFile.Close()
+	log.SetOutput(logFile)
 
 	// Determine the environment
 	env := os.Getenv("APP_ENV")

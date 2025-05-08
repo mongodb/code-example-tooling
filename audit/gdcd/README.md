@@ -71,7 +71,7 @@ To perform operations with this project, you need:
 - Ollama installed. Refer to the [Ollama](https://ollama.com/) website for
   installation details.
 - The Ollama [qwen2.5-coder](https://ollama.com/library/qwen2.5-coder) model installed.
-- - A `.env` file for the appropriate environment with details outlined below.
+- A `.env` file for the appropriate environment with details outlined below.
 
 #### Ollama
 

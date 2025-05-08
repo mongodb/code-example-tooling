@@ -57,8 +57,8 @@ func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjec
 
 	// Get the existing "summaries" document from the DB, and update it.
 	var summaryDoc common.CollectionReport
-	expectedPageCountFromIncomingPages := incomingPageCount - incomingDeletedPageCount
-	summaryDoc, report = HandleCollectionSummariesDocument(project, report, expectedPageCountFromIncomingPages)
+	report.Counter.TotalCurrentPageCount = incomingPageCount - incomingDeletedPageCount
+	summaryDoc, report = HandleCollectionSummariesDocument(project, report)
 
 	// Output the project report to the log
 	LogReportForProject(project.ProjectName, report)

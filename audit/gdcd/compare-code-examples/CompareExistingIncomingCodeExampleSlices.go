@@ -11,10 +11,10 @@ import (
 )
 
 // CompareExistingIncomingCodeExampleSlices takes []common.CodeNode, which represents the existing code example nodes from
-// Atlas, and []types.ASTNode, which represents incoming code examples from the Snooty Data API. It also takes a types.ProjectCounts
-// to track various project counts. This function compares the existing code examples with the incoming code examples
+// Atlas, and []types.ASTNode, which represents incoming code examples from the Snooty Data API. It also takes a types.ProjectReport
+// to track various project changes and counts. This function compares the existing code examples with the incoming code examples
 // to find unchanged, updated, new, and removed nodes. It appends these nodes into an updated []common.CodeNode slice,
-// which it returns to the call site for making updates to Atlas. It also returns the updated types.ProjectCounts.
+// which it returns to the call site for making updates to Atlas. It also returns the updated types.ProjectReport.
 func CompareExistingIncomingCodeExampleSlices(existingNodes []common.CodeNode, existingRemovedNodes []common.CodeNode, incomingNodes []types.ASTNode, report types.ProjectReport, pageId string, llm *ollama.LLM, ctx context.Context, isDriversProject bool) ([]common.CodeNode, types.ProjectReport) {
 	var updatedPageNodes []types.ASTNode
 	var newPageNodes []types.ASTNode

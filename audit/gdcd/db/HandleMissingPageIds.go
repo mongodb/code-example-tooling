@@ -14,6 +14,9 @@ func HandleMissingPageIds(collectionName string, incomingPageIds map[string]bool
 	}
 	// Compare the pages that are currently in Atlas with pages coming in from the Snooty Data API. If the page exists
 	// in Atlas but isn't coming in from the Snooty Data API, grab the ID so we can remove the page in Atlas.
+	// TODO: There may be a logic issue here. When we could not retrieve the page ID from the DB; the page was getting
+	//  deleted. That suggests some logic is backward here, but I can't see a logic issue. Revisit if this still appears
+	//  to be a problem now that the DB retrieval func has retry logic. (And/or add testing for this!)
 	var pageIdsWithNoMatchingSnootyPage []string
 	for _, existingId := range existingPageIds {
 		if incomingPageIds[existingId] {

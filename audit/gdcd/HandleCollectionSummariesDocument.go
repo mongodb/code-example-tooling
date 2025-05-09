@@ -7,7 +7,7 @@ import (
 	"gdcd/utils"
 )
 
-func HandleCollectionSummariesDocument(project types.DocsProjectDetails, report types.ProjectReport, incomingPageCount int) (common.CollectionReport, types.ProjectReport) {
+func HandleCollectionSummariesDocument(project types.DocsProjectDetails, report types.ProjectReport) (common.CollectionReport, types.ProjectReport) {
 	summaryDoc := db.GetAtlasProjectSummaryData(project.ProjectName)
 	var latestCollectionInfo common.CollectionInfoView
 	collectionVersionKey := ""
@@ -49,9 +49,14 @@ func HandleCollectionSummariesDocument(project types.DocsProjectDetails, report 
 		pageCountBeforeUpdating := summaryDoc.Version[project.ActiveBranch].TotalPageCount
 		updatedSummaryDoc := db.UpdateCollectionVersionDocument(*summaryDoc, project, report)
 		summaryDoc = &updatedSummaryDoc
+
+		// If we take the total pages from the last version of the summary (pageCountBeforeUpdating), add the count of
+		// new pages, and subtract the count of removed pages, we should have the same number as
+		// report.Counter.TotalCurrentPageCount. TotalCurrentPageCount is the length of the docs pages array we get from
+		// Snooty, minus any pages where the deleted flag is true, to reflect the total current count of docs pages in the project.
 		sumOfExpectedPages := pageCountBeforeUpdating + report.Counter.NewPagesCount - report.Counter.RemovedPagesCount
-		if sumOfExpectedPages != incomingPageCount {
-			report = utils.ReportIssues(types.PageCountIssue, report, project.ProjectName, sumOfExpectedPages, incomingPageCount)
+		if sumOfExpectedPages != report.Counter.TotalCurrentPageCount {
+			report = utils.ReportIssues(types.PageCountIssue, report, project.ProjectName, sumOfExpectedPages, report.Counter.TotalCurrentPageCount)
 		}
 	}
 
@@ -62,8 +67,8 @@ func HandleCollectionSummariesDocument(project types.DocsProjectDetails, report 
 	if sumOfExpectedCodeNodes != report.Counter.IncomingCodeNodesCount {
 		report = utils.ReportIssues(types.CodeNodeCountIssue, report, project.ProjectName, sumOfExpectedCodeNodes, report.Counter.IncomingCodeNodesCount)
 	}
-	if latestCollectionInfo.TotalPageCount != incomingPageCount {
-		report = utils.ReportChanges(types.ProjectSummaryPageCountChange, report, project.ProjectName, latestCollectionInfo.TotalPageCount, incomingPageCount)
+	if latestCollectionInfo.TotalPageCount != report.Counter.TotalCurrentPageCount {
+		report = utils.ReportChanges(types.ProjectSummaryPageCountChange, report, project.ProjectName, latestCollectionInfo.TotalPageCount, report.Counter.TotalCurrentPageCount)
 	}
 	return *summaryDoc, report
 }

@@ -42,15 +42,39 @@ func ConsolidateCollections(client *mongo.Client, ctx context.Context) {
 			}
 			idValue, ok := doc["_id"].(string)
 			if ok {
+				// Skip documents where '_id' is "summaries"
 				if idValue == "summaries" {
-					continue // Skip documents where '_id' is "summaries"
+					continue
 				} else {
 					// Deserialize into DocsPage
 					var docsPage common.DocsPage
 					if err := cursor.Decode(&docsPage); err != nil {
 						log.Fatalf("Error decoding document into DocsPage: %v", err)
 					}
-					newID := bson.NewObjectID() // Generate a new unique ObjectID
+
+					// If the page has been removed from Snooty/is no longer live, skip it - we don't want those examples in Ask Cal
+					if docsPage.IsRemoved {
+						continue
+					}
+
+					// If the page has no code examples, skip it - we only care about pages with code examples for Ask Cal
+					if docsPage.CodeNodesTotal == 0 {
+						continue
+					}
+
+					newID := bson.NewObjectID() // Generate a new unique ObjectID for the page
+					// Atlas Search can only facet on a top-level field, so we need to create a top-level field of languages for faceting
+					var languagesFacet []string
+					if docsPage.Nodes != nil && len(*docsPage.Nodes) > 0 {
+						for _, node := range *docsPage.Nodes {
+							if !node.IsRemoved {
+								if !Contains(languagesFacet, node.Language) {
+									languagesFacet = append(languagesFacet, node.Language)
+								}
+							}
+						}
+					}
+
 					// Convert the DocsPage into a modified version of the page with an ObjectID identifier and the origin collection name
 					updatedDoc := common.CalDocsPage{
 						ID:                   newID,
@@ -69,6 +93,10 @@ func ConsolidateCollections(client *mongo.Client, ctx context.Context) {
 						DateRemoved:          docsPage.DateRemoved,
 						IsRemoved:            docsPage.IsRemoved,
 					}
+
+					if languagesFacet != nil {
+						updatedDoc.LanguagesFacet = languagesFacet
+					}
 					updatedDocuments = append(updatedDocuments, updatedDoc)
 				}
 			} else {
@@ -85,4 +113,13 @@ func ConsolidateCollections(client *mongo.Client, ctx context.Context) {
 		}
 	}
 	log.Println("All collections copied successfully")
+}
+
+func Contains(slice []string, str string) bool {
+	for _, s := range slice {
+		if s == str {
+			return true
+		}
+	}
+	return false
 }

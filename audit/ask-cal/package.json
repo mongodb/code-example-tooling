@@ -9,6 +9,16 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^5.7.12"
+    "@astrojs/check": "^0.9.4",
+    "@astrojs/netlify": "^6.3.2",
+    "@astrojs/react": "^4.2.7",
+    "@netlify/functions": "^3.1.8",
+    "@types/node": "^20.12.5",
+    "@types/react": "18.2.23",
+    "@types/react-dom": "18.2.8",
+    "astro": "^5.7.12",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.8.3"
   }
 }

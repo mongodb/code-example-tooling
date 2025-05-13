@@ -13,6 +13,8 @@ type CalDocsPage struct {
 	DateLastUpdated      time.Time      `bson:"date_last_updated"`
 	IoCodeBlocksTotal    int            `bson:"io_code_blocks_total"`
 	Languages            LanguagesArray `bson:"languages"`
+	LanguagesFacet       []string       `bson:"languages_facet,omitempty"`
+	CategoriesFacet      []string       `bson:"categories_facet,omitempty"`
 	LiteralIncludesTotal int            `bson:"literal_includes_total"`
 	Nodes                *[]CodeNode    `bson:"nodes"`
 	PageURL              string         `bson:"page_url"`

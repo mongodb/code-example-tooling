@@ -63,13 +63,20 @@ func ConsolidateCollections(client *mongo.Client, ctx context.Context) {
 					}
 
 					newID := bson.NewObjectID() // Generate a new unique ObjectID for the page
-					// Atlas Search can only facet on a top-level field, so we need to create a top-level field of languages for faceting
+					// Atlas Search can only facet on a top-level field, so we need to create top-level fields for languages and categories on the page
 					var languagesFacet []string
+					var categoriesFacet []string
 					if docsPage.Nodes != nil && len(*docsPage.Nodes) > 0 {
 						for _, node := range *docsPage.Nodes {
+							// If the code example node is currently live on the page, add the language to the languagesFacet and the
+							// category to the categoriesFacet
 							if !node.IsRemoved {
+								// We only want a facet value to appear once in the string slice, so confirm it's not already there before adding it
 								if !Contains(languagesFacet, node.Language) {
 									languagesFacet = append(languagesFacet, node.Language)
+								}
+								if !Contains(categoriesFacet, node.Category) {
+									categoriesFacet = append(categoriesFacet, node.Category)
 								}
 							}
 						}
@@ -96,6 +103,9 @@ func ConsolidateCollections(client *mongo.Client, ctx context.Context) {
 
 					if languagesFacet != nil {
 						updatedDoc.LanguagesFacet = languagesFacet
+					}
+					if categoriesFacet != nil {
+						updatedDoc.CategoriesFacet = categoriesFacet
 					}
 					updatedDocuments = append(updatedDocuments, updatedDoc)
 				}

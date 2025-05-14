@@ -20,7 +20,7 @@ import (
 
 type QueryResult struct {
 	CodeExamples []ReshapedCodeNode `json:"code_examples"`
-	AnalyticsID  bson.ObjectID      `json:"analytics_id"`
+	AnalyticsID  string             `json:"analytics_id"`
 }
 
 type ReshapedCodeNode struct {
@@ -286,7 +286,7 @@ func trimStartingFromSubstring(input string, substring string) string {
 	return input[:index]
 }
 
-func createAnalyticsReport(query common.QueryRequestBody, ctx context.Context, queryTimeElapsed float64) bson.ObjectID {
+func createAnalyticsReport(query common.QueryRequestBody, ctx context.Context, queryTimeElapsed float64) string {
 	uri := os.Getenv("ANALYTICS_CONNECTION_STRING")
 	client, err := mongo.Connect(options.Client().
 		ApplyURI(uri))
@@ -317,7 +317,7 @@ func createAnalyticsReport(query common.QueryRequestBody, ctx context.Context, q
 	if result.InsertedID != nil && result.InsertedID != reportId {
 		fmt.Printf("The inserted document ID %s does not match the document ID %s\n", result.InsertedID, reportId)
 	}
-	return reportId
+	return reportId.Hex()
 }
 
 func handler(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
@@ -354,9 +354,8 @@ func handler(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResp
 		codeExamples = append(codeExamples, completeResult)
 	}
 
-	queryIdAsString := queryResults.AnalyticsID.String()
 	responseBody := ResponseBody{
-		QueryId:      queryIdAsString,
+		QueryId:      queryResults.AnalyticsID,
 		CodeExamples: codeExamples,
 	}
 

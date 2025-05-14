@@ -6,6 +6,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/aws/aws-lambda-go v1.48.0
 	go.mongodb.org/mongo-driver/v2 v2.2.1
+	common v0.0.0
 )
 
 require (

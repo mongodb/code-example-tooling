@@ -12,6 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@leafygreen-ui/combobox": "^11.0.18",
     "@leafygreen-ui/icon": "^13.3.0",
     "@leafygreen-ui/logo": "^10.0.6",
     "@leafygreen-ui/palette": "^4.1.4",

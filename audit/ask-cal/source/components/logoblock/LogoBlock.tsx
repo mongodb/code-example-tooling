@@ -6,8 +6,8 @@ import Logo from "@leafygreen-ui/logo";
 function LogoBlock() {
   return (
     <div className={styles.logo_block}>
-      <H1>Ask CAL</H1>
       <Logo name={"MongoDBLogoMark"} />
+      <H1>Ask CAL</H1>
     </div>
   );
 }

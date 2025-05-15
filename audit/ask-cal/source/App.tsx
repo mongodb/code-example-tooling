@@ -10,7 +10,8 @@ import { AcalaProvider } from "./providers/AcalaProvider";
 import Toggle from "@leafygreen-ui/toggle";
 
 import Homepage from "./pages/home/HomePage";
-import Resultspage from "./pages/results/home/ResultsPage";
+import Resultspage from "./pages/results/ResultsPage";
+import Header from "./components/header/Header";
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -26,12 +27,12 @@ function App() {
           size="small"
           className={styles.theme_toggle}
         />
-        {/* 
-        <Sidebar />
-        <Viewer />
-        <Footer /> */}
-
         <AcalaProvider>
+          <Header
+            setIsHomepage={setIsHomepage}
+            isHomepage={isHomepage}
+          />
+
           {isHomepage ? (
             <Homepage setIsHomepage={setIsHomepage} />
           ) : (

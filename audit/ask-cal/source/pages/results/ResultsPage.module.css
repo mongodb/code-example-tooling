@@ -6,22 +6,6 @@
   height: 100vh;
 }
 
-header {
-  display: flex;
-  gap: 2em;
-  align-items: center;
-  margin: 4em 0 3em 0;
-  padding: 0.5em 0;
-}
-
-header > form {
-  flex: 2;
-}
-
-header > div {
-  flex: 3;
-}
-
 .horizontal_container {
   display: flex;
   width: 100%;
@@ -39,21 +23,19 @@ header > div {
 
 .example_container {
   display: flex;
-  flex: 2;
   flex-direction: column;
+  flex: 2;
   margin: 2em 1em;
-  max-width: 55%;
 }
 
-.facet_container {
+.summary_button {
+  margin: 2em 0;
+}
+
+.example_body {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.facet_container > div {
-  width: 30%;
+  justify-content: space-around;
+  /* gap: 2em; */
 }
 
 .results {
@@ -67,10 +49,12 @@ header > div {
   margin-bottom: 2em;
 }
 
-/* .results_code_example {
-  max-width: 100%;
-} */
-
 .code_example {
   margin: 2em 0;
+  max-width: 600px;
+}
+
+.ai_summary {
+  white-space: pre-wrap;
+  word-break: break-word;
 }

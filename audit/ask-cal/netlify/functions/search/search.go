@@ -5,16 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"log"
-	"net/http"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -24,26 +21,18 @@ type QueryResult struct {
 }
 
 type ReshapedCodeNode struct {
-	Code        string `bson:"code" json:"code"`
-	Language    string `bson:"language" json:"language"`
-	Category    string `bson:"category" json:"category"`
-	PageURL     string `bson:"page_url" json:"pageUrl"`
-	ProjectName string `bson:"project_name" json:"projectName"`
-}
-
-type CodeExampleResult struct {
-	Code            string `json:"code"`
-	Language        string `json:"language"`
-	Category        string `json:"category"`
-	PageURL         string `json:"pageUrl"`
-	ProjectName     string `json:"projectName"`
-	PageTitle       string `json:"pageTitle"`
-	PageDescription string `json:"pageDescription"`
+	Code            string `bson:"code" json:"code"`
+	Language        string `bson:"language" json:"language"`
+	Category        string `bson:"category" json:"category"`
+	PageURL         string `bson:"page_url" json:"pageUrl"`
+	ProjectName     string `bson:"project_name" json:"projectName"`
+	PageTitle       string `bson:"page_title" json:"pageTitle"`
+	PageDescription string `bson:"page_description" json:"pageDescription"`
 }
 
 type ResponseBody struct {
-	QueryId      string              `json:"queryId"`
-	CodeExamples []CodeExampleResult `json:"codeExamples"`
+	QueryId      string             `json:"queryId"`
+	CodeExamples []ReshapedCodeNode `json:"codeExamples"`
 }
 
 //func getSearchResultsFromAtlas(queryString string, languageFacet string, categoryFacet string, docsSet string) []ReshapedCodeNode {
@@ -145,7 +134,7 @@ func getSearchResultsFromAtlas(query common.QueryRequestBody, ctx context.Contex
 		}
 	}(client, ctx)
 
-	collection := client.Database("ask_cal").Collection("consolidated_examples")
+	collection := client.Database("ask_cal").Collection("consolidated_examples_v2")
 	// Initialize the pipeline
 	var pipeline mongo.Pipeline
 
@@ -210,6 +199,8 @@ func getSearchResultsFromAtlas(query common.QueryRequestBody, ctx context.Contex
 			{"category", "$nodes.category"},
 			{"page_url", "$page_url"},
 			{"project_name", "$project_name"},
+			{"page_title", "$page_title"},
+			{"page_description", "$page_description"},
 		}},
 	}
 	pipeline = append(pipeline, projectStage)
@@ -236,54 +227,6 @@ func getSearchResultsFromAtlas(query common.QueryRequestBody, ctx context.Contex
 		CodeExamples: results,
 		AnalyticsID:  analyticsObjectId,
 	}
-}
-
-func getPageNameAndDescription(pageURL string) (string, string) {
-	// Step 1: Fetch the HTML content of the webpage
-	resp, err := http.Get(pageURL)
-	if err != nil {
-		return "", ""
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", ""
-	}
-
-	// Step 2: Parse the HTML content with goquery
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
-	if err != nil {
-		return "", ""
-	}
-
-	// Step 3: Extract the `<title>` tag
-	title := doc.Find("title").Text()
-	// Substring to find and trim
-	substring := "arrow-"
-
-	// Trim the string
-	trimmedTitle := trimStartingFromSubstring(title, substring)
-
-	// Step 4: Extract the meta description from `<meta name="description">`
-	description := ""
-	metaDescription := doc.Find(`meta[name="description"]`)
-	if metaDescription.Length() > 0 {
-		description, _ = metaDescription.Attr("content")
-	}
-
-	return trimmedTitle, description
-}
-
-func trimStartingFromSubstring(input string, substring string) string {
-	// Find the index where the substring appears
-	index := strings.Index(input, substring)
-	if index == -1 {
-		// If the substring is not found, return the original string
-		return input
-	}
-
-	// Return the string trimmed up to the index of the substring
-	return input[:index]
 }
 
 func createAnalyticsReport(query common.QueryRequestBody, ctx context.Context, queryTimeElapsed float64) string {
@@ -334,29 +277,10 @@ func handler(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResp
 
 	ctx := context.Background()
 	queryResults := getSearchResultsFromAtlas(requestPayload, ctx)
-	var codeExamples []CodeExampleResult
-	for index, result := range queryResults.CodeExamples {
-		var title string
-		var description string
-		// Only get the title and description for the first 10 results
-		if index < 10 {
-			title, description = getPageNameAndDescription(result.PageURL)
-		}
-		completeResult := CodeExampleResult{
-			Code:            result.Code,
-			Language:        result.Language,
-			Category:        result.Category,
-			PageURL:         result.PageURL,
-			ProjectName:     result.ProjectName,
-			PageTitle:       title,
-			PageDescription: description,
-		}
-		codeExamples = append(codeExamples, completeResult)
-	}
 
 	responseBody := ResponseBody{
 		QueryId:      queryResults.AnalyticsID,
-		CodeExamples: codeExamples,
+		CodeExamples: queryResults.CodeExamples,
 	}
 
 	responseAsJson, _ := json.Marshal(responseBody)

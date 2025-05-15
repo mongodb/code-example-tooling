@@ -26,11 +26,6 @@ function App() {
           size="small"
           className={styles.theme_toggle}
         />
-        {/* 
-        <Sidebar />
-        <Viewer />
-        <Footer /> */}
-
         <AcalaProvider>
           {isHomepage ? (
             <Homepage setIsHomepage={setIsHomepage} />

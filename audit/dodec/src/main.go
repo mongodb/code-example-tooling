@@ -48,6 +48,9 @@ func main() {
 	db := client.Database(dbName)
 	PerformAggregation(db, ctx)
 
+	// Add product and sub-product names
+	//updates.AddProductNames(db, ctx)
+
 	// To rename a field in the document
 	//updates.RenameField(db, ctx)
 

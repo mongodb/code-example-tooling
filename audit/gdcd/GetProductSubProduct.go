@@ -32,6 +32,7 @@ func GetProductSubProduct(project string, page string) (string, string) {
 		"kotlin":                   "Drivers",
 		"kotlin-sync":              "Drivers",
 		"laravel":                  "Drivers",
+		"mck":                      "Enterprise Kubernetes Operator",
 		"mongoid":                  "Drivers",
 		"mongodb-shell":            "MongoDB Shell",
 		"mongocli":                 "MongoDB CLI",

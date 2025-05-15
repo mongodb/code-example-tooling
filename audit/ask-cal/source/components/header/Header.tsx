@@ -1,8 +1,7 @@
 import styles from "./Header.module.css";
 
-import { H1 } from "@leafygreen-ui/typography";
 import Toggle from "@leafygreen-ui/toggle";
-import Logo from "@leafygreen-ui/logo";
+import LogoBlock from "../logoblock/LogoBlock";
 
 type HeaderProps = {
   darkMode: boolean;
@@ -12,10 +11,7 @@ type HeaderProps = {
 function Header({ darkMode, setDarkMode }: HeaderProps) {
   return (
     <header className={styles.header}>
-      <div className={styles.logo_block}>
-        <H1>Ask CAL</H1>
-        <Logo name={"MongoDBLogoMark"} />
-      </div>
+      <LogoBlock />
       <Toggle
         aria-label="Dark mode toggle"
         checked={darkMode}

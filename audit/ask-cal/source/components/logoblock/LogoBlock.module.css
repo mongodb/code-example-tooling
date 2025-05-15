@@ -1,0 +1,8 @@
+.logo_block {
+  display: flex;
+  align-items: center;
+}
+
+.logo_block svg {
+  padding-left: 1em;
+}

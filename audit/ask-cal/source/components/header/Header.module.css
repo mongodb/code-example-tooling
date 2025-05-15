@@ -6,12 +6,3 @@
   padding: 16px;
   border-bottom: var(--palette-gray-dark-2) 1px solid;
 }
-
-.logo_block {
-  display: flex;
-  align-items: center;
-}
-
-.logo_block svg {
-  padding-left: 1em;
-}

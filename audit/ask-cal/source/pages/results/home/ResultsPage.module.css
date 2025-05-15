@@ -74,3 +74,17 @@ header > div {
 .code_example {
   margin: 2em 0;
 }
+
+.example_header_container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2em;
+}
+
+.example_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 70%;
+}

@@ -3,6 +3,7 @@ import { useState, Dispatch, SetStateAction } from "react";
 
 import { SearchInput } from "@leafygreen-ui/search-input";
 import { Combobox, ComboboxOption } from "@leafygreen-ui/combobox";
+import { PageLoader } from "@leafygreen-ui/loading-indicator";
 
 import LogoBlock from "../../components/logoblock/LogoBlock";
 import { useAcala } from "../../providers/UseAcala";
@@ -34,7 +35,7 @@ function Homepage({ setIsHomepage }: HomepageProps) {
     docsSet: "",
   });
 
-  const { search, results, loading } = useAcala();
+  const { search, loading } = useAcala();
 
   const handleSearch = async (event: React.FormEvent<HTMLFormElement>) => {
     // Get the value from the input element. Look for the role "search".
@@ -148,14 +149,21 @@ function Homepage({ setIsHomepage }: HomepageProps) {
         </Combobox>
       </div>
 
-      <SearchInput
-        onSubmit={(event) => {
-          handleSearch(event);
-        }}
-        aria-label="search box"
-        className={styles.search_input}
-        size="large"
-      ></SearchInput>
+      {/* If loading, render BlobLoader */}
+      {loading ? (
+        <div className={styles.loading_container}>
+          <PageLoader description="Looking for code examples..." />
+        </div>
+      ) : (
+        <SearchInput
+          onSubmit={(event) => {
+            handleSearch(event);
+          }}
+          aria-label="search box"
+          className={styles.search_input}
+          size="large"
+        ></SearchInput>
+      )}
     </div>
   );
 }

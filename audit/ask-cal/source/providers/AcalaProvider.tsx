@@ -69,7 +69,7 @@ export const AcalaProvider = ({ children }: { children: ReactNode }) => {
       const response = {
         ok: true,
         json: async () => {
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
           const mockResponse: SearchResponse = {
             queryId: "fake-string-id",
             codeExamples: [

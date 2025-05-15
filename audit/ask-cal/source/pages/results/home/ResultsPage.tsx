@@ -5,6 +5,9 @@ import { SearchInput } from "@leafygreen-ui/search-input";
 import { Combobox, ComboboxOption } from "@leafygreen-ui/combobox";
 import Card from "@leafygreen-ui/card";
 import Code from "@leafygreen-ui/code";
+import IconButton from "@leafygreen-ui/icon-button";
+import Button from "@leafygreen-ui/button";
+import Icon from "@leafygreen-ui/icon";
 import { FacetGroup, Facet, CodeExample } from "../../../constants/types";
 
 import { useAcala } from "../../../providers/UseAcala";
@@ -168,6 +171,11 @@ function Resultspage() {
                     contentStyle="clickable"
                     onClick={() => {
                       setSelectedCodeExample(result);
+
+                      console.log(
+                        "Selected code example:",
+                        selectedCodeExample
+                      );
                     }}
                     key={index}
                   >
@@ -188,24 +196,53 @@ function Resultspage() {
         </div>
 
         <div className={styles.example_container}>
-          <H2>Page title</H2>
-
           {selectedCodeExample && (
-            <Code
-              language={
-                selectedCodeExample.language
-                  ? selectedCodeExample.language
-                  : "java"
-              }
-              expandable={true}
-              className={styles.code_example}
-              showLineNumbers={true}
-              onCopy={() => {
-                console.log("copy code clicked");
-              }}
-            >
-              {selectedCodeExample.code}
-            </Code>
+            <>
+              <div className={styles.example_header_container}>
+                <div className={styles.example_header}>
+                  <H2>{selectedCodeExample.pageTitle}</H2>
+                  <IconButton
+                    aria-label="Some Menu"
+                    onClick={() => {
+                      window.open(selectedCodeExample.pageUrl, "_blank");
+                    }}
+                  >
+                    <Icon
+                      glyph="OpenNewTab"
+                      size={"xlarge"}
+                    />
+                  </IconButton>
+                </div>
+
+                <Button
+                  leftGlyph={<Icon glyph="Sparkle" />}
+                  aria-label="Some Menu"
+                  className={styles.copy_button}
+                  onClick={() => {
+                    console.log("copy code clicked");
+                  }}
+                >
+                  Explain this code
+                </Button>
+              </div>
+              {selectedCodeExample.pageDescription && (
+                <Body>{selectedCodeExample.pageDescription}</Body>
+              )}
+              <Code
+                language={
+                  selectedCodeExample.language
+                    ? selectedCodeExample.language
+                    : "java"
+                }
+                className={styles.code_example}
+                showLineNumbers={true}
+                onCopy={() => {
+                  console.log("copy code clicked");
+                }}
+              >
+                {selectedCodeExample.code}
+              </Code>
+            </>
           )}
         </div>
       </div>

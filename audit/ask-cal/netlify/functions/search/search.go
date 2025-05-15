@@ -35,92 +35,125 @@ type ResponseBody struct {
 	CodeExamples []ReshapedCodeNode `json:"codeExamples"`
 }
 
-//func getSearchResultsFromAtlas(queryString string, languageFacet string, categoryFacet string, docsSet string) []ReshapedCodeNode {
-//	ctx := context.Background()
-//	uri := os.Getenv("CODE_SNIPPETS_CONNECTION_STRING")
-//	client, err := mongo.Connect(options.Client().
-//		ApplyURI(uri))
-//	if err != nil {
-//		log.Fatalf("Failed to connect to MongoDB: %v", err)
-//	}
-//	defer func(client *mongo.Client, ctx context.Context) {
-//		err := client.Disconnect(ctx)
-//		if err != nil {
-//			fmt.Printf("Failed to disconnect from mongodb: %v", err)
-//		}
-//	}(client, ctx)
-//
-//	collection := client.Database("ask_cal").Collection("consolidated_examples")
-//
-//	// Define the aggregation pipeline with search and multiple facet filters
-//	pipeline := mongo.Pipeline{
-//		// `$search` with text search and multiple filters - MUST BE THE FIRST STAGE
-//		{
-//			{"$search", bson.D{
-//				{"index", "ask_cal"},
-//				{"compound", bson.D{
-//					{"should", bson.A{
-//						bson.D{
-//							{"text", bson.D{
-//								{"query", queryString},
-//								{"path", "nodes.code"},
-//							}},
-//						},
-//					}},
-//					{"filter", bson.A{
-//						bson.D{
-//							{"equals", bson.D{
-//								{"path", "languages_facet"},
-//								{"value", languageFacet},
-//							}},
-//						},
-//						bson.D{
-//							{"equals", bson.D{
-//								{"path", "categories_facet"},
-//								{"value", categoryFacet},
-//							}},
-//						},
-//						bson.D{
-//							{"equals", bson.D{
-//								{"path", "project_name"},
-//								{"value", docsSet},
-//							}},
-//						},
-//					}},
-//				}},
-//			}},
-//		},
-//		// Reshape the data using a `$project` stage
-//		{
-//			{"$project", bson.D{
-//				{"code", "$nodes.code"},
-//				{"language", "$nodes.language"},
-//				{"category", "$nodes.category"},
-//				{"page_url", "$page_url"},
-//				{"project_name", "$project_name"},
-//			}},
-//		},
-//	}
-//
-//	// Execute the aggregation pipeline
-//	cursor, err := collection.Aggregate(ctx, pipeline)
-//
-//	// Iterate through the results
-//	var results []ReshapedCodeNode
-//	if err != nil {
-//		log.Fatalf("Failed to execute aggregation pipeline: %v", err)
-//	}
-//	defer cursor.Close(ctx)
-//
-//	if err := cursor.All(ctx, &results); err != nil {
-//		log.Fatalf("Failed to decode aggregation results: %v", err)
-//	}
-//
-//	return results
-//}
+// This functionality uses Atlas Search, which gives us full-text matching and additional search options
+func performAtlasSearchQuery(query common.QueryRequestBody, ctx context.Context) []ReshapedCodeNode {
+	uri := os.Getenv("CODE_SNIPPETS_CONNECTION_STRING")
+	client, err := mongo.Connect(options.Client().
+		ApplyURI(uri))
+	if err != nil {
+		log.Fatalf("Failed to connect to MongoDB: %v", err)
+	}
+	defer func(client *mongo.Client, ctx context.Context) {
+		err := client.Disconnect(ctx)
+		if err != nil {
+			fmt.Printf("Failed to disconnect from mongodb: %v", err)
+		}
+	}(client, ctx)
 
-func getSearchResultsFromAtlas(query common.QueryRequestBody, ctx context.Context) QueryResult {
-	queryStartTime := time.Now()
+	collection := client.Database("ask_cal").Collection("consolidated_examples_v2")
+	// Initialize the pipeline
+	var pipeline mongo.Pipeline
+
+	// Build the $search stage of the query - this stage MUST come first
+	searchStage := mongo.Pipeline{
+		bson.D{
+			{"$search", bson.D{
+				{"index", "ask_cal_v2"},
+				{"compound", bson.D{
+					{"must", bson.A{
+						bson.D{
+							{"text", bson.D{
+								{"query", query.QueryString},
+								{"path", bson.A{
+									"page_title",
+									"page_description",
+									"nodes.code",
+									"page_url",
+									"sub_product",
+								}},
+							}},
+						},
+					}},
+				}},
+			}},
+		},
+	}
+
+	pipeline = append(pipeline, searchStage...)
+
+	// Add `$sort` stage to order by relevance score
+	sortStage := bson.D{{"$sort", bson.D{{"_score", -1}}}}
+	pipeline = append(pipeline, sortStage)
+
+	// Unwind the nodes array to filter on individual node values
+	unwindStage := mongo.Pipeline{
+		{{"$unwind", bson.D{{"path", "$nodes"}}}}, // Unwind the `nodes` array
+	}
+	pipeline = append(pipeline, unwindStage...)
+
+	// Conditionally add a `$match` stage for `languageFacet`
+	if query.LanguageFacet != "" {
+		languageFacetStage := bson.D{
+			{"$match", bson.D{
+				{"nodes.language", query.LanguageFacet},
+			}},
+		}
+		pipeline = append(pipeline, languageFacetStage)
+	}
+
+	// Conditionally add a `$match` stage for `categoryFacet`
+	if query.CategoryFacet != "" {
+		categoryFacetStage := bson.D{
+			{"$match", bson.D{
+				{"nodes.category", query.CategoryFacet},
+			}},
+		}
+		pipeline = append(pipeline, categoryFacetStage)
+	}
+
+	// Conditionally add a `$match` stage for `docsSet`
+	if query.DocsSet != "" {
+		docsSetFacetStage := bson.D{
+			{"$match", bson.D{
+				{"project_name", query.DocsSet},
+			}},
+		}
+		pipeline = append(pipeline, docsSetFacetStage)
+	}
+
+	projectStage := bson.D{
+		{"$project", bson.D{
+			{"code", "$nodes.code"},
+			{"language", "$nodes.language"},
+			{"category", "$nodes.category"},
+			{"page_url", "$page_url"},
+			{"project_name", "$project_name"},
+			{"page_title", "$page_title"},
+			{"page_description", "$page_description"},
+		}},
+	}
+	pipeline = append(pipeline, projectStage)
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		log.Fatalf("Failed to execute aggregation: %v", err)
+	}
+	defer cursor.Close(ctx)
+
+	// Iterate through the results
+	var results []ReshapedCodeNode
+	defer cursor.Close(ctx)
+
+	if err := cursor.All(ctx, &results); err != nil {
+		log.Fatalf("Failed to decode aggregation results: %v", err)
+	}
+	return results
+}
+
+// This functionality uses an aggregation pipeline with exact substring match only in the code example field
+// Try first to see if we have some exact matches; otherwise, fall back to Atlas Search to expand the options
+// With enough tweaking, we could probably get this functionality *in* Atlas Search, but it's taking too much time for a quick PoC
+func performExactMatchQuery(query common.QueryRequestBody, ctx context.Context) []ReshapedCodeNode {
 	uri := os.Getenv("CODE_SNIPPETS_CONNECTION_STRING")
 	client, err := mongo.Connect(options.Client().
 		ApplyURI(uri))
@@ -218,15 +251,7 @@ func getSearchResultsFromAtlas(query common.QueryRequestBody, ctx context.Contex
 	if err := cursor.All(ctx, &results); err != nil {
 		log.Fatalf("Failed to decode aggregation results: %v", err)
 	}
-	queryCompletionTime := time.Now()
-	queryTimeElapsedInNanoseconds := queryCompletionTime.Sub(queryStartTime)
-	queryTimeInSeconds := queryTimeElapsedInNanoseconds.Seconds()
-	analyticsObjectId := createAnalyticsReport(query, ctx, queryTimeInSeconds)
-
-	return QueryResult{
-		CodeExamples: results,
-		AnalyticsID:  analyticsObjectId,
-	}
+	return results
 }
 
 func createAnalyticsReport(query common.QueryRequestBody, ctx context.Context, queryTimeElapsed float64) string {
@@ -276,13 +301,36 @@ func handler(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResp
 	}
 
 	ctx := context.Background()
-	queryResults := getSearchResultsFromAtlas(requestPayload, ctx)
 
-	responseBody := ResponseBody{
-		QueryId:      queryResults.AnalyticsID,
-		CodeExamples: queryResults.CodeExamples,
+	queryStartTime := time.Now()
+
+	// The exact match query only searches for an exact text match within the nodes.code fields. It may not return enough results.
+	// If we get fewer than, say, 5 results, flesh out the list with some extended Atlas Search results
+	queryResults := performExactMatchQuery(requestPayload, ctx)
+	if len(queryResults) < 5 {
+		expandedQueryResults := performAtlasSearchQuery(requestPayload, ctx)
+		queryResults = append(queryResults, expandedQueryResults...)
 	}
+	queryCompletionTime := time.Now()
+	queryTimeElapsedInNanoseconds := queryCompletionTime.Sub(queryStartTime)
+	queryTimeInSeconds := queryTimeElapsedInNanoseconds.Seconds()
+	analyticsObjectId := createAnalyticsReport(requestPayload, ctx, queryTimeInSeconds)
 
+	// We don't want a large number of responses, so limit the number of responses we're sending to the front end
+	var responseBody ResponseBody
+	resultsLimit := 30
+	if len(queryResults) < resultsLimit {
+		responseBody = ResponseBody{
+			QueryId:      analyticsObjectId,
+			CodeExamples: queryResults,
+		}
+	} else {
+		limitedResultsSet := queryResults[:resultsLimit]
+		responseBody = ResponseBody{
+			QueryId:      analyticsObjectId,
+			CodeExamples: limitedResultsSet,
+		}
+	}
 	responseAsJson, _ := json.Marshal(responseBody)
 
 	return &events.APIGatewayProxyResponse{
@@ -291,7 +339,6 @@ func handler(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResp
 		Body:            string(responseAsJson),
 		IsBase64Encoded: false,
 	}, nil
-
 }
 
 func main() {

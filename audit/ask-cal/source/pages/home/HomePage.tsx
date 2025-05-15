@@ -29,9 +29,9 @@ function Homepage({ setIsHomepage }: HomepageProps) {
   // provider and hook.
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [facets, setFacets] = useState<FacetGroup>({
-    programmingLanguage: null,
-    category: null,
-    docsSet: null,
+    programmingLanguage: "",
+    category: "",
+    docsSet: "",
   });
 
   const { search, results, loading } = useAcala();
@@ -42,6 +42,8 @@ function Homepage({ setIsHomepage }: HomepageProps) {
       "input"
     ) as HTMLInputElement;
     const value = inputElement.value;
+
+    console.log("Search value: ", value);
 
     if (!value) {
       console.error("Search input is empty");
@@ -54,10 +56,10 @@ function Homepage({ setIsHomepage }: HomepageProps) {
     // TODO: make this work for real
     await search({
       bodyContent: {
-        queryString: searchQuery,
+        QueryString: searchQuery,
         LanguageFacet: facets.programmingLanguage,
         CategoryFacet: facets.category,
-        docsSet: facets.docsSet,
+        DocsSet: facets.docsSet,
       },
       mock: true,
     });

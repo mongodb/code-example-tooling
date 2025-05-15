@@ -7,8 +7,19 @@
 }
 
 header {
+  display: flex;
+  gap: 2em;
+  align-items: center;
   margin: 4em 0 3em 0;
-  width: 40%;
+  padding: 0.5em 0;
+}
+
+header > form {
+  flex: 2;
+}
+
+header > div {
+  flex: 3;
 }
 
 .horizontal_container {
@@ -23,6 +34,7 @@ header {
   flex: 1;
   flex-direction: column;
   background-color: var(--palette-gray-light-3);
+  max-width: 40%;
 }
 
 .example_container {
@@ -30,6 +42,7 @@ header {
   flex: 2;
   flex-direction: column;
   margin: 2em 1em;
+  max-width: 55%;
 }
 
 .facet_container {
@@ -49,6 +62,14 @@ header {
   flex-direction: column;
   margin: 2em 1em;
 }
+
+.results_list > div {
+  margin-bottom: 2em;
+}
+
+/* .results_code_example {
+  max-width: 100%;
+} */
 
 .code_example {
   margin: 2em 0;

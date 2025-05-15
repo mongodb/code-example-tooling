@@ -1,75 +1,155 @@
 import styles from "./HomePage.module.css";
-
-import { Dispatch, SetStateAction } from "react";
+import { useState, Dispatch, SetStateAction } from "react";
 
 import { SearchInput } from "@leafygreen-ui/search-input";
 import { Combobox, ComboboxOption } from "@leafygreen-ui/combobox";
-import Toggle from "@leafygreen-ui/toggle";
 
 import LogoBlock from "../../components/logoblock/LogoBlock";
+import { useAcala } from "../../providers/UseAcala";
+
+// Types
+import {
+  CodeExampleDisplayValues,
+  CodeExampleCategory,
+} from "../../constants/categories";
+import { DocsSetDisplayValues, DocsSet } from "../../constants/docsSets";
+import {
+  ProgrammingLanguageDisplayValues,
+  ProgrammingLanguage,
+} from "../../constants/programmingLanguages";
+
+import { Facet, FacetGroup } from "../../constants/types";
 
 interface HomepageProps {
   setIsHomepage: Dispatch<SetStateAction<boolean>>;
-  setDarkMode: Dispatch<SetStateAction<boolean>>;
-  darkMode: boolean;
 }
 
-function Homepage({ setIsHomepage, setDarkMode, darkMode }: HomepageProps) {
-  const handleSearch = () => {
-    // Handle search logic here
-    console.log("Search triggered");
+function Homepage({ setIsHomepage }: HomepageProps) {
+  // TODO: move this into AcalaProvider. Also consider making search its own
+  // provider and hook.
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [facets, setFacets] = useState<FacetGroup>({
+    programmingLanguage: null,
+    category: null,
+    docsSet: null,
+  });
+
+  const { search, results, loading } = useAcala();
+
+  const handleSearch = async (event: React.FormEvent<HTMLFormElement>) => {
+    // Get the value from the input element. Look for the role "search".
+    const inputElement = event.currentTarget.querySelector(
+      "input"
+    ) as HTMLInputElement;
+    const value = inputElement.value;
+
+    if (!value) {
+      console.error("Search input is empty");
+      return;
+    }
+
+    setSearchQuery(value);
+
+    // Mock search, as getting CORS errors
+    // TODO: make this work for real
+    await search({
+      bodyContent: {
+        queryString: searchQuery,
+        LanguageFacet: facets.programmingLanguage,
+        CategoryFacet: facets.category,
+        docsSet: facets.docsSet,
+      },
+      mock: true,
+    });
 
     setIsHomepage(false);
   };
 
+  const handleFacetChange = ({ facet, value }: Facet) => {
+    setFacets((previous) => {
+      const updatedFacetGroup: FacetGroup = {
+        programmingLanguage:
+          facet === "programmingLanguage"
+            ? (value as ProgrammingLanguage)
+            : previous?.programmingLanguage,
+        category:
+          facet === "category"
+            ? (value as CodeExampleCategory)
+            : previous?.category,
+        docsSet: facet === "docsSet" ? (value as DocsSet) : previous?.docsSet,
+      };
+      return updatedFacetGroup;
+    });
+  };
+
   return (
     <div className={styles.homepage}>
-      <Toggle
-        aria-label="Dark mode toggle"
-        checked={darkMode}
-        onChange={setDarkMode}
-        size="small"
-        className={styles.theme_toggle}
-      />
       <LogoBlock />
 
+      {/* TODO: abstract to a component */}
       <div className={styles.facet_container}>
         <Combobox
           label="Programming Language"
           placeholder="Select language"
           size="xsmall"
+          onChange={(value: string | null) => {
+            handleFacetChange({
+              facet: "programmingLanguage",
+              value: value,
+            });
+          }}
         >
-          <ComboboxOption value="JavaScript" />
-          <ComboboxOption value="C#" />
-          <ComboboxOption value="Go" />
-          <ComboboxOption value="Rust" />
+          {Object.values(ProgrammingLanguageDisplayValues).map((language) => (
+            <ComboboxOption
+              key={language}
+              value={language}
+            />
+          ))}
         </Combobox>
 
         <Combobox
           label="Category"
           placeholder="Select category"
           size="xsmall"
+          onChange={(value: string | null) => {
+            handleFacetChange({
+              facet: "category",
+              value: value,
+            });
+          }}
         >
-          <ComboboxOption value="JavaScript" />
-          <ComboboxOption value="C#" />
-          <ComboboxOption value="Go" />
-          <ComboboxOption value="Rust" />
+          {Object.values(CodeExampleDisplayValues).map((category) => (
+            <ComboboxOption
+              key={category}
+              value={category}
+            />
+          ))}
         </Combobox>
 
         <Combobox
           label="Documentation set"
           placeholder="Select docs set"
           size="xsmall"
+          onChange={(value: string | null) => {
+            handleFacetChange({
+              facet: "docsSet",
+              value: value,
+            });
+          }}
         >
-          <ComboboxOption value="JavaScript" />
-          <ComboboxOption value="C#" />
-          <ComboboxOption value="Go" />
-          <ComboboxOption value="Rust" />
+          {Object.values(DocsSetDisplayValues).map((docsSet) => (
+            <ComboboxOption
+              key={docsSet}
+              value={docsSet}
+            />
+          ))}
         </Combobox>
       </div>
 
       <SearchInput
-        onSubmit={handleSearch}
+        onSubmit={(event) => {
+          handleSearch(event);
+        }}
         aria-label="search box"
         className={styles.search_input}
         size="large"

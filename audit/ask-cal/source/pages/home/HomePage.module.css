@@ -5,7 +5,6 @@
   justify-content: center;
   width: 100vw;
   height: 80vh;
-  /* margin-top: 10em; */
 }
 
 .facet_container {
@@ -22,10 +21,4 @@
 .search_input {
   width: 50vw;
   margin-top: 3em;
-}
-
-.theme_toggle {
-  position: absolute;
-  top: 1em;
-  right: 1em;
 }

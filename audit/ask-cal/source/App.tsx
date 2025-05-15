@@ -1,10 +1,13 @@
 import "./styles/fonts.css";
 import "./styles/main.css";
+import styles from "./App.module.css";
 
 import { useState } from "react";
 
 // Leafygreen UI components
 import LeafyGreenProvider from "@leafygreen-ui/leafygreen-provider";
+import { AcalaProvider } from "./providers/AcalaProvider";
+import Toggle from "@leafygreen-ui/toggle";
 
 import Homepage from "./pages/home/HomePage";
 import Resultspage from "./pages/results/home/ResultsPage";
@@ -16,20 +19,25 @@ function App() {
   return (
     <LeafyGreenProvider darkMode={darkMode}>
       <div className={`App ${darkMode && "darkmode-bg"}`}>
+        <Toggle
+          aria-label="Dark mode toggle"
+          checked={darkMode}
+          onChange={setDarkMode}
+          size="small"
+          className={styles.theme_toggle}
+        />
         {/* 
         <Sidebar />
         <Viewer />
         <Footer /> */}
 
-        {isHomepage ? (
-          <Homepage
-            setIsHomepage={setIsHomepage}
-            setDarkMode={setDarkMode}
-            darkMode={darkMode}
-          />
-        ) : (
-          <Resultspage />
-        )}
+        <AcalaProvider>
+          {isHomepage ? (
+            <Homepage setIsHomepage={setIsHomepage} />
+          ) : (
+            <Resultspage />
+          )}
+        </AcalaProvider>
       </div>
     </LeafyGreenProvider>
   );

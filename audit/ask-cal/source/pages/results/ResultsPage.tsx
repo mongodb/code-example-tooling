@@ -3,11 +3,10 @@ import { useState } from "react";
 
 import Card from "@leafygreen-ui/card";
 import Code from "@leafygreen-ui/code";
-import IconButton from "@leafygreen-ui/icon-button";
 import Button from "@leafygreen-ui/button";
 import Icon from "@leafygreen-ui/icon";
 import { PageLoader } from "@leafygreen-ui/loading-indicator";
-import { Body, H2, H3 } from "@leafygreen-ui/typography";
+import { Body, H2, H3, Link } from "@leafygreen-ui/typography";
 import {
   DisplayMode,
   Drawer,
@@ -29,6 +28,19 @@ function Resultspage() {
       await getAiSummary({ code, pageUrl });
     } catch (error) {
       console.error("Error fetching AI summary:", error);
+    }
+  };
+
+  const parseLanguage = (language: string) => {
+    console.log("Parsing language:", language);
+
+    switch (language) {
+      case "undefined":
+        return "javascript";
+      case "text":
+        return "javascript";
+      default:
+        return language;
     }
   };
 
@@ -58,7 +70,7 @@ function Resultspage() {
                     <H3>{result.pageTitle}</H3>
 
                     <Code
-                      language={result.language}
+                      language={parseLanguage(result.language)}
                       expandable={true}
                       className={styles.code_example}
                     >
@@ -74,21 +86,11 @@ function Resultspage() {
         <div className={styles.example_container}>
           {selectedCodeExample && (
             <>
-              <div className={styles.example_header}>
-                <H2>{selectedCodeExample.pageTitle}</H2>
-
-                <IconButton
-                  aria-label="Some Menu"
-                  onClick={() => {
-                    window.open(selectedCodeExample.pageUrl, "_blank");
-                  }}
-                >
-                  <Icon
-                    glyph="OpenNewTab"
-                    size={"xlarge"}
-                  />
-                </IconButton>
-              </div>
+              <H2>{selectedCodeExample.pageTitle}</H2>
+              <Link href={selectedCodeExample.pageUrl}>
+                {" "}
+                {selectedCodeExample.pageUrl}{" "}
+              </Link>
 
               {selectedCodeExample.pageDescription && (
                 <Body>{selectedCodeExample.pageDescription}</Body>
@@ -96,11 +98,7 @@ function Resultspage() {
 
               <div className={styles.example_body}>
                 <Code
-                  language={
-                    selectedCodeExample.language
-                      ? selectedCodeExample.language
-                      : "java"
-                  }
+                  language={parseLanguage(selectedCodeExample.language)}
                   className={styles.code_example}
                   showLineNumbers={true}
                   onCopy={() => {

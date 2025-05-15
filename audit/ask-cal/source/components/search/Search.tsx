@@ -34,7 +34,7 @@ function Search({ isHomepage, setIsHomepage }: SearchProps) {
 
   // TODO: this also exists on the homepage. Move to a common place.
   const handleSearch = async (event: React.FormEvent<HTMLFormElement>) => {
-    setSearchQuery("");
+    // setSearchQuery("");
     // Get the value from the input element. Look for the role "search".
     const inputElement = event.currentTarget.querySelector(
       "input"
@@ -57,10 +57,12 @@ function Search({ isHomepage, setIsHomepage }: SearchProps) {
         CategoryFacet: facets.category,
         docsSet: facets.docsSet,
       },
-      mock: true,
+      mock: false,
     });
 
-    setIsHomepage(!isHomepage);
+    if (isHomepage) {
+      setIsHomepage(false);
+    }
   };
 
   const handleFacetChange = ({ facet, value }: Facet) => {
@@ -88,6 +90,9 @@ function Search({ isHomepage, setIsHomepage }: SearchProps) {
       <SearchInput
         onSubmit={(event) => {
           handleSearch(event);
+        }}
+        onChange={(event) => {
+          setSearchQuery(event.target.value);
         }}
         aria-label="search box"
         className={styles.search_input}

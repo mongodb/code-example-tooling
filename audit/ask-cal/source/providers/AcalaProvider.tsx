@@ -177,9 +177,10 @@ export const AcalaProvider = ({ children }: { children: ReactNode }) => {
       options,
       requestType: RequestType.Search,
     })) as SearchResponse;
+    const limitedResults = data.codeExamples.slice(0, 10);
 
     setSearchQueryId(data.queryId as string);
-    setResults(data.codeExamples);
+    setResults(limitedResults);
 
     return;
   };

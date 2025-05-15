@@ -54,13 +54,6 @@
   max-width: 600px;
 }
 
-.example_header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1em;
-}
-
 .ai_summary {
   white-space: pre-wrap;
   word-break: break-word;

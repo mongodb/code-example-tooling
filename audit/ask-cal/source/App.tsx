@@ -11,6 +11,7 @@ import Toggle from "@leafygreen-ui/toggle";
 
 import Homepage from "./pages/home/HomePage";
 import Resultspage from "./pages/results/home/ResultsPage";
+import Header from "./components/header/Header";
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -27,6 +28,11 @@ function App() {
           className={styles.theme_toggle}
         />
         <AcalaProvider>
+          <Header
+            setIsHomepage={setIsHomepage}
+            isHomepage={isHomepage}
+          />
+
           {isHomepage ? (
             <Homepage setIsHomepage={setIsHomepage} />
           ) : (

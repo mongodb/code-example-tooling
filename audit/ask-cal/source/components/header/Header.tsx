@@ -1,24 +1,33 @@
 import styles from "./Header.module.css";
 
-import Toggle from "@leafygreen-ui/toggle";
 import LogoBlock from "../logoblock/LogoBlock";
+import Search from "../search/Search";
 
 type HeaderProps = {
-  darkMode: boolean;
-  setDarkMode: (darkMode: boolean) => void;
+  isHomepage: boolean;
+  setIsHomepage: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-function Header({ darkMode, setDarkMode }: HeaderProps) {
+function Header({ isHomepage, setIsHomepage }: HeaderProps) {
   return (
-    <header className={styles.header}>
-      <LogoBlock />
-      <Toggle
-        aria-label="Dark mode toggle"
-        checked={darkMode}
-        onChange={setDarkMode}
-        size="small"
-      />
+    <header className={isHomepage ? styles.header : styles.header_results}>
+      <Logo />
+
+      {!isHomepage && (
+        <Search
+          isHomepage={isHomepage}
+          setIsHomepage={setIsHomepage}
+        />
+      )}
     </header>
+  );
+}
+
+function Logo() {
+  return (
+    <div>
+      <LogoBlock />
+    </div>
   );
 }
 

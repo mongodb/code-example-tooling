@@ -24,8 +24,8 @@ func getAiSummaryFromHuggingFace(code string, pageUrl string) string {
 		`Find the code example below on the given webpage. In a few sentences, summarize the section of
 			the webpage that contains the given code example. Provide information that gives developers useful context
 			surrounding the code example - don't just describe the code example.
-			Page URL: {{.pageUrl}}
-			Code: {{.code}}`,
+			Code: {{.code}}
+			Page URL: {{.pageUrl}}`,
 		[]string{"question", "context"},
 	)
 	prompt, err := template.Format(map[string]any{
@@ -49,18 +49,32 @@ func getAiSummaryFromHuggingFace(code string, pageUrl string) string {
 	if err != nil {
 		log.Fatalf("failed to generate a response from the prompt: %v", err)
 	}
-	response := strings.Split(completion, "\n\n")
-	// For this particular LLM implementation, the first string is the prompt it was given, and subsequent strings are related paragraphs.
-	// Omit the prompt and provide the subsequent strings as one string for the response.
-	var responseLines strings.Builder
-	for index, line := range response {
-		if index == 0 {
-			continue
-		} else {
-			responseLines.WriteString(line + "\n\n")
-		}
+	response := extractLogicalResponse(completion)
+	return response
+}
+
+func extractLogicalResponse(input string) string {
+	// Define the marker "Page URL:"
+	marker := "Page URL:"
+
+	// Locate the marker
+	idx := strings.Index(input, marker)
+	if idx == -1 {
+		// If marker is not found, return an empty string
+		return ""
 	}
-	return responseLines.String()
+
+	// Extract the text after the marker
+	textAfterMarker := input[idx+len(marker):]
+
+	// Find the first line break after the URL
+	lines := strings.Split(strings.TrimSpace(textAfterMarker), "\n")
+	if len(lines) > 1 {
+		// Return everything after the first line (logical response)
+		return strings.Join(lines[1:], "\n")
+	}
+
+	return strings.TrimSpace(textAfterMarker) // Fallback: only the text after the marker
 }
 
 func handler(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {

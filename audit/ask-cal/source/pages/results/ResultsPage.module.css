@@ -23,10 +23,19 @@
 
 .example_container {
   display: flex;
-  flex: 2;
   flex-direction: column;
+  flex: 2;
   margin: 2em 1em;
-  max-width: 55%;
+}
+
+.summary_button {
+  margin: 2em 0;
+}
+
+.example_body {
+  display: flex;
+  justify-content: space-around;
+  /* gap: 2em; */
 }
 
 .results {
@@ -40,24 +49,19 @@
   margin-bottom: 2em;
 }
 
-/* .results_code_example {
-  max-width: 100%;
-} */
-
 .code_example {
   margin: 2em 0;
-}
-
-.example_header_container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2em;
+  max-width: 600px;
 }
 
 .example_header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 70%;
+  gap: 1em;
+}
+
+.ai_summary {
+  white-space: pre-wrap;
+  word-break: break-word;
 }

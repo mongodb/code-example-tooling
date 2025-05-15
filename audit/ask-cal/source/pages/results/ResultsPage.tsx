@@ -6,7 +6,13 @@ import Code from "@leafygreen-ui/code";
 import IconButton from "@leafygreen-ui/icon-button";
 import Button from "@leafygreen-ui/button";
 import Icon from "@leafygreen-ui/icon";
+import { PageLoader } from "@leafygreen-ui/loading-indicator";
 import { Body, H2, H3 } from "@leafygreen-ui/typography";
+import {
+  DisplayMode,
+  Drawer,
+  DrawerStackProvider,
+} from "@leafygreen-ui/drawer";
 import { CodeExample } from "../../constants/types";
 
 import { useAcala } from "../../providers/UseAcala";
@@ -14,8 +20,17 @@ import { useAcala } from "../../providers/UseAcala";
 function Resultspage() {
   const [selectedCodeExample, setSelectedCodeExample] =
     useState<CodeExample | null>(null);
+  const [openAiDrawer, setOpenAiDrawer] = useState(false);
 
-  const { results } = useAcala();
+  const { results, getAiSummary, aiSummary, loading } = useAcala();
+
+  const handleAiSummary = async (code: string, pageUrl: string) => {
+    try {
+      await getAiSummary({ code, pageUrl });
+    } catch (error) {
+      console.error("Error fetching AI summary:", error);
+    }
+  };
 
   return (
     <div className={styles.results_page}>
@@ -45,7 +60,7 @@ function Resultspage() {
                     <Code
                       language={result.language}
                       expandable={true}
-                      className={styles.results_code_example}
+                      className={styles.code_example}
                     >
                       {result.code}
                     </Code>
@@ -59,53 +74,88 @@ function Resultspage() {
         <div className={styles.example_container}>
           {selectedCodeExample && (
             <>
-              <div className={styles.example_header_container}>
-                <div className={styles.example_header}>
-                  <H2>{selectedCodeExample.pageTitle}</H2>
-                  <IconButton
-                    aria-label="Some Menu"
-                    onClick={() => {
-                      window.open(selectedCodeExample.pageUrl, "_blank");
-                    }}
-                  >
-                    <Icon
-                      glyph="OpenNewTab"
-                      size={"xlarge"}
-                    />
-                  </IconButton>
-                </div>
+              <div className={styles.example_header}>
+                <H2>{selectedCodeExample.pageTitle}</H2>
+
+                <IconButton
+                  aria-label="Some Menu"
+                  onClick={() => {
+                    window.open(selectedCodeExample.pageUrl, "_blank");
+                  }}
+                >
+                  <Icon
+                    glyph="OpenNewTab"
+                    size={"xlarge"}
+                  />
+                </IconButton>
+              </div>
+
+              {selectedCodeExample.pageDescription && (
+                <Body>{selectedCodeExample.pageDescription}</Body>
+              )}
+
+              <div className={styles.example_body}>
+                <Code
+                  language={
+                    selectedCodeExample.language
+                      ? selectedCodeExample.language
+                      : "java"
+                  }
+                  className={styles.code_example}
+                  showLineNumbers={true}
+                  onCopy={() => {
+                    console.log("copy code clicked");
+                  }}
+                >
+                  {selectedCodeExample.code}
+                </Code>
 
                 <Button
                   leftGlyph={<Icon glyph="Sparkle" />}
                   aria-label="Some Menu"
-                  className={styles.copy_button}
+                  className={styles.summary_button}
                   onClick={() => {
-                    console.log("copy code clicked");
+                    setOpenAiDrawer(true);
+                    handleAiSummary(
+                      selectedCodeExample.code,
+                      selectedCodeExample.pageUrl
+                    );
+                    // setOpenResultsDrawer(false);
                   }}
                 >
                   Explain this code
                 </Button>
               </div>
-              {selectedCodeExample.pageDescription && (
-                <Body>{selectedCodeExample.pageDescription}</Body>
-              )}
-              <Code
-                language={
-                  selectedCodeExample.language
-                    ? selectedCodeExample.language
-                    : "java"
-                }
-                className={styles.code_example}
-                showLineNumbers={true}
-                onCopy={() => {
-                  console.log("copy code clicked");
-                }}
-              >
-                {selectedCodeExample.code}
-              </Code>
             </>
           )}
         </div>
+
+        {selectedCodeExample && (
+          <div className={styles.summary_container}>
+            <DrawerStackProvider>
+              <Drawer
+                displayMode={DisplayMode.Overlay}
+                onClose={() => {
+                  setOpenAiDrawer(false);
+                  // setOpenResultsDrawer(true);
+                }}
+                open={openAiDrawer}
+                title="Drawer Title"
+              >
+                {loading ? (
+                  <PageLoader description="Asking the robots..." />
+                ) : (
+                  <Body
+                    baseFontSize={16}
+                    className={styles.ai_summary}
+                  >
+                    {aiSummary}
+                  </Body>
+                )}
+              </Drawer>
+            </DrawerStackProvider>
+          </div>
+        )}
       </div>
     </div>
   );

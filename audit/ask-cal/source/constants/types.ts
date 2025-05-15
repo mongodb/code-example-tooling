@@ -39,9 +39,15 @@ export interface HandleRequestProperties {
   requestType: RequestType;
 }
 
+export interface AiSummaryPayload {
+  code: string;
+  pageUrl: string;
+}
+
 // List of possible requests against the API
 export enum RequestType {
   Search = "search",
   ReportFeedback = "reportFeedback",
   RequestExample = "requestExample",
+  GetAiSummary = "getAiSummary",
 }

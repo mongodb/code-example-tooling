@@ -7,6 +7,7 @@ import {
   RequestType,
   RequestProperties,
   HandleRequestProperties,
+  AiSummaryPayload,
 } from "../constants/types";
 
 // TODO: remove the mock features when the API is ready
@@ -17,6 +18,7 @@ export const AcalaProvider = ({ children }: { children: ReactNode }) => {
   const [apiError, setApiError] = useState<string | null>(null);
   const [results, setResults] = useState<CodeExample[]>([]);
   const [searchQueryId, setSearchQueryId] = useState<string | null>(null);
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
 
   const baseUrl =
     window.location.hostname === "localhost"
@@ -36,6 +38,28 @@ export const AcalaProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await fetch(url, options);
       if (!response.ok) throw new Error(response.statusText);
+
+      if (requestType === RequestType.GetAiSummary && response.body) {
+        // Stream handling
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let result = "";
+        let done = false;
+
+        setLoading(false);
+
+        while (!done) {
+          const { value, done: streamDone } = await reader.read();
+          done = streamDone;
+          if (value) {
+            const chunk = decoder.decode(value, { stream: !done });
+            result += chunk;
+            // Optionally update the UI with partial result here
+            setAiSummary(result); // This will update your UI as data streams in
+          }
+        }
+        return { summary: result };
+      }
 
       return await response.json();
     } catch (error: unknown) {
@@ -160,6 +184,29 @@ export const AcalaProvider = ({ children }: { children: ReactNode }) => {
     return;
   };
 
+  const getAiSummary = async (payload: AiSummaryPayload) => {
+    const url = `${baseUrl}/.netlify/functions/ai-summary`;
+    const options = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    };
+
+    const data = await handleRequest({
+      url,
+      options,
+      requestType: RequestType.GetAiSummary,
+    });
+
+    if (data) {
+      setAiSummary(data.summary);
+    } else {
+      setApiError("Failed to fetch AI summary.");
+    }
+
+    return;
+  };
+
   const reportFeedback = async ({ bodyContent, mock }: RequestProperties) => {
     const url = `${baseUrl}/.netlify/functions/feedback`;
     const options = {
@@ -213,7 +260,9 @@ export const AcalaProvider = ({ children }: { children: ReactNode }) => {
         searchQueryId,
         reportFeedback,
         requestExample,
+        getAiSummary,
         results,
+        aiSummary,
         loading,
         apiError,
       }}

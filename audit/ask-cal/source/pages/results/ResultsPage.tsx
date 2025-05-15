@@ -7,9 +7,9 @@ import IconButton from "@leafygreen-ui/icon-button";
 import Button from "@leafygreen-ui/button";
 import Icon from "@leafygreen-ui/icon";
 import { Body, H2, H3 } from "@leafygreen-ui/typography";
-import { CodeExample } from "../../../constants/types";
+import { CodeExample } from "../../constants/types";
 
-import { useAcala } from "../../../providers/UseAcala";
+import { useAcala } from "../../providers/UseAcala";
 
 function Resultspage() {
   const [selectedCodeExample, setSelectedCodeExample] =

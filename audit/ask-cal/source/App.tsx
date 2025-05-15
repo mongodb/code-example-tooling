@@ -10,7 +10,7 @@ import { AcalaProvider } from "./providers/AcalaProvider";
 import Toggle from "@leafygreen-ui/toggle";
 
 import Homepage from "./pages/home/HomePage";
-import Resultspage from "./pages/results/home/ResultsPage";
+import Resultspage from "./pages/results/ResultsPage";
 import Header from "./components/header/Header";
 
 function App() {

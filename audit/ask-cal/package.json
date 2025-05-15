@@ -15,6 +15,7 @@
     "@leafygreen-ui/card": "^12.0.9",
     "@leafygreen-ui/code": "^18.0.4",
     "@leafygreen-ui/combobox": "^11.0.18",
+    "@leafygreen-ui/drawer": "^2.0.4",
     "@leafygreen-ui/icon": "^13.3.0",
     "@leafygreen-ui/icon-button": "^16.0.11",
     "@leafygreen-ui/loading-indicator": "^3.0.11",

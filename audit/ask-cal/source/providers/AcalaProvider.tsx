@@ -171,6 +171,7 @@ export const AcalaProvider = ({ children }: { children: ReactNode }) => {
       requestType: RequestType.Search,
     })) as SearchResponse;
     const rawResults = data.codeExamples;
+    console.log("rawResults", rawResults);
 
     // for every result in rawResults, look at the pageTitle and remove
     // the substring " - MongoDB Docs" from the end of the string.

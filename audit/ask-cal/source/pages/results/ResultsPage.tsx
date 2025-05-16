@@ -14,6 +14,7 @@ import {
   DrawerStackProvider,
 } from "@leafygreen-ui/drawer";
 import { CodeExample } from "../../constants/types";
+import { DocsSetDisplayValues, DocsSet } from "../../constants/docsSets";
 
 import { useAcala } from "../../providers/UseAcala";
 import CodeExamplePlaceholder from "../../components/code-example-placeholder/CodeExamplePlaceholder";
@@ -42,6 +43,16 @@ function Resultspage() {
       default:
         return language;
     }
+  };
+
+  const findDocsSetDisplayValue = (value: string) => {
+    // use value as key to find the display value in DocsSetDisplayValues
+    const docsSet = Object.keys(DocsSetDisplayValues).find(
+      (key) => key.toLowerCase() === value.toLowerCase()
+    ) as DocsSet;
+
+    console.log("docsSet", docsSet);
+    return DocsSetDisplayValues[docsSet] || value;
   };
 
   return (
@@ -75,6 +86,9 @@ function Resultspage() {
                     <div className={styles.badge_container}>
                       <Badge variant="blue">{result.language}</Badge>
                       <Badge variant="green">{result.category}</Badge>
+                      <Badge variant="yellow">
+                        {findDocsSetDisplayValue(result.projectName)}
+                      </Badge>
                     </div>
                   </Card>
                 ))}

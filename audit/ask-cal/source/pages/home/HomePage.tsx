@@ -1,6 +1,7 @@
 import styles from "./HomePage.module.css";
 
 import { PageLoader } from "@leafygreen-ui/loading-indicator";
+import { Body } from "@leafygreen-ui/typography";
 
 import { useAcala } from "../../providers/UseAcala";
 import Search from "../../components/search/Search";
@@ -14,7 +15,14 @@ function Homepage({ setIsHomepage }: HomepageProps) {
 
   return (
     <div className={styles.homepage}>
-      {/* If loading, render BlobLoader */}
+      <div className={styles.description}>
+        <Body baseFontSize={16}>
+          Welcome to your hub for MongoDB code examples! Easily search curated
+          examples from our documentation and get instant explanations from the
+          Docs AI Chatbot for guidance.
+        </Body>
+      </div>
+
       {loading ? (
         <div className={styles.loading_container}>
           <PageLoader description="Looking for code examples..." />
@@ -25,6 +33,8 @@ function Homepage({ setIsHomepage }: HomepageProps) {
           setIsHomepage={setIsHomepage}
         />
       )}
+
+      <div className={styles.background_image}></div>
     </div>
   );
 }

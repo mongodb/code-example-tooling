@@ -5,6 +5,7 @@ import Card from "@leafygreen-ui/card";
 import Code from "@leafygreen-ui/code";
 import Button from "@leafygreen-ui/button";
 import Icon from "@leafygreen-ui/icon";
+import Badge from "@leafygreen-ui/badge";
 import { PageLoader } from "@leafygreen-ui/loading-indicator";
 import { Body, H2, H3, Link } from "@leafygreen-ui/typography";
 import {
@@ -70,6 +71,11 @@ function Resultspage() {
                     >
                       {result.code}
                     </Code>
+
+                    <div className={styles.badge_container}>
+                      <Badge variant="blue">{result.language}</Badge>
+                      <Badge variant="green">{result.category}</Badge>
+                    </div>
                   </Card>
                 ))}
               </div>

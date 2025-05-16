@@ -170,11 +170,11 @@ export const AcalaProvider = ({ children }: { children: ReactNode }) => {
       options,
       requestType: RequestType.Search,
     })) as SearchResponse;
-    const limitedResults = data.codeExamples.slice(0, 10);
+    const rawResults = data.codeExamples;
 
-    // for every result in limitedResults, look at the pageTitle and remove
+    // for every result in rawResults, look at the pageTitle and remove
     // the substring " - MongoDB Docs" from the end of the string.
-    limitedResults.forEach((result) => {
+    rawResults.forEach((result) => {
       if (result.pageTitle.endsWith(" - MongoDB Docs")) {
         result.pageTitle = result.pageTitle.slice(
           0,
@@ -184,7 +184,7 @@ export const AcalaProvider = ({ children }: { children: ReactNode }) => {
     });
 
     setSearchQueryId(data.queryId as string);
-    setResults(limitedResults);
+    setResults(rawResults);
 
     return;
   };

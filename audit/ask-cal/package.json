@@ -12,6 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@leafygreen-ui/badge": "^9.0.10",
     "@leafygreen-ui/card": "^12.0.9",
     "@leafygreen-ui/code": "^18.0.4",
     "@leafygreen-ui/combobox": "^11.0.18",

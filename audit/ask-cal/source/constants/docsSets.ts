@@ -25,6 +25,7 @@ export type DocsSet =
   | "kotlin"
   | "kotlin-sync"
   | "laravel"
+  | "mck"
   | "mongocli"
   | "mongodb-shell"
   | "mongoid"
@@ -39,24 +40,21 @@ export type DocsSet =
   | "spark-connector";
   
 export const DocsSetDisplayValues: Record<DocsSet, string> = {
+  "cloud-docs": "Atlas",
   "atlas-architecture": "Atlas Architecture Center",
+  "charts": "Atlas Charts",
   "atlas-cli": "Atlas CLI",
   "atlas-operator": "Atlas Kubernetes Operator",
   "bi-connector": "BI Connector",
   "c": "C Driver",
-  "charts": "Atlas Charts",
-  "cloud-docs": "Atlas",
-  "cloud-manager": "Cloud Manager",
-  "cloudgov": "MongoDB Atlas for Government",
-  "cluster-sync": "MongoDB Cluster-to-Cluster Sync",
-  "compass": "Compass",
   "cpp-driver": "C++ Driver",
   "csharp": "C#/.NET Driver",
+  "cloud-manager": "Cloud Manager",
+  "compass": "Compass",
+  "docs": "Database Manual",
   "database-tools": "Database Tools",
   "django": "Django MongoDB Backend",
-  "docs": "Database Manual",
   "docs-k8s-operator": "Enterprise Kubernetes Operator",
-  "docs-relational-migrator": "Relational Migrator",
   "entity-framework": "EF Core Provider",
   "golang": "Go Driver",
   "java": "Java Sync Driver",
@@ -66,6 +64,9 @@ export const DocsSetDisplayValues: Record<DocsSet, string> = {
   "kotlin-sync": "Kotlin Sync Driver",
   "laravel": "Laravel MongoDB",
   "mongocli": "MongoCLI",
+  "cloudgov": "MongoDB Atlas for Government",
+  "cluster-sync": "MongoDB Cluster-to-Cluster Sync",
+  "mck": "MongoDB Controllers for Kubernetes Operators",
   "mongodb-shell": "mongosh",
   "mongoid": "Mongoid",
   "node": "Node.js Driver",
@@ -73,6 +74,7 @@ export const DocsSetDisplayValues: Record<DocsSet, string> = {
   "php-library": "PHP Library Manual",
   "pymongo": "PyMongo Driver",
   "pymongo-arrow": "PyMongoArrow",
+  "docs-relational-migrator": "Relational Migrator",
   "ruby-driver": "Ruby Driver",
   "rust": "Rust Driver",
   "scala": "Scala Driver",

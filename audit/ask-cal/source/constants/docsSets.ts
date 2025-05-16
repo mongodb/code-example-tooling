@@ -13,14 +13,14 @@ export type DocsSet =
   | "cpp-driver"
   | "csharp"
   | "database-tools"
-  | "django"
+  | "docs-django"
   | "docs"
   | "docs-k8s-operator"
-  | "docs-relational-migrator"
-  | "entity-framework"
-  | "golang"
-  | "java"
-  | "java-rs"
+  | "relational-migrator"
+  | "docs-entity-framework"
+  | "docs-golang"
+  | "docs-java"
+  | "docs-java-rs"
   | "kafka-connector"
   | "kotlin"
   | "kotlin-sync"
@@ -53,12 +53,12 @@ export const DocsSetDisplayValues: Record<DocsSet, string> = {
   "compass": "Compass",
   "docs": "Database Manual",
   "database-tools": "Database Tools",
-  "django": "Django MongoDB Backend",
+  "docs-django": "Django MongoDB Backend",
   "docs-k8s-operator": "Enterprise Kubernetes Operator",
-  "entity-framework": "EF Core Provider",
-  "golang": "Go Driver",
-  "java": "Java Sync Driver",
-  "java-rs": "Java Reactive Streams Driver",
+  "docs-entity-framework": "EF Core Provider",
+  "docs-golang": "Go Driver",
+  "docs-java": "Java Sync Driver",
+  "docs-java-rs": "Java Reactive Streams Driver",
   "kafka-connector": "Kafka Connector",
   "kotlin": "Kotlin Coroutine",
   "kotlin-sync": "Kotlin Sync Driver",
@@ -74,7 +74,7 @@ export const DocsSetDisplayValues: Record<DocsSet, string> = {
   "php-library": "PHP Library Manual",
   "pymongo": "PyMongo Driver",
   "pymongo-arrow": "PyMongoArrow",
-  "docs-relational-migrator": "Relational Migrator",
+  "relational-migrator": "Relational Migrator",
   "ruby-driver": "Ruby Driver",
   "rust": "Rust Driver",
   "scala": "Scala Driver",

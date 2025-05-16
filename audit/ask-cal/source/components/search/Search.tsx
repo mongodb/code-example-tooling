@@ -66,21 +66,84 @@ function Search({ isHomepage, setIsHomepage }: SearchProps) {
   };
 
   const handleFacetChange = ({ facet, value }: Facet) => {
-    setFacets((previous) => {
-      const updatedFacetGroup: FacetGroup = {
-        programmingLanguage:
-          facet === "programmingLanguage"
-            ? (value as ProgrammingLanguage)
-            : previous?.programmingLanguage,
-        category:
-          facet === "category"
-            ? (value as CodeExampleCategory)
-            : previous?.category,
-        docsSet: facet === "docsSet" ? (value as DocsSet) : previous?.docsSet,
-      };
-      return updatedFacetGroup;
-    });
+    switch (facet) {
+      case "programmingLanguage": {
+        const languageKey = mapLanguageValueToKey(value as string);
+
+        if (!languageKey) {
+          console.error("Invalid programming language key");
+          return;
+        }
+
+        setFacets((previous) => ({
+          ...previous,
+          programmingLanguage: languageKey,
+        }));
+
+        break;
+      }
+      case "category": {
+        const categoryKey = mapCategoryValueToKey(value as string);
+
+        if (!categoryKey) {
+          console.error("Invalid category key");
+          return;
+        }
+
+        setFacets((previous) => ({
+          ...previous,
+          category: categoryKey,
+        }));
+
+        break;
+      }
+      case "docsSet": {
+        const docsSetKey = mapDocsSetValueToKey(value as string);
+
+        if (!docsSetKey) {
+          console.error("Invalid docs set key");
+          return;
+        }
+
+        setFacets((previous) => ({
+          ...previous,
+          docsSet: docsSetKey,
+        }));
+
+        break;
+      }
+      default:
+        break;
+    }
+
+    console.log("Updated facets:", facets);
   };
+
+  const mapLanguageValueToKey = (value: string) => {
+    const languageKey = Object.keys(ProgrammingLanguageDisplayValues).find(
+      (key) =>
+        ProgrammingLanguageDisplayValues[key as ProgrammingLanguage] === value
+    );
+
+    return (languageKey as ProgrammingLanguage) || "";
+  };
+
+  const mapCategoryValueToKey = (value: string) => {
+    const categoryKey = Object.keys(CodeExampleDisplayValues).find((key) =>
+      CodeExampleDisplayValues[key as CodeExampleCategory].includes(value)
+    );
+
+    return (categoryKey as CodeExampleCategory) || "";
+  };
+
+  const mapDocsSetValueToKey = (value: string) => {
+    const docsSetKey = Object.keys(DocsSetDisplayValues).find(
+      (key) => DocsSetDisplayValues[key as DocsSet] === value
+    );
+
+    return (docsSetKey as DocsSet) || "";
+  };
+
   return (
     <div
       className={

@@ -1,5 +1,5 @@
-import "./styles/fonts.css";
-import "./styles/main.css";
+import "./assets/styles/fonts.css";
+import "./assets/styles/main.css";
 import styles from "./App.module.css";
 
 import { useState } from "react";

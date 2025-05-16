@@ -15,6 +15,7 @@ import {
 import { CodeExample } from "../../constants/types";
 
 import { useAcala } from "../../providers/UseAcala";
+import CodeExamplePlaceholder from "../../components/code-example-placeholder/CodeExamplePlaceholder";
 
 function Resultspage() {
   const [selectedCodeExample, setSelectedCodeExample] =
@@ -32,8 +33,6 @@ function Resultspage() {
   };
 
   const parseLanguage = (language: string) => {
-    console.log("Parsing language:", language);
-
     switch (language) {
       case "undefined":
         return "javascript";
@@ -59,11 +58,6 @@ function Resultspage() {
                     contentStyle="clickable"
                     onClick={() => {
                       setSelectedCodeExample(result);
-
-                      console.log(
-                        "Selected code example:",
-                        selectedCodeExample
-                      );
                     }}
                     key={index}
                   >
@@ -81,9 +75,17 @@ function Resultspage() {
               </div>
             </div>
           )}
+
+          {!results && (
+            <div>
+              <Body>No results found. Try a different search query.</Body>
+            </div>
+          )}
         </div>
 
         <div className={styles.example_container}>
+          {!selectedCodeExample && <CodeExamplePlaceholder />}
+
           {selectedCodeExample && (
             <>
               <H2>{selectedCodeExample.pageTitle}</H2>
@@ -107,27 +109,28 @@ function Resultspage() {
                   className={styles.code_example}
                   showLineNumbers={true}
                   onCopy={() => {
-                    console.log("copy code clicked");
+                    navigator.clipboard.writeText(selectedCodeExample.code);
                   }}
                 >
                   {selectedCodeExample.code}
                 </Code>
 
-                <Button
-                  leftGlyph={<Icon glyph="Sparkle" />}
-                  aria-label="Some Menu"
-                  className={styles.summary_button}
-                  onClick={() => {
-                    setOpenAiDrawer(true);
-                    handleAiSummary(
-                      selectedCodeExample.code,
-                      selectedCodeExample.pageUrl
-                    );
-                    // setOpenResultsDrawer(false);
-                  }}
-                >
-                  Explain this code
-                </Button>
+                {!openAiDrawer && (
+                  <Button
+                    leftGlyph={<Icon glyph="Sparkle" />}
+                    aria-label="Some Menu"
+                    className={styles.summary_button}
+                    onClick={() => {
+                      setOpenAiDrawer(true);
+                      handleAiSummary(
+                        selectedCodeExample.code,
+                        selectedCodeExample.pageUrl
+                      );
+                    }}
+                  >
+                    Explain this code
+                  </Button>
+                )}
               </div>
             </>
           )}

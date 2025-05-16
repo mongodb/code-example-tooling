@@ -115,8 +115,6 @@ function Search({ isHomepage, setIsHomepage }: SearchProps) {
       default:
         break;
     }
-
-    console.log("Updated facets:", facets);
   };
 
   const mapLanguageValueToKey = (value: string) => {

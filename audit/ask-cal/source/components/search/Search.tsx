@@ -158,8 +158,7 @@ function Search({ isHomepage, setIsHomepage }: SearchProps) {
           setSearchQuery(event.target.value);
         }}
         aria-label="search box"
-        className={styles.search_input}
-      ></SearchInput>
+      />
 
       <div className={styles.facet_container}>
         <Combobox

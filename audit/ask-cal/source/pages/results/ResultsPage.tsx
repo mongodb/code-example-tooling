@@ -93,7 +93,12 @@ function Resultspage() {
               </Link>
 
               {selectedCodeExample.pageDescription && (
-                <Body>{selectedCodeExample.pageDescription}</Body>
+                <Body
+                  baseFontSize={16}
+                  className={styles.page_description}
+                >
+                  {selectedCodeExample.pageDescription}
+                </Body>
               )}
 
               <div className={styles.example_body}>
@@ -138,7 +143,7 @@ function Resultspage() {
                   // setOpenResultsDrawer(true);
                 }}
                 open={openAiDrawer}
-                title="Drawer Title"
+                title="AI Summary"
               >
                 {loading ? (
                   <PageLoader description="Asking the robots..." />

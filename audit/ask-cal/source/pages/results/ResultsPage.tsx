@@ -86,9 +86,11 @@ function Resultspage() {
                     <div className={styles.badge_container}>
                       <Badge variant="blue">{result.language}</Badge>
                       <Badge variant="green">{result.category}</Badge>
-                      <Badge variant="yellow">
-                        {findDocsSetDisplayValue(result.projectName)}
-                      </Badge>
+                      {result.projectName && (
+                        <Badge variant="yellow">
+                          {findDocsSetDisplayValue(result.projectName)}
+                        </Badge>
+                      )}
                     </div>
                   </Card>
                 ))}

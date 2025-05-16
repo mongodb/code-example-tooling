@@ -18,14 +18,17 @@
   flex: 1;
   flex-direction: column;
   background-color: var(--palette-gray-light-3);
-  max-width: 40%;
+  max-width: 35%;
+  /* TODO: take header height into account */
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
 .example_container {
   display: flex;
   flex-direction: column;
   flex: 2;
-  margin: 2em 1em;
+  margin: 2em 3em;
 }
 
 .summary_button {
@@ -35,14 +38,13 @@
 .example_body {
   display: flex;
   justify-content: space-around;
-  /* gap: 2em; */
 }
 
 .results {
   display: flex;
   gap: 2em;
   flex-direction: column;
-  margin: 2em 1em;
+  margin: 2em 3em;
 }
 
 .results_list > div {
@@ -57,4 +59,8 @@
 .ai_summary {
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.page_description {
+  margin: 2em 0;
 }

@@ -10,8 +10,6 @@ import {
   AiSummaryPayload,
 } from "../constants/types";
 
-// TODO: remove the mock features when the API is ready
-
 // Acala stands for "Ask CAL API".
 export const AcalaProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(false);
@@ -33,8 +31,6 @@ export const AcalaProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     setApiError(null);
 
-    console.log("API request:", { url, options, requestType });
-
     try {
       const response = await fetch(url, options);
       if (!response.ok) throw new Error(response.statusText);
@@ -48,14 +44,15 @@ export const AcalaProvider = ({ children }: { children: ReactNode }) => {
 
         setLoading(false);
 
+        // TODO: investigate why it isn't rendering chunks and we only get
+        // the final result.
         while (!done) {
           const { value, done: streamDone } = await reader.read();
           done = streamDone;
           if (value) {
             const chunk = decoder.decode(value, { stream: !done });
             result += chunk;
-            // Optionally update the UI with partial result here
-            setAiSummary(result); // This will update your UI as data streams in
+            setAiSummary(result);
           }
         }
         return { summary: result };
@@ -78,16 +75,12 @@ export const AcalaProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleMockRequest = async ({
-    url,
-    options,
     requestType,
   }: HandleRequestProperties) => {
     setLoading(true);
     setApiError(null);
 
     setResults([]);
-
-    console.log("Mock request:", { url, options });
 
     try {
       const response = {
@@ -178,6 +171,17 @@ export const AcalaProvider = ({ children }: { children: ReactNode }) => {
       requestType: RequestType.Search,
     })) as SearchResponse;
     const limitedResults = data.codeExamples.slice(0, 10);
+
+    // for every result in limitedResults, look at the pageTitle and remove
+    // the substring " - MongoDB Docs" from the end of the string.
+    limitedResults.forEach((result) => {
+      if (result.pageTitle.endsWith(" - MongoDB Docs")) {
+        result.pageTitle = result.pageTitle.slice(
+          0,
+          result.pageTitle.length - " - MongoDB Docs".length
+        );
+      }
+    });
 
     setSearchQueryId(data.queryId as string);
     setResults(limitedResults);

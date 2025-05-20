@@ -1,0 +1,33 @@
+.facet_container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  width: 40%;
+}
+
+.facet_container > div {
+  width: 30%;
+}
+
+.search_block {
+  display: flex;
+  gap: 2em;
+  justify-content: center;
+  align-items: center;
+  width: 80%;
+}
+
+.search_block > form {
+  width: 40%;
+}
+
+.search_block_homepage > .facet_container {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2em;
+  width: 50vw;
+}
+
+.facet_container > div {
+  width: 30%;
+}

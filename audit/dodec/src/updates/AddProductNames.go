@@ -10,8 +10,9 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-// AddProductNames adds `product` and `sub_product` (where applicable) fields to documents with values that correspond
+// AddProductNames adds a human-readable `product` and `sub_product` (where applicable) fields to documents with values that correspond
 // to the Docs Taxonomy. If the document in the collection already has the applicable field(s), no change is made.
+// NOTE: Map uses the Snooty `project_name` (defined in the repo's `snooty.toml` file as `name`)
 func AddProductNames(db *mongo.Database, ctx context.Context) {
 	collectionProducts := map[string]string{
 		"atlas-cli":             "Atlas",
@@ -38,6 +39,7 @@ func AddProductNames(db *mongo.Database, ctx context.Context) {
 		"kotlin":                "Drivers",
 		"kotlin-sync":           "Drivers",
 		"laravel":               "Drivers",
+		"mck":                   "Enterprise Kubernetes Operator",
 		"mongoid":               "Drivers",
 		"mongodb-shell":         "MongoDB Shell",
 		"mongocli":              "MongoDB CLI",

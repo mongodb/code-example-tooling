@@ -16,7 +16,6 @@ import (
 // to a log file on the local file system. Then, we perform a batch update with all the changes for this project.
 func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjectDetails, llm *ollama.LLM, ctx context.Context, report types.ProjectReport) {
 	incomingPageIdsMatchingExistingPages := make(map[string]bool)
-	incomingPageCount := len(docsPages)
 	incomingDeletedPageCount := 0
 	var newPageIds []string
 	var newPages []common.DocsPage
@@ -57,8 +56,10 @@ func CheckDocsForUpdates(docsPages []types.PageWrapper, project types.DocsProjec
 
 	// Get the existing "summaries" document from the DB, and update it.
 	var summaryDoc common.CollectionReport
-	expectedPageCountFromIncomingPages := incomingPageCount - incomingDeletedPageCount
-	summaryDoc, report = HandleCollectionSummariesDocument(project, report, expectedPageCountFromIncomingPages)
+
+	// Adjust the total page count we're getting from Snooty to remove any 'deleted' pages - we don't want to count or track those
+	report.Counter.TotalCurrentPageCount = report.Counter.TotalCurrentPageCount - incomingDeletedPageCount
+	summaryDoc, report = HandleCollectionSummariesDocument(project, report)
 
 	// Output the project report to the log
 	LogReportForProject(project.ProjectName, report)

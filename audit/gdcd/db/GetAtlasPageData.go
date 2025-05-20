@@ -59,7 +59,7 @@ func GetAtlasPageData(collectionName string, docId string) *common.DocsPage {
 		// We have seen transient connection errors in the log. For that type of error, try again to retrieve the page
 		// before giving up and creating a new one.
 		if isRetryableError(err, retryableErrorPrefix) {
-			log.Printf("Attempt %d: transient error occurred, retrying: %v", attempts+1, err)
+			log.Printf("Attempt %d to get page '%s': transient error occurred, retrying. Error: %v", attempts+1, docId, err)
 			time.Sleep(retryDelay)
 			continue
 		} else {

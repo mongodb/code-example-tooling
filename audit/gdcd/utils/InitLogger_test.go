@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -19,11 +18,65 @@ func cleanupLogs(t *testing.T) {
 	}
 }
 
+func TestInitLogger_CreatesLogDir(t *testing.T) {
+	cleanupLogs(t)
+	defer cleanupLogs(t)
+
+	// Create a nested test directory path
+	nestedLogDir := filepath.Join(testDir, "nested", "logs")
+	f, err := InitLogger(nestedLogDir)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	defer f.Close()
+
+	// Check nested dir exists
+	_, err = os.Stat(nestedLogDir)
+	if err != nil {
+		t.Fatalf("log directory wasn't created: %v", err)
+	}
+}
+
+func TestInitLogger_CreatesTimestampedLogFile(t *testing.T) {
+	cleanupLogs(t)
+	defer cleanupLogs(t)
+
+	f, err := InitLogger(testDir)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	defer f.Close()
+
+	// Check filename matches expected pattern
+	filename := filepath.Base(f.Name())
+	pattern := `^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-app\.log$`
+	matched, err := regexp.MatchString(pattern, filename)
+	if err != nil {
+		t.Fatalf("regexp error: %v", err)
+	}
+	if !matched {
+		t.Errorf("log filename %q doesn't match expected pattern %q", filename, pattern)
+	}
+}
+
+func TestInitLogger_FailsWhenDirCannotBeCreated(t *testing.T) {
+	// Should fail when dir creation requires elevated permissions
+	restrictedDir := "/root/logs"
+	if os.Geteuid() == 0 {
+		t.Skip("Test can't fail if running as root")
+	}
+
+	_, err := InitLogger(restrictedDir)
+	if err == nil {
+		t.Fatal("expected error when log directory cannot be created, got nil")
+	}
+}
+
 func TestInitLogger_FailsWhenFileCannotBeCreated(t *testing.T) {
 	cleanupLogs(t)
 	defer cleanupLogs(t)
 
-	// Create a directory with the same name as the log file to cause a failure
+	// Should fail if directory has the same name as log file
 	timestamp := time.Now().Format("2006-01-02-15-04-05")
 	logFilePath := filepath.Join(testDir, timestamp+"-app.log")
 	if err := os.MkdirAll(logFilePath, 0o755); err != nil {
@@ -36,43 +89,55 @@ func TestInitLogger_FailsWhenFileCannotBeCreated(t *testing.T) {
 	}
 }
 
-func TestInitLogger_WritesToConsoleAndFile(t *testing.T) {
+func TestInitLogger_WriteToLogFile(t *testing.T) {
 	cleanupLogs(t)
 	defer cleanupLogs(t)
 
-	// Capture console output
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
+	// Resets destination for logger output after the test
+	originalOutput := log.Writer()
+	defer log.SetOutput(originalOutput)
 
 	f, err := InitLogger(testDir)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	defer func() {
-		f.Close()
-		os.Stdout = oldStdout
-	}()
+	defer f.Close()
 
-	// Write a log message
-	logMessage := "console-and-file-test"
-	log.Println(logMessage)
+	// Write to the log after initializing
+	testMessage := "test log message"
+	log.Println(testMessage)
 
-	// Capture console output
-	w.Close()
-	consoleOutput, _ := io.ReadAll(r)
-
-	// Read file contents
-	data, err := os.ReadFile(f.Name())
+	// Read log file content
+	content, err := os.ReadFile(f.Name())
 	if err != nil {
-		t.Fatalf("reading log file: %v", err)
+		t.Fatalf("couldn't read log file: %v", err)
 	}
 
-	// Verify log message is in both console and file
-	if !regexp.MustCompile(logMessage).Match(consoleOutput) {
-		t.Errorf("expected log entry in console; got %q", string(consoleOutput))
+	// Log should contain the expected test message
+	if !regexp.MustCompile(testMessage).Match(content) {
+		t.Errorf("log file doesn't contain expected message; got %q", string(content))
 	}
-	if !regexp.MustCompile(logMessage).Match(data) {
-		t.Errorf("expected log entry in file; got %q", string(data))
+}
+
+func TestInitLogger_UsesCorrectFilePermissions(t *testing.T) {
+	cleanupLogs(t)
+	defer cleanupLogs(t)
+
+	f, err := InitLogger(testDir)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	defer f.Close()
+
+	// Get file info
+	fileInfo, err := os.Stat(f.Name())
+	if err != nil {
+		t.Fatalf("couldn't get file info: %v", err)
+	}
+
+	// Check permission mode (0644 in octal)
+	expectedMode := os.FileMode(0o644)
+	if fileInfo.Mode().Perm() != expectedMode {
+		t.Errorf("expected file permissions %v, got %v", expectedMode, fileInfo.Mode().Perm())
 	}
 }

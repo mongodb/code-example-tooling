@@ -18,20 +18,19 @@ import (
 
 func main() {
 	// Set up logging + a console display to show progress
-	// NOTE: this tool can take a long time to run (~1.5-2hrs, depending on your machine)
+	// Logs are saved to a timestamped file in the logs directory, which is ignored by git
+	// NOTE: the GDCD tool can take a long time to run (~1.5-2hrs, depending on your machine)
 	startTime := time.Now()
 	formattedTime := startTime.Format("2006-01-02 15:04:05")
-	logDir := "./logs"
 
+	logDir := "./logs"
 	logFile, err := utils.InitLogger(logDir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error initializing logger: %v\n", err)
 		os.Exit(1)
-	} else {
-		fmt.Println("Log file created:", logFile.Name())
 	}
+	fmt.Println("Log file created:", logFile.Name())
 	defer logFile.Close()
-	log.SetOutput(logFile)
 
 	// Determine the environment
 	env := os.Getenv("APP_ENV")
@@ -63,22 +62,22 @@ func main() {
 	projectsToParse := snooty.GetProjects(client)
 
 	// Uncomment to parse a single project during testing
-	//compass := types.DocsProjectDetails{
+	// compass := types.DocsProjectDetails{
 	//	ProjectName:  "compass",
 	//	ActiveBranch: "master",
 	//	ProdUrl:      "https://mongodb.com/docs/compass/current",
-	//}
-	//opsManager := types.DocsProjectDetails{
+	// }
+	// opsManager := types.DocsProjectDetails{
 	//	ProjectName:  "ops-manager",
 	//	ActiveBranch: "v8.0",
 	//	ProdUrl:      "https://mongodb.com/docs/ops-manager/current",
-	//}
-	//cloudManager := types.DocsProjectDetails{
+	// }
+	// cloudManager := types.DocsProjectDetails{
 	//	ProjectName:  "cloud-manager",
 	//	ActiveBranch: "master",
 	//	ProdUrl:      "https://mongodb.com/docs/cloud-manager/",
-	//}
-	//projectsToParse := []types.DocsProjectDetails{compass}
+	// }
+	// projectsToParse := []types.DocsProjectDetails{compass}
 
 	// Finish setting up console display to show progress during run
 	totalProjects := len(projectsToParse)

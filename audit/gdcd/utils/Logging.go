@@ -4,6 +4,8 @@ import (
 	"fmt"
 )
 
+// TODO: look into why progress display isn't creating newlines correctly
+
 var primaryProgress int
 var primaryTarget int
 var projectName string

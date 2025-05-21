@@ -3,7 +3,7 @@ import styles from "./HomePage.module.css";
 import { PageLoader } from "@leafygreen-ui/loading-indicator";
 import { Body } from "@leafygreen-ui/typography";
 
-import { useAcala } from "../../providers/UseAcala";
+import { useSearch } from "../../providers/Hooks";
 import Search from "../../components/search/Search";
 
 interface HomepageProps {
@@ -11,7 +11,7 @@ interface HomepageProps {
 }
 
 function Homepage({ setIsHomepage }: HomepageProps) {
-  const { loading } = useAcala();
+  const { loadingSearch } = useSearch();
 
   return (
     <div className={styles.homepage}>
@@ -23,7 +23,7 @@ function Homepage({ setIsHomepage }: HomepageProps) {
         </Body>
       </div>
 
-      {loading ? (
+      {loadingSearch ? (
         <div className={styles.loading_container}>
           <PageLoader description="Looking for code examples..." />
         </div>

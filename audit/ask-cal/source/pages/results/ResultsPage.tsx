@@ -16,7 +16,7 @@ import {
 import { CodeExample } from "../../constants/types";
 import { DocsSetDisplayValues, DocsSet } from "../../constants/docsSets";
 
-import { useAcala } from "../../providers/UseAcala";
+import { useAcala, useSearch } from "../../providers/Hooks";
 import CodeExamplePlaceholder from "../../components/code-example-placeholder/CodeExamplePlaceholder";
 
 function Resultspage() {
@@ -24,7 +24,8 @@ function Resultspage() {
     useState<CodeExample | null>(null);
   const [openAiDrawer, setOpenAiDrawer] = useState(false);
 
-  const { results, getAiSummary, aiSummary, loading } = useAcala();
+  const { getAiSummary, aiSummary, loadingRequest } = useAcala();
+  const { results } = useSearch();
 
   const handleAiSummary = async (code: string, pageUrl: string) => {
     try {
@@ -170,7 +171,7 @@ function Resultspage() {
                 open={openAiDrawer}
                 title="AI Summary"
               >
-                {loading ? (
+                {loadingRequest ? (
                   <PageLoader description="Asking the robots..." />
                 ) : (
                   <Body

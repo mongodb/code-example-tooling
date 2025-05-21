@@ -30,11 +30,10 @@ export interface SearchResponse {
 
 export interface RequestProperties {
   bodyContent: unknown;
-  mock: boolean;
+  mock?: boolean;
 }
 
 export interface HandleRequestProperties {
-  url: string;
   options: RequestInit;
   requestType: RequestType;
 }
@@ -44,10 +43,33 @@ export interface AiSummaryPayload {
   pageUrl: string;
 }
 
-// List of possible requests against the API
+// List of possible request types against the API
 export enum RequestType {
   Search = "search",
   ReportFeedback = "reportFeedback",
   RequestExample = "requestExample",
   GetAiSummary = "getAiSummary",
 }
+
+export const Requests = {
+  Search: {
+    type: RequestType.Search,
+    method: "POST",
+    url: "/.netlify/functions/search",
+  },
+  ReportFeedback: {
+    type: RequestType.ReportFeedback,
+    method: "POST",
+    url: "/.netlify/functions/TODO",
+  },
+  RequestExample: {
+    type: RequestType.RequestExample,
+    method: "POST",
+    url: "/.netlify/functions/TODO",
+  },
+  GetAiSummary: {
+    type: RequestType.GetAiSummary,
+    method: "POST",
+    url: "/.netlify/functions/ai-summary",
+  },
+};

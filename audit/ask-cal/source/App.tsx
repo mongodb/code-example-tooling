@@ -7,6 +7,7 @@ import { useState } from "react";
 // Leafygreen UI components
 import LeafyGreenProvider from "@leafygreen-ui/leafygreen-provider";
 import { AcalaProvider } from "./providers/AcalaProvider";
+import { SearchProvider } from "./providers/SearchProvider";
 import Toggle from "@leafygreen-ui/toggle";
 
 import Homepage from "./pages/home/HomePage";
@@ -28,16 +29,18 @@ function App() {
           className={styles.theme_toggle}
         />
         <AcalaProvider>
-          <Header
-            setIsHomepage={setIsHomepage}
-            isHomepage={isHomepage}
-          />
+          <SearchProvider>
+            <Header
+              setIsHomepage={setIsHomepage}
+              isHomepage={isHomepage}
+            />
 
-          {isHomepage ? (
-            <Homepage setIsHomepage={setIsHomepage} />
-          ) : (
-            <Resultspage />
-          )}
+            {isHomepage ? (
+              <Homepage setIsHomepage={setIsHomepage} />
+            ) : (
+              <Resultspage />
+            )}
+          </SearchProvider>
         </AcalaProvider>
       </div>
     </LeafyGreenProvider>

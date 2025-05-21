@@ -4,7 +4,7 @@ import { useState } from "react";
 import { SearchInput } from "@leafygreen-ui/search-input";
 import { Combobox, ComboboxOption } from "@leafygreen-ui/combobox";
 
-import { useAcala } from "../../providers/UseAcala";
+import { useSearch } from "../../providers/Hooks";
 
 import { FacetGroup, Facet } from "../../constants/types";
 import {
@@ -30,7 +30,7 @@ function Search({ isHomepage, setIsHomepage }: SearchProps) {
     docsSet: "",
   });
 
-  const { search } = useAcala();
+  const { search } = useSearch();
 
   // TODO: this also exists on the homepage. Move to a common place.
   const handleSearch = async (event: React.FormEvent<HTMLFormElement>) => {

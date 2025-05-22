@@ -1,6 +1,7 @@
 import styles from "./ResultsPage.module.css";
 import { useState } from "react";
 
+// Leafygreen UI components
 import Card from "@leafygreen-ui/card";
 import Code from "@leafygreen-ui/code";
 import Button from "@leafygreen-ui/button";
@@ -13,11 +14,15 @@ import {
   Drawer,
   DrawerStackProvider,
 } from "@leafygreen-ui/drawer";
+
+// Types
 import { CodeExample } from "../../constants/types";
 import { DocsSetDisplayValues, DocsSet } from "../../constants/docsSets";
 
+// App components
 import { useAcala, useSearch } from "../../providers/Hooks";
 import CodeExamplePlaceholder from "../../components/code-example-placeholder/CodeExamplePlaceholder";
+import Header from "../../components/header/Header";
 
 function Resultspage() {
   const [selectedCodeExample, setSelectedCodeExample] =
@@ -58,6 +63,8 @@ function Resultspage() {
 
   return (
     <div className={styles.results_page}>
+      <Header isHomepage={false} />
+
       <div className={styles.horizontal_container}>
         <div className={styles.results_container}>
           {results && (

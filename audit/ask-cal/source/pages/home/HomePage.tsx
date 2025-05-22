@@ -5,16 +5,15 @@ import { Body } from "@leafygreen-ui/typography";
 
 import { useSearch } from "../../providers/Hooks";
 import Search from "../../components/search/Search";
+import Header from "../../components/header/Header";
 
-interface HomepageProps {
-  setIsHomepage: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-function Homepage({ setIsHomepage }: HomepageProps) {
+function Homepage() {
   const { loadingSearch } = useSearch();
 
   return (
     <div className={styles.homepage}>
+      <Header isHomepage={true} />
+
       <div className={styles.description}>
         <Body baseFontSize={16}>
           Welcome to your hub for MongoDB code examples! Easily search curated
@@ -28,10 +27,7 @@ function Homepage({ setIsHomepage }: HomepageProps) {
           <PageLoader description="Looking for code examples..." />
         </div>
       ) : (
-        <Search
-          isHomepage={true}
-          setIsHomepage={setIsHomepage}
-        />
+        <Search isHomepage={true} />
       )}
 
       <div className={styles.background_image}></div>

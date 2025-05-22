@@ -1,11 +1,17 @@
 import styles from "./Search.module.css";
-import { useState } from "react";
 
+// React
+import { useState } from "react";
+import { useNavigate } from "react-router";
+
+// Leafygreen UI components
 import { SearchInput } from "@leafygreen-ui/search-input";
 import { Combobox, ComboboxOption } from "@leafygreen-ui/combobox";
 
+// App components
 import { useSearch } from "../../providers/Hooks";
 
+// Types
 import { FacetGroup, Facet } from "../../constants/types";
 import {
   CodeExampleDisplayValues,
@@ -19,10 +25,9 @@ import {
 
 type SearchProps = {
   isHomepage: boolean;
-  setIsHomepage: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-function Search({ isHomepage, setIsHomepage }: SearchProps) {
+function Search({ isHomepage }: SearchProps) {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [facets, setFacets] = useState<FacetGroup>({
     programmingLanguage: "",
@@ -31,6 +36,7 @@ function Search({ isHomepage, setIsHomepage }: SearchProps) {
   });
 
   const { search } = useSearch();
+  const navigate = useNavigate();
 
   // TODO: this also exists on the homepage. Move to a common place.
   const handleSearch = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -61,7 +67,7 @@ function Search({ isHomepage, setIsHomepage }: SearchProps) {
     });
 
     if (isHomepage) {
-      setIsHomepage(false);
+      navigate("/results");
     }
   };
 

@@ -13,11 +13,23 @@ export const SearchProvider = ({ children }: { children: ReactNode }) => {
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [results, setResults] = useState<CodeExample[]>([]);
   const [searchQueryId, setSearchQueryId] = useState<string | null>(null);
+  const [requestObject, setRequestObject] = useState<RequestProperties | null>(
+    null
+  );
 
   const { handleRequest } = useAcala();
 
   const search = async ({ bodyContent }: RequestProperties) => {
+    // Handle empty input before making the request
+    if (bodyContent.queryString === "") {
+      console.error("Search input element has no value");
+
+      return;
+    }
+
     setLoadingSearch(true);
+    // Store the request info for referencing elsewhere
+    setRequestObject({ bodyContent });
 
     const options = {
       method: "POST",
@@ -30,7 +42,6 @@ export const SearchProvider = ({ children }: { children: ReactNode }) => {
       requestType: RequestType.Search,
     })) as SearchResponse;
     const rawResults = data.codeExamples;
-    console.log("rawResults", rawResults);
 
     // for every result in rawResults, look at the pageTitle and remove
     // the substring " - MongoDB Docs" from the end of the string.
@@ -55,6 +66,7 @@ export const SearchProvider = ({ children }: { children: ReactNode }) => {
       value={{
         search,
         searchQueryId,
+        requestObject,
         loadingSearch,
         results,
       }}

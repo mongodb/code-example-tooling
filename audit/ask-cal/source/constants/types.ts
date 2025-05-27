@@ -29,7 +29,12 @@ export interface SearchResponse {
 }
 
 export interface RequestProperties {
-  bodyContent: unknown;
+  bodyContent: {
+    queryString: string;
+    LanguageFacet: string;
+    CategoryFacet: string;
+    docsSet: string;
+  };
   mock?: boolean;
 }
 

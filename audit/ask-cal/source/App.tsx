@@ -29,6 +29,7 @@ function App() {
           size="small"
           className={styles.theme_toggle}
         />
+
         <AcalaProvider>
           <SearchProvider>
             <BrowserRouter>
@@ -42,16 +43,6 @@ function App() {
                   element={<Resultspage />}
                 />
               </Routes>
-              {/* <Header
-                setIsHomepage={setIsHomepage}
-                isHomepage={isHomepage}
-              />
-
-              {isHomepage ? (
-                <Homepage setIsHomepage={setIsHomepage} />
-              ) : (
-                <Resultspage />
-              )} */}
             </BrowserRouter>
           </SearchProvider>
         </AcalaProvider>

@@ -8,7 +8,7 @@ import Button from "@leafygreen-ui/button";
 import Icon from "@leafygreen-ui/icon";
 import Badge from "@leafygreen-ui/badge";
 import { PageLoader } from "@leafygreen-ui/loading-indicator";
-import { Body, H2, H3, Link } from "@leafygreen-ui/typography";
+import { Body, H2, H3, Link, InlineCode } from "@leafygreen-ui/typography";
 import {
   DisplayMode,
   Drawer,
@@ -30,7 +30,7 @@ function Resultspage() {
   const [openAiDrawer, setOpenAiDrawer] = useState(false);
 
   const { getAiSummary, aiSummary, loadingRequest } = useAcala();
-  const { results } = useSearch();
+  const { results, requestObject } = useSearch();
 
   const handleAiSummary = async (code: string, pageUrl: string) => {
     try {
@@ -57,7 +57,6 @@ function Resultspage() {
       (key) => key.toLowerCase() === value.toLowerCase()
     ) as DocsSet;
 
-    console.log("docsSet", docsSet);
     return DocsSetDisplayValues[docsSet] || value;
   };
 
@@ -69,8 +68,19 @@ function Resultspage() {
         <div className={styles.results_container}>
           {results && (
             <div className={styles.results}>
-              <Body>{results.length} results found</Body>
-
+              {results.length ? (
+                <Body>
+                  {results.length} results found for{" "}
+                  <InlineCode>
+                    {requestObject?.bodyContent.queryString}
+                  </InlineCode>
+                  {/* TODO: add facet information */}
+                </Body>
+              ) : (
+                <Body baseFontSize={16}>
+                  Search for code examples using the search box
+                </Body>
+              )}
               <div className={styles.results_list}>
                 {results.map((result, index) => (
                   <Card

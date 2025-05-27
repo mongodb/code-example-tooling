@@ -23,6 +23,7 @@ interface AcalaContextType {
 interface SearchContextType {
   search: ({ bodyContent, mock }: RequestProperties) => Promise<void>;
   searchQueryId: string | null;
+  requestObject: RequestProperties | null;
   loadingSearch: boolean;
   results: CodeExample[];
 }

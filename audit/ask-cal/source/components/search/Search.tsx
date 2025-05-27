@@ -1,7 +1,7 @@
 import styles from "./Search.module.css";
 
 // React
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 
 // Leafygreen UI components
@@ -28,34 +28,35 @@ type SearchProps = {
 };
 
 function Search({ isHomepage }: SearchProps) {
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const { search, requestObject } = useSearch();
+
+  const [searchQuery, setSearchQuery] = useState<string>(
+    requestObject?.bodyContent.queryString || ""
+  );
   const [facets, setFacets] = useState<FacetGroup>({
-    programmingLanguage: "",
-    category: "",
-    docsSet: "",
+    programmingLanguage:
+      (requestObject?.bodyContent.LanguageFacet as ProgrammingLanguage) || "",
+    category:
+      (requestObject?.bodyContent.CategoryFacet as CodeExampleCategory) || "",
+    docsSet: (requestObject?.bodyContent.docsSet as DocsSet) || "",
   });
 
-  const { search } = useSearch();
   const navigate = useNavigate();
 
-  // TODO: this also exists on the homepage. Move to a common place.
-  const handleSearch = async (event: React.FormEvent<HTMLFormElement>) => {
-    // setSearchQuery("");
-    // Get the value from the input element. Look for the role "search".
-    const inputElement = event.currentTarget.querySelector(
-      "input"
-    ) as HTMLInputElement;
-    const value = inputElement.value;
-
-    if (!value) {
-      console.error("Search input is empty");
-      return;
+  useEffect(() => {
+    if (requestObject) {
+      setSearchQuery(requestObject.bodyContent.queryString || "");
+      setFacets({
+        programmingLanguage: requestObject.bodyContent
+          .LanguageFacet as ProgrammingLanguage,
+        category: requestObject.bodyContent
+          .CategoryFacet as CodeExampleCategory,
+        docsSet: requestObject.bodyContent.docsSet as DocsSet,
+      });
     }
+  }, [requestObject]);
 
-    setSearchQuery(value);
-
-    // Mock search, as getting CORS errors
-    // TODO: make this work for real
+  const handleSearch = async () => {
     await search({
       bodyContent: {
         queryString: searchQuery,
@@ -71,7 +72,34 @@ function Search({ isHomepage }: SearchProps) {
     }
   };
 
+  const mapLanguageValueToKey = (value: string) => {
+    const languageKey = Object.keys(ProgrammingLanguageDisplayValues).find(
+      (key) =>
+        ProgrammingLanguageDisplayValues[key as ProgrammingLanguage] === value
+    );
+
+    return (languageKey as ProgrammingLanguage) || "";
+  };
+
+  const mapCategoryValueToKey = (value: string) => {
+    const categoryKey = Object.keys(CodeExampleDisplayValues).find((key) =>
+      CodeExampleDisplayValues[key as CodeExampleCategory].includes(value)
+    );
+
+    return (categoryKey as CodeExampleCategory) || "";
+  };
+
+  const mapDocsSetValueToKey = (value: string) => {
+    const docsSetKey = Object.keys(DocsSetDisplayValues).find(
+      (key) => DocsSetDisplayValues[key as DocsSet] === value
+    );
+
+    return (docsSetKey as DocsSet) || "";
+  };
+
   const handleFacetChange = ({ facet, value }: Facet) => {
+    if (!value) return; // Don't do anything if empty string is passed
+
     switch (facet) {
       case "programmingLanguage": {
         const languageKey = mapLanguageValueToKey(value as string);
@@ -123,31 +151,6 @@ function Search({ isHomepage }: SearchProps) {
     }
   };
 
-  const mapLanguageValueToKey = (value: string) => {
-    const languageKey = Object.keys(ProgrammingLanguageDisplayValues).find(
-      (key) =>
-        ProgrammingLanguageDisplayValues[key as ProgrammingLanguage] === value
-    );
-
-    return (languageKey as ProgrammingLanguage) || "";
-  };
-
-  const mapCategoryValueToKey = (value: string) => {
-    const categoryKey = Object.keys(CodeExampleDisplayValues).find((key) =>
-      CodeExampleDisplayValues[key as CodeExampleCategory].includes(value)
-    );
-
-    return (categoryKey as CodeExampleCategory) || "";
-  };
-
-  const mapDocsSetValueToKey = (value: string) => {
-    const docsSetKey = Object.keys(DocsSetDisplayValues).find(
-      (key) => DocsSetDisplayValues[key as DocsSet] === value
-    );
-
-    return (docsSetKey as DocsSet) || "";
-  };
-
   return (
     <div
       className={
@@ -155,9 +158,8 @@ function Search({ isHomepage }: SearchProps) {
       }
     >
       <SearchInput
-        onSubmit={(event) => {
-          handleSearch(event);
-        }}
+        value={searchQuery}
+        onSubmit={handleSearch}
         onChange={(event) => {
           setSearchQuery(event.target.value);
         }}
@@ -169,6 +171,11 @@ function Search({ isHomepage }: SearchProps) {
           label="Programming Language"
           placeholder="Select language"
           size="xsmall"
+          value={
+            facets.programmingLanguage
+              ? ProgrammingLanguageDisplayValues[facets.programmingLanguage]
+              : ""
+          }
           onChange={(value: string | null) => {
             if (value) {
               handleFacetChange({
@@ -190,6 +197,9 @@ function Search({ isHomepage }: SearchProps) {
           label="Category"
           placeholder="Select category"
           size="xsmall"
+          value={
+            facets.category ? CodeExampleDisplayValues[facets.category] : ""
+          }
           onChange={(value: string | null) => {
             if (value) {
               handleFacetChange({
@@ -211,6 +221,7 @@ function Search({ isHomepage }: SearchProps) {
           label="Documentation set"
           placeholder="Select docs set"
           size="xsmall"
+          value={facets.docsSet ? DocsSetDisplayValues[facets.docsSet] : ""}
           onChange={(value: string | null) => {
             if (value) {
               handleFacetChange({

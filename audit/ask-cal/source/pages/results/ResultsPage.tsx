@@ -1,30 +1,36 @@
 import styles from "./ResultsPage.module.css";
 import { useState } from "react";
 
+// Leafygreen UI components
 import Card from "@leafygreen-ui/card";
 import Code from "@leafygreen-ui/code";
 import Button from "@leafygreen-ui/button";
 import Icon from "@leafygreen-ui/icon";
 import Badge from "@leafygreen-ui/badge";
 import { PageLoader } from "@leafygreen-ui/loading-indicator";
-import { Body, H2, H3, Link } from "@leafygreen-ui/typography";
+import { Body, H2, H3, Link, InlineCode } from "@leafygreen-ui/typography";
 import {
   DisplayMode,
   Drawer,
   DrawerStackProvider,
 } from "@leafygreen-ui/drawer";
+
+// Types
 import { CodeExample } from "../../constants/types";
 import { DocsSetDisplayValues, DocsSet } from "../../constants/docsSets";
 
-import { useAcala } from "../../providers/UseAcala";
+// App components
+import { useAcala, useSearch } from "../../providers/Hooks";
 import CodeExamplePlaceholder from "../../components/code-example-placeholder/CodeExamplePlaceholder";
+import Header from "../../components/header/Header";
 
 function Resultspage() {
   const [selectedCodeExample, setSelectedCodeExample] =
     useState<CodeExample | null>(null);
   const [openAiDrawer, setOpenAiDrawer] = useState(false);
 
-  const { results, getAiSummary, aiSummary, loading } = useAcala();
+  const { getAiSummary, aiSummary, loadingRequest } = useAcala();
+  const { results, requestObject } = useSearch();
 
   const handleAiSummary = async (code: string, pageUrl: string) => {
     try {
@@ -51,18 +57,30 @@ function Resultspage() {
       (key) => key.toLowerCase() === value.toLowerCase()
     ) as DocsSet;
 
-    console.log("docsSet", docsSet);
     return DocsSetDisplayValues[docsSet] || value;
   };
 
   return (
     <div className={styles.results_page}>
+      <Header isHomepage={false} />
+
       <div className={styles.horizontal_container}>
         <div className={styles.results_container}>
           {results && (
             <div className={styles.results}>
-              <Body>{results.length} results found</Body>
-
+              {results.length ? (
+                <Body>
+                  {results.length} results found for{" "}
+                  <InlineCode>
+                    {requestObject?.bodyContent.queryString}
+                  </InlineCode>
+                  {/* TODO: add facet information */}
+                </Body>
+              ) : (
+                <Body baseFontSize={16}>
+                  Search for code examples using the search box
+                </Body>
+              )}
               <div className={styles.results_list}>
                 {results.map((result, index) => (
                   <Card
@@ -170,7 +188,7 @@ function Resultspage() {
                 open={openAiDrawer}
                 title="AI Summary"
               >
-                {loading ? (
+                {loadingRequest ? (
                   <PageLoader description="Asking the robots..." />
                 ) : (
                   <Body

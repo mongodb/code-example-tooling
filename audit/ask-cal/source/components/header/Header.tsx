@@ -5,20 +5,14 @@ import Search from "../search/Search";
 
 type HeaderProps = {
   isHomepage: boolean;
-  setIsHomepage: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-function Header({ isHomepage, setIsHomepage }: HeaderProps) {
+function Header({ isHomepage }: HeaderProps) {
   return (
     <header className={isHomepage ? styles.header : styles.header_results}>
       <Logo />
 
-      {!isHomepage && (
-        <Search
-          isHomepage={isHomepage}
-          setIsHomepage={setIsHomepage}
-        />
-      )}
+      {!isHomepage && <Search isHomepage={isHomepage} />}
     </header>
   );
 }

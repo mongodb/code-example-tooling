@@ -44,6 +44,8 @@
   --palette-red-light-1: #ef5752;
   --palette-red-light-2: #ffcdc7;
   --palette-red-light-3: #ffeae5;
+
+  --background-secondary: var(--palette-gray-light-3);
 }
 
 html {
@@ -69,5 +71,7 @@ body {
 }
 
 .darkmode-bg {
+  --background-secondary: var(--palette-gray-dark-3);
+
   background-color: #001e2b;
 }

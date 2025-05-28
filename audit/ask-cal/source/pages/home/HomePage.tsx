@@ -29,8 +29,6 @@ function Homepage() {
       ) : (
         <Search isHomepage={true} />
       )}
-
-      <div className={styles.background_image}></div>
     </div>
   );
 }

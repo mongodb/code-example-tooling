@@ -21,11 +21,15 @@
   width: 40%;
 }
 
+.search_block_homepage {
+  width: 40%;
+}
+
 .search_block_homepage > .facet_container {
   display: flex;
   justify-content: space-between;
   margin-top: 2em;
-  width: 50vw;
+  width: 100%;
 }
 
 .facet_container > div {

@@ -72,6 +72,8 @@ function Search({ isHomepage }: SearchProps) {
     }
   };
 
+  // TODO: move these mapping functions to a utility file
+
   const mapLanguageValueToKey = (value: string) => {
     const languageKey = Object.keys(ProgrammingLanguageDisplayValues).find(
       (key) =>
@@ -157,6 +159,8 @@ function Search({ isHomepage }: SearchProps) {
         !isHomepage ? styles.search_block : styles.search_block_homepage
       }
     >
+      {/* TODO: add a loading indicator when searching on the results page */}
+
       <SearchInput
         value={searchQuery}
         onSubmit={handleSearch}

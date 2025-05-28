@@ -4,24 +4,15 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding-bottom: 8em;
+  height: 100%;
+  background-image: url("../../assets/images/brandshape_7.svg");
+  background-repeat: no-repeat;
+  background-size: 55%;
+  background-position: center;
 }
 
 .description {
   text-align: center;
-  width: 60%;
+  width: 40%;
   margin-bottom: 3em;
-}
-
-.background_image {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 50vw;
-  height: 50vh;
-  z-index: -1;
-  background-image: url("../../assets/images/brandshape_7.svg");
-  background-repeat: no-repeat;
-  background-size: cover;
-  transform: translate(-50%, -50%);
 }

@@ -31,7 +31,7 @@ func TestCategorizeDriverLanguageSnippet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := CategorizeDriverLanguageSnippet(tt.args.contents, tt.args.llm, tt.args.ctx); got != tt.want {
+			if got, _ := CategorizeDriverLanguageSnippet(tt.args.contents, tt.args.llm, tt.args.ctx); got != tt.want {
 				t.Errorf("CategorizeDriverLanguageSnippet() = got %v, want %v", got, tt.want)
 			}
 		})

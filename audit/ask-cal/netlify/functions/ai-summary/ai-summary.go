@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/tmc/langchaingo/llms"
@@ -18,7 +19,7 @@ type RequestBody struct {
 	PageURL string `json:"pageUrl"`
 }
 
-func getAiSummaryFromHuggingFace(code string, pageUrl string) string {
+func getAiSummaryFromHuggingFace(code string, pageUrl string) (string, error) {
 	ctx := context.Background()
 	template := prompts.NewPromptTemplate(
 		`Find the code example below on the given webpage. In a few sentences, summarize the section of
@@ -32,6 +33,9 @@ func getAiSummaryFromHuggingFace(code string, pageUrl string) string {
 		"pageUrl": pageUrl,
 		"code":    code,
 	})
+	if err != nil {
+		return "", fmt.Errorf("failed to format prompt: %w", err)
+	}
 	opts := llms.CallOptions{
 		Model:       "mistralai/Mistral-7B-Instruct-v0.3",
 		MaxTokens:   150,
@@ -43,14 +47,14 @@ func getAiSummaryFromHuggingFace(code string, pageUrl string) string {
 		huggingface.WithModel("mistralai/Mistral-7B-Instruct-v0.3"),
 	)
 	if err != nil {
-		log.Fatalf("failed to initialize a Hugging Face LLM: %v", err)
+		return "", fmt.Errorf("failed to initialize a Hugging Face LLM (is your API Token set?): %v", err)
 	}
 	completion, err := llms.GenerateFromSinglePrompt(ctx, llm, prompt, llms.WithOptions(opts))
 	if err != nil {
-		log.Fatalf("failed to generate a response from the prompt: %v", err)
+		return "", fmt.Errorf("failed to generate a response from the prompt (is Hugging Face reachable?): %w", err)
 	}
 	response := extractLogicalResponse(completion)
-	return response
+	return response, nil
 }
 
 func extractLogicalResponse(input string) string {
@@ -88,14 +92,22 @@ func handler(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResp
 			IsBase64Encoded: false,
 		}, err
 	}
-	summary := getAiSummaryFromHuggingFace(requestPayload.Code, requestPayload.PageURL)
+	summary, err := getAiSummaryFromHuggingFace(requestPayload.Code, requestPayload.PageURL)
+	if err != nil {
+		log.Printf("Error generating AI summary: %v", err)
+		return &events.APIGatewayProxyResponse{
+			StatusCode:      500,
+			Headers:         map[string]string{"Content-Type": "text/plain"},
+			Body:            "Failed to generate summary. Check if Hugging Face is reachable and your API token is set.",
+			IsBase64Encoded: false,
+		}, err
+	}
 	return &events.APIGatewayProxyResponse{
 		StatusCode:      200,
 		Headers:         map[string]string{"Content-Type": "text/plain"},
 		Body:            summary,
 		IsBase64Encoded: false,
 	}, nil
-
 }
 
 func main() {

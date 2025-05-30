@@ -4,14 +4,12 @@ import (
 	"common"
 	"context"
 	"fmt"
-	"log"
-
 	"github.com/tmc/langchaingo/llms"
 	"github.com/tmc/langchaingo/llms/ollama"
 	"github.com/tmc/langchaingo/prompts"
 )
 
-func CategorizeShellSnippet(contents string, llm *ollama.LLM, ctx context.Context) string {
+func CategorizeShellSnippet(contents string, llm *ollama.LLM, ctx context.Context) (string, error) {
 	// To tweak the prompt for accuracy, edit this question
 	const questionTemplate = `I need to sort code examples into one of these categories:
 	%s
@@ -45,11 +43,11 @@ func CategorizeShellSnippet(contents string, llm *ollama.LLM, ctx context.Contex
 		"question": question,
 	})
 	if err != nil {
-		log.Fatalf("failed to create a prompt from the template: %q\n, %q\n, %q\n, %q\n", template, contents, question, err)
+		return "", fmt.Errorf("failed to create a prompt from the template: %q\n, %q\n, %q\n, %q\n", template, contents, question, err)
 	}
 	completion, err := llms.GenerateFromSinglePrompt(ctx, llm, prompt)
 	if err != nil {
-		log.Fatalf("failed to generate a response from the given prompt: %q", prompt)
+		return "", fmt.Errorf("failed to generate a response from the CategorizeShellSnippet prompt (is Ollama running locally?): %w", err)
 	}
-	return completion
+	return completion, nil
 }

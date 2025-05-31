@@ -1,156 +1,157 @@
-# Great Docs Code Devourer
+# Great Docs Code Devourer (Code Ingest Tool) 
 
-The Great Docs Code Devourer (GDCD) pours through the finest hand-curated selection of MongoDB documentation pages to find
-every last morsel of our code examples. It then compares these code examples with code that it has previously devoured
-to focus on only the new code, updates to existing code, and figuring out which code has been removed from this delectable
-docs corpus. The Great Docs Code Devourer relies on a MongoDB Atlas database to savor each and every detail about these
-code examples - recording not just the code itself, but delightful metadata to make it easier to recall the code in
-novel and useful ways.
+The Great Docs Code Devourer (GDCD) processes MongoDB documentation pages to extract code examples. It compares these 
+examples with previously stored code to identify new, updated, or removed examples. GDCD stores all code examples and 
+metadata in a MongoDB Atlas database maintained by the Developer Docs team.
 
-To let it feast upon your code, or ask it to recall the finest details of its prior meals, reach out to the Developer
-Docs team.
 
-## Why devour code at all?
+Contact the Developer Docs team to use this tool or access its data.
 
-The Great Docs Code Devourer stores code examples and related metadata to a MongoDB Atlas database. This intersection of
-code and metadata enables us get interesting information about the code examples across our documentation corpus, such as:
+## Why We Devour Code
 
-- Number of code examples for a given programming language, category, product, sub-product, or keyword
+The database of devoured code examples enables powerful analysis of the documentation corpus, including:
+
+- Code example counts by programming language, category, product, sub-product, or keyword
 - Density of code examples on the page by product, sub-product, or keyword
 - Code example complexity (the intersection of the "Usage example" category and code example length)
-- Count of one-line code examples
-- List of docs projects or pages that have code examples in a given language
+- Distribution of short vs. comprehensive examples
+- Language coverage across documentation
 
-The Great Docs Code Devourer does not do any of this querying itself - it only devours code. If you want to get information
-from the musings stored by the Great Docs Code Devourer, you want the companion project,
+For querying this data, use the companion project,
 [Database of Devoured Example Code (DODEC)](https://github.com/mongodb/code-example-tooling/tree/main/audit/dodec).
 
 ## How it works
 
-The Great Docs Code Devourer uses the pipeline described below to get code examples from our documentation. We then store
-metadata about the examples, as well as the examples themselves, to a MongoDB Atlas database maintained by the Developer
-Docs team.
+GDCD follows this pipeline:
 
-### Pipeline
+1. Retrieves the latest docs project information from the Snooty Data API
+2. For each specified project, gets docs pages for current active branch
+3. Extracts code examples and metadata from each docs page
+4. Syncs changes to MongoDB Atlas
 
-- Get the latest information about docs projects from the Snooty Data API
-- Get documentation pages for the current active branch in a project from the Snooty Data API for a subset of projects
-- Find code examples and related metadata for each docs page in the project
-- Sync changes to code examples on a given documentation page with a MongoDB Atlas database
+### LLM-Based Code Categorization
 
-### Metadata
+We use the Ollama [qwen2.5-coder](https://ollama.com/library/qwen2.5-coder) model to categorize new incoming 
+code examples. At the time of this writing, it is the latest series of code-specific Qwen models focused on improved code 
+reasoning, code generation, and code fixing. This model has consistently produced the most accurate results when 
+categorizing code examples. Refer to the [Ollama](https://ollama.com/) website for more details.
 
-We track various bits of metadata about the code examples, as well as the examples themselves, including:
+### Metadata Tracked
 
-- The code example text
-- File extension
-- Programming language
+We track various metadata about the code examples and their associated documentation pages:
+
+For each code example:
+- Code example text 
+- File extension and programming language
 - Category
-- Whether the code example category was assigned by an LLM or manually
+- Categorization method (LLM or manual)
 - Date created, updated, and removed
 
-Every code example is associated with a documentation page that has its own metadata, including:
+For each docs page:
+- Production URL
+- Example counts by language
+- Product and sub-product
+- Keywords
+- Last updated date
 
-- Production page URL
-- Number of code examples on the page, and their languages
-- Product and sub-product name
-- Keywords on the documentation page
-- Date last updated
-
-## Run the tool
-
-Enlist the aid of the Great Docs Code Devourer at your peril. This beast is an amalgam of tools with some test coverage,
-but key bits of business logic remain uncovered by tests. If demand/priority permits, we would love to expand and improve
-this tooling.
+## Installing the Tool
 
 ### Prerequisites
 
-To perform operations with this project, you need:
+Before you begin, contact the Developer Docs team for the required connection details and access. 
 
-- Golang installed. Refer to the [Go installation page](https://go.dev/doc/install) for details.
-- Ollama installed. Refer to the [Ollama](https://ollama.com/) website for
-  installation details.
-- The Ollama [qwen2.5-coder](https://ollama.com/library/qwen2.5-coder) model installed.
-- A `.env` file for the appropriate environment with details outlined below.
+- [Go](https://go.dev/doc/install)
+- [Ollama](https://ollama.com/) installed locally
+- The [qwen2.5-coder](https://ollama.com/library/qwen2.5-coder) model
+- Environment configuration details from the Developer Docs team
 
-#### Ollama
+### Setup
+1. Install Ollama from [ollama.com](https://ollama.com/), then install the required model:
+    ```shell
+    ollama pull qwen2.5-coder
+    ```
+2. Install dependencies. From the project root, run the following:
+    ```shell
+    go get gdcd
+    ```
+3. Create the relevant env configuration files in the project root. This project is set up for three environments. You will most likely be running against prod.  
+   1. Create a `.env.ENVIRONMENT` file for the `ENVIRONMENT` where you want to run the tool:
+      - `production` 
+      - `development`
+      - `testing`
+      
+      (for example, create `.env.production` to run against the prod database)
+   2. Add the following:
+         ```dotenv
+         MONGODB_URI="YOUR_MONGODB_URI_HERE"
+         DB_NAME="RELEVANT_DB_NAME_HERE"
+         ```
+      - `MONGODB_URI`: Connection string for the Code Snippets project in the Developer Docs Atlas organization. 
+        Contact the Developer Docs team for access.
+      - `DB_NAME`: The database to run the tool on. We maintain several databases for production, testing, and backup purposes. 
+        Contact the Developer Docs team for the appropriate DB name.
 
-This project uses Ollama running locally on the device to categorize new incoming code examples. Refer to the
-[Ollama](https://ollama.com/) website for installation details.
+## Running the Tool
 
-##### Model
+Set the `APP_ENV` variable to the environment where you want to run the tool, then run from `main.go`. 
+Env values:
+- `production`
+- `development`
+- `testing`
 
-This project uses the Ollama [qwen2.5-coder](https://ollama.com/library/qwen2.5-coder) model. At the time of writing
-this README, this is the latest series of code-specific Qwen models, with a focus on improved code reasoning, code
-generation, and code fixing. This model has consistently produced the most accurate results when categorizing code
-examples.
+You can do this from the command line or your IDE: 
 
-To install the model locally, after you have installed Ollama, run the following command:
+- **Command Line**
 
-```shell
-ollama pull qwen2.5-coder
+    To run from the terminal, set the variable, then run from the project root. 
+    For example, to run against the `production` environment:
+    ```shell
+    export APP_ENV=production
+    go build
+    go run .
+    ```
+- **IDE**:
+    
+    To run from an IDE configuration: 
+    1. Set the `APP_ENV` environment variable (e.g. `APP_ENV=production`) 
+    2. Run `main.go`
+
+The progress bar should immediately output to console and continue to display progress until all 
+projects are parsed. Depending on your machine and the amount of projects specified, this can be a 
+long-running program (~1-2hrs ). 
+
+## Troubleshooting
+### Ollama Issues
+```text
+Error: "failed to generate a response from the given prompt (is Ollama running locally?)"
 ```
+1. Check if Ollama is running locally
+2. Verify model availability:
 
-### Install project dependencies
+  ```shell
+  ollama list
+  ```
+  If `qwen2.5-coder` isn't listed, install it:
 
-From the project root, run the following command to install dependencies:
+  ```shell
+  ollama pull qwen2.5-coder
+  ```
 
-```shell
-go get gdcd
+### Connection Issues
+```text
+Error: "failed to connect to MongoDB"
 ```
+1. Verify you've set the correct `APP_ENV` variable and corresponding `.env.ENVIRONMENT` exists in project root
+2. Check your connection string in the corresponding `.env.ENVIRONMENT` file
+3. Check connectivity to Atlas and that your IP is whitelisted 
 
-### Create the relevant env file(s)
+### Other Issues
 
-This project is set up for three environments:
+Contact the Developer Docs team for assistance with environment setup or access.
 
-- production
-- development
-- testing
+## Disclaimer
 
-Create a `.env.ENVIRONMENT` file for each environment where you want to run the tool. For example, to run the
-tool against the production database, create a `.env.production` file.
+Enlist the aid of the Great Docs Code Devourer at your peril! 
 
-Your .env file must contain the following keys:
-
-```
-MONGODB_URI="YOUR_MONGODB_URI_HERE"
-DB_NAME="RELEVANT_DB_NAME_HERE"
-```
-
-When you start the app, set an `APP_ENV` key to specify the environment you're running against. The tool loads the
-relevant `.env` file and uses the appropriate values.
-
-#### MongoDB URI
-
-You need a connection string for the Code Snippets project in the Developer Docs Atlas organization. Contact the
-Developer Docs team for access.
-
-#### Database name
-
-The Developer Docs team maintains various databases for production, testing, and backup. Get the appropriate DB name
-from Developer Docs.
-
-### Run the project
-
-With the dependencies installed, and the MONGODB_URI available in your environment, you can run the project from the
-command line or from your IDE.
-
-#### Command-line
-
-To run the project from the command line, run the following commands:
-
-```shell
-export APP_ENV=production
-go build
-go run .
-```
-
-Substitute `production` with the appropraite environment.
-
-#### IDE
-
-To run the project from an IDE:
-
-- Set the `APP_ENV` environment variable in your IDE to the appropriate environment variable
-- Press the play button next to the main() func in main.go - OR -
-- Press the Build button in the top right of your IDE
+This beast is an amalgam of tools with some test coverage, but key bits of business logic still remain uncovered by tests. 
+If demand/priority permits, we would love to expand and improve this tooling.

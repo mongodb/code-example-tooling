@@ -4,12 +4,15 @@ import (
 	"common"
 	"context"
 	"gdcd/add-code-examples/utils"
+	"log"
 
 	"github.com/tmc/langchaingo/llms/ollama"
 )
 
 func GetCategory(contents string, lang string, llm *ollama.LLM, ctx context.Context, isDriverProject bool) (string, bool) {
 	var category string
+	var err error
+
 	validCategories := []string{common.ExampleReturnObject, common.ExampleConfigurationObject, common.NonMongoCommand, common.SyntaxExample, common.UsageExample}
 
 	/* If the start characters of the code example match a pattern we have defined for a given category,
@@ -25,7 +28,11 @@ func GetCategory(contents string, lang string, llm *ollama.LLM, ctx context.Cont
 		 */
 		return category, llmCategorized
 	} else {
-		category = LLMAssignCategory(contents, langCategory, llm, ctx, isDriverProject)
+		category, err = LLMAssignCategory(contents, langCategory, llm, ctx, isDriverProject)
+		if err != nil {
+			log.Printf("Error categorizing snippet with LLM: %v", err)
+			return "Uncategorized", true
+		}
 		if utils.SliceContainsString(validCategories, category) {
 			llmCategorized = true
 			return category, llmCategorized

@@ -25,7 +25,7 @@ For querying this data, use the companion project,
 GDCD follows this pipeline:
 
 1. Retrieves the latest docs project information from the Snooty Data API
-2. For each specified project, gets docs pages for current active branch
+2. For each specified project, gets docs pages for current active branch (latest published version)
 3. Extracts code examples and metadata from each docs page
 4. Syncs changes to MongoDB Atlas
 

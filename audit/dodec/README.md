@@ -42,6 +42,7 @@ Get IDs for pages based on various criteria:
 - [Rename a field](src/updates/RenameField.go) in the document across the 37 docs properties
 - [Rename a value](src/updates/RenameValue.go) in the document across the 37 docs properties
 - [Copy the current production DB for testing](/src/updates/CopyDBForTesting.go)
+- [Change the value of the `product` field](src/updates/ChangeProductName.go) (product name) in all docs within a collection
 
 **Print to console**
 

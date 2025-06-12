@@ -39,13 +39,13 @@ func GetProjectDocuments(docsProject types.DocsProjectDetails, client *http.Clie
 		if resp.StatusCode != http.StatusOK {
 			log.Fatalf("Error: received status code %d for docs project %s", resp.StatusCode, docsProject.ProjectName)
 		}
-		log.Printf("Successfully retrieved a Snooty response for docs project %s. Deserializing to PageWrapper now.", docsProject.ProjectName)
+		log.Printf("\nSuccessfully retrieved a Snooty response for docs project %s. Deserializing to PageWrapper now.", docsProject.ProjectName)
 		reader = *bufio.NewReader(resp.Body)
 	}
 
 	projectDocuments := ReadDocsForGitHubUser(reader)
 	if len(projectDocuments) == 0 {
-		log.Printf("No docs found for project %s using url %s", docsProject.ProjectName, apiURL)
+		log.Printf("\nNo docs found for project %s using url %s", docsProject.ProjectName, apiURL)
 	}
 	return projectDocuments
 }

@@ -35,7 +35,7 @@ to complete the next steps. You will know this if the repository you selected ha
 ### Confirm the new target repository
 In the new repository's settings, go to the 
 [GitHub Apps section](https://GitHub.com/mongodb/stitch-tutorial-todo-backend/settings/installations).
-Scroll down and confirm that `go-GitHub-mdb-app` is installed.
+Scroll down and confirm that `Docs Examples Copier` is installed.
 
 
 ## Install the App on a new Source Repo
@@ -167,7 +167,7 @@ as they come in. Handling the messages means:
 
 ## Future Work
 
-- BUG/SECURITY: Move .pem to google secret.
+- ~~BUG/SECURITY: Move .pem to google secret.~~
 - ~~Where do we view the log for the app when it hits a snag?~~
      Fixed in 112c8953cbb54d3743b25744fe01f6649f783faa. Added Google 
      Logging and centralized logging service for terminal logging.

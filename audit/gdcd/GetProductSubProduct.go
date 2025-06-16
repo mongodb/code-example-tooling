@@ -20,7 +20,7 @@ func GetProductSubProduct(project string, page string) (string, string) {
 		"cpp-driver":               "Drivers",
 		"csharp":                   "Drivers",
 		"database-tools":           "Database Tools",
-		"django":                   "Drivers",
+		"django":                   "Django Integration",
 		"docs":                     "Server",
 		"docs-k8s-operator":        "Enterprise Kubernetes Operator",
 		"docs-relational-migrator": "Relational Migrator",

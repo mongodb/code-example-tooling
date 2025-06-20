@@ -5,8 +5,6 @@ import (
 	"context"
 	"gdcd/snooty"
 	"gdcd/types"
-	"log"
-
 	"github.com/tmc/langchaingo/llms/ollama"
 )
 
@@ -35,6 +33,7 @@ func CompareExistingIncomingCodeExampleSlices(existingNodes []common.CodeNode, e
 	// This will be a map of sha256 hashes for code examples coming in on the page from the Snooty Data API. The int
 	// value represents the number of times the hash appears on the page.
 	snootySha256Hashes := make(map[string]int)
+	snootySha256ToAstNodeMap := make(map[string]types.ASTNode)
 
 	// This will be a map of sha256 hashes for code examples that are already in the database. The int value represents
 	// the number of times the hash appears in the database. As we potentially match them with incoming AST nodes,
@@ -57,7 +56,7 @@ func CompareExistingIncomingCodeExampleSlices(existingNodes []common.CodeNode, e
 		unmatchedSha256ToCodeNodeMap[node.SHA256Hash] = node
 	}
 
-	// Now start iterating through the AST nodes that represent the code examples coming in from the docs page...
+	// Create a SHA256 hash map for the incoming nodes for easy comparison with existing nodes
 	for _, node := range incomingNodes {
 		// This makes a hash from the whitespace-trimmed code example. We trim whitespace on code examples before adding
 		// them to the DB, so this ensures an incoming example hash can match a whitespace-trimmed existing example match.
@@ -66,29 +65,56 @@ func CompareExistingIncomingCodeExampleSlices(existingNodes []common.CodeNode, e
 		// Add the hash as an entry in the map, and increment its counter. If the hash does not already exist in the map,
 		// this will create it. If it does already exist, this will just increment its counter.
 		snootySha256Hashes[hash]++
+		snootySha256ToAstNodeMap[hash] = node
+	}
 
+	// First, check for incoming examples that are exact matches for existing examples. Consider it "unchanged" and
+	// remove it from the potential comparison candidates.
+	for hash, count := range snootySha256Hashes {
+		// Check to see if the incoming code example hash is an exact match for an unmatched hash, and the count is at least 1
+		if unmatchedSha256Hashes[hash] >= 1 {
+			// Get the matching code node and append it to the array of unchanged nodes. We use this to construct the
+			// new array of nodes on the page.
+			unchangedCodeNode := unmatchedSha256ToCodeNodeMap[hash]
+			unchangedNodes = append(unchangedNodes, unchangedCodeNode)
+			// If this hash appears only once in the existing hashes, delete it from the hash list and map. We don't
+			// want to consider it as a possible match for other examples.
+			if unmatchedSha256Hashes[hash] == 1 {
+				delete(unmatchedSha256Hashes, hash)
+				delete(unmatchedSha256ToCodeNodeMap, hash)
+			} else {
+				// If a sha256 hash appears more than once on a page, decrement one instance from the counter since
+				// we are counting it as a "match" here
+				unmatchedSha256Hashes[hash]--
+			}
+			// If the hash exists only once in the incoming code examples hash map, delete it from the hash list and map.
+			// Otherwise, decrement the count of times it appears.
+			if count == 1 {
+				delete(snootySha256Hashes, hash)
+				delete(snootySha256ToAstNodeMap, hash)
+			} else {
+				snootySha256Hashes[hash]--
+			}
+		}
+	}
+
+	// Now start checking whether the remaining incoming examples are updates or net new examples.
+	for hash, count := range snootySha256Hashes {
+		astNode := snootySha256ToAstNodeMap[hash]
 		// Figure out whether the code example is new, updated, or unchanged. If it matches an existing code example in the DB,
 		// this function returns the existing code example along with the "bucket name".
-		bucketName, existingNode := ChooseBucketForNode(unmatchedSha256Hashes, unmatchedSha256ToCodeNodeMap, node)
-
-		switch bucketName {
-		case unchanged:
-			if existingNode != nil {
-				unchangedNodes = append(unchangedNodes, *existingNode)
-				// If the incoming node matches an existing node, and that node's SHA256 hash only exists once on the page,
-				// remove the node from the "eligible" nodes for comparison. Each incoming code example should match 0 or
-				// at most 1 existing code examples. Once the code example has been matched, the existing example should
-				// no longer be eligible for matching.
-				if unmatchedSha256Hashes[existingNode.SHA256Hash] == 1 {
-					delete(unmatchedSha256Hashes, existingNode.SHA256Hash)
-					delete(unmatchedSha256ToCodeNodeMap, existingNode.SHA256Hash)
-				} else {
-					// If a sha256 hash appears more than once on a page, decrement one instance from the counter since
-					// we are counting it as a "match" here
-					unmatchedSha256Hashes[existingNode.SHA256Hash]--
-				}
+		newOrUpdated, existingNode := CodeNewOrUpdated(unmatchedSha256ToCodeNodeMap, astNode)
+		if newOrUpdated == newExample {
+			newPageNodes = append(newPageNodes, astNode)
+			// If the hash exists only once in the incoming code examples hash map, delete it from the hash list and map.
+			// Otherwise, decrement the count of times it appears.
+			if count == 1 {
+				delete(snootySha256Hashes, hash)
+				delete(snootySha256ToAstNodeMap, hash)
+			} else {
+				snootySha256Hashes[hash]--
 			}
-		case updated:
+		} else {
 			if existingNode != nil {
 				incomingUpdatedSha256ToCodeNodeMap[hash] = *existingNode
 
@@ -105,11 +131,7 @@ func CompareExistingIncomingCodeExampleSlices(existingNodes []common.CodeNode, e
 					unmatchedSha256Hashes[existingNode.SHA256Hash]--
 				}
 			}
-			updatedPageNodes = append(updatedPageNodes, node)
-		case newExample:
-			newPageNodes = append(newPageNodes, node)
-		default:
-			log.Printf("Bucket '%s' not found in existing nodes\n", bucketName)
+			updatedPageNodes = append(updatedPageNodes, astNode)
 		}
 	}
 

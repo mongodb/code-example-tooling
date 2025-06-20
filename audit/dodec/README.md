@@ -17,8 +17,8 @@ Get counts broken down in the following ways:
   - [By product](src/aggregations/GetProductLanguageCounts.go)
   - [By Atlas sub-product](src/aggregations/GetSubProductLanguageCounts.go)
   - [For a specific language by docs property](src/aggregations/GetSpecificLanguageCounts.go)
-  - [Manually get counts from the languages array on device versus using an aggregation](/src/aggregations/GetLangCountFromLangArrayManually.go)
-  - [From code nodes instead of the languages array (slower but used to diagnose data issues)](/src/aggregations/GetLangCountFromNodes.go)
+  - [Manually get counts from the languages array on device versus using an aggregation](src/aggregations/GetLangCountFromLangArrayManually.go)
+  - [From code nodes instead of the languages array (slower but used to diagnose data issues)](src/aggregations/GetLangCountFromNodes.go)
 - Category counts:
   - [By docs property](src/aggregations/GetCategoryCounts.go)
   - [By product](src/aggregations/GetProductCategoryCounts.go)
@@ -28,20 +28,24 @@ Get counts broken down in the following ways:
   - [One line usage examples by docs property](src/aggregations/GetOneLineUsageExampleCounts.go)
   - [Minimum, median, maximum character counts for code examples in the collection, and one-liner counts](src/aggregations/GetMinMedianMaxCodeLength.go)
 - Code example content counts:
-  - [Code examples containing a specific substring](src/aggregations/GetStringInCodeNodeCounts.go)
+  - [Code examples containing a specific
+    substring](src/aggregations/GetStringInCodeNodeCounts.go)
 
 Get IDs for pages based on various criteria:
-- [Find docs pages in Atlas that have had code examples added, updated, or removed within the last week](/src/aggregations/GetDocsIdsWithRecentActivity.go)
-- [Find docs pages in Atlas that have had new applied usage examples added within the last week](/src/aggregations/FindNewAppliedUsageExamples.go)
-- [Find docs pages in Atlas where the Product name is missing](/src/aggregations/FindDocsMissingProduct.go)
-- [Find docs pages in Atlas that have a count mismatch between the languages array and the languages in code nodes](/src/aggregations/GetPagesWithNodeLangCountMismatch.go)
+- [Find docs pages in Atlas that have had code examples added, updated, or removed within the last week](src/aggregations/GetDocsIdsWithRecentActivity.go)
+- [Find docs pages in Atlas that have had new applied usage examples added within the last week](src/aggregations/FindNewAppliedUsageExamples.go)
+- [Find docs pages in Atlas where the Product name is missing](src/aggregations/FindDocsMissingProduct.go)
+- [Find docs pages in Atlas that have a count mismatch between the languages array and the languages in code nodes](src/aggregations/GetPagesWithNodeLangCountMismatch.go)
+
+Get URLs for pages based on various criteria:
+- [Find page URLs in Atlas that contain a specific substring](src/aggregations/FindURLContainingString.go)
 
 **Update Documents**
 - [Add `product` and `sub_product` fields](src/updates/AddProductNames.go) to their relevant documents across the 37
   docs properties
 - [Rename a field](src/updates/RenameField.go) in the document across the 37 docs properties
 - [Rename a value](src/updates/RenameValue.go) in the document across the 37 docs properties
-- [Copy the current production DB for testing](/src/updates/CopyDBForTesting.go)
+- [Copy the current production DB for testing](src/updates/CopyDBForTesting.go)
 - [Change the value of the `product` field](src/updates/ChangeProductName.go) (product name) in all docs within a collection
 
 **Print to console**
@@ -62,13 +66,13 @@ tables.
   a docs property, and columns provide details about the minimum, median, and maximum character counts for code examples
   in the collection, as well as a count of "short" examples (under 80 characters) in the collection. Use with the
   [GetMinMedianMaxCodeLength](src/aggregations/GetMinMedianMaxCodeLength.go) aggregation.
-- [Print Page IDs with changes in the last week](/src/utils/PrintPageIdChangesCountMap.go) where each row represents a
+- [Print Page IDs with changes in the last week](src/utils/PrintPageIdChangesCountMap.go) where each row represents a
   page that has had changes, and each column lists the number of code examples added, updated, or removed on the page
-- [Print Page IDs with new applied usage examples in the last week](/src/utils/PrintPageIdNewAppliedUsageExampleCounts.go)
+- [Print Page IDs with new applied usage examples in the last week](src/utils/PrintPageIdNewAppliedUsageExampleCounts.go)
   where each row represents a page that has had new applied usage examples added (category is `common.UsageExample`
   and the `code` character count is greater than 300), and the counts column lists the number of code examples that meet
   this criteria. Prints a separate table for each collection, and an aggregate count at the end of the tables.
-- [Print page IDs with node language count mismatch](/src/utils/PrintPageIdChangesCountMap.go) with each table representing
+- [Print page IDs with node language count mismatch](src/utils/PrintPageIdChangesCountMap.go) with each table representing
   a different docs project, and each row is a Page ID for a document in that project that has a node/languages array
   count mismatch
 

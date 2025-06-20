@@ -5,7 +5,6 @@ import (
 	"dodec/aggregations"
 	"dodec/types"
 	"dodec/utils"
-
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
@@ -36,6 +35,7 @@ func PerformAggregation(db *mongo.Database, ctx context.Context) {
 		panic(err)
 	}
 	//substringToFindInCodeExamples := "defaultauthdb"
+	//substringToFindInPageURL := "code-examples"
 
 	for _, collectionName := range collectionNames {
 		//simpleMap = aggregations.GetCategoryCounts(db, collectionName, simpleMap, ctx)
@@ -57,6 +57,7 @@ func PerformAggregation(db *mongo.Database, ctx context.Context) {
 		//pageIdsWithNodeLangCountMismatch = aggregations.GetPagesWithNodeLangCountMismatch(db, collectionName, pageIdsWithNodeLangCountMismatch, ctx)
 		//pageIdsWithNodeLangCountMismatch = aggregations.FindDocsMissingProduct(db, collectionName, pageIdsWithNodeLangCountMismatch, ctx)
 		productSubProductCounter = aggregations.FindNewAppliedUsageExamples(db, collectionName, productSubProductCounter, ctx)
+		//pageIdsWithNodeLangCountMismatch = aggregations.FindURLContainingString(db, collectionName, pageIdsWithNodeLangCountMismatch, ctx, substringToFindInPageURL)
 	}
 
 	//simpleTableLabel := "Collection"

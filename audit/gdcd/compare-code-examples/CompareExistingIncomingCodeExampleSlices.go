@@ -145,9 +145,7 @@ func CompareExistingIncomingCodeExampleSlices(existingNodes []common.CodeNode, e
 	// Make the complete array of code nodes, which will overwrite the existing array. This array consists of: all
 	// previously removed nodes, new removed nodes as of this run, unchanged nodes, updated nodes, and net new nodes.
 	// This function also calls the func to update the report based on the counts.
-	codeNodesToReturn := make([]common.CodeNode, 0)
-	codeNodesToReturn, report = MakeUpdatedCodeNodesArray(removedPageNodes, existingRemovedNodes, unchangedNodes,
+	return MakeUpdatedCodeNodesArray(removedPageNodes, existingRemovedNodes, unchangedNodes,
 		updatedPageNodes, incomingUpdatedSha256ToCodeNodeMap, newPageNodes,
 		incomingCount, report, pageId, llm, ctx, isDriversProject)
-	return codeNodesToReturn, report
 }

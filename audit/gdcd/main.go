@@ -22,6 +22,7 @@ func main() {
 	// NOTE: the GDCD tool can take a long time to run (~1.5-2hrs, depending on your machine)
 	startTime := time.Now()
 	formattedTime := startTime.Format("2006-01-02 15:04:05")
+	fmt.Println("Starting at ", formattedTime)
 
 	logDir := "./logs"
 	logFile, err := utils.InitLogger(logDir)

@@ -10,6 +10,10 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
+// GetPagesWithNodeLangCountMismatch is a function that compares the counts of code examples for each programming language
+// provided by the `languages` array versus a count from the `nodes` array. It returns a map whose string key is the
+// collection name. The slice value is a slice of page IDs where there is a mismatch between the programming language
+// counts from the `languages` array versus the counts from the `nodes` array.
 func GetPagesWithNodeLangCountMismatch(db *mongo.Database, collectionName string, pageIdsWithNodeLangCountMismatch map[string][]string, ctx context.Context) map[string][]string {
 	var pageIdsWithCountMismatch []string
 	collection := db.Collection(collectionName)

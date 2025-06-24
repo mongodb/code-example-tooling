@@ -10,6 +10,9 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
+// GetDocsIdsWithRecentActivity returns a slice of types.PageIdChangedCounts for the given collection. This aggregation
+// finds all docs pages with activity within the last week, and appends the page ID along with a count of each change type
+// to a list of pages with changes in the given collection. The string map key is the collection name.
 func GetDocsIdsWithRecentActivity(db *mongo.Database, collectionName string, aggregatePageIdCounts map[string][]types.PageIdChangedCounts, ctx context.Context) map[string][]types.PageIdChangedCounts {
 	// Calculate last week's date range
 	now := time.Now()

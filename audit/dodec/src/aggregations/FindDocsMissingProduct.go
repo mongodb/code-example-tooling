@@ -9,6 +9,9 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
+// FindDocsMissingProduct returns a list of all documentation page IDs in a given collection where the `product` field is
+// missing or contains an empty string. The string map key is the collection name, and the array of strings is an array
+// of page IDs that are missing a `product` value in the collection.
 func FindDocsMissingProduct(db *mongo.Database, collectionName string, pageIdsMissingProduct map[string][]string, ctx context.Context) map[string][]string {
 	var pageIds []string
 	collection := db.Collection(collectionName)

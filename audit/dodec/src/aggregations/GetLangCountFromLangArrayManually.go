@@ -9,6 +9,9 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
+// GetLangCountFromLangArrayManually processes the `Languages` field locally on device to get a count of all code examples
+// in each programming language within the collection. This function was used to debug discrepancies between the node language
+// count and the languages array count returned by other aggregations.
 func GetLangCountFromLangArrayManually(db *mongo.Database, collectionName string, languageCountMap map[string]int, ctx context.Context) map[string]int {
 	collection := db.Collection(collectionName)
 	// Define the aggregation pipeline

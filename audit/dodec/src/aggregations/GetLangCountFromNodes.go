@@ -8,6 +8,11 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
+// GetLangCountsFromNodes returns a count of code examples by programming language taken from the `nodes` array instead
+// of the `languages` array. The map string key is the programming language, and the int is the count of code examples
+// in that programming language, according to the elements in the `nodes` array. The count omits nodes that have been
+// removed from the page - i.e. where `is_removed` is `true`. This was cross-checked against the counts from the language
+// array in the GetLangCountFromLangArrayManually func.
 func GetLangCountsFromNodes(db *mongo.Database, collectionName string, languageCountMap map[string]int, ctx context.Context) map[string]int {
 	collection := db.Collection(collectionName)
 	languagePipeline := mongo.Pipeline{

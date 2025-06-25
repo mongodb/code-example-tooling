@@ -14,7 +14,7 @@ func HandleRemovedCodeNodes(removedCodeNodes []common.CodeNode) []common.CodeNod
 	updatedRemovedNodes := make([]common.CodeNode, 0)
 	for _, node := range removedCodeNodes {
 		node.IsRemoved = true
-		node.DateUpdated = time.Now()
+		node.DateRemoved = time.Now()
 		updatedRemovedNodes = append(updatedRemovedNodes, node)
 	}
 	return updatedRemovedNodes

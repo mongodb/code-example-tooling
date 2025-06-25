@@ -1,13 +1,14 @@
 package types
 
-import "common"
+import "time"
 
 type NewOrMovedPage struct {
 	PageId              string
 	CodeNodeCount       int
 	LiteralIncludeCount int
 	IoCodeBlockCount    int
-	PageData            common.DocsPage
+	PageData            PageMetadata
 	OldPageId           string
 	NewPageId           string
+	DateAdded           time.Time
 }

@@ -3,6 +3,7 @@ package db
 import (
 	"gdcd/types"
 	"gdcd/utils"
+	"strings"
 )
 
 // HandleMissingPageIds gets a list of all the page IDs from Atlas, compares each page ID against incoming ones coming
@@ -40,6 +41,9 @@ func HandleMissingPageIds(collectionName string, incomingPageIds map[string]bool
 		// does not have a matching page ID could be either moved or new. If the count of code examples, literalincludes,
 		// and io-code-blocks exactly matches a removed page, we'll call it "moved" instead of "new"
 		for index, maybeNewPage := range maybeNewPages {
+			// If the page IDs share a page name, they might be the same page
+			pageIdsOverlap := checkIfPageIdsOverlap(existingPage.ID, maybeNewPage.PageId)
+
 			// If the count of code examples is exactly the same, *and* that count is not 0, they might be the same page
 			codeNodeCountMatches := maybeNewPage.CodeNodeCount == existingPage.CodeNodesTotal && maybeNewPage.CodeNodeCount != 0
 
@@ -47,11 +51,12 @@ func HandleMissingPageIds(collectionName string, incomingPageIds map[string]bool
 			literalIncludeCountMatches := maybeNewPage.LiteralIncludeCount == existingPage.LiteralIncludesTotal
 			ioCodeBlockCountMatches := maybeNewPage.IoCodeBlockCount == existingPage.IoCodeBlocksTotal
 
-			// If all three counts match, and the code node count is not 0, consider it a moved page instead of new & removed pages
-			if codeNodeCountMatches && literalIncludeCountMatches && ioCodeBlockCountMatches {
+			// If the page name shares common elements, all three counts match, and the code node count is not 0,
+			// consider it a moved page instead of new & removed pages
+			if pageIdsOverlap && codeNodeCountMatches && literalIncludeCountMatches && ioCodeBlockCountMatches {
 				maybeNewPage.NewPageId = maybeNewPage.PageId
 				maybeNewPage.OldPageId = existingPage.ID
-				maybeNewPage.PageData.DateAdded = existingPage.DateAdded
+				maybeNewPage.DateAdded = existingPage.DateAdded
 				movedPages = append(movedPages, maybeNewPage)
 
 				// If we find a match, we can remove it from the `maybeNewPages` slice so we don't attempt to match it again
@@ -61,7 +66,7 @@ func HandleMissingPageIds(collectionName string, incomingPageIds map[string]bool
 				pageIsMoved = true
 
 				// We've found a match, so we can skip the rest of the `maybeNewPages` for this `maybeRemovedPageId`
-				continue
+				break
 			}
 		}
 
@@ -101,6 +106,80 @@ func HandleMissingPageIds(collectionName string, incomingPageIds map[string]bool
 	// Anything left in the `maybeNewPages` slice at this point is net new, so we'll handle it back at the call site
 	// Anything in the `movedPages` slice is moved, which we'll also handle back at the call site
 	return report, maybeNewPages, movedPages
+}
+
+// checkIfPageIdsOverlap does a couple of types of comparison between the old page ID and the new page ID to determine
+// if they "match".
+func checkIfPageIdsOverlap(oldPageId string, newPageId string) bool {
+	// First, we want to get the page title. Split by `|`. The final element will be the page title.
+	// i.e. in the page ID `tutorial|create-mongodb-user-for-cluster` - the final element after the `|`,
+	// `create-mongodb-user-for-cluster` - is what we're considering the page title
+	oldPageName := getPageTitleFromId(oldPageId)
+	newPageName := getPageTitleFromId(newPageId)
+
+	// The simplest case is a restructure that moves the pages from one directory to another without any changes.
+	// If the page name is an exact match, we can return true, because the page title overlaps 100%
+	if oldPageName == newPageName {
+		return true
+	} else {
+		// If it's not a 1:1 move the page without changing the title situation, we can compare the page titles to try
+		// to figure out if it has enough overlap to be effectively the same page title
+		return pageNamesHaveCommonElements(oldPageName, newPageName)
+	}
+}
+
+func getPageTitleFromId(pageId string) string {
+	parts := strings.Split(pageId, "|")
+
+	// Get the last element
+	if len(parts) > 0 {
+		lastElement := parts[len(parts)-1] // Access the last index
+		return lastElement
+	} else {
+		return ""
+	}
+}
+
+func pageNamesHaveCommonElements(oldPageName string, newPageName string) bool {
+	// Split the page names by `-` to get the words in the name for common comparison
+	oldPageNameParts := strings.Split(oldPageName, "-")
+	newPageNameParts := strings.Split(newPageName, "-")
+
+	// We don't want to count irrelevant words for this comparison, so compare elements against these words and omit
+	// them from being counted as an overlap
+	ignoreWords := []string{"and", "or", "by", "for", "the", "in"}
+
+	oldPageNameElements := make(map[string]bool)
+	for _, element := range oldPageNameParts {
+		oldPageNameElements[element] = true // Mark the presence of each element in the map
+	}
+
+	// Compare with `newPageNameParts` and count common elements
+	commonCount := 0
+	for _, value := range newPageNameParts {
+		if oldPageNameElements[value] { // Check if the element exists in the map
+			// Confirm the element isn't one of the ignore words
+			if !contains(ignoreWords, value) {
+				// If it's not an ignore word, consider it a common element
+				commonCount++
+			}
+		}
+	}
+
+	if commonCount > 0 {
+		return true
+	} else {
+		return false
+	}
+}
+
+func contains(slice []string, str string) bool {
+	for _, value := range slice {
+		if value == str {
+			return true // Return true if the string is found
+		}
+	}
+	return false // Return false if the string is not found
 }
 
 func removeMovedPage(maybeNewPages []types.NewOrMovedPage, index int) []types.NewOrMovedPage {

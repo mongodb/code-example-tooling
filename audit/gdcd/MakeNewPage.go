@@ -11,13 +11,13 @@ import (
 	"github.com/tmc/langchaingo/llms/ollama"
 )
 
-func MakeNewPage(data types.PageWrapper, projectName string, siteUrl string, llm *ollama.LLM, ctx context.Context) common.DocsPage {
-	incomingCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes := snooty.GetCodeExamplesFromIncomingData(data.Data.AST)
+func MakeNewPage(data types.PageMetadata, projectName string, siteUrl string, llm *ollama.LLM, ctx context.Context) common.DocsPage {
+	incomingCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes := snooty.GetCodeExamplesFromIncomingData(data.AST)
 	incomingCodeNodeCount := len(incomingCodeNodes)
 	incomingLiteralIncludeNodeCount := len(incomingLiteralIncludeNodes)
 	incomingIoCodeNodeCount := len(incomingIoCodeBlockNodes)
-	pageId := utils.ConvertSnootyPageIdToAtlasPageId(data.Data.PageID)
-	pageUrl := utils.ConvertSnootyPageIdToProductionUrl(data.Data.PageID, siteUrl)
+	pageId := utils.ConvertSnootyPageIdToAtlasPageId(data.PageID)
+	pageUrl := utils.ConvertSnootyPageIdToProductionUrl(data.PageID, siteUrl)
 	product, subProduct := GetProductSubProduct(projectName, pageUrl)
 	var isDriversProject bool
 	if product == "Drivers" {
@@ -31,7 +31,7 @@ func MakeNewPage(data types.PageWrapper, projectName string, siteUrl string, llm
 		newNode := snooty.MakeCodeNodeFromSnootyAST(node, llm, ctx, isDriversProject)
 		newCodeNodes = append(newCodeNodes, newNode)
 	}
-	maybeKeywords := snooty.GetMetaKeywords(data.Data.AST.Children)
+	maybeKeywords := snooty.GetMetaKeywords(data.AST.Children)
 
 	languagesArrayValues := MakeLanguagesArray(newCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes)
 

@@ -2,7 +2,7 @@ package main
 
 import (
 	"common"
-	"gdcd/add-code-examples"
+	add_code_examples "gdcd/add-code-examples"
 	"gdcd/types"
 	"gdcd/utils"
 )
@@ -23,11 +23,13 @@ func UpdateProjectReportForNewPage(page common.DocsPage, report types.ProjectRep
 	newCodeNodeCount := 0
 	if page.Nodes != nil {
 		for _, node := range *page.Nodes {
-			if add_code_examples.IsNewAppliedUsageExample(node) {
-				newAppliedUsageExampleCount++
+			if !node.IsRemoved {
+				if add_code_examples.IsNewAppliedUsageExample(node) {
+					newAppliedUsageExampleCount++
+				}
+				newCodeNodeCount++
 			}
 		}
-		newCodeNodeCount = len(*page.Nodes)
 	}
 	report.Counter.NewAppliedUsageExamplesCount += newAppliedUsageExampleCount
 

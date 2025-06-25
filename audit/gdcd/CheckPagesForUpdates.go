@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"gdcd/db"
+	"gdcd/snooty"
 	"gdcd/types"
 	"gdcd/utils"
 
@@ -49,15 +50,7 @@ func CheckPagesForUpdates(pages []types.PageWrapper, project types.ProjectDetail
 				// If there is no existing document in Atlas that matches the page, we need to make a new page. BUT!
 				// It might actually be a new or moved page. So store it in a temp `maybeNewPages` slice so we can compare
 				// it against removed pages later and potentially call it a "moved" page, instead.
-				var newPage common.DocsPage
-				newPage = MakeNewPage(page, project.ProjectName, project.ProdUrl, llm, ctx)
-				newOrMovedPage := types.NewOrMovedPage{
-					PageId:              newPage.ID,
-					CodeNodeCount:       newPage.CodeNodesTotal,
-					LiteralIncludeCount: newPage.LiteralIncludesTotal,
-					IoCodeBlockCount:    newPage.IoCodeBlocksTotal,
-					PageData:            newPage,
-				}
+				newOrMovedPage := getNewOrMovedPageDetails(page.Data)
 				maybeNewPages = append(maybeNewPages, newOrMovedPage)
 			}
 		}
@@ -68,11 +61,12 @@ func CheckPagesForUpdates(pages []types.PageWrapper, project types.ProjectDetail
 	// we had in the DB are not coming in from the incoming response. If so, those pages are either moved or removed.
 	report, newPages, movedPages = db.HandleMissingPageIds(project.ProjectName, incomingPageIdsMatchingExistingPages, maybeNewPages, report)
 
-	// If we have new pages, increment the project report for them
+	// If we have new pages, create the corresponding DocsPage and increment the project report for them
 	if newPages != nil {
 		for _, page := range newPages {
-			newPageDBEntries = append(newPageDBEntries, page.PageData)
-			report = UpdateProjectReportForNewPage(page.PageData, report)
+			newPage := MakeNewPage(page.PageData, project.ProjectName, project.ProdUrl, llm, ctx)
+			newPageDBEntries = append(newPageDBEntries, newPage)
+			report = UpdateProjectReportForNewPage(newPage, report)
 		}
 	}
 
@@ -82,13 +76,15 @@ func CheckPagesForUpdates(pages []types.PageWrapper, project types.ProjectDetail
 			// Remove the old page from the DB
 			db.RemovePageFromAtlas(project.ProjectName, page.OldPageId)
 
-			// Update the project counts for the "existing" page
-			report = IncrementProjectCountsForExistingPage(page.CodeNodeCount, page.LiteralIncludeCount, page.IoCodeBlockCount, page.PageData, report)
-
 			// Append the "moved" page to the `newPageDBEntries` array. Because the page ID doesn't match the old one,
 			// we write it to the DB as a new page. Because we just deleted the old page, it works out to the same count
 			// and provides the up-to-date data in the DB.
-			newPageDBEntries = append(newPageDBEntries, page.PageData)
+			newPage := MakeNewPage(page.PageData, project.ProjectName, project.ProdUrl, llm, ctx)
+			newPage.DateAdded = page.DateAdded
+			newPageDBEntries = append(newPageDBEntries, newPage)
+
+			// Update the project counts for the "existing" page
+			report = IncrementProjectCountsForExistingPage(page.CodeNodeCount, page.LiteralIncludeCount, page.IoCodeBlockCount, newPage, report)
 
 			// Report it in the logs as a moved page
 			stringMessageForReport := fmt.Sprintf("Old page ID: %s, new page ID: %s", page.OldPageId, page.NewPageId)
@@ -108,4 +104,16 @@ func CheckPagesForUpdates(pages []types.PageWrapper, project types.ProjectDetail
 
 	// At this point, we have all the new and updated pages and an updated summary. Write updates to Atlas.
 	db.BatchUpdateCollection(project.ProjectName, newPageDBEntries, updatedPages, summaryDoc)
+}
+
+func getNewOrMovedPageDetails(metadata types.PageMetadata) types.NewOrMovedPage {
+	incomingCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes := snooty.GetCodeExamplesFromIncomingData(metadata.AST)
+	pageId := utils.ConvertSnootyPageIdToAtlasPageId(metadata.PageID)
+	return types.NewOrMovedPage{
+		PageId:              pageId,
+		CodeNodeCount:       len(incomingCodeNodes),
+		LiteralIncludeCount: len(incomingLiteralIncludeNodes),
+		IoCodeBlockCount:    len(incomingIoCodeBlockNodes),
+		PageData:            metadata,
+	}
 }

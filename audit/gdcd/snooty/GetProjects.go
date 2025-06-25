@@ -26,7 +26,7 @@ func removeTrailingSlash(input string) string {
 	return input
 }
 
-func GetProjects(client *http.Client) []types.DocsProjectDetails {
+func GetProjects(client *http.Client) []types.ProjectDetails {
 	env := os.Getenv("APP_ENV")
 	var response types.Response
 	if env == "testing" {
@@ -74,7 +74,7 @@ func GetProjects(client *http.Client) []types.DocsProjectDetails {
 		"mongoid-railsmdb",
 	}
 
-	var collectionsToParse []types.DocsProjectDetails
+	var collectionsToParse []types.ProjectDetails
 	for _, docsProject := range response.Data {
 		var activeBranch string
 		var prodUrl string
@@ -90,7 +90,7 @@ func GetProjects(client *http.Client) []types.DocsProjectDetails {
 					break
 				}
 			}
-			collectionDetails := types.DocsProjectDetails{
+			collectionDetails := types.ProjectDetails{
 				ProjectName:  docsProject.Project,
 				ActiveBranch: activeBranch,
 				ProdUrl:      prodUrl,

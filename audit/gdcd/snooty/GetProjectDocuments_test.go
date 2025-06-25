@@ -9,12 +9,12 @@ import (
 
 // TODO: Figure out why this test is failing. The stub has 13 JSON blobs where "type":"page" - I'm getting one too few back. The first "page" response is always nil. This is not a problem for the C driver.
 func TestSparkConnectorStubShouldReturnPages(t *testing.T) {
-	testProject := types.DocsProjectDetails{
+	testProject := types.ProjectDetails{
 		ProjectName:  "spark-connector",
 		ActiveBranch: "",
 		ProdUrl:      "",
 	}
-	projectDocuments := GetProjectDocuments(testProject, &http.Client{Timeout: 5 * time.Second})
+	projectDocuments := GetProjectPages(testProject, &http.Client{Timeout: 5 * time.Second})
 	projectDocumentCount := len(projectDocuments)
 	expectedProjectDocumentCount := 13
 	if projectDocumentCount != expectedProjectDocumentCount {
@@ -23,12 +23,12 @@ func TestSparkConnectorStubShouldReturnPages(t *testing.T) {
 }
 
 func TestCDriverStubShouldReturnPages(t *testing.T) {
-	testProject := types.DocsProjectDetails{
+	testProject := types.ProjectDetails{
 		ProjectName:  "c",
 		ActiveBranch: "",
 		ProdUrl:      "",
 	}
-	projectDocuments := GetProjectDocuments(testProject, &http.Client{Timeout: 5 * time.Second})
+	projectDocuments := GetProjectPages(testProject, &http.Client{Timeout: 5 * time.Second})
 	projectDocumentCount := len(projectDocuments)
 	expectedProjectDocumentCount := 10
 	if projectDocumentCount != expectedProjectDocumentCount {

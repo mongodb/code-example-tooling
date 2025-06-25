@@ -19,7 +19,7 @@ func TestStubbedProjectsReturnTheCorrectNumberOfProjects(t *testing.T) {
 
 func TestStubbedProjectsReturnCorrectProjectDetails(t *testing.T) {
 	projectDocuments := GetProjects(&http.Client{Timeout: 5 * time.Second})
-	expectedProjectDocument := types.DocsProjectDetails{
+	expectedProjectDocument := types.ProjectDetails{
 		ProjectName:  "spark-connector",
 		ActiveBranch: "v10.4",
 		ProdUrl:      "https://mongodb.com/docs/spark-connector/current",

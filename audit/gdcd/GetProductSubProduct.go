@@ -4,6 +4,12 @@ import (
 	"strings"
 )
 
+/*
+ * IMPORTANT: If you update mapped product values in this file, you must also run
+ * the `changeProductName` function in DODEC to populate the new product values
+ * to existing documents already in Atlas.
+ */
+
 // GetProductSubProduct returns the product taxonomy for a given page in a project, which corresponds to collection in Atlas.
 // It uses predefined mappings to determine the product and sub-product, if any, based on the project name and page URL.
 func GetProductSubProduct(project string, page string) (string, string) {
@@ -30,7 +36,7 @@ func GetProductSubProduct(project string, page string) (string, string) {
 		"docs":                     "Server",
 		"docs-k8s-operator":        "Enterprise Kubernetes Operator",
 		"docs-relational-migrator": "Relational Migrator",
-		"entity-framework":         "Entity Framework Core Provider", // DOCSP-50997 to add to taxonomy
+		"entity-framework":         "Drivers", // TODO: "Entity Framework Core Provider" DOCSP-50997 to add to taxonomy
 		"golang":                   "Drivers",
 		"java":                     "Drivers",
 		"java-rs":                  "Drivers",

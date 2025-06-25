@@ -25,6 +25,7 @@ const (
 	// Define the possible types of changes.
 	PageCreated ChangeType = iota
 	PageUpdated
+	PageMoved
 	PageRemoved
 	KeywordsUpdated
 	CodeExampleCreated
@@ -59,7 +60,7 @@ type Issue struct {
 
 // String returns a string representation of the ChangeType for easier readability.
 func (ct ChangeType) String() string {
-	return [...]string{"Page created", "Page updated", "Page removed", "Keywords updated", "Code example created", "Code example updated", "Code example removed", "Code node count change", "literalinclude count change", "io-code-block count change", "Project summary node count change", "Project summary page count change", "Applied usage example added"}[ct]
+	return [...]string{"Page created", "Page updated", "Page removed", "Page moved", "Keywords updated", "Code example created", "Code example updated", "Code example removed", "Code node count change", "literalinclude count change", "io-code-block count change", "Project summary node count change", "Project summary page count change", "Applied usage example added"}[ct]
 }
 
 // String returns a string representation of the IssueType for easier readability.

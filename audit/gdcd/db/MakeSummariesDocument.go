@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func MakeSummariesDocument(project types.DocsProjectDetails, report types.ProjectReport) common.CollectionReport {
+func MakeSummariesDocument(project types.ProjectDetails, report types.ProjectReport) common.CollectionReport {
 	collectionInfo := common.CollectionInfoView{
 		TotalPageCount:   report.Counter.NewPagesCount,
 		TotalCodeCount:   report.Counter.NewCodeNodesCount,

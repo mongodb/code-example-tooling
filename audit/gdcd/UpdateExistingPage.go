@@ -14,7 +14,7 @@ import (
 	"github.com/tmc/langchaingo/llms/ollama"
 )
 
-func UpdateExistingDocsPage(existingPage common.DocsPage, data types.PageWrapper, projectReport types.ProjectReport, llm *ollama.LLM, ctx context.Context) (*common.DocsPage, types.ProjectReport) {
+func UpdateExistingPage(existingPage common.DocsPage, data types.PageWrapper, projectReport types.ProjectReport, llm *ollama.LLM, ctx context.Context) (*common.DocsPage, types.ProjectReport) {
 	var existingCurrentCodeNodes []common.CodeNode
 	var existingRemovedCodeNodes []common.CodeNode
 	// Some of the existing Nodes on the page could have been previously removed from the page. So we need to know which
@@ -24,7 +24,7 @@ func UpdateExistingDocsPage(existingPage common.DocsPage, data types.PageWrapper
 	if existingPage.Nodes != nil {
 		existingCurrentCodeNodes, existingRemovedCodeNodes = db.GetCurrentRemovedAtlasCodeNodes(*existingPage.Nodes)
 	}
-	atlasDocCurrentCodeNodeCount := len(existingCurrentCodeNodes)
+	existingCodeNodeCount := len(existingCurrentCodeNodes)
 	incomingCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes := snooty.GetCodeExamplesFromIncomingData(data.Data.AST)
 	maybePageKeywords := snooty.GetMetaKeywords(data.Data.AST.Children)
 	newAppliedUsageExampleCount := 0
@@ -43,18 +43,18 @@ func UpdateExistingDocsPage(existingPage common.DocsPage, data types.PageWrapper
 		}
 	}
 
-	if incomingCodeNodePageCount == atlasDocCurrentCodeNodeCount {
+	if incomingCodeNodePageCount == existingCodeNodeCount {
 		// The page doesn't have any code changes we can return a page with updated keywords (if it exists) and an updated projectReport
-		projectReport.Counter.UnchangedCodeNodesCount += atlasDocCurrentCodeNodeCount
+		projectReport.Counter.UnchangedCodeNodesCount += existingCodeNodeCount
 		return pageWithUpdatedKeywords, projectReport
 	}
 
-	// If the incoming page node count does not equal the existing atlas doc node count, we need to update the page
-	var updatedDocsPage common.DocsPage
+	// If the incoming AST node count does not equal the existing code node count, we need to update the page
+	var updatedPage common.DocsPage
 	if pageWithUpdatedKeywords != nil {
-		updatedDocsPage = *pageWithUpdatedKeywords
+		updatedPage = *pageWithUpdatedKeywords
 	} else {
-		updatedDocsPage = existingPage
+		updatedPage = existingPage
 	}
 	var isDriversProject bool
 	if existingPage.Product == "Drivers" {
@@ -63,13 +63,13 @@ func UpdateExistingDocsPage(existingPage common.DocsPage, data types.PageWrapper
 		isDriversProject = false
 	}
 
-	// If examples exist already and we are getting no incoming examples from the API, the existing examples have been removed from the incoming page
-	if atlasDocCurrentCodeNodeCount > 0 && incomingCodeNodePageCount == 0 {
+	// If code nodes exist already and we are getting no incoming AST nodes from the API, the existing examples have been removed from the incoming page
+	if existingCodeNodeCount > 0 && incomingCodeNodePageCount == 0 {
 		newRemovedNodeCount := 0
 		// Mark all nodes as removed
 		updatedCodeNodes := make([]common.CodeNode, 0)
 		for _, node := range *existingPage.Nodes {
-			// Some removed nodes may already exist on the page. We don't want to count those in the "new removed nodes" count,
+			// Some removed nodes may already exist in the database. We don't want to count those in the "new removed nodes" count,
 			// but we do need to add them to the `Nodes` array if we don't want them to disappear.
 			if !node.IsRemoved {
 				node.DateRemoved = time.Now()
@@ -85,16 +85,16 @@ func UpdateExistingDocsPage(existingPage common.DocsPage, data types.PageWrapper
 		oldLiteralIncludeCount := existingPage.LiteralIncludesTotal
 		oldIoCodeBlockCount := existingPage.IoCodeBlocksTotal
 
-		// Update the code node count, io-block-count and literalinclude count
-		updatedDocsPage.CodeNodesTotal = 0
-		updatedDocsPage.LiteralIncludesTotal = 0
-		updatedDocsPage.IoCodeBlocksTotal = 0
+		// Update the AST node count, io-block-count and literalinclude count
+		updatedPage.CodeNodesTotal = 0
+		updatedPage.LiteralIncludesTotal = 0
+		updatedPage.IoCodeBlocksTotal = 0
 
 		// Update the language counts array (set all values for the page to 0)
-		updatedDocsPage.Languages = MakeEmptyLanguagesArray()
+		updatedPage.Languages = MakeEmptyLanguagesArray()
 
 		// Update the date_last_updated time
-		updatedDocsPage.DateLastUpdated = time.Now()
+		updatedPage.DateLastUpdated = time.Now()
 
 		// Add relevant entries to the projectReport
 		projectReport = utils.ReportChanges(types.PageUpdated, projectReport, existingPage.ID)
@@ -113,8 +113,8 @@ func UpdateExistingDocsPage(existingPage common.DocsPage, data types.PageWrapper
 		if oldIoCodeBlockCount != incomingIoCodeBlockNodeCount {
 			projectReport = utils.ReportChanges(types.IoCodeBlockCountChange, projectReport, existingPage.ID, oldIoCodeBlockCount, incomingIoCodeBlockNodeCount)
 		}
-	} else if atlasDocCurrentCodeNodeCount == 0 && incomingCodeNodePageCount > 0 {
-		// There are no existing code examples - they're all new - so just make new code examples
+	} else if existingCodeNodeCount == 0 && incomingCodeNodePageCount > 0 {
+		// There are no existing code nodes - only incoming AST nodes - so just make new code examples
 		newCodeNodes := make([]common.CodeNode, 0)
 		for _, snootyNode := range incomingCodeNodes {
 			newNode := snooty.MakeCodeNodeFromSnootyAST(snootyNode, llm, ctx, isDriversProject)
@@ -124,19 +124,19 @@ func UpdateExistingDocsPage(existingPage common.DocsPage, data types.PageWrapper
 			}
 		}
 		newCodeNodeCount := len(newCodeNodes)
-		updatedDocsPage.Nodes = &newCodeNodes
+		updatedPage.Nodes = &newCodeNodes
 
-		// Update the code node count, io-block-count and literalinclude count
-		updatedDocsPage.CodeNodesTotal = newCodeNodeCount
-		updatedDocsPage.LiteralIncludesTotal = len(incomingLiteralIncludeNodes)
-		updatedDocsPage.IoCodeBlocksTotal = len(incomingIoCodeBlockNodes)
+		// Update the AST code node count, io-block-count and literalinclude count
+		updatedPage.CodeNodesTotal = newCodeNodeCount
+		updatedPage.LiteralIncludesTotal = len(incomingLiteralIncludeNodes)
+		updatedPage.IoCodeBlocksTotal = len(incomingIoCodeBlockNodes)
 
 		// Add language counts
 		updatedLanguagesArray := MakeLanguagesArray(newCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes)
-		updatedDocsPage.Languages = updatedLanguagesArray
+		updatedPage.Languages = updatedLanguagesArray
 
 		// Update the date_last_updated time
-		updatedDocsPage.DateLastUpdated = time.Now()
+		updatedPage.DateLastUpdated = time.Now()
 
 		// Add relevant entries to the project projectReport
 		projectReport = utils.ReportChanges(types.PageUpdated, projectReport, existingPage.ID)
@@ -148,7 +148,7 @@ func UpdateExistingDocsPage(existingPage common.DocsPage, data types.PageWrapper
 			projectReport.Counter.NewAppliedUsageExamplesCount += newAppliedUsageExampleCount
 			projectReport = utils.ReportChanges(types.AppliedUsageExampleAdded, projectReport, existingPage.ID, newAppliedUsageExampleCount)
 		}
-	} else if atlasDocCurrentCodeNodeCount == 0 && incomingCodeNodePageCount == 0 {
+	} else if existingCodeNodeCount == 0 && incomingCodeNodePageCount == 0 {
 		// No code examples to deal with here - just return nil and the unchanged projectReport
 		return nil, projectReport
 	} else {
@@ -161,19 +161,19 @@ func UpdateExistingDocsPage(existingPage common.DocsPage, data types.PageWrapper
 		// Handle those distinct cases.
 		var updatedCodeNodes []common.CodeNode
 		updatedCodeNodes, projectReport = compare_code_examples.CompareExistingIncomingCodeExampleSlices(existingCurrentCodeNodes, existingRemovedCodeNodes, incomingCodeNodes, projectReport, existingPage.ID, llm, ctx, isDriversProject)
-		updatedDocsPage.Nodes = &updatedCodeNodes
+		updatedPage.Nodes = &updatedCodeNodes
 
 		// Update the code node count, io-block-count and literalinclude count
-		updatedDocsPage.CodeNodesTotal = incomingCodeNodePageCount
-		updatedDocsPage.LiteralIncludesTotal = len(incomingLiteralIncludeNodes)
-		updatedDocsPage.IoCodeBlocksTotal = len(incomingIoCodeBlockNodes)
+		updatedPage.CodeNodesTotal = incomingCodeNodePageCount
+		updatedPage.LiteralIncludesTotal = len(incomingLiteralIncludeNodes)
+		updatedPage.IoCodeBlocksTotal = len(incomingIoCodeBlockNodes)
 
 		// Update the language counts for the page based on the updated code nodes.
 		updatedLanguagesArray := MakeLanguagesArray(updatedCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes)
-		updatedDocsPage.Languages = updatedLanguagesArray
+		updatedPage.Languages = updatedLanguagesArray
 
 		// Update the date_last_updated time
-		updatedDocsPage.DateLastUpdated = time.Now()
+		updatedPage.DateLastUpdated = time.Now()
 
 		// Update the projectReport for changes to the code node count, literalinclude count, or io-code-block count
 		oldCodeNodeCount := existingPage.CodeNodesTotal
@@ -189,5 +189,5 @@ func UpdateExistingDocsPage(existingPage common.DocsPage, data types.PageWrapper
 			projectReport = utils.ReportChanges(types.IoCodeBlockCountChange, projectReport, existingPage.ID, oldIoCodeBlockCount, incomingIoCodeBlockNodeCount)
 		}
 	}
-	return &updatedDocsPage, projectReport
+	return &updatedPage, projectReport
 }

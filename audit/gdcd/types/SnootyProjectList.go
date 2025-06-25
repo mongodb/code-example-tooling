@@ -29,7 +29,7 @@ type Response struct {
 	Data []DocsProject `json:"data"`
 }
 
-type DocsProjectDetails struct {
+type ProjectDetails struct {
 	ProjectName  string
 	ActiveBranch string
 	ProdUrl      string

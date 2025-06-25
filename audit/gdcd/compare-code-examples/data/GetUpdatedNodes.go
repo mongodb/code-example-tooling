@@ -2,6 +2,7 @@ package data
 
 import (
 	"common"
+	"gdcd/snooty"
 	"gdcd/types"
 	"time"
 )
@@ -49,7 +50,7 @@ int main(void) {
 		Language:       "c",
 		FileExtension:  ".c",
 		Category:       "Usage example",
-		SHA256Hash:     "422b3486866301e76fe74d41441f075a7640091dd9b110d0783134a3f4b2c69f",
+		SHA256Hash:     snooty.MakeSha256HashForCode(codeText),
 		LLMCategorized: true,
 		DateAdded:      time.Now(),
 		IsRemoved:      false,

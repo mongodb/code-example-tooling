@@ -23,6 +23,7 @@ func main() {
 	// NOTE: the GDCD tool can take a long time to run (~1.5-2hrs, depending on your machine)
 	startTime := time.Now()
 	formattedTime := startTime.Format("2006-01-02 15:04:05")
+	fmt.Println("Starting at ", formattedTime)
 
 	logDir := "./logs"
 	logFile, err := utils.InitLogger(logDir)
@@ -63,22 +64,22 @@ func main() {
 	projectsToParse := snooty.GetProjects(client)
 
 	// Uncomment to parse a single project during testing
-	// compass := types.DocsProjectDetails{
+	// compass := types.ProjectDetails{
 	//	ProjectName:  "compass",
 	//	ActiveBranch: "master",
 	//	ProdUrl:      "https://mongodb.com/docs/compass/current",
 	// }
-	// opsManager := types.DocsProjectDetails{
+	// opsManager := types.ProjectDetails{
 	//	ProjectName:  "ops-manager",
 	//	ActiveBranch: "v8.0",
 	//	ProdUrl:      "https://mongodb.com/docs/ops-manager/current",
 	// }
-	// cloudManager := types.DocsProjectDetails{
+	// cloudManager := types.ProjectDetails{
 	//	ProjectName:  "cloud-manager",
 	//	ActiveBranch: "master",
 	//	ProdUrl:      "https://mongodb.com/docs/cloud-manager/",
 	// }
-	// projectsToParse := []types.DocsProjectDetails{compass}
+	// projectsToParse := []types.ProjectDetails{compass}
 
 	// Finish setting up console display to show progress during run
 	totalProjects := len(projectsToParse)
@@ -94,29 +95,29 @@ func main() {
 	// Backup the current database
 	db.BackUpDb()
 
-	// Process docs pages for every project in the projectsToParse array
+	// Process pages for every project in the projectsToParse array
 	firstProject := true
 	for _, project := range projectsToParse {
-		// Get docs pages from the API
-		docsPages := snooty.GetProjectDocuments(project, client)
-		docsPageCount := len(docsPages)
-		log.Printf("Found %d docs pages for project %s\n", docsPageCount, project.ProjectName)
+		// Get pages from the API
+		pages := snooty.GetProjectPages(project, client)
+		pageCount := len(pages)
+		log.Printf("Found %d docs pages for project %s\n", pageCount, project.ProjectName)
 		report := types.ProjectReport{
 			ProjectName: project.ProjectName,
 			Changes:     nil,
 			Issues:      nil,
 			Counter: types.ProjectCounts{
-				TotalCurrentPageCount: docsPageCount,
+				TotalCurrentPageCount: pageCount,
 			},
 		}
-		if docsPageCount > 0 {
+		if pageCount > 0 {
 			if firstProject {
-				utils.SetUpProgressDisplay(totalProjects, docsPageCount, project.ProjectName)
+				utils.SetUpProgressDisplay(totalProjects, pageCount, project.ProjectName)
 				firstProject = false
 			} else {
-				utils.SetNewSecondaryTarget(docsPageCount, project.ProjectName)
+				utils.SetNewSecondaryTarget(pageCount, project.ProjectName)
 			}
-			CheckDocsForUpdates(docsPages, project, llm, ctx, report)
+			CheckPagesForUpdates(pages, project, llm, ctx, report)
 			utils.UpdatePrimaryTarget()
 		} else {
 			report = utils.ReportIssues(types.PagesNotFoundIssue, report, project.ProjectName)

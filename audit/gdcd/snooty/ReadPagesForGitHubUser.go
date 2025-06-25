@@ -8,9 +8,9 @@ import (
 	"log"
 )
 
-// ReadDocsForGitHubUser creates a slice of []types.PageWrapper with logic to avoid double-counting pages as a workaround
+// ReadPagesForGitHubUser creates a slice of []types.PageWrapper with logic to avoid double-counting pages as a workaround
 // for an outstanding DOP bug.
-func ReadDocsForGitHubUser(reader bufio.Reader) []types.PageWrapper {
+func ReadPagesForGitHubUser(reader bufio.Reader) []types.PageWrapper {
 	var allIncomingDocsPages []types.PageWrapper
 	for {
 		line, err := reader.ReadBytes('\n') // Read until newline

@@ -29,7 +29,7 @@ func CompareExistingIncomingCodeExampleSlices(existingNodes []common.CodeNode, e
 
 	// These are existing code nodes from the database, but are not coming in from the Snooty Data API. They must inherently
 	// be removed from the page.
-	var removedPageNodes []common.CodeNode
+	var removedCodeNodes []common.CodeNode
 
 	incomingCount := len(incomingNodes)
 
@@ -142,14 +142,14 @@ func CompareExistingIncomingCodeExampleSlices(existingNodes []common.CodeNode, e
 	// If there are any unmatched existing code nodes after this process is complete, they must have been removed from the page.
 	if len(unmatchedSha256Hashes) > 0 {
 		for hash, _ := range unmatchedSha256Hashes {
-			removedPageNodes = append(removedPageNodes, unmatchedSha256ToCodeNodeMap[hash])
+			removedCodeNodes = append(removedCodeNodes, unmatchedSha256ToCodeNodeMap[hash])
 		}
 	}
 
 	// Make the complete array of code nodes, which will overwrite the existing array. This array consists of: all
 	// previously removed nodes, new removed nodes as of this run, unchanged nodes, updated nodes, and net new nodes.
 	// This function also calls the func to update the report based on the counts.
-	return MakeUpdatedCodeNodesArray(removedPageNodes, existingRemovedNodes, unchangedNodes,
+	return MakeUpdatedCodeNodesArray(removedCodeNodes, existingRemovedNodes, unchangedNodes,
 		updatedPageNodes, incomingUpdatedSha256ToCodeNodeMap, newPageNodes,
 		incomingCount, report, pageId, llm, ctx, isDriversProject)
 }

@@ -84,7 +84,7 @@ func CheckPagesForUpdates(pages []types.PageWrapper, project types.ProjectDetail
 			newPageDBEntries = append(newPageDBEntries, newPage)
 
 			// Update the project counts for the "existing" page
-			report = IncrementProjectCountsForExistingPage(page.CodeNodeCount, page.LiteralIncludeCount, page.IoCodeBlockCount, newPage, report)
+			report = IncrementProjectCountsForExistingPage(newPage.CodeNodesTotal, newPage.LiteralIncludesTotal, newPage.IoCodeBlocksTotal, newPage, report)
 
 			// Report it in the logs as a moved page
 			stringMessageForReport := fmt.Sprintf("Old page ID: %s, new page ID: %s", page.OldPageId, page.NewPageId)

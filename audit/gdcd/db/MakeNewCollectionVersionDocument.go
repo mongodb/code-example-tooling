@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func MakeNewCollectionVersionDocument(existingSummaries common.CollectionReport, project types.DocsProjectDetails, report types.ProjectReport) common.CollectionReport {
+func MakeNewCollectionVersionDocument(existingSummaries common.CollectionReport, project types.ProjectDetails, report types.ProjectReport) common.CollectionReport {
 	collectionInfo := common.CollectionInfoView{
 		TotalPageCount:   report.Counter.TotalCurrentPageCount,
 		TotalCodeCount:   report.Counter.IncomingCodeNodesCount,

@@ -12,7 +12,7 @@ import (
 	"github.com/tmc/langchaingo/llms/ollama"
 )
 
-func MakeNewDocsPage(data types.PageWrapper, siteUrl string, report types.ProjectReport, llm *ollama.LLM, ctx context.Context) (common.DocsPage, types.ProjectReport) {
+func MakeNewPage(data types.PageWrapper, siteUrl string, report types.ProjectReport, llm *ollama.LLM, ctx context.Context) (common.DocsPage, types.ProjectReport) {
 	incomingCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes := snooty.GetCodeExamplesFromIncomingData(data.Data.AST)
 	incomingCodeNodeCount := len(incomingCodeNodes)
 	incomingLiteralIncludeNodeCount := len(incomingLiteralIncludeNodes)

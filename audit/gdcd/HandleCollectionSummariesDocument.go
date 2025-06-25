@@ -7,7 +7,7 @@ import (
 	"gdcd/utils"
 )
 
-func HandleCollectionSummariesDocument(project types.DocsProjectDetails, report types.ProjectReport) (common.CollectionReport, types.ProjectReport) {
+func HandleCollectionSummariesDocument(project types.ProjectDetails, report types.ProjectReport) (common.CollectionReport, types.ProjectReport) {
 	summaryDoc := db.GetAtlasProjectSummaryData(project.ProjectName)
 	var latestCollectionInfo common.CollectionInfoView
 	collectionVersionKey := ""

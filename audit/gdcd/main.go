@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"gdcd/add-code-examples"
+	"gdcd/db"
 	"gdcd/snooty"
 	"gdcd/types"
 	"gdcd/utils"
@@ -89,6 +90,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to connect to ollama: %v", err)
 	}
+
+	// Backup the current database
+	db.BackUpDb()
 
 	// Process docs pages for every project in the projectsToParse array
 	firstProject := true

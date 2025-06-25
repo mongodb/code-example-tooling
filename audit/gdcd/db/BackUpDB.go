@@ -3,14 +3,15 @@ package db
 import (
 	"context"
 	"fmt"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 func BackUpDb() {
@@ -34,12 +35,12 @@ func BackUpDb() {
 			log.Printf("Failed to disconnect from MongoDB: %v", err)
 		}
 	}()
-	// Define the database and collection
+	// Define the database to copy
 	sourceDb := client.Database(dbName)
 
 	// Create a db name for today's backup
 	now := time.Now()
-	// Format the date as "Month_Day"
+	// Format the date as "Month_Date"
 	dateStr := fmt.Sprintf("%s_%d", now.Month(), now.Day())
 	targetDBName := "backup_code_metrics_" + dateStr
 	targetDb := client.Database(targetDBName)
@@ -51,7 +52,7 @@ func BackUpDb() {
 	}
 
 	log.Println("Backing up database...")
-	// Iterate over each collection
+	// Iterate over each collection, copying records from the source to target DB
 	for _, collName := range collectionNames {
 		sourceColl := sourceDb.Collection(collName)
 		targetColl := targetDb.Collection(collName)
@@ -74,6 +75,7 @@ func BackUpDb() {
 			}
 			documents = append(documents, doc)
 		}
+		// If the source collection contains documents, insert them into the target collection
 		if len(documents) > 0 {
 			_, err = targetColl.InsertMany(ctx, documents)
 			if err != nil {

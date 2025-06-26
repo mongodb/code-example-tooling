@@ -73,18 +73,29 @@ func CheckPagesForUpdates(pages []types.PageWrapper, project types.ProjectDetail
 	// If we have moved pages, handle them
 	if movedPages != nil {
 		for _, page := range movedPages {
+			var movedPage common.DocsPage
+			oldPage := db.GetAtlasPageData(project.ProjectName, page.OldPageId)
+
+			if oldPage != nil {
+				movedPage = *oldPage
+				movedPage.ID = page.NewPageId
+				newPageUrl := utils.ConvertSnootyPageIdToProductionUrl(page.NewPageId, project.ProdUrl)
+				movedPage.PageURL = newPageUrl
+			} else {
+				movedPage = MakeNewPage(page.PageData, project.ProjectName, project.ProdUrl, llm, ctx)
+				movedPage.DateAdded = page.DateAdded
+			}
+
 			// Remove the old page from the DB
 			db.RemovePageFromAtlas(project.ProjectName, page.OldPageId)
 
 			// Append the "moved" page to the `newPageDBEntries` array. Because the page ID doesn't match the old one,
 			// we write it to the DB as a new page. Because we just deleted the old page, it works out to the same count
 			// and provides the up-to-date data in the DB.
-			newPage := MakeNewPage(page.PageData, project.ProjectName, project.ProdUrl, llm, ctx)
-			newPage.DateAdded = page.DateAdded
-			newPageDBEntries = append(newPageDBEntries, newPage)
+			newPageDBEntries = append(newPageDBEntries, movedPage)
 
 			// Update the project counts for the "existing" page
-			report = IncrementProjectCountsForExistingPage(newPage.CodeNodesTotal, newPage.LiteralIncludesTotal, newPage.IoCodeBlocksTotal, newPage, report)
+			report = IncrementProjectCountsForExistingPage(movedPage.CodeNodesTotal, movedPage.LiteralIncludesTotal, movedPage.IoCodeBlocksTotal, movedPage, report)
 
 			// Report it in the logs as a moved page
 			stringMessageForReport := fmt.Sprintf("Old page ID: %s, new page ID: %s", page.OldPageId, page.NewPageId)

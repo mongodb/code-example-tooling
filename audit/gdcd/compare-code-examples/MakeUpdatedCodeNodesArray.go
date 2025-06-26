@@ -15,9 +15,9 @@ import (
 func MakeUpdatedCodeNodesArray(removedCodeNodes []common.CodeNode,
 	existingRemovedCodeNodes []common.CodeNode,
 	unchangedPageNodes []common.CodeNode,
-	updatedPageNodes []types.ASTNode,
+	updatedPageNodes []types.ASTNodeWrapper,
 	updatedPageNodesSha256CodeNodeLookup map[string]common.CodeNode,
-	newPageNodes []types.ASTNode,
+	newPageNodes []types.ASTNodeWrapper,
 	incomingCount int,
 	report types.ProjectReport,
 	pageId string,
@@ -30,8 +30,10 @@ func MakeUpdatedCodeNodesArray(removedCodeNodes []common.CodeNode,
 	newAppliedUsageExampleCounts := 0
 
 	// Call all the 'Handle' functions in sequence
-	updatedCodeNodes := HandleUpdatedPageNodes(updatedPageNodes, updatedPageNodesSha256CodeNodeLookup)
-	newCodeNodes := HandleNewPageNodes(newPageNodes, llm, ctx, isDriversProject)
+	updatedCodeNodes, updatedCodeNodeCount := HandleUpdatedPageNodes(updatedPageNodes, updatedPageNodesSha256CodeNodeLookup)
+
+	newCodeNodes, newCodeNodeCount := HandleNewPageNodes(newPageNodes, llm, ctx, isDriversProject)
+
 	removedCodeNodesUpdatedForRemoval := HandleRemovedCodeNodes(removedCodeNodes)
 
 	if len(newCodeNodes) > 0 {
@@ -42,14 +44,18 @@ func MakeUpdatedCodeNodesArray(removedCodeNodes []common.CodeNode,
 		}
 	}
 
+	unchangedPageNodeCount := GetCodeNodeCount(unchangedPageNodes)
+
 	// Make the updated []types.CodeNode array
 	aggregateCodeNodeChanges = append(aggregateCodeNodeChanges, unchangedPageNodes...)
 	aggregateCodeNodeChanges = append(aggregateCodeNodeChanges, updatedCodeNodes...)
 	aggregateCodeNodeChanges = append(aggregateCodeNodeChanges, newCodeNodes...)
 	aggregateCodeNodeChanges = append(aggregateCodeNodeChanges, removedCodeNodesUpdatedForRemoval...)
 
+	aggregateCodeNodeCount := GetCodeNodeCount(aggregateCodeNodeChanges)
+
 	// Increment project counters
-	report = UpdateProjectReportForUpdatedCodeNodes(report, pageId, incomingCount, len(unchangedPageNodes), len(updatedCodeNodes), len(newCodeNodes), len(removedCodeNodesUpdatedForRemoval), len(aggregateCodeNodeChanges), newAppliedUsageExampleCounts)
+	report = UpdateProjectReportForUpdatedCodeNodes(report, pageId, incomingCount, unchangedPageNodeCount, updatedCodeNodeCount, newCodeNodeCount, len(removedCodeNodesUpdatedForRemoval), aggregateCodeNodeCount, newAppliedUsageExampleCounts)
 	// We don't want to report on any of the removed code nodes that were already on the page, but we do want to keep them
 	// around, so append them to the Nodes array after adding and reporting on the new stuff
 	aggregateCodeNodeChanges = append(aggregateCodeNodeChanges, existingRemovedCodeNodes...)

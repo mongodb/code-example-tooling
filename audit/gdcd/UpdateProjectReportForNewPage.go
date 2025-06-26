@@ -3,6 +3,7 @@ package main
 import (
 	"common"
 	"gdcd/add-code-examples"
+	compare_code_examples "gdcd/compare-code-examples"
 	"gdcd/types"
 	"gdcd/utils"
 )
@@ -26,8 +27,8 @@ func UpdateProjectReportForNewPage(page common.DocsPage, report types.ProjectRep
 			if add_code_examples.IsNewAppliedUsageExample(node) {
 				newAppliedUsageExampleCount++
 			}
-			newCodeNodeCount++
 		}
+		newCodeNodeCount = compare_code_examples.GetCodeNodeCount(*page.Nodes)
 	}
 	report.Counter.NewAppliedUsageExamplesCount += newAppliedUsageExampleCount
 

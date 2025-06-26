@@ -8,6 +8,7 @@ import (
 	"gdcd/snooty"
 	"gdcd/types"
 	"gdcd/utils"
+	"time"
 
 	"github.com/tmc/langchaingo/llms/ollama"
 )
@@ -34,6 +35,7 @@ func CheckPagesForUpdates(pages []types.PageWrapper, project types.ProjectDetail
 		if page.Data.Deleted {
 			report = HandleDeletedIncomingPages(project.ProjectName, page, report)
 			incomingDeletedPageCount++
+			utils.UpdateSecondaryTarget()
 		} else {
 			maybeExistingPage := CheckForExistingPage(project.ProjectName, page)
 			if maybeExistingPage != nil {
@@ -46,6 +48,7 @@ func CheckPagesForUpdates(pages []types.PageWrapper, project types.ProjectDetail
 				if updatedPage != nil {
 					updatedPages = append(updatedPages, *updatedPage)
 				}
+				utils.UpdateSecondaryTarget()
 			} else {
 				// If there is no existing document in Atlas that matches the page, we need to make a new page. BUT!
 				// It might actually be a new or moved page. So store it in a temp `maybeNewPages` slice so we can compare
@@ -54,7 +57,7 @@ func CheckPagesForUpdates(pages []types.PageWrapper, project types.ProjectDetail
 				maybeNewPages = append(maybeNewPages, newOrMovedPage)
 			}
 		}
-		utils.UpdateSecondaryTarget()
+		//utils.UpdateSecondaryTarget()
 	}
 
 	// After iterating through the incoming pages from the Snooty Data API, we need to figure out if any of the page IDs
@@ -67,6 +70,7 @@ func CheckPagesForUpdates(pages []types.PageWrapper, project types.ProjectDetail
 			newPage := MakeNewPage(page.PageData, project.ProjectName, project.ProdUrl, llm, ctx)
 			newPageDBEntries = append(newPageDBEntries, newPage)
 			report = UpdateProjectReportForNewPage(newPage, report)
+			utils.UpdateSecondaryTarget()
 		}
 	}
 
@@ -79,7 +83,8 @@ func CheckPagesForUpdates(pages []types.PageWrapper, project types.ProjectDetail
 			if oldPage != nil {
 				movedPage = *oldPage
 				movedPage.ID = page.NewPageId
-				newPageUrl := utils.ConvertSnootyPageIdToProductionUrl(page.NewPageId, project.ProdUrl)
+				newPageUrl := utils.ConvertAtlasPageIdToProductionUrl(page.NewPageId, project.ProdUrl)
+				movedPage.DateLastUpdated = time.Now()
 				movedPage.PageURL = newPageUrl
 			} else {
 				movedPage = MakeNewPage(page.PageData, project.ProjectName, project.ProdUrl, llm, ctx)
@@ -100,6 +105,7 @@ func CheckPagesForUpdates(pages []types.PageWrapper, project types.ProjectDetail
 			// Report it in the logs as a moved page
 			stringMessageForReport := fmt.Sprintf("Old page ID: %s, new page ID: %s", page.OldPageId, page.NewPageId)
 			report = utils.ReportChanges(types.PageMoved, report, stringMessageForReport)
+			utils.UpdateSecondaryTarget()
 		}
 	}
 

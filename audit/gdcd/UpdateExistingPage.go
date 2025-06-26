@@ -3,8 +3,8 @@ package main
 import (
 	"common"
 	"context"
-	add_code_examples "gdcd/add-code-examples"
-	compare_code_examples "gdcd/compare-code-examples"
+	"gdcd/add-code-examples"
+	"gdcd/compare-code-examples"
 	"gdcd/db"
 	"gdcd/snooty"
 	"gdcd/types"

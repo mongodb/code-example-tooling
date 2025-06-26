@@ -29,7 +29,7 @@ func AddProductNames(db *mongo.Database, ctx context.Context) {
 		"csharp":                "Drivers",
 		"database-tools":        "Database Tools",
 		"docs":                  "Server",
-		"docs-django":           "Drivers",
+		"docs-django":           "Django Integration",
 		"docs-entity-framework": "Drivers", // Missing from taxonomy/this is a guess
 		"docs-golang":           "Drivers",
 		"docs-java":             "Drivers",
@@ -39,6 +39,7 @@ func AddProductNames(db *mongo.Database, ctx context.Context) {
 		"kotlin":                "Drivers",
 		"kotlin-sync":           "Drivers",
 		"laravel":               "Drivers",
+		"mcp-server":            "MongoDB MCP Server",
 		"mck":                   "Enterprise Kubernetes Operator",
 		"mongoid":               "Drivers",
 		"mongodb-shell":         "MongoDB Shell",

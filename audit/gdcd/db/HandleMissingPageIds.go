@@ -116,10 +116,15 @@ func checkIfPageIdsOverlap(oldPageId string, newPageId string) bool {
 	// `create-mongodb-user-for-cluster` - is what we're considering the page title
 	oldPageName := getPageTitleFromId(oldPageId)
 	newPageName := getPageTitleFromId(newPageId)
+	newPageSegments := getExtendedPageTitleFromId(newPageName)
 
 	// The simplest case is a restructure that moves the pages from one directory to another without any changes.
 	// If the page name is an exact match, we can return true, because the page title overlaps 100%
 	if oldPageName == newPageName {
+		return true
+		// In some cases, the page may have become a title page for a section, and may now have pages below it. Check
+		// if the old page name is up a directory level.
+	} else if contains(newPageSegments, oldPageName) {
 		return true
 	} else {
 		// If it's not a 1:1 move the page without changing the title situation, we can compare the page titles to try
@@ -138,6 +143,24 @@ func getPageTitleFromId(pageId string) string {
 	} else {
 		return ""
 	}
+}
+
+func getExtendedPageTitleFromId(pageId string) []string {
+	parts := strings.Split(pageId, "|")
+
+	var titleSegments []string
+	// Get the last element
+	if len(parts) > 0 {
+		lastElement := parts[len(parts)-1] // Access the last index
+		titleSegments = append(titleSegments, lastElement)
+	}
+	// If there are multiple elements, get the second-to-last element. This may contain something that _used_ to match
+	// the page ID when we are now nesting pages below it
+	if len(parts) > 1 {
+		secondToLastElement := parts[len(parts)-2]
+		titleSegments = append(titleSegments, secondToLastElement)
+	}
+	return titleSegments
 }
 
 func pageNamesHaveCommonElements(oldPageName string, newPageName string) bool {

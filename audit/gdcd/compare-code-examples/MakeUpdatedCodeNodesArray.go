@@ -34,7 +34,7 @@ func MakeUpdatedCodeNodesArray(removedCodeNodes []common.CodeNode,
 
 	newCodeNodes, newCodeNodeCount := HandleNewPageNodes(newPageNodes, llm, ctx, isDriversProject)
 
-	removedCodeNodesUpdatedForRemoval := HandleRemovedCodeNodes(removedCodeNodes)
+	removedCodeNodesUpdatedForRemoval, newRemovedCodeNodesCount := HandleRemovedCodeNodes(removedCodeNodes)
 
 	if len(newCodeNodes) > 0 {
 		for _, node := range newCodeNodes {
@@ -55,7 +55,7 @@ func MakeUpdatedCodeNodesArray(removedCodeNodes []common.CodeNode,
 	aggregateCodeNodeCount := GetCodeNodeCount(aggregateCodeNodeChanges)
 
 	// Increment project counters
-	report = UpdateProjectReportForUpdatedCodeNodes(report, pageId, incomingCount, unchangedPageNodeCount, updatedCodeNodeCount, newCodeNodeCount, len(removedCodeNodesUpdatedForRemoval), aggregateCodeNodeCount, newAppliedUsageExampleCounts)
+	report = UpdateProjectReportForUpdatedCodeNodes(report, pageId, incomingCount, unchangedPageNodeCount, updatedCodeNodeCount, newCodeNodeCount, newRemovedCodeNodesCount, aggregateCodeNodeCount, newAppliedUsageExampleCounts)
 	// We don't want to report on any of the removed code nodes that were already on the page, but we do want to keep them
 	// around, so append them to the Nodes array after adding and reporting on the new stuff
 	aggregateCodeNodeChanges = append(aggregateCodeNodeChanges, existingRemovedCodeNodes...)

@@ -18,7 +18,7 @@ func HandleNewPageNodes(newIncomingPageNodes []types.ASTNodeWrapper, llm *ollama
 		newNode := snooty.MakeCodeNodeFromSnootyAST(incomingNode.Node, llm, ctx, isDriversProject)
 		if incomingNode.InstancesOnPage > 1 {
 			newNode.InstancesOnPage = incomingNode.InstancesOnPage
-			newCodeNodeCount += newNode.InstancesOnPage
+			newCodeNodeCount += incomingNode.InstancesOnPage
 		} else {
 			newCodeNodeCount++
 		}

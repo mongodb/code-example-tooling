@@ -23,9 +23,9 @@ func HandleUpdatedPageNodes(updatedPageNodes []types.ASTNodeWrapper, incomingSha
 		codeNode.Code = whiteSpaceTrimmedString
 		codeNode.SHA256Hash = hash
 		codeNode.DateUpdated = time.Now()
-		if incomingNode.InstancesOnPage != 0 {
+		if incomingNode.InstancesOnPage > 1 {
 			codeNode.InstancesOnPage = incomingNode.InstancesOnPage
-			updatedCodeNodeCount += codeNode.InstancesOnPage
+			updatedCodeNodeCount += incomingNode.InstancesOnPage
 		} else {
 			updatedCodeNodeCount++
 		}

@@ -57,7 +57,6 @@ func CheckPagesForUpdates(pages []types.PageWrapper, project types.ProjectDetail
 				maybeNewPages = append(maybeNewPages, newOrMovedPage)
 			}
 		}
-		//utils.UpdateSecondaryTarget()
 	}
 
 	// After iterating through the incoming pages from the Snooty Data API, we need to figure out if any of the page IDs
@@ -99,13 +98,19 @@ func CheckPagesForUpdates(pages []types.PageWrapper, project types.ProjectDetail
 			// and provides the up-to-date data in the DB.
 			newPageDBEntries = append(newPageDBEntries, movedPage)
 
-			incomingCodeNodeCount, incomingLiteralIncludeCount, incomingIoCodeBlockCount := snooty.GetCodeExamplesFromIncomingData(page.PageData.AST)
+			incomingAstCodeNodes, incomingAstLiteralIncludeNodes, incomingAstIoCodeBlockNodes := snooty.GetCodeExamplesFromIncomingData(page.PageData.AST)
+			incomingAstCodeNodeCount := len(incomingAstCodeNodes)
+			incomingAstLiteralIncludeNodesCount := len(incomingAstLiteralIncludeNodes)
+			incomingAstIoCodeBlockNodesCount := len(incomingAstIoCodeBlockNodes)
 			// Update the project counts for the "existing" page
-			report = IncrementProjectCountsForExistingPage(len(incomingCodeNodeCount), len(incomingLiteralIncludeCount), len(incomingIoCodeBlockCount), movedPage, report)
+			report = IncrementProjectCountsForExistingPage(incomingAstCodeNodeCount, incomingAstLiteralIncludeNodesCount, incomingAstIoCodeBlockNodesCount, movedPage, report)
 
 			// Report it in the logs as a moved page
 			stringMessageForReport := fmt.Sprintf("Old page ID: %s, new page ID: %s", page.OldPageId, page.NewPageId)
 			report = utils.ReportChanges(types.PageMoved, report, stringMessageForReport)
+			if movedPage.CodeNodesTotal != incomingAstCodeNodeCount {
+				utils.ReportIssues(types.CodeNodeCountIssue, report, page.NewPageId, page.CodeNodeCount, len(incomingAstCodeNodes))
+			}
 			utils.UpdateSecondaryTarget()
 		}
 	}

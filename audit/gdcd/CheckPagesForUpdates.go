@@ -99,8 +99,9 @@ func CheckPagesForUpdates(pages []types.PageWrapper, project types.ProjectDetail
 			// and provides the up-to-date data in the DB.
 			newPageDBEntries = append(newPageDBEntries, movedPage)
 
+			incomingCodeNodeCount, incomingLiteralIncludeCount, incomingIoCodeBlockCount := snooty.GetCodeExamplesFromIncomingData(page.PageData.AST)
 			// Update the project counts for the "existing" page
-			report = IncrementProjectCountsForExistingPage(movedPage.CodeNodesTotal, movedPage.LiteralIncludesTotal, movedPage.IoCodeBlocksTotal, movedPage, report)
+			report = IncrementProjectCountsForExistingPage(len(incomingCodeNodeCount), len(incomingLiteralIncludeCount), len(incomingIoCodeBlockCount), movedPage, report)
 
 			// Report it in the logs as a moved page
 			stringMessageForReport := fmt.Sprintf("Old page ID: %s, new page ID: %s", page.OldPageId, page.NewPageId)

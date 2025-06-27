@@ -12,11 +12,15 @@ import (
 
 func TestHandleUpdatedPageNodesCorrectlyUpdatesValues(t *testing.T) {
 	codeNode, astNode := data.GetUpdatedNodes()
+	astNodeWrapper := types.ASTNodeWrapper{
+		InstancesOnPage: 1,
+		Node:            astNode,
+	}
 	sha256HashCodeNodeLookupMap := make(map[string]common.CodeNode)
 	whitespaceTrimmedString := strings.TrimSpace(astNode.Value)
 	incomingSha26Hash := snooty.MakeSha256HashForCode(whitespaceTrimmedString)
 	sha256HashCodeNodeLookupMap[incomingSha26Hash] = codeNode
-	updatedCodeNodes := HandleUpdatedPageNodes([]types.ASTNode{astNode}, sha256HashCodeNodeLookupMap)
+	updatedCodeNodes, _ := HandleUpdatedPageNodes([]types.ASTNodeWrapper{astNodeWrapper}, sha256HashCodeNodeLookupMap)
 	updatedCodeNode := updatedCodeNodes[0]
 	if updatedCodeNode.SHA256Hash != incomingSha26Hash {
 		t.Errorf("FAILED: got %s on the code node hash, want %s", updatedCodeNode.SHA256Hash, incomingSha26Hash)

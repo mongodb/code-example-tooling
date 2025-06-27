@@ -18,10 +18,10 @@ import (
 // This function attempts to assign a state to & appropriately handle every node.
 func CompareExistingIncomingCodeExampleSlices(existingNodes []common.CodeNode, existingRemovedNodes []common.CodeNode, incomingNodes []types.ASTNode, report types.ProjectReport, pageId string, llm *ollama.LLM, ctx context.Context, isDriversProject bool) ([]common.CodeNode, types.ProjectReport) {
 	// These are page nodes that are a partial match for nodes on the page. We assume they are making updates to an existing node.
-	var updatedPageNodes []types.ASTNode
+	var updatedPageNodes []types.ASTNodeWrapper
 
 	// These are incoming AST nodes that do not match any existing code nodes on the page. They are net new.
-	var newPageNodes []types.ASTNode
+	var newPageNodes []types.ASTNodeWrapper
 
 	// These are existing code nodes from the database that match incoming AST nodes from the Snooty Data API.
 	// They are exact matches that are unchanged.
@@ -77,47 +77,49 @@ func CompareExistingIncomingCodeExampleSlices(existingNodes []common.CodeNode, e
 		// Check to see if the incoming AST node hash is an exact match for an unmatched existing code node hash, and
 		// the count is at least 1
 		if unmatchedSha256Hashes[hash] >= 1 {
-			// Get the matching code node and append it to the array of unchanged code nodes. We use this to construct the
-			// new array of nodes on the page.
+			// Get the matching code node
 			unchangedCodeNode := unmatchedSha256ToCodeNodeMap[hash]
-			unchangedNodes = append(unchangedNodes, unchangedCodeNode)
-			// If this hash appears only once in the existing hashes, delete it from the hash list and map. We don't
-			// want to consider it as a possible match for other nodes.
-			if unmatchedSha256Hashes[hash] == 1 {
+
+			if unchangedCodeNode.InstancesOnPage != 0 && unchangedCodeNode.InstancesOnPage != count {
+				// If the unchanged code node does not match the count of number of times this hash appears, decrement
+				// one instance from the counter since we are counting it as a "match" here. we don't just want to
+				// delete it because it may also match an "update" later.
+				unmatchedSha256Hashes[hash]--
+			} else if unchangedCodeNode.InstancesOnPage == 0 && unmatchedSha256Hashes[hash] > 1 {
+				// If `InstancesOnPage` is unitialized, we can't compare it with the hash count, so just decrement the hash count
+				unmatchedSha256Hashes[hash]--
+			} else {
+				// If it _does_ match the number of times the hash appears, consider it unchanged. Delete it from the
+				// unmatched hash list and map. Now that it has matched, we don't need to consider it as a possible
+				// match for other nodes.
 				delete(unmatchedSha256Hashes, hash)
 				delete(unmatchedSha256ToCodeNodeMap, hash)
-			} else {
-				// If a sha256 hash appears more than once on a page, decrement one instance from the counter since
-				// we are counting it as a "match" here
-				unmatchedSha256Hashes[hash]--
 			}
-			// If the hash exists only once in the incoming AST node hash map, delete it from the hash list and map.
-			// Otherwise, decrement the count of times it appears.
-			if count == 1 {
-				delete(snootySha256Hashes, hash)
-				delete(snootySha256ToAstNodeMap, hash)
-			} else {
-				snootySha256Hashes[hash]--
-			}
+
+			// Update the count to reflect how many times it currently appears on the page
+			unchangedCodeNode.InstancesOnPage = count
+
+			// Append it to the array of unchanged nodes. We use this to rebuild the array of code nodes we'll write to the DB.
+			unchangedNodes = append(unchangedNodes, unchangedCodeNode)
+
+			// Delete it from the incoming hash list and map.
+			delete(snootySha256Hashes, hash)
+			delete(snootySha256ToAstNodeMap, hash)
 		}
 	}
 
 	// Now start checking whether the remaining incoming AST nodes are updates or net new examples.
 	for hash, count := range snootySha256Hashes {
 		astNode := snootySha256ToAstNodeMap[hash]
+		nodePlusMetadata := types.ASTNodeWrapper{
+			InstancesOnPage: count,
+			Node:            astNode,
+		}
 		// Figure out whether the AST node is new or updated. If it matches an existing code node in the DB,
 		// this function returns the existing code node along with the string "newExample" or "updated".
 		newOrUpdated, existingNode := CodeNewOrUpdated(unmatchedSha256ToCodeNodeMap, astNode)
 		if newOrUpdated == newExample {
-			newPageNodes = append(newPageNodes, astNode)
-			// If the hash exists only once in the incoming AST node hash map, delete it from the hash list and map.
-			// Otherwise, decrement the count of times it appears.
-			if count == 1 {
-				delete(snootySha256Hashes, hash)
-				delete(snootySha256ToAstNodeMap, hash)
-			} else {
-				snootySha256Hashes[hash]--
-			}
+			newPageNodes = append(newPageNodes, nodePlusMetadata)
 		} else {
 			if existingNode != nil {
 				incomingUpdatedSha256ToCodeNodeMap[hash] = *existingNode
@@ -135,7 +137,7 @@ func CompareExistingIncomingCodeExampleSlices(existingNodes []common.CodeNode, e
 					unmatchedSha256Hashes[existingNode.SHA256Hash]--
 				}
 			}
-			updatedPageNodes = append(updatedPageNodes, astNode)
+			updatedPageNodes = append(updatedPageNodes, nodePlusMetadata)
 		}
 	}
 

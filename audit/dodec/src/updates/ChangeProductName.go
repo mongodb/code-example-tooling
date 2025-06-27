@@ -9,9 +9,14 @@ import (
 )
 
 // ChangeProductName sets the `product` field value to a new value that you specify for all documents in the given collection.
+// Run this function to populate any changes made to the mapped product names in `GetProductSubProduct` in GDCD.
 func ChangeProductName(db *mongo.Database, ctx context.Context) {
-	collection := db.Collection("atlas-architecture") // Set the collection where you need to update the product name
-	newProductName := "Atlas Architecture Center"     // Specify the new name for the product
+
+	// ===== CONFIGURATION: Set these values before running =====
+	collection := db.Collection("atlas-architecture") // collection to update (this should match the project name in GDCD)
+	newProductName := "Atlas Architecture Center"     // New product name to apply to the documents
+	// ==========================================================
+
 	// Omit the summary document, as the `$set` operator would add this field to the doc
 	filter := bson.M{
 		"_id": bson.M{

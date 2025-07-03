@@ -3,8 +3,8 @@ package main
 import (
 	"common"
 	"context"
-	add_code_examples "gdcd/add-code-examples"
-	compare_code_examples "gdcd/compare-code-examples"
+	"gdcd/add-code-examples"
+	"gdcd/compare-code-examples"
 	"gdcd/db"
 	"gdcd/snooty"
 	"gdcd/types"
@@ -17,14 +17,15 @@ import (
 func UpdateExistingPage(existingPage common.DocsPage, data types.PageWrapper, projectReport types.ProjectReport, llm *ollama.LLM, ctx context.Context) (*common.DocsPage, types.ProjectReport) {
 	var existingCurrentCodeNodes []common.CodeNode
 	var existingRemovedCodeNodes []common.CodeNode
+	existingCodeNodeCount := 0
 	// Some of the existing Nodes on the page could have been previously removed from the page. So we need to know which
 	// nodes are "currently" on the page, and which nodes have already been removed. The ones that are "currently" on the
 	// page should be used to compare code examples, but the ones that have already been removed from the page will be
 	// appended to the Nodes array without changes after making all the other updates.
 	if existingPage.Nodes != nil {
 		existingCurrentCodeNodes, existingRemovedCodeNodes = db.GetCurrentRemovedAtlasCodeNodes(*existingPage.Nodes)
+		existingCodeNodeCount = compare_code_examples.GetCodeNodeCount(*existingPage.Nodes)
 	}
-	existingCodeNodeCount := len(existingCurrentCodeNodes)
 	incomingCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes := snooty.GetCodeExamplesFromIncomingData(data.Data.AST)
 	maybePageKeywords := snooty.GetMetaKeywords(data.Data.AST.Children)
 	newAppliedUsageExampleCount := 0
@@ -75,7 +76,12 @@ func UpdateExistingPage(existingPage common.DocsPage, data types.PageWrapper, pr
 				node.DateRemoved = time.Now()
 				node.IsRemoved = true
 				updatedCodeNodes = append(updatedCodeNodes, node)
-				newRemovedNodeCount++
+				if node.InstancesOnPage > 0 {
+					newRemovedNodeCount += node.InstancesOnPage
+					node.InstancesOnPage = 0
+				} else {
+					newRemovedNodeCount++
+				}
 			} else {
 				updatedCodeNodes = append(updatedCodeNodes, node)
 			}
@@ -123,7 +129,7 @@ func UpdateExistingPage(existingPage common.DocsPage, data types.PageWrapper, pr
 				newAppliedUsageExampleCount++
 			}
 		}
-		newCodeNodeCount := len(newCodeNodes)
+		newCodeNodeCount := compare_code_examples.GetCodeNodeCount(newCodeNodes)
 		updatedPage.Nodes = &newCodeNodes
 
 		// Update the AST code node count, io-block-count and literalinclude count

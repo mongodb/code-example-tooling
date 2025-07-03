@@ -18,12 +18,23 @@ func MakeLanguagesArray(codeNodes []common.CodeNode, literalIncludeNodes []types
 			continue
 		} else {
 			if languageCounts, exists := languages[node.Language]; exists {
-				languageCounts.Total += 1
-				languages[node.Language] = languageCounts
+				if node.InstancesOnPage > 0 {
+					languageCounts.Total += node.InstancesOnPage
+					languages[node.Language] = languageCounts
+				} else {
+					languageCounts.Total += 1
+					languages[node.Language] = languageCounts
+				}
 			} else {
-				countsForLang := languages[common.Undefined]
-				countsForLang.LiteralIncludes += 1
-				languages[common.Undefined] = countsForLang
+				if node.InstancesOnPage > 0 {
+					countsForLang := languages[common.Undefined]
+					countsForLang.Total += node.InstancesOnPage
+					languages[common.Undefined] = countsForLang
+				} else {
+					countsForLang := languages[common.Undefined]
+					countsForLang.Total += 1
+					languages[common.Undefined] = countsForLang
+				}
 			}
 		}
 	}

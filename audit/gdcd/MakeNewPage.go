@@ -3,7 +3,6 @@ package main
 import (
 	"common"
 	"context"
-	add_code_examples "gdcd/add-code-examples"
 	"gdcd/snooty"
 	"gdcd/types"
 	"gdcd/utils"
@@ -12,35 +11,51 @@ import (
 	"github.com/tmc/langchaingo/llms/ollama"
 )
 
-func MakeNewPage(data types.PageWrapper, siteUrl string, report types.ProjectReport, llm *ollama.LLM, ctx context.Context) (common.DocsPage, types.ProjectReport) {
-	incomingCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes := snooty.GetCodeExamplesFromIncomingData(data.Data.AST)
+func MakeNewPage(data types.PageMetadata, projectName string, siteUrl string, llm *ollama.LLM, ctx context.Context) common.DocsPage {
+	incomingCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes := snooty.GetCodeExamplesFromIncomingData(data.AST)
 	incomingCodeNodeCount := len(incomingCodeNodes)
 	incomingLiteralIncludeNodeCount := len(incomingLiteralIncludeNodes)
 	incomingIoCodeNodeCount := len(incomingIoCodeBlockNodes)
-	pageId := utils.ConvertSnootyPageIdToAtlasPageId(data.Data.PageID)
-	pageUrl := utils.ConvertSnootyPageIdToProductionUrl(data.Data.PageID, siteUrl)
-	product, subProduct := GetProductSubProduct(report.ProjectName, pageUrl)
+	pageId := utils.ConvertSnootyPageIdToAtlasPageId(data.PageID)
+	pageUrl := utils.ConvertSnootyPageIdToProductionUrl(data.PageID, siteUrl)
+	product, subProduct := GetProductSubProduct(projectName, pageUrl)
 	var isDriversProject bool
 	if product == "Drivers" {
 		isDriversProject = true
 	} else {
 		isDriversProject = false
 	}
-	newAppliedUsageExampleCount := 0
-	var newCodeNodes []common.CodeNode
+
+	// Some of the new code examples coming in from the page may be duplicates. So we first make Sha256 hashes of the
+	// incoming code examples, and count the number of times the hash appears on the page.
+	snootySha256Hashes := make(map[string]int)
+	snootySha256ToAstNodeMap := make(map[string]types.ASTNode)
+
 	for _, node := range incomingCodeNodes {
-		newNode := snooty.MakeCodeNodeFromSnootyAST(node, llm, ctx, isDriversProject)
-		newCodeNodes = append(newCodeNodes, newNode)
-		if add_code_examples.IsNewAppliedUsageExample(newNode) {
-			newAppliedUsageExampleCount++
-		}
+		// This makes a hash from the whitespace-trimmed AST node. We trim whitespace on AST nodes before adding
+		// them to the DB, so this ensures an incoming node hash can match a whitespace-trimmed existing node hash.
+		hash := snooty.MakeSha256HashForCode(node.Value)
+
+		// Add the hash as an entry in the map, and increment its counter. If the hash does not already exist in the map,
+		// this will create it. If it does already exist, this will just increment its counter.
+		snootySha256Hashes[hash]++
+		snootySha256ToAstNodeMap[hash] = node
 	}
-	maybeKeywords := snooty.GetMetaKeywords(data.Data.AST.Children)
+
+	// Then, we go through the hashes, create the corresponding codeNodes, and set the `InstancesOnPage` if the example
+	// appears more than once on the page.
+	var newCodeNodes []common.CodeNode
+	for hash, count := range snootySha256Hashes {
+		newNode := snooty.MakeCodeNodeFromSnootyAST(snootySha256ToAstNodeMap[hash], llm, ctx, isDriversProject)
+		if count > 1 {
+			newNode.InstancesOnPage = count
+		}
+		newCodeNodes = append(newCodeNodes, newNode)
+	}
+
+	maybeKeywords := snooty.GetMetaKeywords(data.AST.Children)
 
 	languagesArrayValues := MakeLanguagesArray(newCodeNodes, incomingLiteralIncludeNodes, incomingIoCodeBlockNodes)
-
-	// Report relevant details for the new page
-	report = UpdateProjectReportForNewPage(incomingCodeNodeCount, incomingLiteralIncludeNodeCount, incomingIoCodeNodeCount, len(newCodeNodes), newAppliedUsageExampleCount, pageId, report)
 
 	return common.DocsPage{
 		ID:                   pageId,
@@ -52,9 +67,9 @@ func MakeNewPage(data types.PageWrapper, siteUrl string, report types.ProjectRep
 		LiteralIncludesTotal: incomingLiteralIncludeNodeCount,
 		Nodes:                &newCodeNodes,
 		PageURL:              pageUrl,
-		ProjectName:          report.ProjectName,
+		ProjectName:          projectName,
 		Product:              product,
 		SubProduct:           subProduct,
 		Keywords:             maybeKeywords,
-	}, report
+	}
 }

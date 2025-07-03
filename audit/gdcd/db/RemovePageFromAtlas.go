@@ -42,9 +42,15 @@ func RemovePageFromAtlas(collectionName string, pageId string) bool {
 	if err != nil {
 		log.Printf("Failed to delete MongoDB document for pageId %s: %v\n", pageId, err)
 	}
-	if deleteResult.DeletedCount == 1 {
-		return true
+	if deleteResult != nil {
+		if deleteResult.DeletedCount == 1 {
+			return true
+		} else {
+			log.Printf("Attmpted to delete MongoDB document for pageId %s and got this deleted count: %v\n", pageId, deleteResult.DeletedCount)
+			return false
+		}
 	} else {
+		log.Printf("Attempted to delete MongoDB document for pageId %s but the delete result was nil.\n", pageId)
 		return false
 	}
 }

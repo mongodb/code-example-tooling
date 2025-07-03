@@ -25,6 +25,8 @@ func ReportChanges(changeType types.ChangeType, report types.ProjectReport, stri
 		message = fmt.Sprintf("Page ID: %s", stringArg)
 	case types.PageUpdated:
 		message = fmt.Sprintf("Page ID: %s", stringArg)
+	case types.PageMoved:
+		message = fmt.Sprintf("%s", stringArg)
 	case types.PageRemoved:
 		message = fmt.Sprintf("Page ID: %s", stringArg)
 	case types.KeywordsUpdated:

@@ -33,7 +33,7 @@ func TestCategorizeTextSnippet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := CategorizeTextSnippet(tt.args.contents, tt.args.llm, tt.args.ctx); got != tt.want {
+			if got, _ := CategorizeTextSnippet(tt.args.contents, tt.args.llm, tt.args.ctx); got != tt.want {
 				t.Errorf("CategorizeTextSnippet() = got %v, want %v", got, tt.want)
 			}
 		})

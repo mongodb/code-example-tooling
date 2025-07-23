@@ -1,104 +1,31 @@
 package main
 
 import (
+	"common"
 	"strings"
 )
 
-/*
- * IMPORTANT: If you update mapped product values in this file, you must also run
- * the `changeProductName` function in DODEC to populate the new product values
- * to existing documents already in Atlas.
- */
-
-// GetProductSubProduct returns the product taxonomy for a given page in a project, which corresponds to collection in Atlas.
-// It uses predefined mappings to determine the product and sub-product, if any, based on the project name and page URL.
+// GetProductSubProduct returns the product taxonomy for a given page in a project, where the project corresponds to a
+// collection in our code example database. It uses predefined mappings from the `common` package to determine the product
+// and sub-product, if any, based on the project name and page URL.
+// NOTE: If the project is `cloud-docs` and the page ID contains a subdirectory string that corresponds to a mapped Atlas
+// sub-product, the function returns that string.
 func GetProductSubProduct(project string, page string) (string, string) {
+	var productInfo common.ProductInfo
 
-	// Maps a project to a product name. Every project should have a corresponding product.
-	// Keys are the project names (in alpha order), and values are product names (from Docs taxonomy).
-	// This sets the `product` field for all documents in the project's collection in Atlas; otherwise, the field is left empty.
-	collectionProducts := map[string]string{
-		"atlas-cli":                "Atlas",
-		"atlas-operator":           "Atlas",
-		"atlas-architecture":       "Atlas Architecture Center",
-		"bi-connector":             "BI Connector",
-		"c":                        "Drivers",
-		"charts":                   "Atlas",
-		"cloud-docs":               "Atlas",
-		"cloud-manager":            "Cloud Manager",
-		"cloudgov":                 "Atlas", // Missing from taxonomy/this is a guess
-		"cluster-sync":             "Cluster-to-Cluster sync",
-		"compass":                  "Compass",
-		"cpp-driver":               "Drivers",
-		"csharp":                   "Drivers",
-		"database-tools":           "Database Tools",
-		"django":                   "Django Integration",
-		"docs":                     "Server",
-		"docs-k8s-operator":        "Enterprise Kubernetes Operator",
-		"docs-relational-migrator": "Relational Migrator",
-		"entity-framework":         "Drivers", // TODO: "Entity Framework Core Provider" DOCSP-50997 to add to taxonomy
-		"golang":                   "Drivers",
-		"java":                     "Drivers",
-		"java-rs":                  "Drivers",
-		"kafka-connector":          "Kafka Connector",
-		"kotlin":                   "Drivers",
-		"kotlin-sync":              "Drivers",
-		"laravel":                  "Drivers",
-		"mck":                      "Enterprise Kubernetes Operator",
-		"mcp-server":               "MongoDB MCP Server", // DOCSP-50997 to add to taxonomy
-		"mongoid":                  "Drivers",
-		"mongodb-shell":            "MongoDB Shell",
-		"mongocli":                 "MongoDB CLI",
-		"node":                     "Drivers",
-		"ops-manager":              "Ops Manager",
-		"php-library":              "Drivers", // DOCSP-51020 to add to taxonomy/programmatic tagging
-		"pymongo":                  "Drivers",
-		"pymongo-arrow":            "Drivers",
-		"ruby-driver":              "Drivers",
-		"rust":                     "Drivers",
-		"scala":                    "Drivers",
-		"spark-connector":          "Spark Connector",
-	}
-
-	// Maps a project to a sub-product, when applicable.
-	// Keys are the project names (in alpha order), and values are sub-product names (from Docs taxonomy).
-	// This sets the `sub_product` field for all documents in the project's collection in Atlas; otherwise, the field is omitted.
-	collectionSubProducts := map[string]string{
-		"atlas-cli":      "Atlas CLI",
-		"atlas-operator": "Kubernetes Operator",
-		"charts":         "Charts",
-	}
-
-	// Maps a subdirectory in the `cloud-docs` project to a sub-product, when applicable.
-	// Keys are the subdirectory names (in alpha order), and values are sub-product names (from Docs taxonomy).
-	// This sets the `sub_product` field for documents in the `cloud-docs` collection in Atlas whose page URL contains the subdirectory string; otherwise, the field is omitted.
-	atlasCollectionSubProductByDir := map[string]string{
-		"atlas-stream-processing": "Stream Processing",
-		"atlas-search":            "Search",
-		"atlas-vector-search":     "Vector Search",
-		"data-federation":         "Data Federation",
-		"online-archive":          "Online Archive",
-		"triggers":                "Triggers",
-	}
-
-	product := collectionProducts[project]
-	subProduct := ""
-
+	// If the project is `cloud-docs`, the subdirectory of the docs may correspond with one of the subproductdir strings.
+	// Each of them represents a different sub-product of Atlas. If the string is present in the page ID, return the
+	// corresponding product info.
 	if project == "cloud-docs" {
-		for directory, displayName := range atlasCollectionSubProductByDir {
-			if strings.Contains(page, directory) {
-				subProduct = displayName
+		subProductStringKeys := common.SubProductDirs
+		for _, dir := range subProductStringKeys {
+			if strings.Contains(page, dir) {
+				productInfo = common.GetProductInfo(dir)
 			}
 		}
 	} else {
-		// If it's a collection that directly correlates to one of the collectionSubProducts, it's an Atlas product
-		// and has the relevant sub-product display name
-		displayName, exists := collectionSubProducts[project]
-		if exists {
-			product = "Atlas"
-			subProduct = displayName
-			return product, subProduct
-		}
+		// Otherwise, just get the product/sub-product info defined in the common package
+		productInfo = common.GetProductInfo(project)
 	}
-	return product, subProduct
+	return productInfo.ProductName, productInfo.SubProduct
 }

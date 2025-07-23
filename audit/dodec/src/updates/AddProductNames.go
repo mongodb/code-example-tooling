@@ -1,130 +1,101 @@
 package updates
 
 import (
+	"common"
 	"context"
 	"fmt"
-	"log"
-	"regexp"
-
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"log"
+	"regexp"
 )
 
-// AddProductNames adds a human-readable `product` and `sub_product` (where applicable) fields to documents with values that correspond
-// to the Docs Taxonomy. If the document in the collection already has the applicable field(s), no change is made.
-// NOTE: Map uses the Snooty `project_name` (defined in the repo's `snooty.toml` file as `name`)
+// AddProductNames adds human-readable `product` and `sub_product` (where applicable) fields to documents with values
+// that correspond to the Docs Taxonomy. The mappings are defined in the `common` module. If the document in the
+// collection already has the applicable field(s), no change is made.
 func AddProductNames(db *mongo.Database, ctx context.Context) {
-	collectionProducts := map[string]string{
-		"atlas-cli":             "Atlas",
-		"atlas-operator":        "Atlas",
-		"bi-connector":          "BI Connector",
-		"c":                     "Drivers",
-		"charts":                "Atlas",
-		"cloud-docs":            "Atlas",
-		"cloud-manager":         "Cloud Manager",
-		"cloudgov":              "Atlas", // Missing from taxonomy/this is a guess
-		"cluster-sync":          "Cluster-to-Cluster sync",
-		"compass":               "Compass",
-		"cpp-driver":            "Drivers",
-		"csharp":                "Drivers",
-		"database-tools":        "Database Tools",
-		"docs":                  "Server",
-		"docs-django":           "Django Integration",
-		"docs-entity-framework": "Drivers", // Missing from taxonomy/this is a guess
-		"docs-golang":           "Drivers",
-		"docs-java":             "Drivers",
-		"docs-java-rs":          "Drivers",
-		"docs-k8s-operator":     "Enterprise Kubernetes Operator",
-		"kafka-connector":       "Kafka Connector",
-		"kotlin":                "Drivers",
-		"kotlin-sync":           "Drivers",
-		"laravel":               "Drivers",
-		"mcp-server":            "MongoDB MCP Server",
-		"mck":                   "Enterprise Kubernetes Operator",
-		"mongoid":               "Drivers",
-		"mongodb-shell":         "MongoDB Shell",
-		"mongocli":              "MongoDB CLI",
-		"node":                  "Drivers",
-		"ops-manager":           "Ops Manager",
-		"php-library":           "Drivers", // Missing from taxonomy/this is a guess
-		"pymongo":               "Drivers",
-		"pymongo-arrow":         "Drivers",
-		"relational-migrator":   "Relational Migrator",
-		"ruby-driver":           "Drivers",
-		"rust":                  "Drivers",
-		"scala":                 "Drivers",
-		"spark-connector":       "Spark Connector",
+	emptyFilter := bson.D{}
+	collectionNames, err := db.ListCollectionNames(ctx, emptyFilter)
+
+	if err != nil {
+		log.Fatal("Could not retrieve collection names from the database: ", err)
 	}
 
-	collectionSubProducts := map[string]string{
-		"atlas-cli":      "Atlas CLI",
-		"atlas-operator": "Kubernetes Operator",
-		"charts":         "Charts",
-	}
-
-	atlasCollectionSubProductByDir := map[string]string{
-		"atlas-stream-processing": "Stream Processing",
-		"atlas-search":            "Search",
-		"atlas-vector-search":     "Vector Search",
-		"data-federation":         "Data Federation",
-		"online-archive":          "Online Archive",
-		"triggers":                "Triggers",
-	}
-
-	for collectionName, productString := range collectionProducts {
+	for _, collectionName := range collectionNames {
 		collection := db.Collection(collectionName)
+		productInfo := common.GetProductInfo(collectionName)
+		var update bson.D
 
-		// Use UpdateMany to add the Product field
+		// Skip the "summaries" document because there should be no product or sub-product
 		filter := bson.D{{"_id", bson.D{{"$ne", "summaries"}}}}
-		update := bson.D{{"$set", bson.D{{"product", productString}}}}
+
+		switch productInfo.ProductType {
+		case common.CollectionIsProduct:
+			// If every document in the collection is a specific product with no sub-product (CollectionIsProduct),
+			// set the "product" field for every document
+			update = bson.D{{"$set", bson.D{{"product", productInfo.ProductName}}}}
+		case common.CollectionIsSubProduct:
+			// If every document in the collection is a sub-product, set both the product and sub-product field for
+			// every document in the collection
+			update = bson.D{
+				{"$set", bson.D{
+					{"product", productInfo.ProductName},
+					{"sub_product", productInfo.SubProduct},
+				}},
+			}
+		case common.DirIsSubProduct:
+			// Should not be able to hit this case because none of the collection names map to DirIsSubProduct strings
+			update = bson.D{}
+		default:
+			// If we hit this case, it's because we don't have a value matching the collection name, so we don't know
+			// what "product" key to assign and therefore we don't want to make an update
+			update = bson.D{}
+		}
+
 		updateResult, err := collection.UpdateMany(ctx, filter, update)
 		if err != nil {
 			log.Printf("Could not update documents to add a Product field in collection [%s]: %v", collectionName, err)
 			continue
 		}
 
-		fmt.Printf("Added a Product field to %d documents in the [%s] collection\n", updateResult.ModifiedCount, collectionName)
-	}
-
-	for collectionName, subProductString := range collectionSubProducts {
-		collection := db.Collection(collectionName)
-
-		// Define the filter to exclude documents with "_id" equal to "summaries"
-		filter := bson.D{{"_id", bson.D{{"$ne", "summaries"}}}}
-
-		// Define the update to add the "sub_product" field
-		update := bson.D{{"$set", bson.D{{"sub_product", subProductString}}}}
-
-		// Update all documents that match the filter
-		updateResult, err := collection.UpdateMany(ctx, filter, update)
-		if err != nil {
-			log.Printf("Could not update documents to add a sub-product field in collection [%s]: %v", collectionName, err)
-			continue
+		// Print a descriptive update depending on the type of operation we just completed
+		switch productInfo.ProductType {
+		case common.CollectionIsProduct:
+			fmt.Printf("Added a Product field '%s' to %d documents in the [%s] collection\n", productInfo.ProductName, updateResult.ModifiedCount, collectionName)
+		case common.CollectionIsSubProduct:
+			fmt.Printf("Added a Product field '%s' and Sub-Product field '%s' to %d documents in the [%s] collection\n", productInfo.ProductName, productInfo.SubProduct, updateResult.ModifiedCount, collectionName)
+		case common.DirIsSubProduct:
+			fmt.Printf("Added a Product field '%s' to %d documents in the [%s] collection\n", productInfo.ProductName, updateResult.ModifiedCount, collectionName)
+		default:
+			fmt.Printf("Could not retrieve a matching ProductInfo for [%s] collection, so no updates were made.\n", collectionName)
 		}
 
-		// Log the number of documents modified
-		fmt.Printf("Added a sub_product field to %d documents in the [%s] collection\n", updateResult.ModifiedCount, collectionName)
-	}
+		// In the Atlas (cloud) docs, some of the docs subdirectories correspond to specific sub-products. Add the relevant
+		// sub-product field to any page whose URL contains one of the relevant subdirectories
+		if collectionName == "cloud-docs" {
+			for _, dirPath := range common.SubProductDirs {
+				subProductInfo := common.GetProductInfo(dirPath)
 
-	for directorySubpath, subProductString := range atlasCollectionSubProductByDir {
-		// These are specifically all subdirectories in Cloud Docs, so hardcoding this here for convenience
-		collection := db.Collection("cloud-docs")
-		filter := bson.M{
-			"page_url": bson.M{
-				"$regex":   regexp.QuoteMeta(directorySubpath), // Properly escape special regex characters
-				"$options": "i",                                // Case-insensitive match
-			},
+				dirPathFilter := bson.M{
+					"page_url": bson.M{
+						"$regex":   regexp.QuoteMeta(dirPath), // Properly escape special regex characters
+						"$options": "i",                       // Case-insensitive match
+					},
+				}
+
+				// Define the update to add a new field with the desired value
+				dirSubProductUpdate := bson.M{
+					"$set": bson.M{"sub_product": subProductInfo.SubProduct},
+				}
+
+				// Apply the update to all matching documents
+				dirSubProductUpdateResult, err := collection.UpdateMany(ctx, dirPathFilter, dirSubProductUpdate)
+				if err != nil {
+					log.Printf("Could not update documents for path substring [%s]: %v", dirPath, err)
+					continue
+				}
+				fmt.Printf("Added a 'sub_product' field value '%s' to %d documents in 'cloud-docs' for path substring [%s]\n", subProductInfo.SubProduct, dirSubProductUpdateResult.ModifiedCount, dirPath)
+			}
 		}
-		// Define the update to add a new field with the desired value
-		update := bson.M{
-			"$set": bson.M{"sub_product": subProductString},
-		}
-		// Apply the update to all matching documents
-		updateResult, err := collection.UpdateMany(context.TODO(), filter, update)
-		if err != nil {
-			log.Printf("Could not update documents for substring [%s]: %v", directorySubpath, err)
-			continue
-		}
-		fmt.Printf("Added a sub_product field to %d documents in the collection for substring [%s]\n", updateResult.ModifiedCount, directorySubpath)
 	}
 }

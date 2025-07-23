@@ -8,8 +8,8 @@ import (
 	"log"
 )
 
-// ChangeProjectName sets the `project` field value to a new value that you specify for all documents in the given collection.
-// Then, it renames the collection.
+// ChangeProjectName sets the `project_name` field value to a new value that you specify for all documents in the given
+// collection. Then, it renames the collection. This should match the project name defined in `common`
 func ChangeProjectName(client *mongo.Client, dbName string, ctx context.Context) {
 
 	// ===== CONFIGURATION: Set these values before running =====
@@ -27,7 +27,7 @@ func ChangeProjectName(client *mongo.Client, dbName string, ctx context.Context)
 		},
 	}
 
-	// Define the update to set the Project field value
+	// Define the update to set the ProjectName field value
 	update := bson.M{
 		"$set": bson.M{
 			"project_name": newProjectName,
@@ -43,8 +43,8 @@ func ChangeProjectName(client *mongo.Client, dbName string, ctx context.Context)
 	// Print the result
 	fmt.Printf("Matched %d documents and modified %d documents\n", result.MatchedCount, result.ModifiedCount)
 
-	// Then, rename the collection. The Go Driver does not provide a method to do this directly, so using the runCommand method
-	// Form the BSON document to rename the collection
+	// Then, rename the collection. The Go Driver does not provide a method to do this directly, so using the RunCommand method
+	// Form the BSON document to create the rename command
 	command := bson.D{
 		{"renameCollection", fmt.Sprintf("%s.%s", dbName, oldProjectName)},
 		{"to", fmt.Sprintf("%s.%s", dbName, newProjectName)},

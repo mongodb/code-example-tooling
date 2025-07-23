@@ -3,7 +3,7 @@ package common
 const (
 	CollectionIsProduct    = "collection"
 	CollectionIsSubProduct = "collectionIsSubProduct"
-	DirSubProduct          = "dirSubProduct"
+	DirIsSubProduct        = "dirIsSubProduct"
 	FocusArea              = "focusArea"
 )
 
@@ -13,6 +13,7 @@ type ProductInfo struct {
 	SubProduct  string
 }
 
+// GetProductInfo returns relevant product mapping for a given collection or page
 func GetProductInfo(projectOrSubdir string) ProductInfo {
 	if productInfo, found := productInfoMap[projectOrSubdir]; found {
 		return productInfo
@@ -48,17 +49,17 @@ var productInfoMap = map[string]ProductInfo{
 	},
 	"atlas-search": {
 		ProductName: Atlas,
-		ProductType: DirSubProduct,
+		ProductType: DirIsSubProduct,
 		SubProduct:  Search,
 	},
 	"atlas-stream-processing": {
 		ProductName: Atlas,
-		ProductType: DirSubProduct,
+		ProductType: DirIsSubProduct,
 		SubProduct:  StreamProcessing,
 	},
 	"atlas-vector-search": {
 		ProductName: Atlas,
-		ProductType: DirSubProduct,
+		ProductType: DirIsSubProduct,
 		SubProduct:  VectorSearch,
 	},
 	"bi-connector": {
@@ -113,7 +114,7 @@ var productInfoMap = map[string]ProductInfo{
 	},
 	"data-federation": {
 		ProductName: Atlas,
-		ProductType: DirSubProduct,
+		ProductType: DirIsSubProduct,
 		SubProduct:  DataFederation,
 	},
 	"django": {
@@ -213,7 +214,7 @@ var productInfoMap = map[string]ProductInfo{
 	},
 	"online-archive": {
 		ProductName: Atlas,
-		ProductType: DirSubProduct,
+		ProductType: DirIsSubProduct,
 		SubProduct:  OnlineArchive,
 	},
 	"ops-manager": {
@@ -258,7 +259,7 @@ var productInfoMap = map[string]ProductInfo{
 	},
 	"triggers": {
 		ProductName: Atlas,
-		ProductType: DirSubProduct,
+		ProductType: DirIsSubProduct,
 		SubProduct:  Triggers,
 	},
 }

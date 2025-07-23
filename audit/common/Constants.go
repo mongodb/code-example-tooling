@@ -57,6 +57,13 @@ const (
 	ExampleConfigurationObject = "Example configuration object"
 	UsageExample               = "Usage example"
 
+	/*
+		The constants below for Products, SubProducts, and Directories are used in
+		the `productInfoMap` in the GetProductInfo.go file. The GetProductInfo
+		func relies on these constants to return the appropriate `product` and/or
+		`sub_product` name for their respective fields on a per-docs-page basis
+		in the code examples DB.
+	*/
 	// Products
 
 	Atlas                        = "Atlas"
@@ -91,6 +98,7 @@ const (
 	VectorSearch     = "Vector Search"
 
 	// Directories that map to specific sub-products
+
 	DataFederationDir   = "data-federation"
 	OnlineArchiveDir    = "online-archive"
 	SearchDir           = "atlas-search"

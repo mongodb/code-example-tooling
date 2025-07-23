@@ -10,8 +10,9 @@ import (
 	"regexp"
 )
 
-// AddProductNames adds a human-readable `product` and `sub_product` (where applicable) fields to documents with values that correspond
-// to the Docs Taxonomy. If the document in the collection already has the applicable field(s), no change is made.
+// AddProductNames adds human-readable `product` and `sub_product` (where applicable) fields to documents with values
+// that correspond to the Docs Taxonomy. The mappings are defined in the `common` module. If the document in the
+// collection already has the applicable field(s), no change is made.
 func AddProductNames(db *mongo.Database, ctx context.Context) {
 	emptyFilter := bson.D{}
 	collectionNames, err := db.ListCollectionNames(ctx, emptyFilter)
@@ -42,8 +43,8 @@ func AddProductNames(db *mongo.Database, ctx context.Context) {
 					{"sub_product", productInfo.SubProduct},
 				}},
 			}
-		case common.DirSubProduct:
-			// Should not be able to hit this case because none of the collection names map to DirSubProduct strings
+		case common.DirIsSubProduct:
+			// Should not be able to hit this case because none of the collection names map to DirIsSubProduct strings
 			update = bson.D{}
 		default:
 			// If we hit this case, it's because we don't have a value matching the collection name, so we don't know
@@ -63,7 +64,7 @@ func AddProductNames(db *mongo.Database, ctx context.Context) {
 			fmt.Printf("Added a Product field '%s' to %d documents in the [%s] collection\n", productInfo.ProductName, updateResult.ModifiedCount, collectionName)
 		case common.CollectionIsSubProduct:
 			fmt.Printf("Added a Product field '%s' and Sub-Product field '%s' to %d documents in the [%s] collection\n", productInfo.ProductName, productInfo.SubProduct, updateResult.ModifiedCount, collectionName)
-		case common.DirSubProduct:
+		case common.DirIsSubProduct:
 			fmt.Printf("Added a Product field '%s' to %d documents in the [%s] collection\n", productInfo.ProductName, updateResult.ModifiedCount, collectionName)
 		default:
 			fmt.Printf("Could not retrieve a matching ProductInfo for [%s] collection, so no updates were made.\n", collectionName)

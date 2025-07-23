@@ -13,7 +13,7 @@ import (
 func ChangeProjectName(client *mongo.Client, dbName string, ctx context.Context) {
 
 	// ===== CONFIGURATION: Set these values before running =====
-	oldProjectName := "cluster-sync" // collection to update (this should match the old project name in `common`)
+	oldProjectName := "cluster-sync" // Existing collection to update (this should match the old project name in `common`)
 	newProjectName := "mongosync"    // New project name to apply to the documents/rename the collection
 	// ==========================================================
 

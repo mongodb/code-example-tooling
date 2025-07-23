@@ -43,14 +43,14 @@ func ChangeProjectName(client *mongo.Client, dbName string, ctx context.Context)
 	// Print the result
 	fmt.Printf("Matched %d documents and modified %d documents\n", result.MatchedCount, result.ModifiedCount)
 
-	// Then, rename the collection. The Go Driver does not provide a method to do this directly, so using the RunCommand method
-	// Form the BSON document to create the rename command
+	// Then, rename the collection. The Go Driver does not provide a method to do this directly. Here, we're creating
+	// a rename command in this BSON document, and then executing it with the Go Driver RunCommand method.
 	command := bson.D{
 		{"renameCollection", fmt.Sprintf("%s.%s", dbName, oldProjectName)},
 		{"to", fmt.Sprintf("%s.%s", dbName, newProjectName)},
 	}
 
-	// Execute the renameCollection command
+	// Execute the renameCollection command we created above.
 	adminDB := client.Database("admin") // The renameCollection command must be run on the admin database
 	renameResult := adminDB.RunCommand(ctx, command)
 

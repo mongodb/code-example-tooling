@@ -3,7 +3,7 @@ package common
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type DocsPage struct {

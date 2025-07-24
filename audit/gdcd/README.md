@@ -58,7 +58,10 @@ For each docs page:
 
 ### Prerequisites
 
-Before you begin, contact the Developer Docs team for the required connection details and access. 
+Before you begin, contact the Developer Docs team for the required
+connection details and access.
+> NOTE: The `gdcdUser` custom role gives the necessary
+> permissions to run the tool.
 
 - [Go](https://go.dev/doc/install)
 - [Ollama](https://ollama.com/) installed locally
@@ -121,11 +124,22 @@ projects are parsed. Depending on your machine and the amount of projects specif
 long-running program (~1-2hrs ). 
 
 ## Troubleshooting
+### Permission Issues
+```text
+(AtlasError) user is not allowed to do action [...] on [...]
+```
+1. Verify that your Atlas user has the
+   [`dbAdminAnyDatabase`](https://www.mongodb.com/docs/manual/reference/built-in-roles/#mongodb-authrole-dbAdmin)
+   or comparable custom role that lets you read, modify, copy, _and_
+   drop any database.
+2. Verify the role is not limited to specific databases. You much be able
+   to perform actions on _ANY_ database in the cluster.
+
 ### Ollama Issues
 ```text
 Error: "failed to generate a response from the given prompt (is Ollama running locally?)"
 ```
-1. Check if Ollama is running locally
+1. Start a local instance of Ollama, if not already running.
 2. Verify model availability:
 
   ```shell

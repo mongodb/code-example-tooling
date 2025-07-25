@@ -132,7 +132,7 @@ long-running program (~1-2hrs ).
    [`dbAdminAnyDatabase`](https://www.mongodb.com/docs/manual/reference/built-in-roles/#mongodb-authrole-dbAdmin)
    or comparable custom role that lets you read, modify, copy, _and_
    drop any database.
-2. Verify the role is not limited to specific databases. You much be able
+2. Verify the role is not limited to specific databases. You must be able
    to perform actions on _ANY_ database in the cluster.
 
 ### Ollama Issues

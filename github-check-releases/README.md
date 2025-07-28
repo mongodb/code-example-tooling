@@ -3,13 +3,13 @@
 This directory contains tooling to enable us to check GitHub releases programmatically, and validate them against the
 version(s) of the product(s) we use in our code example test suite(s).
 
-This is a simple PoC with two main components:
+This is a simple PoC with three main components:
 
 - A [JSON file](repo-details.json) that contains the list of products, GitHub repo information, and test suite versions.
 - It uses [octokit](https://github.com/octokit/octokit.js) to get release data for those MongoDB products from GitHub, and compare it against the version 
   in our JSON file.
-
-Future work may include automatically creating a Jira ticket to update the test suite when the version is out of date.
+- It uses [axios](https://github.com/axios/axios) with the Jira API to automatically create tickets to update test suite 
+  versions.
 
 ## Add or change products and test suite versions
 
@@ -62,6 +62,11 @@ To run the tool, you need:
 
 For this project, as a MongoDB org member, you must also auth your PAT with SSO.
 
+**Jira**:
+
+- A Jira PAT - refer to the internal wiki for instructions on how to create it
+- Information about the Jira base URL, project, and component(s) to create the ticket with the appropriate data
+
 **System**:
 
 - Node.js/npm installed
@@ -74,9 +79,14 @@ For this project, as a MongoDB org member, you must also auth your PAT with SSO.
 
    ```
    GITHUB_TOKEN="yourToken"
+   JIRA_BASE_URL="https://your-jira-instance-url"
+   JIRA_API_TOKEN="your-api-token"
+   JIRA_PROJECT_KEY="your-project-key"  
+   JIRA_ISSUE_TYPE="Task"
+   JIRA_COMPONENT="your-team-or-project-component"
    ```
 
-   Replace the placeholder value with your GitHub token.
+   Replace the placeholder values with your GitHub token, Jira token, and Jira project/component details.
 
    > Note: The `.env` file is in the `.gitignore`, so no worries about accidentally committing credentials.
 
@@ -99,7 +109,9 @@ For this project, as a MongoDB org member, you must also auth your PAT with SSO.
    You should see output similar to:
 
    ```
-   Warning: for C# Driver, test suite version v3.4.0 is behind latest release version v3.4.2
-   Warning: for Node.js Driver, test suite version v6.17.0 is behind latest release version v6.18.0
+   Warning: for C# Driver, test suite version v3.4.0 is behind latest release version v3.4.2. Creating Jira ticket.
+   Created Jira ticket to track updating this project: DOCSP-52411
+   Warning: for Node.js Driver, test suite version v6.17.0 is behind latest release version v6.18.0. Creating Jira ticket.
+   Created Jira ticket to track updating this project: DOCSP-52412
    Test suite version for PyMongo Driver is up-to-date.
    ```

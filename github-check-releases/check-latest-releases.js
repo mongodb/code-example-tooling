@@ -1,3 +1,5 @@
+import { createJiraTicket } from "./create-jira-ticket.js";
+
 async function checkLatestReleases(octokit, details) {
     const latestRelease = await octokit.rest.repos.getLatestRelease({
         owner: details.owner,
@@ -6,8 +8,12 @@ async function checkLatestReleases(octokit, details) {
     const tagName = latestRelease.data.tag_name;
 
     if (tagName !== details.testSuiteVersion) {
-        console.log(`Warning: for ${details.productName}, test suite version ${details.testSuiteVersion} is behind latest release version ${tagName}`);
-        // TODO: Add code here to call a Jira endpoint to create a ticket to update the test suite. Store the Jira endpoint as a .env var to avoid exposing it in the public repo.
+        console.log(`Warning: for ${details.productName}, test suite version ${details.testSuiteVersion} is behind latest release version ${tagName}. Creating Jira ticket.`);
+
+        const jiraTicketId = await createJiraTicket(details, tagName);
+        if (jiraTicketId) {
+            console.log(`Created Jira ticket to track updating this test suite: ${jiraTicketId}`);
+        }
     } else {
         console.log(`Test suite version for ${details.productName} is up-to-date.`)
     }

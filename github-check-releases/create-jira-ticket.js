@@ -37,13 +37,6 @@ function checkForJiraEnvDetails() {
 
 
 async function createJiraTicket(details, latestVersion) {
-    // Ensure environment variables are configured
-    if (!checkForJiraEnvDetails()) {
-        // Exit early with meaningful feedback
-        console.error('Failed to create Jira ticket due to missing environment variable(s). Please update your .env file.');
-        return;
-    }
-
     const jiraBaseUrl = process.env.JIRA_BASE_URL;
     const apiToken = process.env.JIRA_API_TOKEN;
     const projectKey = process.env.JIRA_PROJECT_KEY;
@@ -87,4 +80,4 @@ async function createJiraTicket(details, latestVersion) {
     }
 }
 
-export { createJiraTicket };
+export { checkForJiraEnvDetails, createJiraTicket };

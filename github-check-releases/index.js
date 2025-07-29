@@ -2,6 +2,7 @@ import fs from 'fs/promises'; // Use fs/promises for asynchronous file reading
 import { Octokit } from "octokit";
 import {RepoDetails} from './RepoDetails.js'; // Import the RepoDetails class
 import {checkLatestReleases} from './check-latest-releases.js';
+import {checkForJiraEnvDetails} from "./create-jira-ticket.js";
 
 // Define an async function to read the JSON file and iterate through the repos
 async function processRepos() {
@@ -20,6 +21,11 @@ async function processRepos() {
         console.error('Error authenticating with GitHub:', error)
     }
 
+    const hasJiraEnvDetails = checkForJiraEnvDetails();
+    if (!hasJiraEnvDetails) {
+        console.error('Cannot create Jira tickets due to missing environment variable(s). Please update your .env file.');
+    }
+
     try {
         // Read the JSON file
         const data = await fs.readFile('repo-details.json', 'utf8');
@@ -35,7 +41,7 @@ async function processRepos() {
 
         // Iterate through the repos array
         for (const repo of repos) {
-            await checkLatestReleases(octokit, repo);
+            await checkLatestReleases(octokit, repo, hasJiraEnvDetails);
         }
     } catch (error) {
         console.error('Error processing repos:', error);

@@ -1,0 +1,20 @@
+[
+  {
+    "owner": "mongodb",
+    "repo": "mongo-csharp-driver",
+    "productName": "C# Driver",
+    "testSuiteVersion": "v3.4.2"
+  },
+  {
+    "owner": "mongodb",
+    "repo": "node-mongodb-native",
+    "productName": "Node.js Driver",
+    "testSuiteVersion": "v6.18.0"
+  },
+  {
+    "owner": "mongodb",
+    "repo": "mongo-python-driver",
+    "productName": "PyMongo Driver",
+    "testSuiteVersion": "4.13.2"
+  }
+]

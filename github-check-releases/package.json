@@ -1,0 +1,17 @@
+{
+  "name": "github-check-releases-tooling",
+  "version": "1.0.0",
+  "description": "Utility to check the latest release for a set of given repo owners and names.",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "axios": "^1.11.0",
+    "esm": "^3.2.25",
+    "octokit": "^5.0.3"
+  }
+}

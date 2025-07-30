@@ -1,45 +1,61 @@
 # GitHub Check Releases
 
-This directory contains tooling to enable us to check GitHub releases programmatically, and validate them against the
-version(s) of the product(s) we use in our code example test suite(s).
+This directory contains tooling to check GitHub releases programmatically, and validate them against the
+versions of the MongoDB products we use in our code example test suites.
 
 This is a simple PoC with three main components:
 
-- A [JSON file](repo-details.json) that contains the list of products, GitHub repo information, and test suite versions.
-- It uses [octokit](https://github.com/octokit/octokit.js) to get release data for those MongoDB products from GitHub, and compare it against the version 
-  in our JSON file.
-- It uses [axios](https://github.com/axios/axios) with the Jira API to automatically create tickets to update test suite 
-  versions.
+- A [JSON file](repo-details.json) that contains the list of products, GitHub repo information, and test suite versions for the specified repos.
+- It gets release data for the MongoDB products from GitHub using [octokit](https://github.com/octokit/octokit.js), 
+  and compares it against the version in our JSON config file.
+- For any test suites that need a version bump, it automatically creates the appropriate Jira tickets  
+  using [axios](https://github.com/axios/axios) with the Jira API.
 
 ## Add or change products and test suite versions
 
-This project pulls data from [repo-details.json](repo-details.json) to check the release versions for the MongoDB
-products we use in our code example test suites. It deserializes the data using `RepoDetails` declared in the
-[RepoDetails file](RepoDetails.js) to map the owner and repo name for a given product whose version we want to check.
+This project pulls the configuration data from [repo-details.json](repo-details.json) to check the release versions for the MongoDB
+products we use in our code example test suites.
 
 ### Add a new product
 
-To add a new product, create a new entry for it in the `repo-details.json` file. 
+To add a new product, create a new entry in the `repo-details.json` file in the following format:
+
+`
+    "owner": "<repo-owner>",
+    "repo": "<repo-name>",
+    "productName": "<MongoDB Product Name>",
+    "testSuiteVersion": "<x.y.z>"
+`
+  
 
 You can get the owner and name from the repo URL: `https://github.com/<owner>/<repo>`
 For example, to add `https://github.com/mongodb/node-mongodb-native`, set `mongodb` as the
-owner and `node-mongodb-native` as the repo name.
+For example, if you want to add the Node Driver, you'd add the following to the `repo-details.json`: 
 
-You can get the test suite version from the test suite's dependency file. For example, the Node.js Driver version is in
-`code-example-tests/javascript/driver/package.json`, in the `dependencies` stanza:
+`
+"owner": "mongodb", // repo owner from URL
+"repo": "node-mongodb-native", // repo name from URL
+"productName": "Node.js Driver", // unique, human-readable product name to use in report outputs
+"testSuiteVersion": "v6.17.0" // taken from the `package.json` dependencies
+`
 
-```
+- repo URL: `https://github.com/mongodb/node-mongodb-native` 
+- product name: the "Node.js Driver" 
+- the test suite's dependency file's 
+`code-example-tests/javascript/driver/package.json` `dependencies` stanza:
+
+`
 "dependencies": {
   "bluehawk": "^1.6.0",
-  "mongodb": "6.17.0" // This is the test suite version for the Driver
+  "mongodb": "6.17.0" // the test suite version for the Driver
 }
-```
-
-The product name is just a human-readable name we can use in the output to report on the changes - i.e. `"Node.js Driver"`.
+`
 
 ### Change the test suite version
 
-If the version is out of date, bump the version in the test suite, and then update it in [repo-details.json](repo-details.json) here
+> IMPORTANT: You must manually update the version in this project and in the test suite.
+
+If the version is out of date, bump the version in the test suite, and then update it in [repo-details.json](repo-details.json) 
 in this project.
 
 ## GitHub release information
@@ -48,7 +64,7 @@ in this project.
 
 This is a simple PoC that uses [octokit](https://github.com/octokit/octokit.js) to get release data for MongoDB products from GitHub.
 
-This code is in the `check-latest-releases.js` file.
+This code is in the [`check-latest-releases.js`](check-latest-releases.js) file.
 
 ## Run the tool
 
@@ -60,7 +76,7 @@ To run the tool, you need:
 
 - A [GitHub Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) (PAT) with `repo` permissions
 
-For this project, as a MongoDB org member, you must also auth your PAT with SSO.
+You must also authorize your PAT with SSO for this project as a MongoDB org member.
 
 **Jira**:
 
@@ -88,7 +104,7 @@ For this project, as a MongoDB org member, you must also auth your PAT with SSO.
 
    Replace the placeholder values with your GitHub token, Jira token, and Jira project/component details.
 
-   > Note: The `.env` file is in the `.gitignore`, so no worries about accidentally committing credentials.
+   > Note: The `.env` file is in the `.gitignore`, but still use caution to avoid accidentally committing credentials.
 
 2. **Install the dependencies**
 

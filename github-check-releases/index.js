@@ -4,7 +4,7 @@ import {RepoDetails} from './RepoDetails.js'; // Import the RepoDetails class
 import {checkLatestReleases} from './check-latest-releases.js';
 import {checkForJiraEnvDetails} from "./create-jira-ticket.js";
 
-// Define an async function to read the JSON file and iterate through the repos
+// processRepos reads the JSON config file and iterates through the repos specified, converting each to an instance of the RepoDetails class.
 async function processRepos() {
     const apiToken = process.env.GITHUB_TOKEN
     const octokit = new Octokit({

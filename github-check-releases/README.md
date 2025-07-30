@@ -46,6 +46,8 @@ the `repo-details.json`:
 "testSuiteVersion": "v6.17.0" // taken from the `package.json` dependencies
 ```
 
+This information is derived from:
+
 - repo URL: `https://github.com/mongodb/node-mongodb-native`
 - product name: the "Node.js Driver"
 - the test suite's dependency file's `code-example-tests/javascript/driver/package.json`

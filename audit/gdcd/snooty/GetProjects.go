@@ -67,6 +67,7 @@ func GetProjects(client *http.Client) []types.ProjectDetails {
 		"intellij",
 		"landing",
 		"mongodb-vscode",
+		"mms-docs",
 		"visual-studio-extension",
 		"guides",
 		"atlas-app-services",

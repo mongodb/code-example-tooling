@@ -17,8 +17,10 @@ func main() {
 		return
 	}
 
-	configs.EnvFile = envFile
-	configs.LoadEnvironment()
+	_, err := configs.LoadEnvironment(envFile)
+	if err != nil {
+		return
+	}
 
 	ConfigurePermissions()
 	SetupWebServerAndListen()

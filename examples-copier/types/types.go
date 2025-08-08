@@ -6,6 +6,7 @@ import (
 )
 
 // **** PR **** //
+
 type PullRequestQuery struct {
 	Repository struct {
 		PullRequest struct {
@@ -30,8 +31,8 @@ type ChangedFile struct {
 	Status    string
 }
 
-// **** END PR **** //
 // **** CHANGED FILES **** //
+
 type RepoFilesResponse struct {
 	Repository Repository `graphql:"repository(owner: $owner, name: $name)"`
 }
@@ -61,10 +62,10 @@ type ConfigFileType []Configs
 type Configs struct {
 	SourceDirectory string `json:"source_directory"`
 	TargetRepo      string `json:"target_repo"`
-	TargetDirectory string `json:"target_directory"`
 	TargetBranch    string `json:"target_branch"`
+	TargetDirectory string `json:"target_directory"`
+	RecursiveCopy   bool   `json:"recursive_copy"`
 }
-
 type DeprecationFile []DeprecatedFileEntry
 type DeprecatedFileEntry struct {
 	FileName  string `json:"filename"`

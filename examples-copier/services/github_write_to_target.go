@@ -91,6 +91,7 @@ func AddFilesToTargetRepoViaPR() {
 func addFilesToBranch(client *github.Client, key UploadKey,
 	files []github.RepositoryContent) (*string, error) {
 
+	ctx := GlobalContext.GetContext()
 	entries := make(map[string]string)
 
 	for _, file := range files {
@@ -195,7 +196,7 @@ func createCommit(ctx context.Context, client *github.Client,
 	if err != nil {
 		return fmt.Errorf("failed to update ref to new commit: %w", err)
 	}
-	//fmt.Printf("Created commit %s\n", newCommit.GetSHA())
+	// fmt.Printf("Created commit %s\n", newCommit.GetSHA())
 	return nil
 }
 
@@ -234,7 +235,7 @@ func mergePR(ctx context.Context, client *github.Client, repo string, prNumber i
 func deleteBranchIfExists(backgroundContext context.Context, client *github.Client, repo string, ref *github.Reference) {
 
 	owner := configs.RepoOwner
-	if ref.GetRef() == "refs/heads/main" { //yes, this happened once...
+	if ref.GetRef() == "refs/heads/main" { // yes, this happened once...
 		LogError("I refuse to delete branch 'main'.")
 		return
 	}

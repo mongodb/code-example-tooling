@@ -14,15 +14,22 @@ import (
 	"golang.org/x/oauth2"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
 var InstallationAccessToken string
 
 func ConfigurePermissions() {
-	configs.LoadEnvironment()
-	pemKey := getPrivateKeyFromSecret()
+	envFilePath := os.Getenv("ENV_FILE")
 
+	_, err := configs.LoadEnvironment(envFilePath)
+	if err != nil {
+		LogError(fmt.Sprintf("Failed to load environment: %v", err))
+		return
+	}
+
+	pemKey := getPrivateKeyFromSecret()
 	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(pemKey)
 	if err != nil {
 		LogError(fmt.Sprintf("Unable to parse RSA private key: %v", err))
@@ -54,7 +61,7 @@ func generateGitHubJWT(appID string, privateKey *rsa.PrivateKey) (string, error)
 }
 
 func getPrivateKeyFromSecret() []byte {
-	ctx := context.Background()
+	ctx := GlobalContext.GetContext()
 	client, err := secretmanager.NewClient(ctx)
 
 	if err != nil {
@@ -63,7 +70,7 @@ func getPrivateKeyFromSecret() []byte {
 	defer client.Close()
 
 	req := &secretmanagerpb.AccessSecretVersionRequest{
-		Name: "projects/1054147886816/secrets/CODE_COPIER_PEM/versions/latest",
+		Name: configs.PEMKeyName,
 	}
 	result, err := client.AccessSecretVersion(ctx, req)
 	if err != nil {
@@ -72,6 +79,7 @@ func getPrivateKeyFromSecret() []byte {
 
 	return result.Payload.Data
 }
+
 func getInstallationAccessToken(installationId, jwtToken string) string {
 	url := fmt.Sprintf("https://api.github.com/app/installations/%s/access_tokens", installationId)
 

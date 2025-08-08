@@ -1,7 +1,6 @@
 package services
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/google/go-github/v48/github"
@@ -10,8 +9,6 @@ import (
 	"github.com/shurcooL/githubv4"
 	"log"
 )
-
-var ctx = context.Background()
 
 func RetrieveAndParseConfigFile() (ConfigFileType, error) {
 	content := retrieveJsonFile(configs.ConfigFile)
@@ -27,7 +24,7 @@ func RetrieveAndParseConfigFile() (ConfigFileType, error) {
 	return configFile, nil
 }
 
-func GetFilesChangedInPr(pr_number int) ([]ChangedFile, error) {
+func GetFilesChangedInPr(prNumber int) ([]ChangedFile, error) {
 	if InstallationAccessToken == "" {
 		log.Println("No installation token provided")
 		ConfigurePermissions()
@@ -37,11 +34,12 @@ func GetFilesChangedInPr(pr_number int) ([]ChangedFile, error) {
 	variables := map[string]interface{}{
 		"owner":  githubv4.String(configs.RepoOwner),
 		"name":   githubv4.String(configs.RepoName),
-		"number": githubv4.Int(pr_number),
+		"number": githubv4.Int(prNumber),
 	}
 
 	client := GetGraphQLClient()
-	err := client.Query(context.Background(), &prQuery, variables)
+	ctx := GlobalContext.GetContext()
+	err := client.Query(ctx, &prQuery, variables)
 	if err != nil {
 		LogCritical(fmt.Sprintf("Failed to execute query GetFilesChanged: %v", err))
 		return nil, err
@@ -64,10 +62,11 @@ func retrieveJsonFile(filePath string) string {
 	client := GetRestClient()
 	owner := configs.RepoOwner
 	repo := configs.RepoName
+	ctx := GlobalContext.GetContext()
 	fileContent, _, _, err :=
 		client.Repositories.GetContents(ctx, owner, repo,
 			filePath, &github.RepositoryContentGetOptions{
-				Ref: "main",
+				Ref: configs.SrcBranch,
 			})
 	if err != nil {
 		LogCritical(fmt.Sprintf("Error getting file content: %v", err))
@@ -82,20 +81,21 @@ func retrieveJsonFile(filePath string) string {
 	return content
 }
 
-func RetrieveFileContents(filePath string) github.RepositoryContent {
+func RetrieveFileContents(filePath string) (github.RepositoryContent, error) {
 
 	owner := configs.RepoOwner
 	repo := configs.RepoName
 	client := GetRestClient()
+	ctx := GlobalContext.GetContext()
 
 	fileContent, _, _, err :=
 		client.Repositories.GetContents(ctx, owner, repo,
 			filePath, &github.RepositoryContentGetOptions{
-				Ref: "main",
+				Ref: configs.SrcBranch,
 			})
 
 	if err != nil {
 		LogCritical(fmt.Sprintf("Error getting file content: %v", err))
 	}
-	return *fileContent
+	return *fileContent, nil
 }

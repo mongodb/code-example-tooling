@@ -5,14 +5,25 @@ import (
 	"github.com/mongodb/code-example-tooling/code-copier/configs"
 	"github.com/pkg/errors"
 	"net/http"
+	"os"
 )
 
 func SetupWebServerAndListen() {
-	configs.LoadEnvironment()
+	// Get environment file path from command line flag or environment variable
+	envFilePath := os.Getenv("ENV_FILE")
+
+	_, err := configs.LoadEnvironment(envFilePath)
+	if err != nil {
+		LogCritical(fmt.Sprintf("Failed to load environment: %v", err))
+		return
+	}
+
 	InitializeGoogleLogger()
 	http.HandleFunc(configs.WebserverPath, ParseWebhookData)
 	port := configs.Port
-	if port != "" {
+	if port == "" {
+		port = ":8080" // default port
+	} else {
 		port = ":" + port
 	}
 
@@ -20,7 +31,7 @@ func SetupWebServerAndListen() {
 
 	e := http.ListenAndServe(port, nil)
 	if e != nil && !errors.Is(e, http.ErrServerClosed) {
-		LogCritical(fmt.Sprintf("Error starting server:", e))
+		LogCritical(fmt.Sprintf("Error starting server: %v", e))
 	} else {
 		LogInfo(fmt.Sprintf("Web server listening on " + configs.WebserverPath))
 	}

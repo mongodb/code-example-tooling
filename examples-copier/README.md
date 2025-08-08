@@ -88,7 +88,7 @@ deprecated_examples.json should just be an empty array:
 ### Configure Permissions for the Web App
 To run the web app on a new repo, you have to go to the web app's 
 [configuration page](https://GitHub.com/apps/docs-examples-copier/installations/62138132)
-and select the repo from the list of available repos. Save the channges, and then in the 
+and select the repo from the list of available repos. Save the changes, and then in the 
 new repo's list of web apps, you should see it listed:
 
 !["list of web apps"](./readme_files/webapps.png)
@@ -103,7 +103,7 @@ for more information.
 
 ### Change Where the App is Hosted
 If you deploy this app to a new host/server, you will need to create a new webhook 
-in the source repo. See [Set Up A Webhook](#Set Up A Webhook)
+in the source repo. See [Set Up A Webhook](### Set Up A Webhook)
 
 
 ## How to Modify and Test
@@ -147,7 +147,7 @@ as they come in. Handling the messages means:
 
 | Directory Name | Use Case                                                                                                                                                                                  |
 |----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `configs`      | The configuration files (.env.*) are here, as is the `envirnoment.go` file, which creates globals for those settings. No other part of the code should read the .env files.               |
+| `configs`      | The configuration files (.env.*) are here, as is the `environment.go` file, which creates globals for those settings. No other part of the code should read the .env files.               |
 | `services`     | The handlers for the services we're interacting with: GitHub and Webhook handlers. For better organization, GitHub handlers have been separated into Auth, Upload, and Download services. |
 | `types`        | All the `type StructName struct` should be here. These are the structs needs to map webhook json to objects we can work with.                                                             |
 

@@ -100,7 +100,7 @@ func HandlePrClosedEvent(prNumber int) error {
 		return fmt.Errorf("failed to get changed files: %w", changedFilesError)
 	}
 
-	err := iterateFilesForCopy(changedFiles, configFile)
+	err := IterateFilesForCopy(changedFiles, configFile)
 	if err != nil {
 		return err
 	}
@@ -110,10 +110,10 @@ func HandlePrClosedEvent(prNumber int) error {
 	return nil
 }
 
-// iterateFilesForCopy takes a splice of ChangedFiles from a PR, and the config file.
+// IterateFilesForCopy takes a splice of ChangedFiles from a PR, and the config file.
 // It iterates through the file list to see if the source path matches one
 // of the defined source paths in the config file, and if so, calls [addToRepoAndFilesMap]
-func iterateFilesForCopy(changedFiles []ChangedFile, configFile ConfigFileType) error {
+func IterateFilesForCopy(changedFiles []ChangedFile, configFile ConfigFileType) error {
 	var totalFileCount int32
 	var uploadedCount int32
 

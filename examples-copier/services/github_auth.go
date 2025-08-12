@@ -3,8 +3,8 @@ package services
 import (
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
-	"context"
 	"crypto/rsa"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
@@ -12,6 +12,7 @@ import (
 	"github.com/mongodb/code-example-tooling/code-copier/configs"
 	"github.com/shurcooL/graphql"
 	"golang.org/x/oauth2"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -19,6 +20,7 @@ import (
 )
 
 var InstallationAccessToken string
+var HTTPClient = http.DefaultClient
 
 func ConfigurePermissions() {
 	envFilePath := os.Getenv("ENV_FILE")
@@ -33,13 +35,21 @@ func ConfigurePermissions() {
 	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(pemKey)
 	if err != nil {
 		LogError(fmt.Sprintf("Unable to parse RSA private key: %v", err))
+		return
 	}
+
 	// Generate JWT
 	token, err := generateGitHubJWT(configs.AppClientId, privateKey)
 	if err != nil {
 		LogError(fmt.Sprintf("Error generating JWT: %v", err))
+		return
 	}
-	installationToken := getInstallationAccessToken(configs.InstallationId, token)
+
+	installationToken, err := getInstallationAccessToken("", token, HTTPClient)
+	if err != nil {
+		LogError(fmt.Sprintf("Failed to get installation access token: %v", err))
+		return
+	}
 	InstallationAccessToken = installationToken
 }
 
@@ -61,6 +71,19 @@ func generateGitHubJWT(appID string, privateKey *rsa.PrivateKey) (string, error)
 }
 
 func getPrivateKeyFromSecret() []byte {
+	if os.Getenv("SKIP_SECRET_MANAGER") == "true" { // for tests and local runs
+		if pem := os.Getenv("GITHUB_APP_PRIVATE_KEY"); pem != "" {
+			return []byte(pem)
+		}
+		if b64 := os.Getenv("GITHUB_APP_PRIVATE_KEY_B64"); b64 != "" {
+			dec, err := base64.StdEncoding.DecodeString(b64)
+			if err != nil {
+				log.Fatalf("Invalid base64 private key: %v", err)
+			}
+			return dec
+		}
+		log.Fatalf("SKIP_SECRET_MANAGER=true but no GITHUB_APP_PRIVATE_KEY or GITHUB_APP_PRIVATE_KEY_B64 set")
+	}
 	ctx := GlobalContext.GetContext()
 	client, err := secretmanager.NewClient(ctx)
 
@@ -69,55 +92,74 @@ func getPrivateKeyFromSecret() []byte {
 	}
 	defer client.Close()
 
+	secretName := os.Getenv(configs.PEMKeyName)
+	if secretName == "" {
+		secretName = configs.NewConfig().PEMKeyName
+	}
+
 	req := &secretmanagerpb.AccessSecretVersionRequest{
-		Name: configs.PEMKeyName,
+		Name: secretName,
 	}
 	result, err := client.AccessSecretVersion(ctx, req)
 	if err != nil {
 		log.Fatalf("Failed to access secret version: %v", err)
 	}
-
 	return result.Payload.Data
 }
 
-func getInstallationAccessToken(installationId, jwtToken string) string {
-	url := fmt.Sprintf("https://api.github.com/app/installations/%s/access_tokens", installationId)
+func getInstallationAccessToken(installationId, jwtToken string, hc *http.Client) (string, error) {
+	if installationId == "" || installationId == configs.InstallationId {
+		installationId = os.Getenv(configs.InstallationId)
+	}
+	if installationId == "" {
+		return "", fmt.Errorf("missing installation ID")
+	}
 
+	url := fmt.Sprintf("https://api.github.com/app/installations/%s/access_tokens", installationId)
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
-		LogError(fmt.Sprintf("failed to create request: %v", err))
+		return "", fmt.Errorf("create request: %w", err)
 	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", jwtToken))
+	req.Header.Set("Authorization", "Bearer "+jwtToken)
 	req.Header.Set("Accept", "application/vnd.github+json")
-	client := &http.Client{}
-	resp, err := client.Do(req)
+
+	if hc == nil {
+		hc = http.DefaultClient
+	}
+	resp, err := hc.Do(req)
 	if err != nil {
-		LogError(fmt.Sprintf("failed to execute request: %v", err))
+		return "", fmt.Errorf("execute request: %w", err)
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusCreated {
-		LogError(fmt.Sprintf("failed to get access token: status %d", resp.StatusCode))
+		b, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("status %d: %s", resp.StatusCode, string(b))
 	}
-	var result struct {
+	var out struct {
 		Token string `json:"token"`
 	}
-
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		LogError(fmt.Sprintf("failed to decode response: %v", err))
+	if err = json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return "", fmt.Errorf("decode: %w", err)
 	}
-	return result.Token
+	return out.Token, nil
 }
 
 func GetRestClient() *github.Client {
-	ConfigurePermissions()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: InstallationAccessToken},
-	)
-	tc := oauth2.NewClient(context.Background(), ts)
-	gitHubClient := github.NewClient(tc)
-	return gitHubClient
+	src := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: InstallationAccessToken})
+
+	base := http.DefaultTransport
+	if HTTPClient != nil && HTTPClient.Transport != nil {
+		base = HTTPClient.Transport
+	}
+
+	httpClient := &http.Client{
+		Transport: &oauth2.Transport{
+			Source: src,
+			Base:   base,
+		},
+	}
+	return github.NewClient(httpClient)
 }
 
 func GetGraphQLClient() *graphql.Client {

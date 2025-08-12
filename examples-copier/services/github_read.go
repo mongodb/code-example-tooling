@@ -82,7 +82,6 @@ func retrieveJsonFile(filePath string) string {
 }
 
 func RetrieveFileContents(filePath string) (github.RepositoryContent, error) {
-
 	owner := configs.RepoOwner
 	repo := configs.RepoName
 	client := GetRestClient()

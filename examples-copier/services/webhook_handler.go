@@ -155,7 +155,7 @@ func IterateFilesForCopy(changedFiles []ChangedFile, configFile ConfigFileType) 
 					if err != nil {
 						return fmt.Errorf("failed to retrieve contents for %s: %w", file.Path, err)
 					}
-					addToRepoAndFilesMap(config.TargetRepo, config.TargetBranch, fileContent)
+					AddToRepoAndFilesMap(config.TargetRepo, config.TargetBranch, fileContent)
 				}
 				uploadedCount++
 			}
@@ -171,7 +171,7 @@ func addToDeprecationMap(target string, config Configs) {
 	FilesToDeprecate[target] = config
 }
 
-func addToRepoAndFilesMap(repoName, targetBranch string, file github.RepositoryContent) {
+func AddToRepoAndFilesMap(repoName, targetBranch string, file github.RepositoryContent) {
 	if FilesToUpload == nil {
 		FilesToUpload = make(map[UploadKey]UploadFileContent)
 	}

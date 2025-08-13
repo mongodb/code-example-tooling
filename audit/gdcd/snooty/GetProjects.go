@@ -45,7 +45,7 @@ func GetProjects(client *http.Client) []types.ProjectDetails {
 
 		// Check for HTTP error response
 		if resp.StatusCode != http.StatusOK {
-			log.Fatalf("ERROR: when requesting the projects list rom the Snooty Data API, received status code %d", resp.StatusCode)
+			log.Fatalf("ERROR: when requesting the projects list from the Snooty Data API, received status code %d", resp.StatusCode)
 		}
 
 		// Read the response body

@@ -12,6 +12,7 @@ Get counts broken down in the following ways:
 
 - Total counts:
   - [Total count by docs property](src/aggregations/GetCollectionCount.go)
+  - [Unique and total recently updated code example counts by docs section](src/aggregations/GetUniqueCodeExamples.go)
 - Programming language counts:
   - [By docs property](src/aggregations/GetLanguageCounts.go)
   - [By product](src/aggregations/GetProductLanguageCounts.go)

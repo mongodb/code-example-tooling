@@ -19,9 +19,17 @@ import (
 	"time"
 )
 
+// transport is a custom HTTP transport that adds the Authorization header to each request.
+type transport struct {
+	token string
+}
+
 var InstallationAccessToken string
 var HTTPClient = http.DefaultClient
 
+// ConfigurePermissions sets up the necessary permissions to interact with the GitHub API.
+// It retrieves the GitHub App's private key from Google Secret Manager, generates a JWT,
+// and exchanges it for an installation access token.
 func ConfigurePermissions() {
 	envFilePath := os.Getenv("ENV_FILE")
 
@@ -53,6 +61,7 @@ func ConfigurePermissions() {
 	InstallationAccessToken = installationToken
 }
 
+// generateGitHubJWT creates a JWT for GitHub App authentication.
 func generateGitHubJWT(appID string, privateKey *rsa.PrivateKey) (string, error) {
 	// Create a new JWT token
 	now := time.Now()
@@ -70,6 +79,8 @@ func generateGitHubJWT(appID string, privateKey *rsa.PrivateKey) (string, error)
 	return signedToken, nil
 }
 
+// getPrivateKeyFromSecret retrieves the GitHub App's private key from Google Secret Manager.
+// It supports local testing by allowing the key to be provided via environment variables.
 func getPrivateKeyFromSecret() []byte {
 	if os.Getenv("SKIP_SECRET_MANAGER") == "true" { // for tests and local runs
 		if pem := os.Getenv("GITHUB_APP_PRIVATE_KEY"); pem != "" {
@@ -107,6 +118,7 @@ func getPrivateKeyFromSecret() []byte {
 	return result.Payload.Data
 }
 
+// getInstallationAccessToken exchanges a JWT for a GitHub App installation access token.
 func getInstallationAccessToken(installationId, jwtToken string, hc *http.Client) (string, error) {
 	if installationId == "" || installationId == configs.InstallationId {
 		installationId = os.Getenv(configs.InstallationId)
@@ -145,6 +157,7 @@ func getInstallationAccessToken(installationId, jwtToken string, hc *http.Client
 	return out.Token, nil
 }
 
+// GetRestClient returns a GitHub REST API client authenticated with the installation access token.
 func GetRestClient() *github.Client {
 	src := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: InstallationAccessToken})
 
@@ -170,12 +183,9 @@ func GetGraphQLClient() *graphql.Client {
 	return client
 }
 
+// RoundTrip adds the Authorization header to each request.
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Set("Authorization", "Bearer "+t.token)
 	req.Header.Set("Accept", "application/vnd.github+json")
 	return http.DefaultTransport.RoundTrip(req)
-}
-
-type transport struct {
-	token string
 }

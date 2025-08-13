@@ -10,6 +10,8 @@ import (
 	"log"
 )
 
+// RetrieveAndParseConfigFile fetches the configuration file from the repository
+// and unmarshals its JSON content into a ConfigFileType structure.
 func RetrieveAndParseConfigFile() (ConfigFileType, error) {
 	content := retrieveJsonFile(configs.ConfigFile)
 	if content == "" {
@@ -24,6 +26,8 @@ func RetrieveAndParseConfigFile() (ConfigFileType, error) {
 	return configFile, nil
 }
 
+// GetFilesChangedInPr retrieves the list of files changed in a specified pull request.
+// It returns a slice of ChangedFile structures containing details about each changed file.
 func GetFilesChangedInPr(prNumber int) ([]ChangedFile, error) {
 	if InstallationAccessToken == "" {
 		log.Println("No installation token provided")
@@ -58,6 +62,8 @@ func GetFilesChangedInPr(prNumber int) ([]ChangedFile, error) {
 	return changedFiles, nil
 }
 
+// retrieveJsonFile fetches the content of a JSON file from the specified path in the repository.
+// It returns the file content as a string.
 func retrieveJsonFile(filePath string) string {
 	client := GetRestClient()
 	owner := configs.RepoOwner
@@ -81,6 +87,8 @@ func retrieveJsonFile(filePath string) string {
 	return content
 }
 
+// RetrieveFileContents fetches the contents of a file from the repository at the specified path.
+// It returns a github.RepositoryContent object containing the file details.
 func RetrieveFileContents(filePath string) (github.RepositoryContent, error) {
 	owner := configs.RepoOwner
 	repo := configs.RepoName

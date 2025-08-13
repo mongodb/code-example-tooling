@@ -8,6 +8,7 @@ import (
 	"os"
 )
 
+// SetupWebServerAndListen sets up the web server and listens for incoming webhook requests.
 func SetupWebServerAndListen() {
 	// Get environment file path from command line flag or environment variable
 	envFilePath := os.Getenv("ENV_FILE")

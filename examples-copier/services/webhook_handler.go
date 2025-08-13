@@ -11,6 +11,9 @@ import (
 	"strings"
 )
 
+// ParseWebhookData processes incoming GitHub webhook requests.
+// It extracts the pull request number, state, and merged status from the payload.
+// If the pull request is closed and merged, it triggers the handling of the PR closed event
 func ParseWebhookData(w http.ResponseWriter, r *http.Request) {
 	GlobalContext.SetContext(r.Context())
 	defer func(Body io.ReadCloser) {
@@ -83,6 +86,11 @@ func ParseWebhookData(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// HandlePrClosedEvent processes a closed and merged pull request.
+// It retrieves the configuration file, gets the list of changed files in the PR,
+// and iterates through the files to determine which need to be copied or deprecated
+// based on the configuration. Finally, it adds the files to the target repository branch
+// and updates the deprecation file as necessary.
 func HandlePrClosedEvent(prNumber int) error {
 	if InstallationAccessToken == "" {
 		ConfigurePermissions()
@@ -110,9 +118,9 @@ func HandlePrClosedEvent(prNumber int) error {
 	return nil
 }
 
-// IterateFilesForCopy takes a splice of ChangedFiles from a PR, and the config file.
-// It iterates through the file list to see if the source path matches one
-// of the defined source paths in the config file, and if so, calls [addToRepoAndFilesMap]
+// IterateFilesForCopy processes the list of changed files and determines which files need to be copied
+// to the target repositories based on the config file. Handles both recursive and non-recursive
+// copying modes, and updates the global maps for files to upload and deprecate accordingly.
 func IterateFilesForCopy(changedFiles []ChangedFile, configFile ConfigFileType) error {
 	var totalFileCount int32
 	var uploadedCount int32
@@ -164,6 +172,8 @@ func IterateFilesForCopy(changedFiles []ChangedFile, configFile ConfigFileType) 
 	return nil
 }
 
+// RetrieveAndParseConfigFile fetches the configuration file from the source repository
+// and unmarshals its JSON content into a ConfigFileType structure.
 func addToDeprecationMap(target string, config Configs) {
 	if FilesToDeprecate == nil {
 		FilesToDeprecate = make(map[string]Configs)
@@ -171,6 +181,9 @@ func addToDeprecationMap(target string, config Configs) {
 	FilesToDeprecate[target] = config
 }
 
+// AddToRepoAndFilesMap adds a file to the global FilesToUpload map under the specified repository and branch.
+// If the repository and branch combination already exists in the map, it appends the file to the existing list.
+// Otherwise, it creates a new entry in the map.
 func AddToRepoAndFilesMap(repoName, targetBranch string, file github.RepositoryContent) {
 	if FilesToUpload == nil {
 		FilesToUpload = make(map[UploadKey]UploadFileContent)

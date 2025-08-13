@@ -9,7 +9,7 @@ import (
 
 // Config holds all environment configuration
 type Config struct {
-	EnvFile              string // Backward compatibility
+	EnvFile              string
 	Port                 string
 	RepoName             string
 	RepoOwner            string
@@ -22,13 +22,13 @@ type Config struct {
 	WebserverPath        string
 	SrcBranch            string
 	PEMKeyName           string
-	CopierLogName        string // Name of the log for the copier
+	CopierLogName        string
 	GoogleCloudProjectId string // Google Cloud project ID, used for logging
 	DefaultRecursiveCopy bool
 }
 
 const (
-	EnvFile              = "ENV" // Backward compatibility
+	EnvFile              = "ENV"
 	Port                 = "PORT"
 	RepoName             = "REPO_NAME"
 	RepoOwner            = "REPO_OWNER"
@@ -40,8 +40,8 @@ const (
 	DeprecationFile      = "DEPRECATION_FILE"
 	WebserverPath        = "WEBSERVER_PATH"
 	SrcBranch            = "SRC_BRANCH"
-	PEMKeyName           = "PEM_NAME"        // Name of the environment variable for the PEM key
-	CopierLogName        = "COPIER_LOG_NAME" // Name of the log for the copier
+	PEMKeyName           = "PEM_NAME"
+	CopierLogName        = "COPIER_LOG_NAME"
 	GoogleCloudProjectId = "GOOGLE_CLOUD_PROJECT_ID"
 	DefaultRecursiveCopy = "DEFAULT_RECURSIVE_COPY"
 )
@@ -49,18 +49,17 @@ const (
 // NewConfig returns a new Config instance with default values
 func NewConfig() *Config {
 	return &Config{
-		Port:            "8080",
-		CommiterName:    "Copier Bot",
-		CommiterEmail:   "bot@example.com",
-		ConfigFile:      "config.json",
-		DeprecationFile: "deprecation.json",
-		WebserverPath:   "/webhook",
-		SrcBranch:       "main", // Default branch to copy from
-		// NOTE: we are purposefully only allowing copying from `main` branch right now
-		PEMKeyName:           "projects/1054147886816/secrets/CODE_COPIER_PEM/versions/latest",
-		CopierLogName:        "copy-copier-log",
-		GoogleCloudProjectId: "github-copy-code-examples",
-		DefaultRecursiveCopy: true, // system-wide default for recursive copying that individual config entries can override.
+		Port:                 "8080",
+		CommiterName:         "Copier Bot",
+		CommiterEmail:        "bot@example.com",
+		ConfigFile:           "config.json",
+		DeprecationFile:      "deprecation.json",
+		WebserverPath:        "/webhook",
+		SrcBranch:            "main",                                                           // Default branch to copy from (NOTE: we are purposefully only allowing copying from `main` branch right now)
+		PEMKeyName:           "projects/1054147886816/secrets/CODE_COPIER_PEM/versions/latest", // default secret name for GCP Secret Manager
+		CopierLogName:        "copy-copier-log",                                                // default log name for logging to GCP
+		GoogleCloudProjectId: "github-copy-code-examples",                                      // default project ID for logging to GCP
+		DefaultRecursiveCopy: true,                                                             // system-wide default for recursive copying that individual config entries can override.
 	}
 }
 
@@ -81,12 +80,10 @@ func LoadEnvironment(envFile string) (*Config, error) {
 		".env." + env,
 	}
 
-	// Add EnvFile if specified (highest precedence)
 	if config.EnvFile != "" {
 		envFiles = append(envFiles, config.EnvFile)
 	}
 
-	// Load each env file if it exists
 	for _, file := range envFiles {
 		if _, err := os.Stat(file); err == nil {
 			if err = godotenv.Load(file); err != nil {
@@ -95,7 +92,7 @@ func LoadEnvironment(envFile string) (*Config, error) {
 		}
 	}
 
-	// Populate config from environment variables
+	// Populate config from environment variables, with defaults where applicable
 	config.Port = getEnvWithDefault(Port, config.Port)
 	config.RepoName = os.Getenv(RepoName)
 	config.RepoOwner = os.Getenv(RepoOwner)
@@ -126,6 +123,7 @@ func getEnvWithDefault(key, defaultValue string) string {
 	return value
 }
 
+// getBoolEnvWithDefault returns the boolean environment variable value or default if not set
 func getBoolEnvWithDefault(key string, defaultValue bool) bool {
 	value := os.Getenv(key)
 	if value == "" {
@@ -138,7 +136,6 @@ func getBoolEnvWithDefault(key string, defaultValue bool) bool {
 func validateConfig(config *Config) error {
 	var missingVars []string
 
-	// Define required variables
 	requiredVars := map[string]string{
 		RepoName:       config.RepoName,
 		RepoOwner:      config.RepoOwner,

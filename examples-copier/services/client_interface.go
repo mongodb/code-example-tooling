@@ -5,7 +5,7 @@ import (
 	"github.com/google/go-github/v48/github"
 )
 
-// GitHubServiceInterface defines methods we need from GitHub API
+// GitHubServiceInterface defines methods from GitHub API
 type GitHubServiceInterface interface {
 	GetContents(ctx context.Context, owner, repo, path string, opt *github.RepositoryContentGetOptions) (*github.RepositoryContent, []*github.RepositoryContent, *github.Response, error)
 	CreateOrUpdateFile(ctx context.Context, owner, repo, path string, opts *github.RepositoryContentFileOptions) (*github.RepositoryContentResponse, *github.Response, error)
@@ -16,9 +16,6 @@ type GitHubWrapper struct {
 	Client *github.RepositoriesService
 }
 
-// GitHubClient is the client used for GitHub API operations
-var GitHubClient GitHubServiceInterface
-
 // GetContents wraps the GitHub API method
 func (w *GitHubWrapper) GetContents(ctx context.Context, owner, repo, path string, opt *github.RepositoryContentGetOptions) (*github.RepositoryContent, []*github.RepositoryContent, *github.Response, error) {
 	return w.Client.GetContents(ctx, owner, repo, path, opt)
@@ -26,7 +23,6 @@ func (w *GitHubWrapper) GetContents(ctx context.Context, owner, repo, path strin
 
 // CreateOrUpdateFile implements the missing method by checking if file exists first
 func (w *GitHubWrapper) CreateOrUpdateFile(ctx context.Context, owner, repo, path string, opts *github.RepositoryContentFileOptions) (*github.RepositoryContentResponse, *github.Response, error) {
-	// Check if file exists first
 	var ref string
 	if opts.Branch != nil {
 		ref = *opts.Branch

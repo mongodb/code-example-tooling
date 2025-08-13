@@ -16,6 +16,9 @@ const (
 	strategyEnv = "COPIER_COMMIT_STRATEGY" // values: "direct" (default) or "pr"
 )
 
+// commitStrategy returns the commit strategy based on the environment variable.
+// Supported values are "direct" (default) and "pr".
+// If an unsupported value is provided, it defaults to "direct".
 func commitStrategy() string {
 	v := os.Getenv(strategyEnv)
 	if v == "" {
@@ -35,16 +38,11 @@ func commitStrategy() string {
 var FilesToUpload map[UploadKey]UploadFileContent
 var FilesToDeprecate map[string]Configs
 
-// Resolve the actual owner value (env), not the key name.
+// repoOwner returns the repository owner from environment variables.
 func repoOwner() string { return os.Getenv(configs.RepoOwner) }
 
-// AddFilesToTargetRepoBranch adds new and modified files directly to the
-// target branch without creating a new branch or PR. If you want more
-// control over the process, use [AddFilesToTargetRepoViaPR] instead.
-// ** IMPORTANT ** This needs to be thoroughly tested, since it has
-// not been updated since other changes.
-
-// AddFilesToTargetRepoBranch commits the staged files directly to the target branch.
+// AddFilesToTargetRepoBranch uploads files to the target repository branch
+// using the specified commit strategy (direct or via pull request).
 func AddFilesToTargetRepoBranch() {
 	ctx := GlobalContext.GetContext()
 	client := GetRestClient()
@@ -63,6 +61,7 @@ func AddFilesToTargetRepoBranch() {
 	}
 }
 
+// createPullRequest opens a pull request from head to base in the specified repository.
 func createPullRequest(ctx context.Context, client *github.Client, repo, head, base, title, body string) (*github.PullRequest, error) {
 	owner := repoOwner()
 	pr := &github.NewPullRequest{
@@ -78,6 +77,7 @@ func createPullRequest(ctx context.Context, client *github.Client, repo, head, b
 	return created, nil
 }
 
+// addFilesViaPR creates a temporary branch, commits files to it, opens a PR, merges it, and deletes the temp branch.
 func addFilesViaPR(ctx context.Context, client *github.Client, key UploadKey,
 	files []github.RepositoryContent, message string) error {
 	tempBranch := "copier/" + time.Now().UTC().Format("20060102-150405")
@@ -147,7 +147,7 @@ func addFilesToBranch(ctx context.Context, client *github.Client, key UploadKey,
 	return nil
 }
 
-// Creates a new branch from the base branch
+// createBranch creates a new branch from 'main' and deletes it first if it already exists.
 func createBranch(ctx context.Context, client *github.Client, repo, newBranch string) (*github.Reference, error) {
 
 	owner := repoOwner()
@@ -244,6 +244,7 @@ func createCommit(ctx context.Context, client *github.Client, targetBranch Uploa
 	return nil
 }
 
+// mergePR merges the specified pull request in the given repository.
 func mergePR(ctx context.Context, client *github.Client, repo string, prNumber int) error {
 	owner := repoOwner()
 
@@ -264,6 +265,7 @@ func mergePR(ctx context.Context, client *github.Client, repo string, prNumber i
 	}
 }
 
+// deleteBranchIfExists deletes the specified branch if it exists, except for 'main'.
 func deleteBranchIfExists(backgroundContext context.Context, client *github.Client, repo string, ref *github.Reference) {
 
 	owner := repoOwner()

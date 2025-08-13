@@ -13,7 +13,7 @@ import (
 // GetUniqueCodeExampleUpdatesForDocsSection looks for pages within the docs section whose code nodes have been added
 // or had updates in the last week, omits any removed code nodes, and then does some post-processing to get counts
 // broken down by unique and aggregate appearances per page, per category, and in total.
-// This func does not return data to print in our nicely-formatted tables; instead, it logs directly to console.
+// NOTE: This func does not return data to print in our nicely-formatted tables; instead, it logs directly to console.
 func GetUniqueCodeExampleUpdatesForDocsSection(db *mongo.Database, ctx context.Context) {
 	// ------ CONFIGURATION: Set these values for your docs set and section ----------
 	collectionName := "cloud-docs"         // Replace this with the name of the docs set you want to search within
@@ -23,8 +23,6 @@ func GetUniqueCodeExampleUpdatesForDocsSection(db *mongo.Database, ctx context.C
 	// Calculate last week's date range
 	now := time.Now()
 	oneWeekAgo := now.AddDate(0, 0, -7)
-	// Define the aggregation pipeline
-	// Build the aggregation pipeline
 	collection := db.Collection(collectionName)
 	// Define the aggregation pipeline
 	pipeline := mongo.Pipeline{

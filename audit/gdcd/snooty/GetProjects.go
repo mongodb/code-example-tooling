@@ -39,23 +39,23 @@ func GetProjects(client *http.Client) []types.ProjectDetails {
 		apiURL := "https://snooty-data-api.mongodb.com/prod/projects/"
 		resp, err := client.Get(apiURL)
 		if err != nil {
-			log.Fatalf("Failed to make request: %v", err)
+			log.Fatalf("ERROR: Failed to get the projects list from the Snooty Data API: %v", err)
 		}
 		defer resp.Body.Close()
 
 		// Check for HTTP error response
 		if resp.StatusCode != http.StatusOK {
-			log.Fatalf("Error: received status code %d", resp.StatusCode)
+			log.Fatalf("ERROR: when requesting the projects list from the Snooty Data API, received status code %d", resp.StatusCode)
 		}
 
 		// Read the response body
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			log.Fatalf("failed to read response body: %s", err)
+			log.Fatalf("ERROR: failed to read response body from Snooty Data API projects list: %s", err)
 		}
 		err = json.Unmarshal(body, &response)
 		if err != nil {
-			log.Fatalf("failed to unmarshal JSON: %s", err)
+			log.Fatalf("ERROR: failed to unmarshal JSON from the Snooty Data API projects list: %s", err)
 		}
 	}
 
@@ -92,12 +92,17 @@ func GetProjects(client *http.Client) []types.ProjectDetails {
 					break
 				}
 			}
-			collectionDetails := types.ProjectDetails{
-				ProjectName:  docsProject.Project,
-				ActiveBranch: activeBranch,
-				ProdUrl:      prodUrl,
+			// If the project does not have an active, stable branch, we don't want to try to get the project details
+			if activeBranch != "" {
+				collectionDetails := types.ProjectDetails{
+					ProjectName:  docsProject.Project,
+					ActiveBranch: activeBranch,
+					ProdUrl:      prodUrl,
+				}
+				collectionsToParse = append(collectionsToParse, collectionDetails)
+			} else {
+				log.Printf("Skipping project %s because it does not have an active, stable branch", docsProject.Project)
 			}
-			collectionsToParse = append(collectionsToParse, collectionDetails)
 		}
 	}
 	log.Println("Found ", len(collectionsToParse), "collections to parse from the Snooty Data API")

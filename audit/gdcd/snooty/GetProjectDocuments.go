@@ -31,13 +31,13 @@ func GetProjectPages(project types.ProjectDetails, client *http.Client) []types.
 	} else {
 		resp, err := client.Get(apiURL)
 		if err != nil {
-			log.Fatalf("Failed to make request for project %s: %v", project.ProjectName, err)
+			log.Printf("ERROR: Failed to make request for project %s: %v", project.ProjectName, err)
 		}
 		defer resp.Body.Close()
 
 		// Check for HTTP error response
 		if resp.StatusCode != http.StatusOK {
-			log.Fatalf("Error: received status code %d for project %s", resp.StatusCode, project.ProjectName)
+			log.Printf("ERROR: received status code %d for project %s", resp.StatusCode, project.ProjectName)
 		}
 		log.Printf("\nSuccessfully retrieved a Snooty response for project %s. Deserializing to PageWrapper now.", project.ProjectName)
 		reader = *bufio.NewReader(resp.Body)

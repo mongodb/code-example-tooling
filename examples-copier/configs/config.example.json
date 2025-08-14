@@ -4,13 +4,20 @@
     "target_repo": "example-repo",
     "target_branch": "main",
     "target_directory": "go",
-    "recursive_copy": true
+    "recursive_copy": true,
+    "pr_title": "Update Go Examples",
+    "commit_message": "Copy latest Go examples from generated-examples",
+    "merge_without_review": false
+
   },
   {
     "source_directory": "examples/python",
     "target_repo": "another-repo",
     "target_branch": "v2.0",
     "target_directory": "python",
-    "recursive_copy": false
+    "recursive_copy": false,
+    "pr_title": "",
+    "commit_message": "Copy v2 Python examples",
+    "merge_without_review": true
   }
 ]

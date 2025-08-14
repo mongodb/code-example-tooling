@@ -28,8 +28,10 @@ func init() {
 }
 
 func main() {
-	// Take the environment file path from command line arguments or default to "./configs/.env"
+	ctx := context.Background()
+	services.GlobalContext.SetContext(ctx)
 
+	// Take the environment file path from command line arguments or default to "./configs/.env"
 	var envFile string
 	flag.StringVar(&envFile, "env", "./configs/.env", "env file")
 	help := flag.Bool("help", false, "show help")

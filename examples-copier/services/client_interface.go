@@ -16,6 +16,9 @@ type GitHubWrapper struct {
 	Client *github.RepositoriesService
 }
 
+// GitHubClient is the global client instance used throughout the application
+var GitHubClient GitHubServiceInterface = &GitHubWrapper{}
+
 // GetContents wraps the GitHub API method
 func (w *GitHubWrapper) GetContents(ctx context.Context, owner, repo, path string, opt *github.RepositoryContentGetOptions) (*github.RepositoryContent, []*github.RepositoryContent, *github.Response, error) {
 	return w.Client.GetContents(ctx, owner, repo, path, opt)

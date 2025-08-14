@@ -76,7 +76,7 @@ func ParseWebhookData(w http.ResponseWriter, r *http.Request) {
 	if state == "closed" && merged {
 		LogInfo(fmt.Sprintf("PR %d was merged and closed.", numberAsInt))
 		LogInfo("--Start--")
-		if err = HandlePrClosedEvent(numberAsInt); err != nil {
+		if err = HandleSourcePrClosedEvent(numberAsInt); err != nil {
 			LogError(fmt.Sprintf("Failed to handle PR closed event: %v", err))
 			http.Error(w, "Failed to process webhook", http.StatusInternalServerError)
 			return
@@ -86,12 +86,12 @@ func ParseWebhookData(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// HandlePrClosedEvent processes a closed and merged pull request.
+// HandleSourcePrClosedEvent processes a closed and merged pull request.
 // It retrieves the configuration file, gets the list of changed files in the PR,
 // and iterates through the files to determine which need to be copied or deprecated
 // based on the configuration. Finally, it adds the files to the target repository branch
 // and updates the deprecation file as necessary.
-func HandlePrClosedEvent(prNumber int) error {
+func HandleSourcePrClosedEvent(pr_number int) error {
 	if InstallationAccessToken == "" {
 		ConfigurePermissions()
 	}
@@ -102,9 +102,9 @@ func HandlePrClosedEvent(prNumber int) error {
 		return fmt.Errorf("config file error: %w", configError)
 	}
 
-	changedFiles, changedFilesError := GetFilesChangedInPr(prNumber)
+	changedFiles, changedFilesError := GetFilesChangedInPr(pr_number)
 	if changedFilesError != nil {
-		LogError(fmt.Sprintf("Failed to get files changed in PR %d: %v", prNumber, changedFilesError))
+		LogError(fmt.Sprintf("Failed to get files changed in PR %d: %v", pr_number, changedFilesError))
 		return fmt.Errorf("failed to get changed files: %w", changedFilesError)
 	}
 
@@ -112,7 +112,7 @@ func HandlePrClosedEvent(prNumber int) error {
 	if err != nil {
 		return err
 	}
-	AddFilesToTargetRepoBranch()
+	AddFilesToTargetRepoBranch(configFile)
 	UpdateDeprecationFile()
 	LogInfo("--Done--")
 	return nil

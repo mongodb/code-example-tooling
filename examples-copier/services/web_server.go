@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/mongodb/code-example-tooling/code-copier/configs"
 	"github.com/pkg/errors"
+	"log"
 	"net/http"
 	"os"
 )
@@ -15,8 +16,7 @@ func SetupWebServerAndListen() {
 
 	_, err := configs.LoadEnvironment(envFilePath)
 	if err != nil {
-		LogCritical(fmt.Sprintf("Failed to load environment: %v", err))
-		return
+		log.Fatal(errors.Wrap(err, "Failed to load environment"))
 	}
 
 	InitializeGoogleLogger()
@@ -32,7 +32,7 @@ func SetupWebServerAndListen() {
 
 	e := http.ListenAndServe(port, nil)
 	if e != nil && !errors.Is(e, http.ErrServerClosed) {
-		LogCritical(fmt.Sprintf("Error starting server: %v", e))
+		log.Fatal(errors.Wrap(e, "Error starting server"))
 	} else {
 		LogInfo(fmt.Sprintf("Web server listening on " + configs.WebserverPath))
 	}

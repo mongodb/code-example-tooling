@@ -25,6 +25,7 @@ type Config struct {
 	CopierLogName        string
 	GoogleCloudProjectId string // Google Cloud project ID, used for logging
 	DefaultRecursiveCopy bool
+	DefaultPRMerge       bool // Default PR merge without review setting
 }
 
 const (
@@ -44,6 +45,7 @@ const (
 	CopierLogName        = "COPIER_LOG_NAME"
 	GoogleCloudProjectId = "GOOGLE_CLOUD_PROJECT_ID"
 	DefaultRecursiveCopy = "DEFAULT_RECURSIVE_COPY"
+	DefaultPRMerge       = "DEFAULT_PR_MERGE"
 )
 
 // NewConfig returns a new Config instance with default values
@@ -60,6 +62,7 @@ func NewConfig() *Config {
 		CopierLogName:        "copy-copier-log",                                                // default log name for logging to GCP
 		GoogleCloudProjectId: "github-copy-code-examples",                                      // default project ID for logging to GCP
 		DefaultRecursiveCopy: true,                                                             // system-wide default for recursive copying that individual config entries can override.
+		DefaultPRMerge:       false,                                                            // system-wide default for PR merge without review that individual config entries can override.
 	}
 }
 
@@ -106,6 +109,9 @@ func LoadEnvironment(envFile string) (*Config, error) {
 	config.SrcBranch = getEnvWithDefault(SrcBranch, config.SrcBranch)
 	config.PEMKeyName = getEnvWithDefault(PEMKeyName, config.PEMKeyName)
 	config.DefaultRecursiveCopy = getBoolEnvWithDefault(DefaultRecursiveCopy, config.DefaultRecursiveCopy)
+	config.DefaultPRMerge = getBoolEnvWithDefault(DefaultPRMerge, config.DefaultPRMerge)
+	config.CopierLogName = getEnvWithDefault(CopierLogName, config.CopierLogName)
+	config.GoogleCloudProjectId = getEnvWithDefault(GoogleCloudProjectId, config.GoogleCloudProjectId)
 
 	if err := validateConfig(config); err != nil {
 		return nil, err

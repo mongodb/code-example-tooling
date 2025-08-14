@@ -10,6 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/go-github/v48/github"
 	"github.com/mongodb/code-example-tooling/code-copier/configs"
+	"github.com/pkg/errors"
 	"github.com/shurcooL/graphql"
 	"golang.org/x/oauth2"
 	"io"
@@ -35,28 +36,25 @@ func ConfigurePermissions() {
 
 	_, err := configs.LoadEnvironment(envFilePath)
 	if err != nil {
-		LogError(fmt.Sprintf("Failed to load environment: %v", err))
-		return
+		log.Fatal(errors.Wrap(err, "Failed to load environment"))
+
 	}
 
 	pemKey := getPrivateKeyFromSecret()
 	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(pemKey)
 	if err != nil {
-		LogError(fmt.Sprintf("Unable to parse RSA private key: %v", err))
-		return
+		log.Fatal(errors.Wrap(err, "Unable to parse RSA private key"))
 	}
 
 	// Generate JWT
 	token, err := generateGitHubJWT(configs.AppClientId, privateKey)
 	if err != nil {
-		LogError(fmt.Sprintf("Error generating JWT: %v", err))
-		return
+		log.Fatal(errors.Wrap(err, "Error generating JWT"))
 	}
 
 	installationToken, err := getInstallationAccessToken("", token, HTTPClient)
 	if err != nil {
-		LogError(fmt.Sprintf("Failed to get installation access token: %v", err))
-		return
+		log.Fatal(errors.Wrap(err, "Error getting installation access token"))
 	}
 	InstallationAccessToken = installationToken
 }

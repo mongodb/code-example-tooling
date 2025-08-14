@@ -158,6 +158,75 @@ func MockDeleteTempRef(owner, repo string) {
 	httpmock.RegisterRegexpResponder("DELETE", re, httpmock.NewStringResponder(204, ""))
 }
 
+// MockBaseRef stubs GET /git/ref/heads/{branch}
+func MockBaseRef(t *testing.T, owner, repo, branch string) {
+	url := fmt.Sprintf(
+		"https://api.github.com/repos/%s/%s/git/ref/heads/%s",
+		owner, repo, branch,
+	)
+	httpmock.RegisterResponder(
+		"GET", url,
+		httpmock.NewJsonResponderOrPanic(200, map[string]any{
+			"ref":    fmt.Sprintf("refs/heads/%s", branch),
+			"object": map[string]any{"sha": "baseSha"},
+		}),
+	)
+}
+
+// MockCreateTempRef stubs POST /git/refs and GET temp branch
+func MockCreateTempRef(t *testing.T, owner, repo string) {
+	postURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/git/refs", owner, repo)
+	httpmock.RegisterResponder(
+		"POST", postURL,
+		httpmock.NewJsonResponderOrPanic(201, map[string]any{
+			"ref":    "refs/heads/copier/20250101-000000",
+			"object": map[string]any{"sha": "baseSha"},
+		}),
+	)
+
+	getPattern := fmt.Sprintf(
+		`^https://api\.github\.com/repos/%s/%s/git/ref/(?:refs/)?heads/copier/\d{8}-\d{6}$`,
+		owner, repo,
+	)
+	httpmock.RegisterRegexpResponder(
+		"GET", regexp.MustCompile(getPattern),
+		httpmock.NewJsonResponderOrPanic(200, map[string]any{
+			"ref":    "refs/heads/copier/20250101-000000",
+			"object": map[string]any{"sha": "baseSha"},
+		}),
+	)
+}
+
+// MockTreeCommitUpdate stubs tree-creation, commit and ref-update for temp branch
+func MockTreeCommitUpdate(t *testing.T, owner, repo string) {
+	// POST /git/trees
+	treePattern := fmt.Sprintf(
+		`^https://api\.github\.com/repos/%s/%s/git/trees(\?.*)?$`,
+		owner, repo,
+	)
+	httpmock.RegisterRegexpResponder(
+		"POST", regexp.MustCompile(treePattern),
+		httpmock.NewJsonResponderOrPanic(201, map[string]any{"sha": "newTreeSha"}),
+	)
+
+	// POST /git/commits
+	commitsURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/git/commits", owner, repo)
+	httpmock.RegisterResponder(
+		"POST", commitsURL,
+		httpmock.NewJsonResponderOrPanic(201, map[string]any{"sha": "newCommitSha"}),
+	)
+
+	// PATCH update temp branch ref
+	patchPattern := fmt.Sprintf(
+		`^https://api\.github\.com/repos/%s/%s/git/refs/heads/copier/\d{8}-\d{6}$`,
+		owner, repo,
+	)
+	httpmock.RegisterRegexpResponder(
+		"PATCH", regexp.MustCompile(patchPattern),
+		httpmock.NewStringResponder(200, "{}"),
+	)
+}
+
 //
 // Staging/assertion helpers
 //

@@ -3,6 +3,7 @@ package services
 import (
 	"cloud.google.com/go/logging"
 	"context"
+	"github.com/mongodb/code-example-tooling/code-copier/configs"
 	"log"
 )
 
@@ -13,15 +14,15 @@ var googleCriticalLogger *log.Logger
 
 func InitializeGoogleLogger() {
 
-	projectID := "github-copy-code-examples"
+	projectId := configs.GoogleCloudProjectId
 
-	loggingClient, err := logging.NewClient(context.Background(), projectID)
+	loggingClient, err := logging.NewClient(context.Background(), projectId)
 	if err != nil {
 		log.Printf("Failed to create loggingClient: %v\n", err)
 		return
 	}
-	//defer loggingClient.Close()
-	logName := "copy-copier-log"
+	// defer loggingClient.Close()
+	logName := configs.CopierLogName
 	googleInfoLogger = loggingClient.Logger(logName).StandardLogger(logging.Info)
 	googleWarningLogger = loggingClient.Logger(logName).StandardLogger(logging.Warning)
 	googleErrorLogger = loggingClient.Logger(logName).StandardLogger(logging.Error)

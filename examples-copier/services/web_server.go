@@ -4,15 +4,27 @@ import (
 	"fmt"
 	"github.com/mongodb/code-example-tooling/code-copier/configs"
 	"github.com/pkg/errors"
+	"log"
 	"net/http"
+	"os"
 )
 
+// SetupWebServerAndListen sets up the web server and listens for incoming webhook requests.
 func SetupWebServerAndListen() {
-	configs.LoadEnvironment()
+	// Get environment file path from command line flag or environment variable
+	envFilePath := os.Getenv("ENV_FILE")
+
+	_, err := configs.LoadEnvironment(envFilePath)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "Failed to load environment"))
+	}
+
 	InitializeGoogleLogger()
 	http.HandleFunc(configs.WebserverPath, ParseWebhookData)
 	port := configs.Port
-	if port != "" {
+	if port == "" {
+		port = ":8080" // default port
+	} else {
 		port = ":" + port
 	}
 
@@ -20,7 +32,7 @@ func SetupWebServerAndListen() {
 
 	e := http.ListenAndServe(port, nil)
 	if e != nil && !errors.Is(e, http.ErrServerClosed) {
-		LogCritical(fmt.Sprintf("Error starting server:", e))
+		log.Fatal(errors.Wrap(e, "Error starting server"))
 	} else {
 		LogInfo(fmt.Sprintf("Web server listening on " + configs.WebserverPath))
 	}

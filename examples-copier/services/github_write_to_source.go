@@ -39,6 +39,7 @@ func UpdateDeprecationFile() {
 
 func uploadDeprecationFileChanges(message string, newDeprecationFileContents string) {
 	client := GetRestClient()
+	ctx := GlobalContext.GetContext()
 
 	targetFileContent, _, _, err := client.Repositories.GetContents(ctx, configs.RepoOwner, configs.RepoName,
 		configs.DeprecationFile, &github.RepositoryContentGetOptions{Ref: "main"})

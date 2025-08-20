@@ -2,9 +2,10 @@ package configs
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
 	"os"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 // Config holds all environment configuration
@@ -23,9 +24,9 @@ type Config struct {
 	SrcBranch            string
 	PEMKeyName           string
 	CopierLogName        string
-	GoogleCloudProjectId string // Google Cloud project ID, used for logging
+	GoogleCloudProjectId string
 	DefaultRecursiveCopy bool
-	DefaultPRMerge       bool // Default PR merge without review setting
+	DefaultPRMerge       bool
 }
 
 const (
@@ -55,7 +56,7 @@ func NewConfig() *Config {
 		CommiterName:         "Copier Bot",
 		CommiterEmail:        "bot@example.com",
 		ConfigFile:           "config.json",
-		DeprecationFile:      "deprecation.json",
+		DeprecationFile:      "deprecated_examples.json",
 		WebserverPath:        "/webhook",
 		SrcBranch:            "main",                                                           // Default branch to copy from (NOTE: we are purposefully only allowing copying from `main` branch right now)
 		PEMKeyName:           "projects/1054147886816/secrets/CODE_COPIER_PEM/versions/latest", // default secret name for GCP Secret Manager
@@ -112,6 +113,24 @@ func LoadEnvironment(envFile string) (*Config, error) {
 	config.DefaultPRMerge = getBoolEnvWithDefault(DefaultPRMerge, config.DefaultPRMerge)
 	config.CopierLogName = getEnvWithDefault(CopierLogName, config.CopierLogName)
 	config.GoogleCloudProjectId = getEnvWithDefault(GoogleCloudProjectId, config.GoogleCloudProjectId)
+
+	// Export resolved values back into environment so downstream os.Getenv sees defaults
+	_ = os.Setenv(Port, config.Port)
+	_ = os.Setenv(RepoName, config.RepoName)
+	_ = os.Setenv(RepoOwner, config.RepoOwner)
+	_ = os.Setenv(AppClientId, config.AppClientId)
+	_ = os.Setenv(InstallationId, config.InstallationId)
+	_ = os.Setenv(CommiterName, config.CommiterName)
+	_ = os.Setenv(CommiterEmail, config.CommiterEmail)
+	_ = os.Setenv(ConfigFile, config.ConfigFile)
+	_ = os.Setenv(DeprecationFile, config.DeprecationFile)
+	_ = os.Setenv(WebserverPath, config.WebserverPath)
+	_ = os.Setenv(SrcBranch, config.SrcBranch)
+	_ = os.Setenv(PEMKeyName, config.PEMKeyName)
+	_ = os.Setenv(CopierLogName, config.CopierLogName)
+	_ = os.Setenv(GoogleCloudProjectId, config.GoogleCloudProjectId)
+	_ = os.Setenv(DefaultRecursiveCopy, fmt.Sprintf("%t", config.DefaultRecursiveCopy))
+	_ = os.Setenv(DefaultPRMerge, fmt.Sprintf("%t", config.DefaultPRMerge))
 
 	if err := validateConfig(config); err != nil {
 		return nil, err

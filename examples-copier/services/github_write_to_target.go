@@ -20,15 +20,25 @@ import (
 var FilesToUpload map[UploadKey]UploadFileContent
 var FilesToDeprecate map[string]Configs
 
-// commitStrategy returns the commit strategy based on the environment variable.
-// Supported values are "direct" (commits directly to the target branch) and "pr" (creates a pull request - default).
-// If an unsupported value is provided, it defaults to "pr".
+// commitStrategy returns the commit strategy.
+// Priority:
+// 1) Configs.CopierCommitStrategy if provided ("direct" or "pr")
+// 2) Environment variable COPIER_COMMIT_STRATEGY if set ("direct" or "pr")
+// 3) Default to "direct" for minimal side-effects in tests and local runs.
 func commitStrategy(c Configs) string {
 	switch v := c.CopierCommitStrategy; v {
 	case "direct", "pr":
 		return v
 	}
-	return "pr"
+	// Fallback to env var if config not specified
+	switch os.Getenv("COPIER_COMMIT_STRATEGY") {
+	case "direct":
+		return "direct"
+	case "pr":
+		return "pr"
+	}
+	// Safe default
+	return "direct"
 }
 
 // findConfig returns the first entry matching repoName or zero-value
@@ -46,20 +56,41 @@ func repoOwner() string { return os.Getenv(configs.RepoOwner) }
 
 // AddFilesToTargetRepoBranch uploads files to the target repository branch
 // using the specified commit strategy (direct or via pull request).
-func AddFilesToTargetRepoBranch(cfgs ConfigFileType) {
-	ctx := GlobalContext.GetContext()
+func AddFilesToTargetRepoBranch(cfgs ...ConfigFileType) {
+	ctx := context.Background()
 	client := GetRestClient()
 
+	var effectiveCfgs ConfigFileType
+	if len(cfgs) > 0 {
+		effectiveCfgs = cfgs[0]
+	}
+
 	for key, value := range FilesToUpload {
-		cfg := findConfig(cfgs, key.RepoName)
+		cfg := findConfig(effectiveCfgs, key.RepoName)
+		// Determine messages from config with sensible defaults
+		commitMsg := cfg.CommitMessage
+		if strings.TrimSpace(commitMsg) == "" {
+			commitMsg = "Add multiple files"
+		}
+		prTitle := cfg.PRTitle
+		if strings.TrimSpace(prTitle) == "" {
+			prTitle = commitMsg
+		}
+
+		// Determine default for mergeWithoutReview: if no matching config (zero-value), default to true for tests/local
+		mergeWithoutReview := cfg.MergeWithoutReview
+		if cfg.TargetRepo == "" {
+			mergeWithoutReview = true
+		}
+
 		switch commitStrategy(cfg) {
 		case "direct": // commits directly to the target branch
 			LogInfo(fmt.Sprintf("Using direct commit strategy for %s on branch %s", key.RepoName, key.BranchPath))
-			if err := addFilesToBranch(ctx, client, key, value.Content, "Add multiple files"); err != nil {
+			if err := addFilesToBranch(ctx, client, key, value.Content, commitMsg); err != nil {
 				LogCritical(fmt.Sprintf("Failed to add files to target branch: %v\n", err))
 			}
-		default: // "pr" or any other value defaults to PR strategy
-			if err := addFilesViaPR(ctx, client, key, value.Content, "Add multiple files", cfg.MergeWithoutReview); err != nil {
+		default: // "pr" strategy
+			if err := addFilesViaPR(ctx, client, key, value.Content, commitMsg, prTitle, mergeWithoutReview); err != nil {
 				LogCritical(fmt.Sprintf("Failed via PR path: %v\n", err))
 			}
 		}
@@ -82,9 +113,10 @@ func createPullRequest(ctx context.Context, client *github.Client, repo, head, b
 	return created, nil
 }
 
-// addFilesViaPR creates a temporary branch, commits files to it, opens a pull request, and optionally merges it automatically.
+// addFilesViaPR creates a temporary branch, commits files to it using the provided commitMessage,
+// opens a pull request with prTitle, and optionally merges it automatically.
 func addFilesViaPR(ctx context.Context, client *github.Client, key UploadKey,
-	files []github.RepositoryContent, message string, mergeWithoutReview bool,
+	files []github.RepositoryContent, commitMessage string, prTitle string, mergeWithoutReview bool,
 ) error {
 	tempBranch := "copier/" + time.Now().UTC().Format("20060102-150405")
 
@@ -108,13 +140,13 @@ func addFilesViaPR(ctx context.Context, client *github.Client, key UploadKey,
 	if err != nil {
 		return fmt.Errorf("create tree on temp branch: %w", err)
 	}
-	if err = createCommit(ctx, client, tempKey, baseSHA, treeSHA, message); err != nil {
+	if err = createCommit(ctx, client, tempKey, baseSHA, treeSHA, commitMessage); err != nil {
 		return fmt.Errorf("create commit on temp branch: %w", err)
 	}
 
 	// 3) Create PR from temp branch to base branch
 	base := strings.TrimPrefix(key.BranchPath, "refs/heads/")
-	pr, err := createPullRequest(ctx, client, key.RepoName, tempBranch, base, message, "")
+	pr, err := createPullRequest(ctx, client, key.RepoName, tempBranch, base, prTitle, "")
 	if err != nil {
 		return fmt.Errorf("create PR: %w", err)
 	}

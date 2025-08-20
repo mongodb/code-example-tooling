@@ -1,13 +1,16 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+
 	"github.com/google/go-github/v48/github"
 	"github.com/mongodb/code-example-tooling/code-copier/configs"
 	. "github.com/mongodb/code-example-tooling/code-copier/types"
 	"github.com/shurcooL/githubv4"
-	"log"
 )
 
 // RetrieveAndParseConfigFile fetches the configuration file from the repository
@@ -34,15 +37,15 @@ func GetFilesChangedInPr(prNumber int) ([]ChangedFile, error) {
 		ConfigurePermissions()
 	}
 
-	var prQuery PullRequestQuery
+ var prQuery PullRequestQuery
 	variables := map[string]interface{}{
-		"owner":  githubv4.String(configs.RepoOwner),
-		"name":   githubv4.String(configs.RepoName),
+		"owner":  githubv4.String(os.Getenv(configs.RepoOwner)),
+		"name":   githubv4.String(os.Getenv(configs.RepoName)),
 		"number": githubv4.Int(prNumber),
 	}
 
 	client := GetGraphQLClient()
-	ctx := GlobalContext.GetContext()
+	ctx := context.Background()
 	err := client.Query(ctx, &prQuery, variables)
 	if err != nil {
 		LogCritical(fmt.Sprintf("Failed to execute query GetFilesChanged: %v", err))
@@ -65,14 +68,14 @@ func GetFilesChangedInPr(prNumber int) ([]ChangedFile, error) {
 // retrieveJsonFile fetches the content of a JSON file from the specified path in the repository.
 // It returns the file content as a string.
 func retrieveJsonFile(filePath string) string {
-	client := GetRestClient()
-	owner := configs.RepoOwner
-	repo := configs.RepoName
-	ctx := GlobalContext.GetContext()
+ client := GetRestClient()
+	owner := os.Getenv(configs.RepoOwner)
+	repo := os.Getenv(configs.RepoName)
+	ctx := context.Background()
 	fileContent, _, _, err :=
 		client.Repositories.GetContents(ctx, owner, repo,
 			filePath, &github.RepositoryContentGetOptions{
-				Ref: configs.SrcBranch,
+				Ref: os.Getenv(configs.SrcBranch),
 			})
 	if err != nil {
 		LogCritical(fmt.Sprintf("Error getting file content: %v", err))
@@ -90,15 +93,15 @@ func retrieveJsonFile(filePath string) string {
 // RetrieveFileContents fetches the contents of a file from the repository at the specified path.
 // It returns a github.RepositoryContent object containing the file details.
 func RetrieveFileContents(filePath string) (github.RepositoryContent, error) {
-	owner := configs.RepoOwner
-	repo := configs.RepoName
+ owner := os.Getenv(configs.RepoOwner)
+	repo := os.Getenv(configs.RepoName)
 	client := GetRestClient()
-	ctx := GlobalContext.GetContext()
+	ctx := context.Background()
 
 	fileContent, _, _, err :=
 		client.Repositories.GetContents(ctx, owner, repo,
 			filePath, &github.RepositoryContentGetOptions{
-				Ref: configs.SrcBranch,
+				Ref: os.Getenv(configs.SrcBranch),
 			})
 
 	if err != nil {

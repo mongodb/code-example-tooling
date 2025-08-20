@@ -1,23 +1,25 @@
 package services
 
 import (
-	secretmanager "cloud.google.com/go/secretmanager/apiv1"
-	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
+	"context"
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"time"
+
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/go-github/v48/github"
 	"github.com/mongodb/code-example-tooling/code-copier/configs"
 	"github.com/pkg/errors"
 	"github.com/shurcooL/graphql"
 	"golang.org/x/oauth2"
-	"io"
-	"log"
-	"net/http"
-	"os"
-	"time"
 )
 
 // transport is a custom HTTP transport that adds the Authorization header to each request.
@@ -47,7 +49,7 @@ func ConfigurePermissions() {
 	}
 
 	// Generate JWT
-	token, err := generateGitHubJWT(configs.AppClientId, privateKey)
+	token, err := generateGitHubJWT(os.Getenv(configs.AppClientId), privateKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "Error generating JWT"))
 	}
@@ -93,7 +95,7 @@ func getPrivateKeyFromSecret() []byte {
 		}
 		log.Fatalf("SKIP_SECRET_MANAGER=true but no GITHUB_APP_PRIVATE_KEY or GITHUB_APP_PRIVATE_KEY_B64 set")
 	}
-	ctx := GlobalContext.GetContext()
+	ctx := context.Background()
 	client, err := secretmanager.NewClient(ctx)
 
 	if err != nil {

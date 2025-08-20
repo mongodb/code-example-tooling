@@ -3,19 +3,19 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/go-github/v48/github"
-	. "github.com/mongodb/code-example-tooling/code-copier/types"
 	"io"
 	"net/http"
 	"path/filepath"
 	"strings"
+
+	"github.com/google/go-github/v48/github"
+	. "github.com/mongodb/code-example-tooling/code-copier/types"
 )
 
 // ParseWebhookData processes incoming GitHub webhook requests.
 // It extracts the pull request number, state, and merged status from the payload.
 // If the pull request is closed and merged, it triggers the handling of the PR closed event
 func ParseWebhookData(w http.ResponseWriter, r *http.Request) {
-	GlobalContext.SetContext(r.Context())
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {

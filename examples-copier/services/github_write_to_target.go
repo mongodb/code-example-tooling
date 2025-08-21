@@ -3,14 +3,16 @@ package services
 import (
 	"context"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/google/go-github/v48/github"
 	"github.com/mongodb/code-example-tooling/code-copier/configs"
 	. "github.com/mongodb/code-example-tooling/code-copier/types"
 	"github.com/pkg/errors"
-	"log"
-	"os"
-	"strings"
-	"time"
 )
 
 // FilesToUpload is a map where the key is the repo name
@@ -23,8 +25,8 @@ var FilesToDeprecate map[string]Configs
 // commitStrategy returns the commit strategy.
 // Priority:
 // 1) Configs.CopierCommitStrategy if provided ("direct" or "pr")
-// 2) Environment variable COPIER_COMMIT_STRATEGY if set ("direct" or "pr")
-// 3) Default to "direct" for minimal side-effects in tests and local runs.
+// 2) Environment variable COPIER_COMMIT_STRATEGY ("direct" or "pr")
+// 3) Default to "direct" for minimal side effects in tests and local runs.
 func commitStrategy(c Configs) string {
 	switch v := c.CopierCommitStrategy; v {
 	case "direct", "pr":
@@ -70,16 +72,21 @@ func AddFilesToTargetRepoBranch(cfgs ...ConfigFileType) {
 		// Determine messages from config with sensible defaults
 		commitMsg := cfg.CommitMessage
 		if strings.TrimSpace(commitMsg) == "" {
-			commitMsg = "Add multiple files"
+			commitMsg = os.Getenv(configs.DefaultCommitMessage)
+			if strings.TrimSpace(commitMsg) == "" {
+				commitMsg = configs.NewConfig().DefaultCommitMessage
+			}
 		}
 		prTitle := cfg.PRTitle
 		if strings.TrimSpace(prTitle) == "" {
 			prTitle = commitMsg
 		}
 
-		// Determine default for mergeWithoutReview: if no matching config (zero-value), default to true for tests/local
+		// Determine default for mergeWithoutReview. If no matching config (zero-value),
+		// honor DEFAULT_PR_MERGE env var; otherwise, fall back to system default.
 		mergeWithoutReview := cfg.MergeWithoutReview
 		if cfg.TargetRepo == "" {
+			// Preserve historical behavior for tests/local runs: default to auto-merge when no config present
 			mergeWithoutReview = true
 		}
 
@@ -155,6 +162,25 @@ func addFilesViaPR(ctx context.Context, client *github.Client, key UploadKey,
 	LogInfo(fmt.Sprintf("PR created: #%d from %s to %s", pr.GetNumber(), tempBranch, base))
 	LogInfo(fmt.Sprintf("PR URL: %s", pr.GetHTMLURL()))
 	if mergeWithoutReview {
+		// Poll PR for mergeability; GitHub may take a moment to compute it
+		// We poll up to ~10s with 500ms interval
+		var mergeable *bool
+		var mergeableState string
+		for i := 0; i < 20; i++ {
+			current, _, gerr := client.PullRequests.Get(ctx, repoOwner(), key.RepoName, pr.GetNumber())
+			if gerr == nil && current != nil {
+				mergeable = current.Mergeable
+				mergeableState = current.GetMergeableState()
+				if mergeable != nil { // computed
+					break
+				}
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+		if mergeable != nil && !*mergeable || strings.EqualFold(mergeableState, "dirty") {
+			LogWarning(fmt.Sprintf("PR #%d is not mergeable (state=%s). Likely merge conflicts. Leaving PR open for manual resolution.", pr.GetNumber(), mergeableState))
+			return fmt.Errorf("pull request #%d has merge conflicts (state=%s)", pr.GetNumber(), mergeableState)
+		}
 		if err = mergePR(ctx, client, key.RepoName, pr.GetNumber()); err != nil {
 			return fmt.Errorf("merge PR: %w", err)
 		}
@@ -285,6 +311,12 @@ func createCommit(ctx context.Context, client *github.Client, targetBranch Uploa
 		Object: &github.GitObject{SHA: github.String(newCommit.GetSHA())},
 	}
 	if _, _, err := client.Git.UpdateRef(ctx, owner, targetBranch.RepoName, ref, false); err != nil {
+		// Detect non-fast-forward / conflict scenarios and provide a clearer error
+		if eresp, ok := err.(*github.ErrorResponse); ok {
+			if eresp.Response != nil && eresp.Response.StatusCode == http.StatusUnprocessableEntity {
+				return fmt.Errorf("failed to update ref: non-fast-forward (possible conflict). Consider using PR strategy: %w", err)
+			}
+		}
 		return fmt.Errorf("failed to update ref to new commit: %w", err)
 	}
 	return nil

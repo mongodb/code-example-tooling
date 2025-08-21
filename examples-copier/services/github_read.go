@@ -37,7 +37,7 @@ func GetFilesChangedInPr(prNumber int) ([]ChangedFile, error) {
 		ConfigurePermissions()
 	}
 
- var prQuery PullRequestQuery
+	var prQuery PullRequestQuery
 	variables := map[string]interface{}{
 		"owner":  githubv4.String(os.Getenv(configs.RepoOwner)),
 		"name":   githubv4.String(os.Getenv(configs.RepoName)),
@@ -68,7 +68,7 @@ func GetFilesChangedInPr(prNumber int) ([]ChangedFile, error) {
 // retrieveJsonFile fetches the content of a JSON file from the specified path in the repository.
 // It returns the file content as a string.
 func retrieveJsonFile(filePath string) string {
- client := GetRestClient()
+	client := GetRestClient()
 	owner := os.Getenv(configs.RepoOwner)
 	repo := os.Getenv(configs.RepoName)
 	ctx := context.Background()
@@ -93,7 +93,7 @@ func retrieveJsonFile(filePath string) string {
 // RetrieveFileContents fetches the contents of a file from the repository at the specified path.
 // It returns a github.RepositoryContent object containing the file details.
 func RetrieveFileContents(filePath string) (github.RepositoryContent, error) {
- owner := os.Getenv(configs.RepoOwner)
+	owner := os.Getenv(configs.RepoOwner)
 	repo := os.Getenv(configs.RepoName)
 	client := GetRestClient()
 	ctx := context.Background()

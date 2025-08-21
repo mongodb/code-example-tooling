@@ -48,8 +48,8 @@ func ConfigurePermissions() {
 		log.Fatal(errors.Wrap(err, "Unable to parse RSA private key"))
 	}
 
-	// Generate JWT
-	token, err := generateGitHubJWT(os.Getenv(configs.AppClientId), privateKey)
+	// Generate JWT — use the numeric GitHub App ID (GITHUB_APP_ID) as "iss"
+	token, err := generateGitHubJWT(os.Getenv(configs.AppId), privateKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "Error generating JWT"))
 	}

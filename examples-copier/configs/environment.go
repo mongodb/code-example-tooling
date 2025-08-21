@@ -14,6 +14,7 @@ type Config struct {
 	Port                 string
 	RepoName             string
 	RepoOwner            string
+	AppId                string
 	AppClientId          string
 	InstallationId       string
 	CommiterName         string
@@ -27,6 +28,7 @@ type Config struct {
 	GoogleCloudProjectId string
 	DefaultRecursiveCopy bool
 	DefaultPRMerge       bool
+	DefaultCommitMessage string
 }
 
 const (
@@ -34,6 +36,7 @@ const (
 	Port                 = "PORT"
 	RepoName             = "REPO_NAME"
 	RepoOwner            = "REPO_OWNER"
+	AppId                = "GITHUB_APP_ID"
 	AppClientId          = "GITHUB_APP_CLIENT_ID"
 	InstallationId       = "INSTALLATION_ID"
 	CommiterName         = "COMMITER_NAME"
@@ -47,6 +50,7 @@ const (
 	GoogleCloudProjectId = "GOOGLE_CLOUD_PROJECT_ID"
 	DefaultRecursiveCopy = "DEFAULT_RECURSIVE_COPY"
 	DefaultPRMerge       = "DEFAULT_PR_MERGE"
+	DefaultCommitMessage = "DEFAULT_COMMIT_MESSAGE"
 )
 
 // NewConfig returns a new Config instance with default values
@@ -64,6 +68,7 @@ func NewConfig() *Config {
 		GoogleCloudProjectId: "github-copy-code-examples",                                      // default project ID for logging to GCP
 		DefaultRecursiveCopy: true,                                                             // system-wide default for recursive copying that individual config entries can override.
 		DefaultPRMerge:       false,                                                            // system-wide default for PR merge without review that individual config entries can override.
+		DefaultCommitMessage: "Automated PR with updated examples",                             // default commit message used when per-config commit_message is absent.
 	}
 }
 
@@ -100,6 +105,7 @@ func LoadEnvironment(envFile string) (*Config, error) {
 	config.Port = getEnvWithDefault(Port, config.Port)
 	config.RepoName = os.Getenv(RepoName)
 	config.RepoOwner = os.Getenv(RepoOwner)
+	config.AppId = os.Getenv(AppId)
 	config.AppClientId = os.Getenv(AppClientId)
 	config.InstallationId = os.Getenv(InstallationId)
 	config.CommiterName = getEnvWithDefault(CommiterName, config.CommiterName)
@@ -113,11 +119,13 @@ func LoadEnvironment(envFile string) (*Config, error) {
 	config.DefaultPRMerge = getBoolEnvWithDefault(DefaultPRMerge, config.DefaultPRMerge)
 	config.CopierLogName = getEnvWithDefault(CopierLogName, config.CopierLogName)
 	config.GoogleCloudProjectId = getEnvWithDefault(GoogleCloudProjectId, config.GoogleCloudProjectId)
+	config.DefaultCommitMessage = getEnvWithDefault(DefaultCommitMessage, config.DefaultCommitMessage)
 
 	// Export resolved values back into environment so downstream os.Getenv sees defaults
 	_ = os.Setenv(Port, config.Port)
 	_ = os.Setenv(RepoName, config.RepoName)
 	_ = os.Setenv(RepoOwner, config.RepoOwner)
+	_ = os.Setenv(AppId, config.AppId)
 	_ = os.Setenv(AppClientId, config.AppClientId)
 	_ = os.Setenv(InstallationId, config.InstallationId)
 	_ = os.Setenv(CommiterName, config.CommiterName)
@@ -131,6 +139,7 @@ func LoadEnvironment(envFile string) (*Config, error) {
 	_ = os.Setenv(GoogleCloudProjectId, config.GoogleCloudProjectId)
 	_ = os.Setenv(DefaultRecursiveCopy, fmt.Sprintf("%t", config.DefaultRecursiveCopy))
 	_ = os.Setenv(DefaultPRMerge, fmt.Sprintf("%t", config.DefaultPRMerge))
+	_ = os.Setenv(DefaultCommitMessage, config.DefaultCommitMessage)
 
 	if err := validateConfig(config); err != nil {
 		return nil, err
@@ -164,7 +173,7 @@ func validateConfig(config *Config) error {
 	requiredVars := map[string]string{
 		RepoName:       config.RepoName,
 		RepoOwner:      config.RepoOwner,
-		AppClientId:    config.AppClientId,
+		AppId:         config.AppId,
 		InstallationId: config.InstallationId,
 	}
 

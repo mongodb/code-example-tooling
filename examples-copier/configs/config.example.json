@@ -5,10 +5,10 @@
     "target_branch": "main",
     "target_directory": "go",
     "recursive_copy": true,
+    "copier_commit_strategy": "pr",
     "pr_title": "Update Go Examples",
     "commit_message": "Copy latest Go examples from generated-examples",
     "merge_without_review": false
-
   },
   {
     "source_directory": "examples/python",
@@ -16,6 +16,7 @@
     "target_branch": "v2.0",
     "target_directory": "python",
     "recursive_copy": false,
+    "copier_commit_strategy": "direct",
     "pr_title": "",
     "commit_message": "Copy v2 Python examples",
     "merge_without_review": true

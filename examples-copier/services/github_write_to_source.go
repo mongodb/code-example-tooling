@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 	"os"
+	"time"
 
 	"github.com/google/go-github/v48/github"
 	"github.com/mongodb/code-example-tooling/code-copier/configs"
@@ -13,7 +13,7 @@ import (
 )
 
 func UpdateDeprecationFile() {
- content := retrieveJsonFile(os.Getenv(configs.DeprecationFile))
+	content := retrieveJsonFile(os.Getenv(configs.DeprecationFile))
 
 	var deprecationFile DeprecationFile
 	err := json.Unmarshal([]byte(content), &deprecationFile)
@@ -36,7 +36,7 @@ func UpdateDeprecationFile() {
 		LogError(fmt.Sprintf("Error marshaling JSON: %v", err))
 	}
 
- message := fmt.Sprintf("Updating %s.", os.Getenv(configs.DeprecationFile))
+	message := fmt.Sprintf("Updating %s.", os.Getenv(configs.DeprecationFile))
 	uploadDeprecationFileChanges(message, string(updatedJSON))
 }
 
@@ -44,14 +44,14 @@ func uploadDeprecationFileChanges(message string, newDeprecationFileContents str
 	client := GetRestClient()
 	ctx := context.Background()
 
- targetFileContent, _, _, err := client.Repositories.GetContents(ctx, os.Getenv(configs.RepoOwner), os.Getenv(configs.RepoName),
+	targetFileContent, _, _, err := client.Repositories.GetContents(ctx, os.Getenv(configs.RepoOwner), os.Getenv(configs.RepoName),
 		os.Getenv(configs.DeprecationFile), &github.RepositoryContentGetOptions{Ref: os.Getenv(configs.SrcBranch)})
 
 	if err != nil {
 		LogError(fmt.Sprintf("Error getting deprecation file contents: %v", err))
 	}
 
- options := &github.RepositoryContentFileOptions{
+	options := &github.RepositoryContentFileOptions{
 		Message: github.String(message),
 		Content: []byte(newDeprecationFileContents),
 		Branch:  github.String(os.Getenv(configs.SrcBranch)),

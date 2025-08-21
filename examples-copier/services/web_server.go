@@ -2,11 +2,12 @@ package services
 
 import (
 	"fmt"
-	"github.com/mongodb/code-example-tooling/code-copier/configs"
-	"github.com/pkg/errors"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/mongodb/code-example-tooling/code-copier/configs"
+	"github.com/pkg/errors"
 )
 
 // SetupWebServerAndListen sets up the web server and listens for incoming webhook requests.
@@ -19,8 +20,9 @@ func SetupWebServerAndListen() {
 		log.Fatal(errors.Wrap(err, "Failed to load environment"))
 	}
 
- InitializeGoogleLogger()
- path := os.Getenv(configs.WebserverPath)
+	InitializeGoogleLogger()
+	defer CloseGoogleLogger()
+	path := os.Getenv(configs.WebserverPath)
 	if path == "" {
 		path = configs.NewConfig().WebserverPath
 	}

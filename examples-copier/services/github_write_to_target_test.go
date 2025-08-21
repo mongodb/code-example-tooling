@@ -6,6 +6,8 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"io"
+	"net/http"
 	"os"
 	"regexp"
 	"strings"
@@ -27,7 +29,8 @@ func TestMain(m *testing.M) {
 	os.Setenv(configs.RepoOwner, "my-org")
 	os.Setenv(configs.RepoName, "target-repo")
 	os.Setenv(configs.InstallationId, "12345")
-	os.Setenv(configs.AppClientId, "dummy-client-id")
+	os.Setenv(configs.AppId, "1166559")
+	os.Setenv(configs.AppClientId, "IvTestClientId")
 	os.Setenv("SKIP_SECRET_MANAGER", "true")
 	os.Setenv("SRC_BRANCH", "main")
 
@@ -35,7 +38,6 @@ func TestMain(m *testing.M) {
 	key, _ := rsa.GenerateKey(rand.Reader, 1024)
 	der := x509.MarshalPKCS1PrivateKey(key)
 	pemBytes := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: der})
-	os.Setenv("GITHUB_APP_ID", "999999")
 	os.Setenv("GITHUB_APP_PRIVATE_KEY", string(pemBytes))
 	os.Setenv("GITHUB_APP_PRIVATE_KEY_B64", base64.StdEncoding.EncodeToString(pemBytes))
 
@@ -45,10 +47,10 @@ func TestMain(m *testing.M) {
 	os.Unsetenv(configs.RepoOwner)
 	os.Unsetenv(configs.RepoName)
 	os.Unsetenv(configs.InstallationId)
+	os.Unsetenv(configs.AppId)
 	os.Unsetenv(configs.AppClientId)
 	os.Unsetenv("SKIP_SECRET_MANAGER")
 	os.Unsetenv("SRC_BRANCH")
-	os.Unsetenv("GITHUB_APP_ID")
 	os.Unsetenv("GITHUB_APP_PRIVATE_KEY")
 	os.Unsetenv("GITHUB_APP_PRIVATE_KEY_B64")
 
@@ -364,6 +366,263 @@ func TestAddFilesToTargetRepoBranch_ViaPR_Succeeds(t *testing.T) {
 			regexp.MustCompile(`/repos/`+regexp.QuoteMeta(owner)+`/`+regexp.QuoteMeta(repo)+`/git/refs/heads/copier/\d{8}-\d{6}$`)),
 		1,
 	)
+
+	services.FilesToUpload = nil
+}
+
+
+
+// --- Added critical tests for merge conflicts and configuration/default priorities ---
+
+func TestAddFiles_DirectConflict_NonFastForward(t *testing.T) {
+	_ = test.WithHTTPMock(t)
+
+	owner, repo := test.EnvOwnerRepo(t)
+	branch := "main"
+
+	// Mock standard direct write endpoints
+	baseRefURL, commitsURL, updateRefURL := test.MockGitHubWriteEndpoints(owner, repo, branch)
+
+	// Override UpdateRef to simulate 422 Unprocessable Entity (non-fast-forward)
+	httpmock.RegisterResponder("PATCH", updateRefURL, httpmock.NewJsonResponderOrPanic(422, map[string]any{
+		"message": "Update is not a fast forward",
+	}))
+
+	files := []github.RepositoryContent{
+		{
+			Name:    github.String("dir/example1.txt"),
+			Path:    github.String("dir/example1.txt"),
+			Content: github.String(base64.StdEncoding.EncodeToString([]byte("hello 1"))),
+		},
+	}
+	services.FilesToUpload = map[types.UploadKey]types.UploadFileContent{
+		{RepoName: repo, BranchPath: "refs/heads/" + branch}: {
+			TargetBranch: branch,
+			Content:      files,
+		},
+	}
+
+	// Run – should not panic; error is handled/logged internally.
+	services.AddFilesToTargetRepoBranch()
+
+	info := httpmock.GetCallCountInfo()
+	require.Equal(t, 1, info["GET "+baseRefURL])
+	require.Equal(t, 1, info["POST "+commitsURL])
+	require.Equal(t, 1, info["PATCH "+updateRefURL])
+
+	services.FilesToUpload = nil
+}
+
+func TestAddFiles_ViaPR_MergeConflict_Dirty_NotMerged(t *testing.T) {
+	_ = test.WithHTTPMock(t)
+	t.Setenv("COPIER_COMMIT_STRATEGY", "pr")
+
+	owner, repo := test.EnvOwnerRepo(t)
+	baseBranch := "main"
+
+	// Fresh token path
+	services.InstallationAccessToken = ""
+	test.MockGitHubAppTokenEndpoint(os.Getenv(configs.InstallationId))
+	services.ConfigurePermissions()
+
+	// Base ref for creating temp branch
+	httpmock.RegisterRegexpResponder("GET",
+		regexp.MustCompile(`^https://api\.github\.com/repos/`+owner+`/`+repo+`/git/ref/(?:refs/)?heads/`+baseBranch+`$`),
+		httpmock.NewJsonResponderOrPanic(200, map[string]any{
+			"ref": "refs/heads/" + baseBranch, "object": map[string]any{"sha": "baseSha"},
+		}),
+	)
+	createRefURL := test.MockCreateRef(owner, repo)
+
+	// Temp branch interactions
+	tempHead := `copier/\d{8}-\d{6}`
+	httpmock.RegisterRegexpResponder("GET",
+		regexp.MustCompile(`^https://api\.github\.com/repos/`+owner+`/`+repo+`/git/ref/(?:refs/)?heads/`+tempHead+`$`),
+		httpmock.NewJsonResponderOrPanic(200, map[string]any{
+			"ref": "refs/heads/copier/20250101-000000", "object": map[string]any{"sha": "baseSha"},
+		}),
+	)
+	httpmock.RegisterRegexpResponder("POST",
+		regexp.MustCompile(`^https://api\.github\.com/repos/`+owner+`/`+repo+`/git/trees(\?.*)?$`),
+		httpmock.NewJsonResponderOrPanic(201, map[string]any{"sha": "newTreeSha"}),
+	)
+	commitsURL := "https://api.github.com/repos/" + owner + "/" + repo + "/git/commits"
+	httpmock.RegisterResponder("POST", commitsURL,
+		httpmock.NewJsonResponderOrPanic(201, map[string]any{"sha": "newCommitSha"}),
+	)
+	httpmock.RegisterRegexpResponder("PATCH",
+		regexp.MustCompile(`^https://api\.github\.com/repos/`+owner+`/`+repo+`/git/refs/heads/`+tempHead+`$`),
+		httpmock.NewStringResponder(200, "{}"),
+	)
+
+	// PR create
+	prNumber := 77
+	httpmock.RegisterResponder("POST",
+		"https://api.github.com/repos/"+owner+"/"+repo+"/pulls",
+		httpmock.NewJsonResponderOrPanic(201, map[string]any{"number": prNumber, "html_url": "https://github.com/"+owner+"/"+repo+"/pull/77"}),
+	)
+	// PR mergeability check returns dirty -> not mergeable
+	httpmock.RegisterResponder("GET",
+		"https://api.github.com/repos/"+owner+"/"+repo+"/pulls/77",
+		httpmock.NewJsonResponderOrPanic(200, map[string]any{"mergeable": false, "mergeable_state": "dirty"}),
+	)
+	// Note: do NOT register PUT /merge to ensure it isn't called
+	// Also do NOT register DELETE for temp ref; conflict path returns early before cleanup
+
+	// Minimal file to write
+	files := []github.RepositoryContent{{
+		Name:    github.String("f.txt"),
+		Path:    github.String("f.txt"),
+		Content: github.String(base64.StdEncoding.EncodeToString([]byte("x"))),
+	}}
+	services.FilesToUpload = map[types.UploadKey]types.UploadFileContent{
+		{RepoName: repo, BranchPath: "refs/heads/" + baseBranch}: {
+			TargetBranch: baseBranch,
+			Content:      files,
+		},
+	}
+
+	services.AddFilesToTargetRepoBranch()
+
+	// Assertions
+	info := httpmock.GetCallCountInfo()
+	require.Equal(t, 1, info["POST "+createRefURL])
+ require.Equal(t, 1, test.CountByMethodAndURLRegexp("POST",
+		regexp.MustCompile(`/repos/`+regexp.QuoteMeta(owner)+`/`+regexp.QuoteMeta(repo)+`/pulls$`)))
+	// No merge call should have been made
+ require.Equal(t, 0, test.CountByMethodAndURLRegexp("PUT",
+		regexp.MustCompile(`/repos/`+regexp.QuoteMeta(owner)+`/`+regexp.QuoteMeta(repo)+`/pulls/77/merge$`)))
+	// No delete of temp ref because we returned early
+ require.Equal(t, 0, test.CountByMethodAndURLRegexp("DELETE",
+		regexp.MustCompile(`/repos/`+regexp.QuoteMeta(owner)+`/`+regexp.QuoteMeta(repo)+`/git/refs/heads/copier/\d{8}-\d{6}$`)))
+
+	services.FilesToUpload = nil
+}
+
+func TestPriority_Strategy_ConfigOverridesEnv_And_MessageFallbacks(t *testing.T) {
+	_ = test.WithHTTPMock(t)
+
+	owner, repo := test.EnvOwnerRepo(t)
+	baseBranch := "main"
+
+	// Env specifies PR, but config will override to direct
+	t.Setenv("COPIER_COMMIT_STRATEGY", "pr")
+
+	// Mocks for direct flow
+	baseRefURL, commitsURL, updateRefURL := test.MockGitHubWriteEndpoints(owner, repo, baseBranch)
+
+	// Intercept POST commit to assert commit message fallback when config empty but env default set
+	wantMsg := "Env Default Commit Message"
+	t.Setenv(configs.DefaultCommitMessage, wantMsg)
+
+	// Replace commits responder with custom body assertion
+	httpmock.RegisterResponder("POST", commitsURL, func(req *http.Request) (*http.Response, error) {
+		defer req.Body.Close()
+		b, _ := io.ReadAll(req.Body)
+		if !strings.Contains(string(b), wantMsg) {
+			t.Fatalf("commit body does not contain expected message: %s; body=%s", wantMsg, string(b))
+		}
+		return httpmock.NewJsonResponse(201, map[string]any{"sha": "newCommitSha"})
+	})
+
+	files := []github.RepositoryContent{{
+		Name:    github.String("a.txt"),
+		Path:    github.String("a.txt"),
+		Content: github.String(base64.StdEncoding.EncodeToString([]byte("x"))),
+	}}
+
+	cfg := types.Configs{
+		TargetRepo:           repo,
+		TargetBranch:         baseBranch,
+		CopierCommitStrategy: "direct", // overrides env "pr"
+		// CommitMessage empty -> use env default
+	}
+
+	services.FilesToUpload = map[types.UploadKey]types.UploadFileContent{
+		{RepoName: repo, BranchPath: "refs/heads/" + baseBranch}: {TargetBranch: baseBranch, Content: files},
+	}
+
+	services.AddFilesToTargetRepoBranch(types.ConfigFileType{cfg})
+
+	info := httpmock.GetCallCountInfo()
+	require.Equal(t, 1, info["GET "+baseRefURL])
+	require.Equal(t, 1, info["POST "+commitsURL])
+	require.Equal(t, 1, info["PATCH "+updateRefURL])
+	// No PR endpoints should be called
+	require.Equal(t, 0, test.CountByMethodAndURLRegexp("POST", regexp.MustCompile(`/pulls$`)))
+
+	services.FilesToUpload = nil
+}
+
+func TestPriority_PRTitleDefaultsToCommitMessage_And_NoAutoMergeWhenConfigPresent(t *testing.T) {
+	_ = test.WithHTTPMock(t)
+	t.Setenv("COPIER_COMMIT_STRATEGY", "pr")
+
+	owner, repo := test.EnvOwnerRepo(t)
+	baseBranch := "main"
+
+	// Token setup
+	services.InstallationAccessToken = ""
+	test.MockGitHubAppTokenEndpoint(os.Getenv(configs.InstallationId))
+	services.ConfigurePermissions()
+
+	// Base ref and temp branch setup
+	httpmock.RegisterRegexpResponder("GET",
+		regexp.MustCompile(`^https://api\.github\.com/repos/`+owner+`/`+repo+`/git/ref/(?:refs/)?heads/`+baseBranch+`$`),
+		httpmock.NewJsonResponderOrPanic(200, map[string]any{"ref": "refs/heads/" + baseBranch, "object": map[string]any{"sha": "baseSha"}}),
+	)
+	_ = test.MockCreateRef(owner, repo)
+		tempHead := `copier/\d{8}-\d{6}`
+	httpmock.RegisterRegexpResponder("GET",
+		regexp.MustCompile(`^https://api\.github\.com/repos/`+owner+`/`+repo+`/git/ref/(?:refs/)?heads/`+tempHead+`$`),
+		httpmock.NewJsonResponderOrPanic(200, map[string]any{"ref": "refs/heads/copier/20250101-000000", "object": map[string]any{"sha": "baseSha"}}),
+	)
+	httpmock.RegisterRegexpResponder("POST",
+		regexp.MustCompile(`^https://api\.github\.com/repos/`+owner+`/`+repo+`/git/trees(\?.*)?$`),
+		httpmock.NewJsonResponderOrPanic(201, map[string]any{"sha": "t"}),
+	)
+	commitsURL := "https://api.github.com/repos/" + owner + "/" + repo + "/git/commits"
+	want := "Env Fallback Message"
+	t.Setenv(configs.DefaultCommitMessage, want)
+	httpmock.RegisterResponder("POST", commitsURL, func(req *http.Request) (*http.Response, error) {
+		b, _ := io.ReadAll(req.Body)
+		if !strings.Contains(string(b), want) {
+			t.Fatalf("expected commit message %q, got body=%s", want, string(b))
+		}
+		return httpmock.NewJsonResponse(201, map[string]any{"sha": "c"})
+	})
+	httpmock.RegisterRegexpResponder("PATCH",
+		regexp.MustCompile(`^https://api\.github\.com/repos/`+owner+`/`+repo+`/git/refs/heads/`+tempHead+`$`),
+		httpmock.NewStringResponder(200, "{}"),
+	)
+
+	// Assert PR title equals commit message when PRTitle empty
+	httpmock.RegisterResponder("POST",
+		"https://api.github.com/repos/"+owner+"/"+repo+"/pulls",
+		func(req *http.Request) (*http.Response, error) {
+			b, _ := io.ReadAll(req.Body)
+			if !strings.Contains(string(b), `"title":"`+want+`"`) {
+				t.Fatalf("expected PR title to default to commit message %q; body=%s", want, string(b))
+			}
+			return httpmock.NewJsonResponse(201, map[string]any{"number": 5})
+		},
+	)
+
+	// No merge; MergeWithoutReview=false when matching config present and not set to true
+	// If code attempted merge, there would be a 404 on PUT, failing the test via missing responder count.
+
+	files := []github.RepositoryContent{{
+		Name: github.String("only.txt"), Path: github.String("only.txt"),
+		Content: github.String(base64.StdEncoding.EncodeToString([]byte("y"))),
+	}}
+	cfg := types.Configs{TargetRepo: repo, TargetBranch: baseBranch /* MergeWithoutReview: false (zero value) */}
+	services.FilesToUpload = map[types.UploadKey]types.UploadFileContent{{RepoName: repo, BranchPath: "refs/heads/" + baseBranch}: {TargetBranch: baseBranch, Content: files}}
+
+	services.AddFilesToTargetRepoBranch(types.ConfigFileType{cfg})
+
+	// Ensure a PR was created but no merge occurred
+	require.Equal(t, 1, test.CountByMethodAndURLRegexp("POST", regexp.MustCompile(`/pulls$`)))
+	require.Equal(t, 0, test.CountByMethodAndURLRegexp("PUT", regexp.MustCompile(`/pulls/5/merge$`)))
 
 	services.FilesToUpload = nil
 }

@@ -16,9 +16,15 @@ import (
 // NOTE: This func does not return data to print in our nicely-formatted tables; instead, it logs directly to console.
 func GetUniqueCodeExampleUpdatesForDocsSection(db *mongo.Database, ctx context.Context) {
 	// ------ CONFIGURATION: Set these values for your docs set and section ----------
-	collectionName := "cloud-docs"         // Replace this with the name of the docs set you want to search within
-	docsSectionSubstring := "atlas-search" // Replace this with a substring that represents the docs section where you want to focus results
+	collectionName := "cloud-docs"                // Replace this with the name of the docs set you want to search within
+	docsSectionSubstring := "atlas-vector-search" // Replace this with a substring that represents the docs section where you want to focus results
 	// ------ END CONFIGURATION --------------------------------------------------
+
+	// Define a struct to match the aggregation output
+	type AggregatedDocsPage struct {
+		ID    string            `bson:"_id"`   // Grouping field (DocsPage ID from `$group`)
+		Nodes []common.CodeNode `bson:"nodes"` // Grouped array of nodes
+	}
 
 	// Calculate last week's date range
 	now := time.Now()
@@ -29,7 +35,7 @@ func GetUniqueCodeExampleUpdatesForDocsSection(db *mongo.Database, ctx context.C
 		// Step 1: Unwind the `nodes` array.
 		{{"$unwind", bson.D{{"path", "$nodes"}}}},
 
-		// Step 2: Match relevant `CodeNode` objects.
+		// Step 2: Match relevant recently added or updated `CodeNode` objects.
 		{{"$match", bson.D{
 			{"$and", bson.A{
 				bson.D{{"$or", bson.A{
@@ -52,7 +58,10 @@ func GetUniqueCodeExampleUpdatesForDocsSection(db *mongo.Database, ctx context.C
 
 		// Step 4: Match `_id` whose string value contains the docs section substring to omit results for any other pages - i.e. `atlas-search`
 		bson.D{{"$match", bson.D{
-			{"_id", bson.M{"$regex": docsSectionSubstring}},
+			{"_id", bson.D{
+				{"$regex", docsSectionSubstring},
+				{"$options", "i"},
+			}},
 		}}},
 	}
 
@@ -65,8 +74,8 @@ func GetUniqueCodeExampleUpdatesForDocsSection(db *mongo.Database, ctx context.C
 	defer cur.Close(ctx)
 
 	// Process the aggregation results
-	var docsPages []common.DocsPage
-	if err := cur.All(context.Background(), &docsPages); err != nil {
+	var docsPages []AggregatedDocsPage
+	if err := cur.All(ctx, &docsPages); err != nil {
 		fmt.Println("Error decoding aggregation results:", err)
 		return
 	}
@@ -93,7 +102,7 @@ func GetUniqueCodeExampleUpdatesForDocsSection(db *mongo.Database, ctx context.C
 		totalInstances := 0                     // Track total `instances_on_page` for this page.
 
 		// Iterate through the `nodes` array in current DocsPage
-		for _, node := range *page.Nodes {
+		for _, node := range page.Nodes {
 			if !distinctHashes[node.SHA256Hash] {
 				distinctHashes[node.SHA256Hash] = true
 			}

@@ -31,7 +31,7 @@ func RetrieveAndParseConfigFile() (ConfigFileType, error) {
 
 // GetFilesChangedInPr retrieves the list of files changed in a specified pull request.
 // It returns a slice of ChangedFile structures containing details about each changed file.
-func GetFilesChangedInPr(prNumber int) ([]ChangedFile, error) {
+func GetFilesChangedInPr(pr_number int) ([]ChangedFile, error) {
 	if InstallationAccessToken == "" {
 		log.Println("No installation token provided")
 		ConfigurePermissions()
@@ -41,7 +41,7 @@ func GetFilesChangedInPr(prNumber int) ([]ChangedFile, error) {
 	variables := map[string]interface{}{
 		"owner":  githubv4.String(os.Getenv(configs.RepoOwner)),
 		"name":   githubv4.String(os.Getenv(configs.RepoName)),
-		"number": githubv4.Int(prNumber),
+		"number": githubv4.Int(pr_number),
 	}
 
 	client := GetGraphQLClient()

@@ -323,23 +323,23 @@ func createCommit(ctx context.Context, client *github.Client, targetBranch Uploa
 }
 
 // mergePR merges the specified pull request in the given repository.
-func mergePR(ctx context.Context, client *github.Client, repo string, prNumber int) error {
+func mergePR(ctx context.Context, client *github.Client, repo string, pr_number int) error {
 	owner := repoOwner()
 
 	options := &github.PullRequestOptions{
 		MergeMethod: "merge", // Other options: "squash" or "rebase"
 	}
-	result, _, err := client.PullRequests.Merge(ctx, owner, repo, prNumber, "Merging the pull request", options)
+	result, _, err := client.PullRequests.Merge(ctx, owner, repo, pr_number, "Merging the pull request", options)
 	if err != nil {
 		LogCritical(fmt.Sprintf("Failed to merge PR: %v\n", err))
 		return err
 	}
 	if result.GetMerged() {
-		LogInfo(fmt.Sprintf("Successfully merged PR #%d\n", prNumber))
+		LogInfo(fmt.Sprintf("Successfully merged PR #%d\n", pr_number))
 		return nil
 	} else {
-		LogError(fmt.Sprintf("Failed to merge PR #%d: %s", prNumber, result.GetMessage()))
-		return fmt.Errorf("failed to merge PR #%d: %s", prNumber, result.GetMessage())
+		LogError(fmt.Sprintf("Failed to merge PR #%d: %s", pr_number, result.GetMessage()))
+		return fmt.Errorf("failed to merge PR #%d: %s", pr_number, result.GetMessage())
 	}
 }
 

@@ -456,10 +456,10 @@ func TestAddFiles_ViaPR_MergeConflict_Dirty_NotMerged(t *testing.T) {
 	)
 
 	// PR create
-	prNumber := 77
+	pr_number := 77
 	httpmock.RegisterResponder("POST",
 		"https://api.github.com/repos/"+owner+"/"+repo+"/pulls",
-		httpmock.NewJsonResponderOrPanic(201, map[string]any{"number": prNumber, "html_url": "https://github.com/"+owner+"/"+repo+"/pull/77"}),
+		httpmock.NewJsonResponderOrPanic(201, map[string]any{"number": pr_number, "html_url": "https://github.com/"+owner+"/"+repo+"/pull/77"}),
 	)
 	// PR mergeability check returns dirty -> not mergeable
 	httpmock.RegisterResponder("GET",

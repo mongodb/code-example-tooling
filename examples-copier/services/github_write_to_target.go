@@ -33,14 +33,13 @@ func commitStrategy(c Configs) string {
 		return v
 	}
 	// Fallback to env var if config not specified
-	switch os.Getenv("COPIER_COMMIT_STRATEGY") {
-	case "direct":
+	ccs := os.Getenv("COPIER_COMMIT_STRATEGY")
+	switch ccs {
+	case "direct", "pr":
+		return ccs
+	default:
 		return "direct"
-	case "pr":
-		return "pr"
 	}
-	// Safe default
-	return "direct"
 }
 
 // findConfig returns the first entry matching repoName or zero-value

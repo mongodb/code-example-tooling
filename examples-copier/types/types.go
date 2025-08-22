@@ -6,6 +6,7 @@ import (
 )
 
 // **** PR **** //
+
 type PullRequestQuery struct {
 	Repository struct {
 		PullRequest struct {
@@ -30,8 +31,8 @@ type ChangedFile struct {
 	Status    string
 }
 
-// **** END PR **** //
 // **** CHANGED FILES **** //
+
 type RepoFilesResponse struct {
 	Repository Repository `graphql:"repository(owner: $owner, name: $name)"`
 }
@@ -58,13 +59,33 @@ type BlobObject struct {
 	Text string `json:"text"`
 }
 type ConfigFileType []Configs
-type Configs struct {
-	SourceDirectory string `json:"source_directory"`
-	TargetRepo      string `json:"target_repo"`
-	TargetDirectory string `json:"target_directory"`
-	TargetBranch    string `json:"target_branch"`
-}
 
+// Configs represents the configuration for file copying operations between repositories.
+//
+// Example usage:
+//
+//	config := Configs{
+//	  SourceDirectory: "docs/api",
+//	  TargetRepo: "company/public-docs",
+//	  TargetBranch: "main",
+//	  TargetDirectory: "reference",
+//	  RecursiveCopy: true,
+//	  CopierCommitStrategy: "pr",
+//	  PRTitle: "Update API documentation",
+//	  CommitMessage: "Sync API docs from internal repo",
+//	  MergeWithoutReview: false,
+//	}
+type Configs struct {
+	SourceDirectory      string `json:"source_directory"`
+	TargetRepo           string `json:"target_repo"`
+	TargetBranch         string `json:"target_branch"`
+	TargetDirectory      string `json:"target_directory"`
+	RecursiveCopy        bool   `json:"recursive_copy"`
+	CopierCommitStrategy string `json:"copier_commit_strategy"`
+	PRTitle              string `json:"pr_title"`
+	CommitMessage        string `json:"commit_message"`
+	MergeWithoutReview   bool   `json:"merge_without_review"`
+}
 type DeprecationFile []DeprecatedFileEntry
 type DeprecatedFileEntry struct {
 	FileName  string `json:"filename"`

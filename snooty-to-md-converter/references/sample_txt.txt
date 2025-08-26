@@ -1,0 +1,118 @@
+.. _slug-reference
+
+=====
+Title
+=====
+
+.. contents:: On this page
+   :local:
+   :backlinks: none
+   :depth: 2
+   :class: singlecol
+
+Heading 1
+---------
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+Vivamus lacinia odio vitae vestibulum vestibulum. Cras venenatis euismod malesuada.
+
+.. _custom-anchor:
+
+Heading 2
+~~~~~~~~~
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+Vivamus lacinia odio vitae vestibulum vestibulum. Cras venenatis euismod malesuada.
+
+.. tip:: title
+    This is a tip directive.
+
+.. note:: title
+    This is a note directive.
+
+.. warning:: title
+    This is a warning directive.
+
+.. caution:: title
+    This is a caution directive.
+
+.. seealso:: title
+    This is a seealso directive.
+
+.. important:: title
+    This is an important directive.
+
+Heading 3
+`````````
+
+This is a paragraph with a :ref:`custom anchor <custom-anchor>`.
+
+Inline Markup Examples
+- **Bold Text**
+- *Italic Text*
+- ``Inline Code``
+
+Link Types
+++++++++++
+
+- External Link `Link Text <https://www.example.com>`__
+- Internal Link :ref:`<custom-anchor>`
+- Reference Link :ref:`Link Text <reference-link_>
+
+Substitutions
++++++++++++++
+
+Substitution = This text replaces the substitution.
+This is an example of |substitution| in a sentence.
+
+Constants
++++++++++
+
+{+CONSTANT_NAME+} is a constant value.
+{+ANOTHER_CONSTANT+} is another constant value.
+
+Lists
++++++
+- Unordered List Item 1
+- Unordered List Item 2
+    - Nested Unordered List Item
+- Unordered List Item 3
+
+1. Ordered List Item 1
+2. Ordered List Item 2
+    1. Nested Ordered List Item
+3. Ordered List Item 3
+
+Procedure Directive
++++++++++++++++++++
+
+.. procedure:: title
+    This is a procedure directive.
+
+    .. step:: title
+        a. Step 1: Do this.
+        b. Do another thing.
+        c. Do this last.
+    .. step:: title
+        Step 2: Do that.
+    .. step:: title
+        Step 3: Finish up.
+
+Include Directive
++++++++++++++++++
+
+Include directives can embed content from other files. They always point to .rst files
+.. include:: sample_include.rst
+
+Literal includes point to specific file types, including code files.
+
+.. literalinclude:: /examples/generated/example.kt
+   :language: kotlin
+
+Code Blocks
++++++++++++
+
+.. code-block:: python
+    # This is a Python code block
+    def hello_world():
+        print("Hello, world!")

@@ -1,0 +1,15 @@
+{
+  "name": "root",
+  "license": "Apache-2.0",
+  "private": true,
+  "workspaces": [
+    "packages/realm-docs-converter"
+  ],
+  "scripts": {
+    "build": "npm run -w packages/realm-docs-converter build",
+    "start": "npm run -w packages/realm-docs-converter start",
+    "dev": "npm run -w packages/realm-docs-converter dev"
+  },
+  "devDependencies": {},
+  "dependencies": {}
+}

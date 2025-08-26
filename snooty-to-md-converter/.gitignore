@@ -1,0 +1,14 @@
+.DS_Store
+
+node_modules
+
+.env*
+!.env.qa
+!.env.example
+
+.secrets.*
+!.secrets.example
+
+.vscode
+build/
+.ipynb_checkpoints/

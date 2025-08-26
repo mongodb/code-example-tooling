@@ -1,0 +1,26 @@
+{
+  "name": "snooty-ast-to-mdx",
+  "version": "0.0.1",
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "start": "ts-node src/main.ts"
+  },
+  "dependencies": {
+    "bson": "^6.10.4",
+    "chalk": "^5.5.0",
+    "remark": "^15.0.1",
+    "remark-frontmatter": "^5.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-mdx": "^3.1.0",
+    "unzipper": "^0.12.3",
+    "yaml": "^2.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/unist": "^3.0.3",
+    "@types/unzipper": "^0.10.11",
+    "ts-node": "^10.9.2",
+    "typescript": "catalog:"
+  }
+}

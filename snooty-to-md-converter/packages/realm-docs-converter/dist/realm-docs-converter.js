@@ -150,8 +150,7 @@ async function convertRealmDocsFromApi(options) {
     for (const page of pages) {
         try {
             // Normalize output file path for both conversion and deletion cases
-            const normalized = page.path.replace(/\\/g, '/').replace(/\/+$/, '');
-            let relPath = normalized;
+            let relPath = page.path.replace(/\\/g, '/').replace(/\/+$/, '');
             if (/\.(txt|rst|mdx?)$/i.test(relPath)) {
                 relPath = relPath.replace(/\.(txt|rst|mdx?)$/i, '.md');
             }

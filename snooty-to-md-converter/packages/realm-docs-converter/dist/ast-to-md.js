@@ -81,8 +81,7 @@ function astToMarkdown(root, options = {}) {
             case 'ref_role': {
                 // Snooty inline ref role; render visible label text (children) best-effort
                 // Children may include literals/emphasis; recurse to preserve formatting
-                const label = (node.children || []).map(inline).join('') || textOf(node);
-                return label;
+                return (node.children || []).map(inline).join('') || textOf(node);
             }
             case 'image': {
                 const url = node.refuri || node.uri || node.url || '';
@@ -190,13 +189,6 @@ function astToMarkdown(root, options = {}) {
        *   • Emits header as "> {Label}: {version}" if a version was found; otherwise "> {Label}:".
        *   • Renders all children via block() and prefixes each resulting line with "> " so lists, code blocks, tables, etc. stay inside the admonition.
        *   • Adds a trailing blank line after the block.
-       *
-       * Rationale
-       * - By rendering children first and then prefixing the range of newly emitted lines, we keep formatting consistent across all child node types
-       *   without re‑implementing list/code/table rendering for admonitions.
-       * - Treating versionadded/versionchanged like regular admonitions fixes earlier issues where only paragraph children were quoted and where
-       *   headers used inconsistent phrasing ("Added in"/"Changed in"). Now the output is uniform and matches the desired style:
-       *     "> Version added: 10.10.0" and "> Version changed: 10.5.0".
        */
     function renderAdmonition(node, kind, parentDepth) {
         const k = String(kind || '').toLowerCase();

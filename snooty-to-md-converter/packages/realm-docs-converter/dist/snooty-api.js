@@ -63,7 +63,6 @@ async function tryFetchAny(url) {
 // Returns a normalized array of { path, ast }.
 async function fetchSnootyProject({ project, branch = 'master', baseUrl = 'https://snooty-data-api.mongodb.com' }) {
     const errors = [];
-    // Use only the official MongoDB Snooty Data API endpoint.
     const candidates = [
         `${baseUrl.replace(/\/$/, '')}/prod/projects/${encodeURIComponent(project)}/${encodeURIComponent(branch)}/documents`,
     ];
@@ -125,7 +124,7 @@ async function fetchSnootyProject({ project, branch = 'master', baseUrl = 'https
             }
             else if (typeof item === 'object' && item) {
                 const anyItem = item;
-                // Skip non-page records, e.g., assets embedded in the index (images, binaries)
+                // Skip non-page records, e.g. assets embedded in the index (images, binaries)
                 if (anyItem.type && String(anyItem.type).toLowerCase() === 'asset') {
                     countAssetsSkipped++;
                     continue;

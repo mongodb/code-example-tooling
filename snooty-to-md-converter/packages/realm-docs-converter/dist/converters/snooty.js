@@ -34,8 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseSnootyContent = parseSnootyContent;
-exports.convertToMarkdown = convertToMarkdown;
-// src/converters/snooty.ts
+exports.convertRSTToMarkdown = convertRSTToMarkdown;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 async function parseSnootyContent(content, options) {
@@ -86,9 +85,9 @@ async function processIncludes(content, options, includes) {
     return result;
 }
 function processSubstitutions(content, substitutions) {
-    // Match pattern like |substitution|
+    // Match definition pattern: .. |name| replace:: value
+    // Note: we perform per-key replacement below, so a generic usage regex is unnecessary here.
     const substitutionDefRegex = /\.\. \|([^|]+)\| replace:: (.*?)$/gm;
-    const substitutionUseRegex = /\|([^|]+)\|/g;
     // Extract substitution definitions
     let match;
     while ((match = substitutionDefRegex.exec(content)) !== null) {
@@ -113,7 +112,7 @@ function processRefs(content, refs) {
         refs[l] = t;
         return t;
     });
-    // Replace simple refs by their label text (best effort)
+    // Replace simple refs by their label text (best-effort)
     result = result.replace(refSimpleRegex, (_m, label) => {
         const l = String(label).trim();
         refs[l] = l;
@@ -121,7 +120,7 @@ function processRefs(content, refs) {
     });
     return result;
 }
-function convertToMarkdown(parsedContent) {
+function convertRSTToMarkdown(parsedContent) {
     let markdown = parsedContent.content;
     // Convert RST headers to Markdown headers
     markdown = convertHeaders(markdown);
@@ -162,7 +161,7 @@ function convertCodeBlocks(content) {
     // Convert RST code blocks to Markdown code blocks
     let result = content;
     // Handle code blocks with :: notation
-    result = result.replace(/::(?:\s*\n+)(\s+[\s\S]+?)(?:\n\n|\n$)/g, (match, code) => {
+    result = result.replace(/::\s*\n+(\s+[\s\S]+?)(?:\n\n|\n$)/g, (match, code) => {
         const indentedCode = code.split('\n')
             .map((line) => line.replace(/^\s{4}/, ''))
             .join('\n');

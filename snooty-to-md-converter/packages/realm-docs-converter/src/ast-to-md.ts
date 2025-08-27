@@ -1,15 +1,3 @@
-// src/ast-to-md.ts
-// Very lightweight Snooty AST -> Markdown converter with pragmatic support for
-// - sections/titles -> #/## headers (with optional HTML anchors when ids/html_id present)
-// - paragraphs and text
-// - code/literal blocks
-// - links and references
-// - substitutions (requires a map)
-// - basic admonitions -> blockquotes with a label
-// - images -> Markdown image syntax
-// - simple tables -> GFM pipe tables (best-effort)
-// - includes -> warn but render children if present
-
 export interface AstToMdOptions {
   // Global substitutions map for the project
   substitutions?: Record<string, string>;
@@ -29,9 +17,9 @@ interface AstNode {
   url?: string; // image/links
   alt?: string; // image alt
   children?: AstNode[];
-  position?: any; // arbitrary
+  position?: any; 
   language?: string; // for code blocks
-  lang?: string; // alternative property for code language
+  lang?: string; // code language
   ids?: string[]; // targets
   html_id?: string; // optional html id
   admonition_type?: string; // for admonitions
@@ -48,6 +36,9 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
   };
 
   const lines: string[] = [];
+  // Track the last emitted heading level (1-6) so certain directives (e.g., cards)
+  // can render a heading relative to the previous one.
+  let lastHeadingLevel = 1;
 
   function posToStr(pos: any): string | undefined {
     if (!pos) return undefined;
@@ -68,12 +59,23 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
     return '';
   }
 
+  // Best-effort stringify of a directive or node argument (string or token array)
+  function argToString(arg: any): string {
+    if (!arg) return '';
+    if (typeof arg === 'string') return arg.trim();
+    if (Array.isArray(arg)) return arg.map((a: any) => (a?.value ?? '')).join('').trim();
+    return String(arg ?? '').trim();
+  }
+
   function inline(node: AstNode): string {
     switch (node.type) {
       case 'text':
         return node.value || '';
       case 'literal':
       case 'inline_literal':
+      case 'code':
+      case 'literal_strong':
+      case 'literal_emphasis':
         return '`' + textOf(node) + '`';
       case 'emphasis':
         return '*' + (node.children ? node.children.map(inline).join('') : textOf(node)) + '*';
@@ -96,10 +98,18 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
         if (node.refname) return label; // best-effort inline text for :ref:
         return label;
       }
+      case 'ref_role': {
+        // Snooty inline ref role; render visible label text (children) best-effort
+        // Children may include literals/emphasis; recurse to preserve formatting
+        return (node.children || []).map(inline).join('') || textOf(node);
+      }
       case 'image': {
         const url = node.refuri || node.uri || node.url || '';
         const alt = node.alt || textOf(node) || '';
-        if (!url) return alt;
+        if (!url) {
+          ctx.onWarn(`Image node missing URL; emitting alt text only`, { path: ctx.docPath, position: posToStr((node as any).position) });
+          return alt;
+        }
         return `![${alt}](${url})`;
       }
       default:
@@ -162,7 +172,10 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
 
     walk(t);
     const header = headers[0] || rows.shift() || [];
-    if (!header.length) return; // nothing to render
+    if (!header.length) {
+      ctx.onWarn(`Table could not be rendered (no header/cells found)`, { path: ctx.docPath, position: posToStr((t as any).position) });
+      return;
+    }
 
     const sep = '|' + header.map(() => ' --- ').join('|') + '|';
     const fmt = (r: string[]) => '|' + header.map((_, i) => (r[i] ?? '').replace(/\n/g, ' ')).join('|') + '|';
@@ -173,22 +186,137 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
     lines.push('');
   }
 
-  function renderAdmonition(node: AstNode, kind: string) {
+/**
+   * Render an admonition node into GitHub‑flavored Markdown blockquotes.
+   *
+   * Inputs
+   * - node: Snooty AST node representing either a named admonition directive (.. note::, .. warning::, .. versionadded::, etc.)
+   *         or a node with type equal to an admonition (e.g., { type: 'note', children: [...] }).
+   * - kind: Lower/upper‑case label of the admonition type. Examples: "note", "warning", "versionadded", "versionchanged".
+   * - parentDepth: The current structural depth; used only when delegating to block() so nested content renders correctly.
+   *
+   * Behavior
+   * - Generic admonitions (note, warning, tip, important, caution, danger, seealso, example, see, deprecated):
+   *   • Emits a single‑line header "> {CapitalizedKind}:".
+   *   • Renders all child nodes normally via block(), then prefixes each emitted line with "> ", including blank lines as plain ">".
+   *   • Adds a trailing blank line after the admonition block.
+   *
+   * - Special handling for versionadded/versionchanged:
+   *   • Computes a header label of either "Version added" or "Version changed".
+   *   • Attempts to extract a version string from several possible sources commonly found in Snooty ASTs:
+   *       argument (string or array tokens), node.value, or options.version.
+   *   • Emits header as "> {Label}: {version}" if a version was found; otherwise "> {Label}:".
+   *   • Renders all children via block() and prefixes each resulting line with "> " so lists, code blocks, tables, etc. stay inside the admonition.
+   *   • Adds a trailing blank line after the block.
+   */
+  function renderAdmonition(node: AstNode, kind: string, parentDepth: number) {
+    const k = String(kind || '').toLowerCase();
+    // Special-case version directives to render with proper spacing and optional version argument
+    if (k === 'versionadded' || k === 'versionchanged') {
+      const label = k === 'versionadded' ? 'Version added' : 'Version changed';
+      const n: any = node as any;
+      // Try to extract version from argument/value/options and separate any trailing body text
+      let version = '';
+      let remainder = '';
+      const extractVersion = (s: string) => {
+        const m = String(s || '').trim().match(/^([0-9]+(?:\.[0-9]+)*(?:-[0-9A-Za-z.]+)?)(.*)$/);
+        if (m) {
+          version = m[1] || '';
+          remainder = (m[2] || '').trim();
+        } else if (!version) {
+          version = String(s || '').trim();
+        }
+      };
+      const arg = (n as any).argument;
+      let remainderNodes: any[] | undefined;
+      if (typeof arg === 'string') {
+        extractVersion(arg);
+      } else if (Array.isArray(arg)) {
+        // Build a string to extract version, but preserve remainder as node tokens to keep formatting
+        const tokens: any[] = arg as any[];
+        extractVersion(tokens.map((a: any) => (a?.value ?? '')).join(''));
+        // Attempt to remove the leading version text from the token list to form remainder nodes
+        if (version) {
+          let consumed = 0;
+          const out: any[] = [];
+          for (let i = 0; i < tokens.length; i++) {
+            const t = tokens[i];
+            const val = String(t?.value ?? '');
+            if (consumed < version.length) {
+              const need = version.length - consumed;
+              if (val.length <= need) {
+                consumed += val.length;
+                continue; // skip this token entirely as part of the version
+              } else {
+                // Split this token: drop the first 'need' chars, keep the rest as remainder
+                const restVal = val.slice(need);
+                const copy = { ...t, value: restVal };
+                out.push(copy);
+                consumed = version.length;
+                continue;
+              }
+            } else {
+              out.push(t);
+            }
+          }
+          // Trim leading whitespace in the first texty node
+          if (out.length && typeof out[0]?.value === 'string') {
+            out[0].value = String(out[0].value).replace(/^\s+/, '');
+          }
+          remainderNodes = out;
+        }
+      }
+      if (!version && n.value) extractVersion(String(n.value));
+      if (!version && n.options && (n.options as any).version) extractVersion(String((n.options as any).version));
+
+      const header = version ? `> ${label}: ${version}` : `> ${label}:`;
+      lines.push(header);
+
+      // Build the list of children for the admonition body, injecting any remainder text as the first paragraph
+      const bodyChildren: any[] = Array.isArray(node.children) ? [...(node.children as any[])] : [];
+      if (Array.isArray(remainderNodes) && remainderNodes.length) {
+        bodyChildren.unshift({ type: 'paragraph', children: remainderNodes });
+      } else if (remainder) {
+        // Best-effort inline RST → Markdown for plain-string remainders
+        const rstToMd = (s: string) => {
+          let out = String(s);
+          // ``code`` → `code`
+          out = out.replace(/``([^`]+)``/g, '`$1`');
+          // :ref:`Text <label>` → Text
+          out = out.replace(/:ref:`([^<`]*)<([^>`]*)>`/g, (_m, text) => String(text).trim());
+          // :ref:`label` → label
+          out = out.replace(/:ref:`([^<`][^`>]*)`/g, (_m, label) => String(label).trim());
+          return out;
+        };
+        bodyChildren.unshift({ type: 'paragraph', children: [{ type: 'text', value: rstToMd(remainder) }] });
+      }
+
+      // Render children into the admonition block
+      for (const c of bodyChildren) {
+        const start = lines.length;
+        block(c as any, parentDepth + 1);
+        const end = lines.length;
+        for (let i = start; i < end; i++) {
+          lines[i] = lines[i] === '' ? '>' : `> ${lines[i]}`;
+        }
+      }
+      lines.push('');
+      return;
+    }
+
+    // Default admonition rendering
     const label = kind.charAt(0).toUpperCase() + kind.slice(1).toLowerCase();
     lines.push(`> ${label}:`);
+    // Render all children normally, then prefix the emitted lines so all content stays within the admonition
     for (const c of node.children || []) {
-      if (c.type === 'paragraph') {
-        const txt = (c.children || []).map(inline).join('');
-        lines.push('> ' + txt);
-      } else if (c.type === 'literal_block') {
-        const language = c.language ? String(c.language) : '';
-        const code = textOf(c);
-        lines.push('>');
-        lines.push('> ' + '```' + language);
-        for (const l of code.split(/\r?\n/)) lines.push('> ' + l);
-        lines.push('> ' + '```');
+      const start = lines.length;
+      block(c as any, parentDepth + 1);
+      const end = lines.length;
+      for (let i = start; i < end; i++) {
+        lines[i] = lines[i] === '' ? '>' : `> ${lines[i]}`;
       }
     }
+    // Trailing blank line after the admonition block
     lines.push('');
   }
 
@@ -197,17 +325,25 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
       case 'section': {
         // Find first title child for header
         const titleNode = (node.children || []).find((c) => c.type === 'title');
+        let sectionTitleText: string | undefined;
         if (titleNode) {
           // Bump headings up one level (min 1)
           const level = Math.max(1, Math.min(6, depth - 1));
           const hashes = '#'.repeat(level);
-          lines.push(`${hashes} ${textOf(titleNode)}`);
+          sectionTitleText = textOf(titleNode).trim();
+          lines.push(`${hashes} ${sectionTitleText}`);
+          lastHeadingLevel = hashes.length;
           // Anchor from ids/html_id if present
           const anchorId = (titleNode as any).html_id || (titleNode as any).ids?.[0] || (node as any).html_id || (node as any).ids?.[0];
           pushAnchor(anchorId);
         }
         for (const c of node.children || []) {
           if (c === titleNode) continue;
+          // If the child is a heading/title with the same text as the section title, skip to avoid duplicate headings
+          if (sectionTitleText && (c as any)?.type && ((c as any).type === 'heading' || (c as any).type === 'title')) {
+            const childText = textOf(c as any).trim();
+            if (childText === sectionTitleText) continue;
+          }
           block(c, depth + 1);
         }
         break;
@@ -217,6 +353,7 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
         const level = Math.max(1, Math.min(6, depth - 1));
         const hashes = '#'.repeat(level);
         lines.push(`${hashes} ${textOf(node)}`);
+        lastHeadingLevel = hashes.length;
         const anchorId = (node as any).html_id || (node as any).ids?.[0];
         pushAnchor(anchorId);
         break;
@@ -226,6 +363,7 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
         const level = Math.max(1, level0 - 1);
         const hashes = '#'.repeat(level);
         lines.push(`${hashes} ${textOf(node)}`);
+        lastHeadingLevel = hashes.length;
         const anchorId = (node as any).html_id || (node as any).ids?.[0];
         pushAnchor(anchorId);
         break;
@@ -290,7 +428,9 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
         const language = (node.language ? String(node.language) : (node.lang ? String(node.lang) : ''));
         const code = textOf(node);
         lines.push('```' + language);
-        lines.push(code);
+        for (const l of String(code).split(/\r?\n/)) {
+          lines.push(l);
+        }
         lines.push('```');
         lines.push('');
         break;
@@ -301,7 +441,7 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
       }
       case 'admonition': {
         const kind = (node.admonition_type as string) || 'note';
-        renderAdmonition(node, kind);
+        renderAdmonition(node, kind, depth);
         break;
       }
       case 'note':
@@ -310,15 +450,17 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
       case 'important':
       case 'caution':
       case 'seealso': {
-        renderAdmonition(node, String(node.type));
+        renderAdmonition(node, String(node.type), depth);
         break;
       }
       case 'versionadded': {
-        const added = textOf(node) || (node.children || []).map(inline).join('');
-        if (added) {
-          lines.push(`> Added in ${added}`);
-          lines.push('');
-        }
+        // Treat versionadded as a regular admonition (ensures all children are blockquoted)
+        renderAdmonition(node, 'versionadded', depth);
+        break;
+      }
+      case 'versionchanged': {
+        // Treat versionchanged as a regular admonition
+        renderAdmonition(node, 'versionchanged', depth);
         break;
       }
       case 'contents': {
@@ -347,12 +489,278 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
       }
       case 'include': {
         // Data API often expands includes; if present, warn and render children best-effort
-        ctx.onWarn(`Include directive encountered (rendering children best-effort)`, { path: ctx.docPath, position: posToStr(node.position) });
+        const incArg = (node as any).argument;
+        const incPath = argToString(incArg) || String((node as any).refuri || (node as any).uri || '').trim();
+        const msg = `Include directive encountered${incPath ? `: ${incPath}` : ''} (rendering children best-effort)`;
+        ctx.onWarn(msg, { path: ctx.docPath, position: posToStr(node.position) });
         for (const c of node.children || []) block(c, depth);
         break;
       }
       case 'directive': {
         const name = String((node as any).name || '').toLowerCase();
+
+        // Ignore certain non-content directives silently
+        const ignoreDirectives = new Set([
+          'meta','facet','contents','toctree','kicker',
+          // Additional non-content/structural directives to ignore
+          'button','default-domain','cssclass','introduction','banner'
+        ]);
+        if (ignoreDirectives.has(name)) {
+          break;
+        }
+
+        // Treat include-like directives similarly (warn and render children best-effort)
+        if (name === 'include' || name === 'literalinclude') {
+          const incArg = (node as any).argument;
+          const incPath = argToString(incArg) || String((node as any).refuri || (node as any).uri || '').trim();
+          const msg = `${name} directive encountered${incPath ? `: ${incPath}` : ''} (rendering children best-effort)`;
+          ctx.onWarn(msg, { path: ctx.docPath, position: posToStr(node.position) });
+          for (const c of node.children || []) block(c, depth);
+          break;
+        }
+
+        // Container: render children as normal (no warning)
+        if (name === 'container') {
+          for (const c of node.children || []) block(c as any, depth);
+          break;
+        }
+
+        // Card groups and cards: keep the headline and text; ignore other options
+        if (name === 'card-group') {
+          const cards = (node.children || []).filter((c: any) => c && c.type === 'directive' && String((c as any).name || '').toLowerCase() === 'card');
+          for (const card of cards as any[]) {
+            const opts = ((card as any).options || {}) as any;
+            let title = String(opts.headline || '').trim();
+            if (!title) {
+              const arg = (card as any).argument;
+              if (typeof arg === 'string') title = arg.trim();
+              else if (Array.isArray(arg)) title = arg.map((a: any) => a?.value ?? '').join('').trim();
+            }
+            title = title || 'Card';
+            const level = Math.min(6, (lastHeadingLevel || 1) + 1);
+            const hashes = '#'.repeat(level);
+            lines.push(`${hashes} ${title}`);
+            lastHeadingLevel = level;
+            lines.push('');
+            for (const ch of (card.children || [])) {
+              if (ch && ch.type === 'paragraph') block(ch as any, depth + 1);
+            }
+            lines.push('');
+          }
+          break;
+        }
+        if (name === 'card') {
+          const opts = ((node as any).options || {}) as any;
+          let title = String(opts.headline || '').trim();
+          if (!title) {
+            const arg = (node as any).argument;
+            if (typeof arg === 'string') title = arg.trim();
+            else if (Array.isArray(arg)) title = arg.map((a: any) => a?.value ?? '').join('').trim();
+          }
+          title = title || 'Card';
+          const level = Math.min(6, (lastHeadingLevel || 1) + 1);
+          const hashes = '#'.repeat(level);
+          lines.push(`${hashes} ${title}`);
+          lastHeadingLevel = level;
+          lines.push('');
+          for (const ch of (node.children || [])) {
+            if (ch && ch.type === 'paragraph') block(ch as any, depth + 1);
+          }
+          lines.push('');
+          break;
+        }
+
+        // Handle procedure/step directives
+        if (name === 'procedure') {
+          // Prefer headings, not lists: render any non-step children first (intro), then for each step emit a heading
+          const steps = (node.children || []).filter((c: any) => c && c.type === 'directive' && String((c as any).name || '').toLowerCase() === 'step');
+          // Render any non-step children before the steps (intro text, etc.)
+          for (const c of (node.children || [])) {
+            if (!(c && c.type === 'directive' && String((c as any).name || '').toLowerCase() === 'step')) {
+              block(c as any, depth);
+            }
+          }
+          const norm = (s: string) => String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+          if (steps.length) {
+            for (const st of steps as any[]) {
+              // Try to find an existing heading/title inside the step; if present, prefer it and do not emit our own
+              let headingChild = (st.children || []).find((c: any) => c && (c.type === 'heading' || c.type === 'title')) as any;
+
+              // Compute a fallback title if no heading child exists
+              const argToString = (arg: any): string => {
+                if (!arg) return '';
+                if (typeof arg === 'string') return arg.trim();
+                if (Array.isArray(arg)) return arg.map((a: any) => a?.value ?? '').join('').trim();
+                return String(arg ?? '').trim();
+              };
+              const opts = (st.options || {}) as any;
+              let title = String(opts.title || '').trim();
+              if (!title) title = argToString((st as any).argument);
+              if (!title) {
+                const firstPara = (st.children || []).find((c: any) => c && c.type === 'paragraph');
+                if (firstPara) title = (firstPara.children || []).map(inline).join('');
+              }
+              title = (title || 'Step').trim();
+
+              // If no direct heading/title, look for a nested section with a title/heading equal to the computed title
+              let sectionWithMatchingTitle: any | undefined;
+              if (!headingChild) {
+                sectionWithMatchingTitle = (st.children || []).find((c: any) => {
+                  if (!c || c.type !== 'section' || !Array.isArray(c.children)) return false;
+                  const tOrH = (c.children as any[]).find((cc: any) => cc && (cc.type === 'title' || cc.type === 'heading'));
+                  return tOrH ? norm(textOf(tOrH).trim()) === norm(title) : false;
+                });
+                if (sectionWithMatchingTitle) {
+                  headingChild = sectionWithMatchingTitle; // treat as existing heading container
+                }
+              }
+
+              if (!headingChild) {
+                // Emit a heading one level deeper than the last heading
+                const level = Math.min(6, (lastHeadingLevel || 1) + 1);
+                const hashes = '#'.repeat(level);
+                lines.push(`${hashes} ${title}`);
+                lastHeadingLevel = level;
+                lines.push('');
+              }
+
+              // Render step children. If we synthesized a heading, skip duplicates:
+              for (const ch of (st.children || [])) {
+                if (!headingChild) {
+                  if (ch.type === 'paragraph') {
+                    const paraText = (ch.children || []).map(inline).join('');
+                    if (norm(paraText) === norm(title)) continue;
+                  }
+                  if (ch.type === 'title' || ch.type === 'heading') {
+                    const headingText = textOf(ch as any);
+                    if (norm(headingText) === norm(title)) continue;
+                  }
+                  if (ch.type === 'section' && Array.isArray((ch as any).children)) {
+                    // Find section title/heading
+                    const tnode = ((ch as any).children as any[]).find((cc: any) => cc && (cc.type === 'title' || cc.type === 'heading'));
+                    const ttext = tnode ? textOf(tnode).trim() : '';
+                    if (norm(ttext) === norm(title)) {
+                      // Render the section without its title/heading to avoid duplicate heading
+                      const children = ((ch as any).children as any[]).filter((cc: any) => cc !== tnode);
+                      for (const cc of children) block(cc as any, depth + 2);
+                      continue;
+                    }
+                  }
+                }
+                block(ch as any, depth + 1);
+              }
+              lines.push('');
+            }
+            break;
+          }
+          // If no explicit steps, render children best-effort (already rendered above for non-step children)
+          break;
+        }
+        if (name === 'step') {
+          // Standalone step: prefer a heading over a list
+          let headingChild = (node.children || []).find((c: any) => c && (c.type === 'heading' || c.type === 'title')) as any;
+          const argToString = (arg: any): string => {
+            if (!arg) return '';
+            if (typeof arg === 'string') return arg.trim();
+            if (Array.isArray(arg)) return arg.map((a: any) => a?.value ?? '').join('').trim();
+            return String(arg ?? '').trim();
+          };
+          const opts = ((node as any).options || {}) as any;
+          let title = String(opts.title || '').trim();
+          if (!title) title = argToString((node as any).argument);
+          if (!title) {
+            const firstPara = (node.children || []).find((c: any) => c && c.type === 'paragraph');
+            if (firstPara) title = (firstPara.children || []).map(inline).join('');
+          }
+          title = (title || 'Step').trim();
+          const norm = (s: string) => String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+          // If no direct heading/title, see if a nested section contains a matching title/heading
+          let sectionWithMatchingTitle: any | undefined;
+          if (!headingChild) {
+            sectionWithMatchingTitle = (node.children || []).find((c: any) => {
+              if (!c || c.type !== 'section' || !Array.isArray(c.children)) return false;
+              const tOrH = (c.children as any[]).find((cc: any) => cc && (cc.type === 'title' || cc.type === 'heading'));
+              return tOrH ? norm(textOf(tOrH).trim()) === norm(title) : false;
+            });
+            if (sectionWithMatchingTitle) {
+              headingChild = sectionWithMatchingTitle;
+            }
+          }
+
+          if (!headingChild) {
+            const level = Math.min(6, (lastHeadingLevel || 1) + 1);
+            const hashes = '#'.repeat(level);
+            lines.push(`${hashes} ${title}`);
+            lastHeadingLevel = level;
+            lines.push('');
+          }
+
+          for (const ch of (node.children || [])) {
+            if (!headingChild) {
+              if (ch.type === 'paragraph') {
+                const paraText = (ch.children || []).map(inline).join('');
+                if (norm(paraText) === norm(title)) continue;
+              }
+              if (ch.type === 'title' || ch.type === 'heading') {
+                const headingText = textOf(ch as any);
+                if (norm(headingText) === norm(title)) continue;
+              }
+              if (ch.type === 'section' && Array.isArray((ch as any).children)) {
+                const tnode = ((ch as any).children as any[]).find((cc: any) => cc && (cc.type === 'title' || cc.type === 'heading'));
+                const ttext = tnode ? textOf(tnode).trim() : '';
+                if (norm(ttext) === norm(title)) {
+                  const children = ((ch as any).children as any[]).filter((cc: any) => cc !== tnode);
+                  for (const cc of children) block(cc as any, depth + 2);
+                  continue;
+                }
+              }
+            }
+            block(ch as any, depth + 1);
+          }
+          lines.push('');
+          break;
+        }
+
+        // IO code block: treat nested input/output directives as fenced code blocks
+        if (name === 'io-code-block') {
+          const parts = (node.children || []).filter((c: any) => c && c.type === 'directive' && ['input','output'].includes(String((c as any).name || '').toLowerCase()));
+          const renderCodeFrom = (d: any) => {
+            // Try to find nested code/literal_block child to preserve language
+            let lang = '';
+            let codeText = '';
+            const codeChild = (d.children || []).find((ch: any) => ch && (ch.type === 'literal_block' || ch.type === 'code' || ch.type === 'code_block'));
+            if (codeChild) {
+              lang = String((codeChild as any).language || (codeChild as any).lang || '').trim();
+              codeText = textOf(codeChild);
+            } else {
+              // fallback to concatenated text
+              lang = String((d.options || {}).language || '').trim();
+              codeText = (d.children || []).map((ch: any) => (ch.type === 'paragraph' ? (ch.children || []).map(inline).join('') : textOf(ch))).join('\n');
+            }
+            lines.push('```' + lang);
+            for (const l of String(codeText).split(/\r?\n/)) {
+              lines.push(l);
+            }
+            lines.push('```');
+            lines.push('');
+          };
+          for (const p of parts as any[]) renderCodeFrom(p);
+          break;
+        }
+        if (name === 'input' || name === 'output') {
+          // Standalone input/output directive → fenced code block
+          let lang = String(((node as any).options || {}).language || '').trim();
+          const codeChild = (node.children || []).find((ch: any) => ch && (ch.type === 'literal_block' || ch.type === 'code' || ch.type === 'code_block'));
+          const codeText = codeChild ? textOf(codeChild) : (node.children || []).map((ch: any) => (ch.type === 'paragraph' ? (ch.children || []).map(inline).join('') : textOf(ch))).join('\n');
+          lines.push('```' + lang);
+          for (const l of String(codeText).split(/\r?\n/)) {
+            lines.push(l);
+          }
+          lines.push('```');
+          lines.push('');
+          break;
+        }
 
         // Handle figure/image directives → render as image with optional caption
         if (name === 'figure' || name === 'image') {
@@ -383,9 +791,6 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
           }
           if (!alt) alt = String(captionText || '').trim();
 
-          const width = opts.width != null ? String(opts.width).trim() : '';
-          const height = opts.height != null ? String(opts.height).trim() : '';
-
           if (src) {
             // Force Markdown image output (ignore width/height attributes)
             lines.push(`![${alt}](${src})`);
@@ -396,6 +801,7 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
             }
             break;
           }
+          ctx.onWarn(`Figure/Image directive missing src; rendering children best-effort`, { path: ctx.docPath, position: posToStr((node as any).position) });
           // If no src found, fall through to children rendering
         }
 
@@ -468,6 +874,7 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
             lines.push('');
             break;
           }
+          ctx.onWarn(`list-table directive could not be parsed; rendering children best-effort`, { path: ctx.docPath, position: posToStr((node as any).position) });
           // Fall through to default children rendering if structure wasn't recognized
         }
 
@@ -493,6 +900,7 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
             // Emit a sub-heading for the tab, then the tab content
             const hashes = '####';
             lines.push(`${hashes} ${heading}`);
+            lastHeadingLevel = 4;
             lines.push('');
             for (const c of (tab.children || [])) block(c as any, depth + 1);
             lines.push('');
@@ -517,6 +925,7 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
           const heading = toTitle(label || 'Tab').replace(/Objective C/i, 'Objective-C');
           const hashes = '####';
           lines.push(`${hashes} ${heading}`);
+          lastHeadingLevel = 4;
           lines.push('');
           for (const c of (node.children || [])) block(c as any, depth + 1);
           lines.push('');
@@ -524,10 +933,14 @@ export function astToMarkdown(root: any, options: AstToMdOptions = {}): string {
         }
 
         // Treat common admonition directives (e.g., .. note::, .. important::)
-        const admonitions = new Set(['note','warning','tip','important','caution','danger','seealso']);
+        const admonitions = new Set(['note','warning','tip','important','caution','danger','seealso','example','see','versionadded','versionchanged','deprecated']);
         if (admonitions.has(name)) {
-          renderAdmonition(node, name);
+          renderAdmonition(node, name, depth);
           break;
+        }
+        // Warn for unhandled directive types before falling back
+        if (!(new Set(['figure','image','list-table','list_table','tabs','tab','note','warning','tip','important','caution','danger','seealso','banner','example','include','literalinclude','procedure','step','io-code-block','input','output','see','versionadded','versionchanged','deprecated','button','default-domain','cssclass','introduction','container','card','card-group']).has(name))) {
+          ctx.onWarn(`Unhandled directive .. ${name}:: (rendering children best-effort)`, { path: ctx.docPath, position: posToStr((node as any).position) });
         }
         // Fallback: render children
         for (const c of node.children || []) block(c, depth);

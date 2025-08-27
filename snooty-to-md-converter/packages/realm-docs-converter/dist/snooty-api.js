@@ -1,8 +1,4 @@
 "use strict";
-// src/snooty-api.ts
-// Minimal Snooty Data API client for fetching a single project's pages
-// NOTE: The exact endpoints can vary by deployment. We allow configuring a baseUrl and branch
-// and try a couple of common patterns. This is intentionally lightweight.
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetchSnootyProject = fetchSnootyProject;
 async function tryFetchAny(url) {
@@ -67,12 +63,9 @@ async function tryFetchAny(url) {
 // Returns a normalized array of { path, ast }.
 async function fetchSnootyProject({ project, branch = 'master', baseUrl = 'https://snooty-data-api.mongodb.com' }) {
     const errors = [];
-    // Try MongoDB Snooty Data API known endpoint first, then fallbacks.
+    // Use only the official MongoDB Snooty Data API endpoint.
     const candidates = [
         `${baseUrl.replace(/\/$/, '')}/prod/projects/${encodeURIComponent(project)}/${encodeURIComponent(branch)}/documents`,
-        // fallbacks (older or alternative deployments)
-        `${baseUrl.replace(/\/$/, '')}/project/${encodeURIComponent(project)}/branch/${encodeURIComponent(branch)}/pages`,
-        `${baseUrl.replace(/\/$/, '')}/projects/${encodeURIComponent(project)}/${encodeURIComponent(branch)}/pages`,
     ];
     let pagesIndex;
     for (const url of candidates) {
@@ -91,7 +84,16 @@ async function fetchSnootyProject({ project, branch = 'master', baseUrl = 'https
     const items = Array.isArray(pagesIndex)
         ? pagesIndex
         : (pagesIndex.documents || pagesIndex.pages || pagesIndex.docs || pagesIndex.items || []);
+    if (!Array.isArray(items) || items.length === 0) {
+        console.warn(`[snooty-api] Pages index returned no page items for project=${project} branch=${branch}.`);
+    }
     const results = [];
+    // Stats for observability
+    let countFetched = 0;
+    let countDeleted = 0;
+    let countAssetsSkipped = 0;
+    let countNonPageSkipped = 0;
+    let countFailed = 0;
     for (const item of items) {
         try {
             if (typeof item === 'string') {
@@ -103,8 +105,6 @@ async function fetchSnootyProject({ project, branch = 'master', baseUrl = 'https
                 const encPath = encodeURIComponent(pagePath);
                 const pageCandidates = [
                     `${encBase}/prod/projects/${encProject}/${encBranch}/documents/${encPath}`,
-                    `${encBase}/project/${encProject}/branch/${encBranch}/page/${encPath}`,
-                    `${encBase}/projects/${encProject}/${encBranch}/page/${encPath}`,
                 ];
                 let ast;
                 for (const u of pageCandidates) {
@@ -121,11 +121,13 @@ async function fetchSnootyProject({ project, branch = 'master', baseUrl = 'https
                     throw new Error(`No AST for page ${pagePath}`);
                 }
                 results.push({ path: pagePath, ast });
+                countFetched++;
             }
             else if (typeof item === 'object' && item) {
                 const anyItem = item;
                 // Skip non-page records, e.g., assets embedded in the index (images, binaries)
                 if (anyItem.type && String(anyItem.type).toLowerCase() === 'asset') {
+                    countAssetsSkipped++;
                     continue;
                 }
                 // Handle objects shaped like { type: 'page', data: { filename|page_id, ast } }
@@ -135,21 +137,25 @@ async function fetchSnootyProject({ project, branch = 'master', baseUrl = 'https
                     if (pd.deleted && candidatePath) {
                         // Mark as deleted; no AST will be processed
                         results.push({ path: String(candidatePath), ast: undefined, deleted: true });
+                        countDeleted++;
                         continue;
                     }
                     if (pd.ast && candidatePath) {
                         results.push({ path: String(candidatePath), ast: pd.ast });
+                        countFetched++;
                         continue;
                     }
                 }
                 const possiblePath = anyItem.path || anyItem.doc || anyItem.document || anyItem.file || anyItem.slug || anyItem.id;
                 if (anyItem.ast && possiblePath) {
                     results.push({ path: String(possiblePath), ast: anyItem.ast });
+                    countFetched++;
                 }
                 else {
                     const pageUrl = (anyItem).url;
                     // If we don't have a path, a url, or an embedded ast, skip this entry (it's not a page descriptor)
                     if (!possiblePath && !pageUrl) {
+                        countNonPageSkipped++;
                         continue;
                     }
                     const pagePath = String(possiblePath || 'index');
@@ -164,8 +170,6 @@ async function fetchSnootyProject({ project, branch = 'master', baseUrl = 'https
                         const encPath = encodeURIComponent(pagePath);
                         const pageCandidates = [
                             `${encBase}/prod/projects/${encProject}/${encBranch}/documents/${encPath}`,
-                            `${encBase}/project/${encProject}/branch/${encBranch}/page/${encPath}`,
-                            `${encBase}/projects/${encProject}/${encBranch}/page/${encPath}`,
                         ];
                         for (const u of pageCandidates) {
                             try {
@@ -183,12 +187,21 @@ async function fetchSnootyProject({ project, branch = 'master', baseUrl = 'https
                         continue;
                     }
                     results.push({ path: pagePath, ast });
+                    countFetched++;
                 }
             }
         }
         catch (e) {
             console.warn(`[snooty-api] Failed to fetch page: ${JSON.stringify(item)} -> ${e?.message || e}`);
+            countFailed++;
         }
+    }
+    const summary = `Fetched=${countFetched}, Deleted=${countDeleted}, SkippedAssets=${countAssetsSkipped}, SkippedNonPage=${countNonPageSkipped}, Failed=${countFailed}`;
+    if (countFailed > 0) {
+        console.warn(`[snooty-api] Summary for project=${project} branch=${branch}: ${summary}`);
+    }
+    else {
+        console.log(`[snooty-api] Summary for project=${project} branch=${branch}: ${summary}`);
     }
     return results;
 }

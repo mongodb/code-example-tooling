@@ -1,9 +1,9 @@
 // src/realm-docs-converter.ts
-import * as fs from 'fs';
-import * as path from 'path';
-import { parseSnootyContent, convertToMarkdown } from './converters/snooty';
-import { fetchSnootyProject } from './snooty-api';
-import { astToMarkdown } from './ast-to-md';
+import * as fs from "fs";
+import * as path from "path";
+import { convertRSTToMarkdown, parseSnootyContent } from "./converters/snooty";
+import { fetchSnootyProject } from "./snooty-api";
+import { astToMarkdown } from "./ast-to-md";
 
 interface ConversionOptions {
   inputDir: string;
@@ -64,7 +64,7 @@ async function convertRealmDocs(options: ConversionOptions): Promise<number> {
       });
 
       // Convert to markdown
-      const markdown = convertToMarkdown(parsedContent);
+      const markdown = convertRSTToMarkdown(parsedContent);
 
       // Write to output file
       const relativePath = path.relative(inputDir, file);
@@ -141,8 +141,7 @@ async function convertRealmDocsFromApi(options: ApiConversionOptions): Promise<n
   for (const page of pages) {
     try {
       // Normalize output file path for both conversion and deletion cases
-      const normalized = page.path.replace(/\\/g, '/').replace(/\/+$/, '');
-      let relPath = normalized;
+      let relPath = page.path.replace(/\\/g, '/').replace(/\/+$/, '');
       if (/\.(txt|rst|mdx?)$/i.test(relPath)) {
         relPath = relPath.replace(/\.(txt|rst|mdx?)$/i, '.md');
       } else if (!/\.md$/i.test(relPath)) {
@@ -181,12 +180,52 @@ async function convertRealmDocsFromApi(options: ApiConversionOptions): Promise<n
     }
   }
 
-  // Write warnings to a log file with pointers
+  // Write warnings to a log file with pointers (with summary and de-duplication)
   if (warnings.length) {
     const logPath = path.join(outputDir, 'conversion-warnings.log');
-    const lines = warnings.map(w => `${w.path}: ${w.message}`);
-    fs.writeFileSync(logPath, lines.join('\n'), 'utf8');
-    console.warn(`Conversion completed with ${warnings.length} warnings. See ${logPath}`);
+
+    // De-duplicate identical (path, message) pairs
+    const uniqueMap = new Map<string, { path: string; message: string }>();
+    for (const w of warnings) {
+      const key = `${w.path}:::${w.message}`;
+      if (!uniqueMap.has(key)) uniqueMap.set(key, w);
+    }
+
+    // Count by message type among unique warnings
+    const countsByType: Record<string, number> = {};
+    for (const w of uniqueMap.values()) {
+      countsByType[w.message] = (countsByType[w.message] || 0) + 1;
+    }
+
+    const totalRaw = warnings.length;
+    const totalUnique = uniqueMap.size;
+    const docsWithWarnings = new Set<string>(Array.from(uniqueMap.values()).map(w => w.path));
+
+    const byTypeLines = Object.entries(countsByType)
+      .sort((a, b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
+      .map(([msg, count]) => `- ${msg}: ${count}`);
+
+    const detailed = Array.from(uniqueMap.values())
+      .sort((a, b) => (a.path === b.path ? a.message.localeCompare(b.message) : a.path.localeCompare(b.path)))
+      .map((w) => `${w.path}: ${w.message}`);
+
+    const outLines = [
+      'Conversion Warnings',
+      '',
+      `Total warnings (raw): ${totalRaw}`,
+      `Total warnings (unique): ${totalUnique}`,
+      `Documents with warnings: ${docsWithWarnings.size}`,
+      '',
+      'By type (unique counts):',
+      ...byTypeLines,
+      '',
+      'Detailed warnings (unique, sorted):',
+      ...detailed,
+      '',
+    ];
+
+    fs.writeFileSync(logPath, outLines.join('\n'), 'utf8');
+    console.warn(`Conversion completed with ${totalRaw} warnings (${totalUnique} unique across ${docsWithWarnings.size} docs). See ${logPath}`);
   }
 
   return convertedCount;

@@ -1,4 +1,3 @@
-// src/converters/snooty.ts
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -74,9 +73,9 @@ async function processIncludes(content: string, options: ParseOptions, includes:
 }
 
 function processSubstitutions(content: string, substitutions: Record<string, string>): string {
-  // Match pattern like |substitution|
+  // Match definition pattern: .. |name| replace:: value
+  // Note: we perform per-key replacement below, so a generic usage regex is unnecessary here.
   const substitutionDefRegex = /\.\. \|([^|]+)\| replace:: (.*?)$/gm;
-  const substitutionUseRegex = /\|([^|]+)\|/g;
 
   // Extract substitution definitions
   let match;
@@ -108,7 +107,7 @@ function processRefs(content: string, refs: Record<string, string>): string {
     return t;
   });
 
-  // Replace simple refs by their label text (best effort)
+  // Replace simple refs by their label text (best-effort)
   result = result.replace(refSimpleRegex, (_m, label) => {
     const l = String(label).trim();
     refs[l] = l;
@@ -118,7 +117,7 @@ function processRefs(content: string, refs: Record<string, string>): string {
   return result;
 }
 
-function convertToMarkdown(parsedContent: ParsedContent): string {
+function convertRSTToMarkdown(parsedContent: ParsedContent): string {
   let markdown = parsedContent.content;
 
   // Convert RST headers to Markdown headers
@@ -169,7 +168,7 @@ function convertCodeBlocks(content: string): string {
   let result = content;
 
   // Handle code blocks with :: notation
-  result = result.replace(/::(?:\s*\n+)(\s+[\s\S]+?)(?:\n\n|\n$)/g, (match, code) => {
+  result = result.replace(/::\s*\n+(\s+[\s\S]+?)(?:\n\n|\n$)/g, (match, code) => {
     const indentedCode = code.split('\n')
       .map((line: string) => line.replace(/^\s{4}/, ''))
       .join('\n');
@@ -192,4 +191,4 @@ function convertLists(content: string): string {
   return result;
 }
 
-export { parseSnootyContent, convertToMarkdown };
+export { parseSnootyContent, convertRSTToMarkdown };

@@ -81,7 +81,7 @@ async function convertRealmDocs(options) {
                 resolveRefs: options.handleRefs,
             });
             // Convert to markdown
-            const markdown = (0, snooty_1.convertToMarkdown)(parsedContent);
+            const markdown = (0, snooty_1.convertRSTToMarkdown)(parsedContent);
             // Write to output file
             const relativePath = path.relative(inputDir, file);
             const outputPath = path.join(outputDir, relativePath.replace(/\.(txt|rst)$/, '.md'));
@@ -115,7 +115,7 @@ async function convertRealmDocsFromApi(options) {
     fs.mkdirSync(outputDir, { recursive: true });
     // Attempt to copy shared images from a configured directory (optional for API mode)
     try {
-        const configuredImagesDir = process.env.REALM_DOCS_SHARED_IMAGES_DIR;
+        const configuredImagesDir = process.env.SHARED_IMAGES_DIR;
         if (configuredImagesDir) {
             const resolved = path.resolve(configuredImagesDir);
             if (fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()) {
@@ -124,7 +124,7 @@ async function convertRealmDocsFromApi(options) {
                 console.log(`Copied shared images (API mode): ${resolved} -> ${dest}`);
             }
             else {
-                console.warn(`Configured REALM_DOCS_SHARED_IMAGES_DIR does not exist or is not a directory: ${resolved}`);
+                console.warn(`Configured SHARED_IMAGES_DIR does not exist or is not a directory: ${resolved}`);
             }
         }
         else {
@@ -138,7 +138,7 @@ async function convertRealmDocsFromApi(options) {
         }
     }
     catch (e) {
-        console.warn(`Warning: failed to copy shared images for API mode. You can set REALM_DOCS_SHARED_IMAGES_DIR to point to a local images folder.`, e);
+        console.warn(`Warning: failed to copy shared images for API mode. You can set SHARED_IMAGES_DIR to point to a local images folder.`, e);
     }
     // Fetch pages and ASTs
     const pages = await (0, snooty_api_1.fetchSnootyProject)({ project, branch, baseUrl });
@@ -189,12 +189,46 @@ async function convertRealmDocsFromApi(options) {
             console.error(`Error converting page ${page.path}:`, e);
         }
     }
-    // Write warnings to a log file with pointers
+    // Write warnings to a log file with pointers (with summary and de-duplication)
     if (warnings.length) {
         const logPath = path.join(outputDir, 'conversion-warnings.log');
-        const lines = warnings.map(w => `${w.path}: ${w.message}`);
-        fs.writeFileSync(logPath, lines.join('\n'), 'utf8');
-        console.warn(`Conversion completed with ${warnings.length} warnings. See ${logPath}`);
+        // De-duplicate identical (path, message) pairs
+        const uniqueMap = new Map();
+        for (const w of warnings) {
+            const key = `${w.path}:::${w.message}`;
+            if (!uniqueMap.has(key))
+                uniqueMap.set(key, w);
+        }
+        // Count by message type among unique warnings
+        const countsByType = {};
+        for (const w of uniqueMap.values()) {
+            countsByType[w.message] = (countsByType[w.message] || 0) + 1;
+        }
+        const totalRaw = warnings.length;
+        const totalUnique = uniqueMap.size;
+        const docsWithWarnings = new Set(Array.from(uniqueMap.values()).map(w => w.path));
+        const byTypeLines = Object.entries(countsByType)
+            .sort((a, b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
+            .map(([msg, count]) => `- ${msg}: ${count}`);
+        const detailed = Array.from(uniqueMap.values())
+            .sort((a, b) => (a.path === b.path ? a.message.localeCompare(b.message) : a.path.localeCompare(b.path)))
+            .map((w) => `${w.path}: ${w.message}`);
+        const outLines = [
+            'Conversion Warnings',
+            '',
+            `Total warnings (raw): ${totalRaw}`,
+            `Total warnings (unique): ${totalUnique}`,
+            `Documents with warnings: ${docsWithWarnings.size}`,
+            '',
+            'By type (unique counts):',
+            ...byTypeLines,
+            '',
+            'Detailed warnings (unique, sorted):',
+            ...detailed,
+            '',
+        ];
+        fs.writeFileSync(logPath, outLines.join('\n'), 'utf8');
+        console.warn(`Conversion completed with ${totalRaw} warnings (${totalUnique} unique across ${docsWithWarnings.size} docs). See ${logPath}`);
     }
     return convertedCount;
 }

@@ -1,7 +1,7 @@
 {
   "name": "realm-docs-converter",
   "version": "1.0.0",
-  "description": "A focused converter for Snooty-based docs-realm to Markdown.",
+  "description": "A focused converter for Snooty-based docs to Markdown.",
   "main": "dist/cli.js",
   "bin": {
     "realm-docs-converter": "dist/cli.js"
@@ -22,5 +22,5 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "license": "MIT"
+  "license": "Apache-2.0"
 }

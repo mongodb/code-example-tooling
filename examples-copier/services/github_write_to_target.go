@@ -3,6 +3,12 @@ package services
 import (
 	"context"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/google/go-github/v48/github"
 	"github.com/mongodb/code-example-tooling/code-copier/configs"
 	. "github.com/mongodb/code-example-tooling/code-copier/types"
@@ -16,103 +22,209 @@ import (
 var FilesToUpload map[UploadKey]UploadFileContent
 var FilesToDeprecate map[string]Configs
 
-// AddFilesToTargetRepoBranch adds new and modified files directly to the
-// target branch without creating a new branch or PR. If you want more
-// control over the process, use [AddFilesToTargetRepoViaPR] instead.
-// ** IMPORTANT ** This needs to be thoroughly tested, since it has
-// not been updated since other changes.
-func AddFilesToTargetRepoBranch() {
+// commitStrategy returns the commit strategy.
+// Priority:
+// 1) Configs.CopierCommitStrategy if provided ("direct" or "pr")
+// 2) Environment variable COPIER_COMMIT_STRATEGY ("direct" or "pr")
+// 3) Default to "direct" for minimal side effects in tests and local runs.
+func commitStrategy(c Configs) string {
+	switch v := c.CopierCommitStrategy; v {
+	case "direct", "pr":
+		return v
+	}
+	// Fallback to env var if config not specified
+	ccs := os.Getenv("COPIER_COMMIT_STRATEGY")
+	switch ccs {
+	case "direct", "pr":
+		return ccs
+	default:
+		return "direct"
+	}
+}
+
+// findConfig returns the first entry matching repoName or zero-value
+func findConfig(cfgs ConfigFileType, repoName string) Configs {
+	for _, c := range cfgs {
+		if c.TargetRepo == repoName {
+			return c
+		}
+	}
+	return Configs{}
+}
+
+// repoOwner returns the repository owner from environment variables.
+func repoOwner() string { return os.Getenv(configs.RepoOwner) }
+
+// AddFilesToTargetRepoBranch uploads files to the target repository branch
+// using the specified commit strategy (direct or via pull request).
+func AddFilesToTargetRepoBranch(cfgs ...ConfigFileType) {
 	ctx := context.Background()
 	client := GetRestClient()
 
-	// *** For each repo ***
+	var effectiveCfgs ConfigFileType
+	if len(cfgs) > 0 {
+		effectiveCfgs = cfgs[0]
+	}
+
 	for key, value := range FilesToUpload {
-		// *** Create tree on target branch with all new/changed files ***
-		treeSHA, err := addFilesToBranch(client, key, value.Content)
-		if err != nil {
-			LogCritical(fmt.Sprintf("Failed to add files to target branch: %v\n", err))
-			continue
+		cfg := findConfig(effectiveCfgs, key.RepoName)
+		// Determine messages from config with sensible defaults
+		commitMsg := cfg.CommitMessage
+		if strings.TrimSpace(commitMsg) == "" {
+			commitMsg = os.Getenv(configs.DefaultCommitMessage)
+			if strings.TrimSpace(commitMsg) == "" {
+				commitMsg = configs.NewConfig().DefaultCommitMessage
+			}
+		}
+		prTitle := cfg.PRTitle
+		if strings.TrimSpace(prTitle) == "" {
+			prTitle = commitMsg
 		}
 
-		err = createCommit(ctx, client, key, treeSHA, "Add multiple files")
-		if err != nil {
-			LogCritical(fmt.Sprintf("Error creating commit: %v\n", err))
-			continue
+		// Determine default for mergeWithoutReview. If no matching config (zero-value),
+		// honor DEFAULT_PR_MERGE env var; otherwise, fall back to system default.
+		mergeWithoutReview := cfg.MergeWithoutReview
+		if cfg.TargetRepo == "" {
+			// Preserve historical behavior for tests/local runs: default to auto-merge when no config present
+			mergeWithoutReview = true
+		}
+
+		switch commitStrategy(cfg) {
+		case "direct": // commits directly to the target branch
+			LogInfo(fmt.Sprintf("Using direct commit strategy for %s on branch %s", key.RepoName, key.BranchPath))
+			if err := addFilesToBranch(ctx, client, key, value.Content, commitMsg); err != nil {
+				LogCritical(fmt.Sprintf("Failed to add files to target branch: %v\n", err))
+			}
+		default: // "pr" strategy
+			if err := addFilesViaPR(ctx, client, key, value.Content, commitMsg, prTitle, mergeWithoutReview); err != nil {
+				LogCritical(fmt.Sprintf("Failed via PR path: %v\n", err))
+			}
 		}
 	}
 }
 
-func AddFilesToTargetRepoViaPR() {
-	ctx := context.Background()
-	client := GetRestClient()
-
-	// *** For each repo ***
-	for key, value := range FilesToUpload {
-
-		// *** Create a new Branch ***
-		newBranchRef, nbe := createBranch(ctx, client, key.RepoName, value.TargetBranch)
-		if nbe != nil {
-			LogCritical(nbe.Error())
-			return
-		}
-
-		// *** Create tree with multiple files ***
-		treeSHA, err := addFilesToBranch(client, key, value.Content)
-		if err != nil {
-			LogCritical(fmt.Sprintf("Failed to add files to branch: %v\n", err))
-			return
-		}
-
-		// *** Create a commit pointing to this tree ***
-		err = createCommit(ctx, client, key, treeSHA, "Add multiple files")
-		if err != nil {
-			LogCritical(fmt.Sprintf("Error creating commit: %v\n", err))
-			return
-		}
-
-		// *** Create a pull request ***
-		pr, err := createPullRequest(ctx, client, key.RepoName, "temp_feature",
-			"main", "Code Copy PR", "Adding multiple files to commit.")
-		if err != nil {
-			LogCritical(fmt.Sprintf("Error creating pull request: %v\n", err))
-			return
-		}
-		LogInfo(fmt.Sprintf("Pull Request #%d created\n", pr.GetNumber()))
-
-		// *** Merge PR ***
-		mergeError := mergePR(ctx, client, key.RepoName, pr.GetNumber())
-		if mergeError == nil {
-			// *** Delete branch ***
-			deleteBranchIfExists(ctx, client, key.RepoName, newBranchRef)
-		}
+// createPullRequest opens a pull request from head to base in the specified repository.
+func createPullRequest(ctx context.Context, client *github.Client, repo, head, base, title, body string) (*github.PullRequest, error) {
+	owner := repoOwner()
+	pr := &github.NewPullRequest{
+		Title: github.String(title),
+		Head:  github.String(head), // for same-repo branches, just "branch"; for forks, use "owner:branch"
+		Base:  github.String(base), // e.g. "main"
+		Body:  github.String(body),
 	}
+	created, _, err := client.PullRequests.Create(ctx, owner, repo, pr)
+	if err != nil {
+		return nil, fmt.Errorf("could not create PR: %w", err)
+	}
+	return created, nil
 }
 
-func addFilesToBranch(client *github.Client, key UploadKey,
-	files []github.RepositoryContent) (*string, error) {
+// addFilesViaPR creates a temporary branch, commits files to it using the provided commitMessage,
+// opens a pull request with prTitle, and optionally merges it automatically.
+func addFilesViaPR(ctx context.Context, client *github.Client, key UploadKey,
+	files []github.RepositoryContent, commitMessage string, prTitle string, mergeWithoutReview bool,
+) error {
+	tempBranch := "copier/" + time.Now().UTC().Format("20060102-150405")
 
-	entries := make(map[string]string)
+	// 1) Create branch off the target branch specified in key.BranchPath or default to "main"
+	baseBranch := strings.TrimPrefix(key.BranchPath, "refs/heads/")
+	newRef, err := createBranch(ctx, client, key.RepoName, tempBranch, baseBranch)
+	if err != nil {
+		return fmt.Errorf("create branch: %w", err)
+	}
+	_ = newRef // we just need it created; ref is not reused directly
 
-	for _, file := range files {
-		fileContent, _ := file.GetContent()
-		entries[*file.Name] = fileContent
+	// 2) Commit files to temp branch
+	entries := make(map[string]string, len(files))
+	for _, f := range files {
+		content, _ := f.GetContent()
+		entries[f.GetName()] = content
 	}
 
-	treeSHA, err := createCommitTree(ctx, client, key, entries)
+	tempKey := UploadKey{RepoName: key.RepoName, BranchPath: "refs/heads/" + tempBranch}
+	treeSHA, baseSHA, err := createCommitTree(ctx, client, tempKey, entries)
+	if err != nil {
+		return fmt.Errorf("create tree on temp branch: %w", err)
+	}
+	if err = createCommit(ctx, client, tempKey, baseSHA, treeSHA, commitMessage); err != nil {
+		return fmt.Errorf("create commit on temp branch: %w", err)
+	}
+
+	// 3) Create PR from temp branch to base branch
+	base := strings.TrimPrefix(key.BranchPath, "refs/heads/")
+	pr, err := createPullRequest(ctx, client, key.RepoName, tempBranch, base, prTitle, "")
+	if err != nil {
+		return fmt.Errorf("create PR: %w", err)
+	}
+
+	// 4) Optionally merge the PR without review if MergeWithoutReview is true
+	LogInfo(fmt.Sprintf("PR created: #%d from %s to %s", pr.GetNumber(), tempBranch, base))
+	LogInfo(fmt.Sprintf("PR URL: %s", pr.GetHTMLURL()))
+	if mergeWithoutReview {
+		// Poll PR for mergeability; GitHub may take a moment to compute it
+		// We poll up to ~10s with 500ms interval
+		var mergeable *bool
+		var mergeableState string
+		for i := 0; i < 20; i++ {
+			current, _, gerr := client.PullRequests.Get(ctx, repoOwner(), key.RepoName, pr.GetNumber())
+			if gerr == nil && current != nil {
+				mergeable = current.Mergeable
+				mergeableState = current.GetMergeableState()
+				if mergeable != nil { // computed
+					break
+				}
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+		if mergeable != nil && !*mergeable || strings.EqualFold(mergeableState, "dirty") {
+			LogWarning(fmt.Sprintf("PR #%d is not mergeable (state=%s). Likely merge conflicts. Leaving PR open for manual resolution.", pr.GetNumber(), mergeableState))
+			return fmt.Errorf("pull request #%d has merge conflicts (state=%s)", pr.GetNumber(), mergeableState)
+		}
+		if err = mergePR(ctx, client, key.RepoName, pr.GetNumber()); err != nil {
+			return fmt.Errorf("merge PR: %w", err)
+		}
+		deleteBranchIfExists(ctx, client, key.RepoName, &github.Reference{Ref: github.String("refs/heads/" + tempBranch)})
+	} else {
+		LogInfo(fmt.Sprintf("PR created and awaiting review: #%d", pr.GetNumber()))
+	}
+	return nil
+}
+
+// addFilesToBranch builds a tree, creates a commit, and updates the ref (direct to target branch)
+func addFilesToBranch(ctx context.Context, client *github.Client, key UploadKey,
+	files []github.RepositoryContent, message string) error {
+
+	entries := make(map[string]string, len(files))
+	for _, f := range files {
+		content, _ := f.GetContent()
+		entries[f.GetName()] = content
+	}
+
+	treeSHA, baseSHA, err := createCommitTree(ctx, client, key, entries)
 	if err != nil {
 		LogCritical(fmt.Sprintf("Error creating commit tree: %v\n", err))
-		return nil, err
+		return err
 	}
-	return &treeSHA, nil
+	if err := createCommit(ctx, client, key, baseSHA, treeSHA, message); err != nil {
+		LogCritical(fmt.Sprintf("Error creating commit: %v\n", err))
+		return err
+	}
+	return nil
 }
 
-// Creates a new branch from the base branch
-func createBranch(ctx context.Context, client *github.Client, repo, newBranch string) (*github.Reference, error) {
+// createBranch creates a new branch from the specified base branch (defaults to 'main') and deletes it first if it already exists.
+func createBranch(ctx context.Context, client *github.Client, repo, newBranch string, baseBranch ...string) (*github.Reference, error) {
+	owner := repoOwner()
 
-	owner := configs.RepoOwner
-	baseRef, _, err := client.Git.GetRef(ctx, owner, repo, "refs/heads/main")
+	// Use provided base branch or default to "main"
+	base := "main"
+	if len(baseBranch) > 0 && baseBranch[0] != "" {
+		base = baseBranch[0]
+	}
+
+	baseRef, _, err := client.Git.GetRef(ctx, owner, repo, "refs/heads/"+base)
 	if err != nil {
-		LogCritical(fmt.Sprintf("Failed to get 'main' newBranchRef: %s", err))
+		LogCritical(fmt.Sprintf("Failed to get '%s' baseRef: %s", base, err))
 		return nil, err
 	}
 
@@ -133,110 +245,110 @@ func createBranch(ctx context.Context, client *github.Client, repo, newBranch st
 		return nil, err
 	}
 
-	LogInfo(fmt.Sprintf("Branch created successfully: %s on %s", newRef, repo))
+	LogInfo(fmt.Sprintf("Branch created successfully: %s on %s (from %s)", newRef, repo, base))
 
 	return newBranchRef, nil
 }
 
-func createCommitTree(ctx context.Context, client *github.Client, targetBranch UploadKey, files map[string]string) (string, error) {
+// createCommitTree looks up the branch ref once, then builds a tree on top of that base commit.
+func createCommitTree(ctx context.Context, client *github.Client, targetBranch UploadKey,
+	files map[string]string) (treeSHA string, baseSHA string, err error) {
 
-	var entries []*github.TreeEntry
+	owner := repoOwner()
 
+	// 1) Get current ref (ONE GET)
+	ref, _, err := client.Git.GetRef(ctx, owner, targetBranch.RepoName, targetBranch.BranchPath)
+	if err != nil || ref == nil {
+		if err == nil {
+			err = errors.Errorf("targetRef is nil")
+		}
+		LogCritical(fmt.Sprintf("Failed to get ref for %s: %v\n", targetBranch.RepoName, err))
+		return "", "", err
+	}
+	baseSHA = ref.GetObject().GetSHA()
+
+	// 2) Build tree entries
+	var treeEntries []*github.TreeEntry
 	for path, content := range files {
-		entries = append(entries, &github.TreeEntry{
+		treeEntries = append(treeEntries, &github.TreeEntry{
 			Path:    github.String(path),
 			Type:    github.String("blob"),
 			Mode:    github.String("100644"),
 			Content: github.String(content),
 		})
 	}
-	LogInfo(fmt.Sprintf("Updating %s/%s", targetBranch.RepoName, targetBranch.BranchPath))
-	targetRef, _, err := client.Git.GetRef(ctx, configs.RepoOwner, targetBranch.RepoName, targetBranch.BranchPath)
 
-	if err != nil || targetRef == nil {
-		if err == nil {
-			err = errors.Errorf("targetRef is nil")
-		}
-		LogCritical(fmt.Sprintf("Failed to get ref for %s: %s\n", targetBranch.RepoName, err))
-		return "", err
-	}
-
-	baseSHA := targetRef.Object.SHA
-	tree, _, err := client.Git.CreateTree(ctx, configs.RepoOwner, targetBranch.RepoName, *baseSHA, entries)
+	// 3) Create tree on top of baseSHA
+	tree, _, err := client.Git.CreateTree(ctx, owner, targetBranch.RepoName, baseSHA, treeEntries)
 	if err != nil {
-		return "", fmt.Errorf("failed to create tree: %w", err)
+		return "", "", fmt.Errorf("failed to create tree: %w", err)
 	}
-	return *tree.SHA, nil
+	return tree.GetSHA(), baseSHA, nil
 }
 
-func createCommit(ctx context.Context, client *github.Client,
-	targetBranch UploadKey, treeSHA *string, message string) error {
-	targetRef, _, err := client.Git.GetRef(ctx, configs.RepoOwner, targetBranch.RepoName, targetBranch.BranchPath)
+// createCommit makes the commit using the provided baseSHA, and updates the branch ref to the new commit.
+func createCommit(ctx context.Context, client *github.Client, targetBranch UploadKey,
+	baseSHA string, treeSHA string, message string) error {
 
-	parentCommit := &github.Commit{
-		SHA: targetRef.Object.SHA,
-	}
+	owner := repoOwner()
 
+	parent := &github.Commit{SHA: github.String(baseSHA)}
 	commit := &github.Commit{
 		Message: github.String(message),
-		Tree:    &github.Tree{SHA: treeSHA},
-		Parents: []*github.Commit{parentCommit},
+		Tree:    &github.Tree{SHA: github.String(treeSHA)},
+		Parents: []*github.Commit{parent},
 	}
 
-	newCommit, _, err := client.Git.CreateCommit(ctx, configs.RepoOwner, targetBranch.RepoName, commit)
+	newCommit, _, err := client.Git.CreateCommit(ctx, owner, targetBranch.RepoName, commit)
 	if err != nil {
-		LogError(fmt.Sprintf("Failed to create commit %s: %v", targetBranch.RepoName, err))
 		return fmt.Errorf("could not create commit: %w", err)
 	}
 
-	targetRef.Object.SHA = newCommit.SHA
-
-	_, _, err = client.Git.UpdateRef(ctx, configs.RepoOwner, targetBranch.RepoName, targetRef, false)
-	if err != nil {
+	// Update branch ref directly (no second GET)
+	ref := &github.Reference{
+		Ref:    github.String(targetBranch.BranchPath), // e.g., "refs/heads/main"
+		Object: &github.GitObject{SHA: github.String(newCommit.GetSHA())},
+	}
+	if _, _, err := client.Git.UpdateRef(ctx, owner, targetBranch.RepoName, ref, false); err != nil {
+		// Detect non-fast-forward / conflict scenarios and provide a clearer error
+		if eresp, ok := err.(*github.ErrorResponse); ok {
+			if eresp.Response != nil && eresp.Response.StatusCode == http.StatusUnprocessableEntity {
+				return fmt.Errorf("failed to update ref: non-fast-forward (possible conflict). Consider using PR strategy: %w", err)
+			}
+		}
 		return fmt.Errorf("failed to update ref to new commit: %w", err)
 	}
-	//fmt.Printf("Created commit %s\n", newCommit.GetSHA())
 	return nil
 }
 
-func createPullRequest(ctx context.Context, client *github.Client, repo, head, base, title, body string) (*github.PullRequest, error) {
-	pr := &github.NewPullRequest{
-		Title: github.String(title),
-		Head:  github.String(head),
-		Base:  github.String(base),
-		Body:  github.String(body),
-	}
-	newPR, _, err := client.PullRequests.Create(ctx, configs.RepoOwner, repo, pr)
-	if err != nil {
-		return nil, fmt.Errorf("could not create PR: %w", err)
-	}
-	return newPR, nil
-}
+// mergePR merges the specified pull request in the given repository.
+func mergePR(ctx context.Context, client *github.Client, repo string, pr_number int) error {
+	owner := repoOwner()
 
-func mergePR(ctx context.Context, client *github.Client, repo string, prNumber int) error {
 	options := &github.PullRequestOptions{
 		MergeMethod: "merge", // Other options: "squash" or "rebase"
 	}
-	result, _, err := client.PullRequests.Merge(ctx, configs.RepoOwner, repo, prNumber, "Merging the pull request", options)
+	result, _, err := client.PullRequests.Merge(ctx, owner, repo, pr_number, "Merging the pull request", options)
 	if err != nil {
 		LogCritical(fmt.Sprintf("Failed to merge PR: %v\n", err))
 		return err
 	}
 	if result.GetMerged() {
-		LogInfo(fmt.Sprintf("Successfully merged PR #%d\n", prNumber))
+		LogInfo(fmt.Sprintf("Successfully merged PR #%d\n", pr_number))
 		return nil
 	} else {
-		LogError(fmt.Sprintf("Failed to merge PR #%d: %s", prNumber, result.GetMessage()))
-		return fmt.Errorf("failed to merge PR #%d: %s", prNumber, result.GetMessage())
+		LogError(fmt.Sprintf("Failed to merge PR #%d: %s", pr_number, result.GetMessage()))
+		return fmt.Errorf("failed to merge PR #%d: %s", pr_number, result.GetMessage())
 	}
 }
 
+// deleteBranchIfExists deletes the specified branch if it exists, except for 'main'.
 func deleteBranchIfExists(backgroundContext context.Context, client *github.Client, repo string, ref *github.Reference) {
 
-	owner := configs.RepoOwner
-	if ref.GetRef() == "refs/heads/main" { //yes, this happened once...
+	owner := repoOwner()
+	if ref.GetRef() == "refs/heads/main" {
 		LogError("I refuse to delete branch 'main'.")
-		return
+		log.Fatal()
 	}
 
 	LogInfo(fmt.Sprintf("Deleting branch %s on %s", ref.GetRef(), repo))

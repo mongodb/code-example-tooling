@@ -40,13 +40,13 @@ func HandleCollectionSummariesDocument(project types.ProjectDetails, report type
 			}
 		}
 	}
-	if project.ActiveBranch != collectionVersionKey {
+	if project.Version != collectionVersionKey {
 		// If the active branch doesn't match the most recent version, need to make a new CollectionInfoView for this document
 		updatedSummaryDoc := db.MakeNewCollectionVersionDocument(*summaryDoc, project, report)
 		summaryDoc = &updatedSummaryDoc
 	} else {
 		// If the active branch does match the most recent version, just need to update this version document's last updated date and counts
-		pageCountBeforeUpdating := summaryDoc.Version[project.ActiveBranch].TotalPageCount
+		pageCountBeforeUpdating := summaryDoc.Version[project.Version].TotalPageCount
 		updatedSummaryDoc := db.UpdateCollectionVersionDocument(*summaryDoc, project, report)
 		summaryDoc = &updatedSummaryDoc
 

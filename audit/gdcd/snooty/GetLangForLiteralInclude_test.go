@@ -2,7 +2,6 @@ package snooty
 
 import (
 	"common"
-	test_data "gdcd/snooty/test-data"
 	"gdcd/types"
 	"testing"
 )
@@ -16,10 +15,10 @@ func TestGetLangForLiteralInclude(t *testing.T) {
 		args args
 		want string
 	}{
-		{"Handles literalinclude with specified lang", args{test_data.MakeLiteralIncludeNodeForTesting(true, common.C, false)}, common.C},
-		{"Handles literalinclude with empty string lang using filepath", args{test_data.MakeLiteralIncludeNodeForTesting(false, common.C, true)}, common.C},
-		{"Uses child code node lang when literalinclude empty string lang and no filepath", args{test_data.MakeLiteralIncludeNodeForTesting(false, common.C, false)}, common.C},
-		{"Lang should be undefined if no other conditions provide lang", args{test_data.MakeLiteralIncludeNodeForTesting(true, common.Undefined, false)}, common.Undefined},
+		{"Handles literalinclude with specified lang", args{MakeLiteralIncludeNodeForTesting(true, common.C, false)}, common.C},
+		{"Handles literalinclude with empty string lang using filepath", args{MakeLiteralIncludeNodeForTesting(false, common.C, true)}, common.C},
+		{"Uses child code node lang when literalinclude empty string lang and no filepath", args{MakeLiteralIncludeNodeForTesting(false, common.C, false)}, common.C},
+		{"Lang should be undefined if no other conditions provide lang", args{MakeLiteralIncludeNodeForTesting(true, common.Undefined, false)}, common.Undefined},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

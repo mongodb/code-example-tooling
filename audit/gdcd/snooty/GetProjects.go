@@ -6,7 +6,9 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -24,6 +26,16 @@ func removeTrailingSlash(input string) string {
 		return input[:len(input)-1]
 	}
 	return input
+}
+
+func getLastSegment(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		log.Printf("ERROR: failed to parse URL: %s\n", err)
+	}
+	u.Path = strings.TrimSuffix(u.Path, "/")
+	seg := path.Base(u.Path)
+	return seg
 }
 
 func GetProjects(client *http.Client) []types.ProjectDetails {
@@ -78,7 +90,7 @@ func GetProjects(client *http.Client) []types.ProjectDetails {
 
 	var collectionsToParse []types.ProjectDetails
 	for _, docsProject := range response.Data {
-		var activeBranch string
+		var version string
 		var prodUrl string
 		if !contains(ignoreProjectNames, docsProject.Project) {
 			for _, branch := range docsProject.Branches {
@@ -87,17 +99,20 @@ func GetProjects(client *http.Client) []types.ProjectDetails {
 					// the PageUrl, we add a slash, so we need to remove a trailing slash if one exists here so we don't
 					// have double slashes.
 					urlWithNoTrailingSlash := removeTrailingSlash(branch.FullUrl)
-					activeBranch = branch.GitBranchName
+
+					// A change in Snooty Data API behavior means the branch name from the projects endpoint is no longer
+					// used to fetch the documents for that project. Instead, we should use the last segment of the URL.
+					version = getLastSegment(urlWithNoTrailingSlash)
 					prodUrl = urlWithNoTrailingSlash
 					break
 				}
 			}
 			// If the project does not have an active, stable branch, we don't want to try to get the project details
-			if activeBranch != "" {
+			if version != "" {
 				collectionDetails := types.ProjectDetails{
-					ProjectName:  docsProject.Project,
-					ActiveBranch: activeBranch,
-					ProdUrl:      prodUrl,
+					ProjectName: docsProject.Project,
+					Version:     version,
+					ProdUrl:     prodUrl,
 				}
 				collectionsToParse = append(collectionsToParse, collectionDetails)
 			} else {

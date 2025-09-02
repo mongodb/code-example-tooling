@@ -16,7 +16,7 @@ import (
 // for further processing.
 func GetProjectPages(project types.ProjectDetails, client *http.Client) []types.PageWrapper {
 	env := os.Getenv("APP_ENV")
-	apiURL := fmt.Sprintf("https://snooty-data-api.mongodb.com/prod/projects/%s/%s/documents", project.ProjectName, project.ActiveBranch)
+	apiURL := fmt.Sprintf("https://snooty-data-api.mongodb.com/prod/projects/%s/%s/documents", project.ProjectName, project.Version)
 	var reader bufio.Reader
 
 	if env == "testing" {

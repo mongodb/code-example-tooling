@@ -2,7 +2,7 @@ package main
 
 import (
 	"common"
-	"gdcd/add-code-examples"
+	add_code_examples "gdcd/add-code-examples"
 	compare_code_examples "gdcd/compare-code-examples"
 	"gdcd/types"
 	"gdcd/utils"

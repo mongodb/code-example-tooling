@@ -13,7 +13,7 @@ func MakeSummariesDocument(project types.ProjectDetails, report types.ProjectRep
 		LastUpdatedAtUTC: time.Now().UTC(),
 	}
 	versionMap := make(map[string]common.CollectionInfoView)
-	versionMap[project.ActiveBranch] = collectionInfo
+	versionMap[project.Version] = collectionInfo
 	collectionReport := common.CollectionReport{
 		ID:      "summaries",
 		Version: versionMap,

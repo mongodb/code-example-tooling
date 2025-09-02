@@ -4,12 +4,13 @@ import (
 	"common"
 	"context"
 	"fmt"
-	"gdcd/add-code-examples"
+	add_code_examples "gdcd/add-code-examples"
 	"gdcd/compare-code-examples/data"
 	"gdcd/types"
-	"github.com/tmc/langchaingo/llms/ollama"
 	"log"
 	"testing"
+
+	"github.com/tmc/langchaingo/llms/ollama"
 )
 
 func TestOneNewCodeExampleHandledCorrectly(t *testing.T) {

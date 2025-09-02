@@ -1,4 +1,4 @@
-package test_data
+package snooty
 
 import (
 	add_code_examples "gdcd/add-code-examples"

@@ -12,6 +12,6 @@ func MakeNewCollectionVersionDocument(existingSummaries common.CollectionReport,
 		TotalCodeCount:   report.Counter.IncomingCodeNodesCount,
 		LastUpdatedAtUTC: time.Now().UTC(),
 	}
-	existingSummaries.Version[project.ActiveBranch] = collectionInfo
+	existingSummaries.Version[project.Version] = collectionInfo
 	return existingSummaries
 }

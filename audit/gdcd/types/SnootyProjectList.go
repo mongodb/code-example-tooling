@@ -30,7 +30,7 @@ type Response struct {
 }
 
 type ProjectDetails struct {
-	ProjectName  string
-	ActiveBranch string
-	ProdUrl      string
+	ProjectName string
+	Version     string
+	ProdUrl     string
 }

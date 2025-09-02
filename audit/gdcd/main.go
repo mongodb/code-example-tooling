@@ -66,17 +66,17 @@ func main() {
 	// Uncomment to parse a single project during testing
 	// compass := types.ProjectDetails{
 	//	ProjectName:  "compass",
-	//	ActiveBranch: "master",
+	//	Version: "master",
 	//	ProdUrl:      "https://mongodb.com/docs/compass/current",
 	// }
 	// opsManager := types.ProjectDetails{
 	//	ProjectName:  "ops-manager",
-	//	ActiveBranch: "v8.0",
+	//	Version: "v8.0",
 	//	ProdUrl:      "https://mongodb.com/docs/ops-manager/current",
 	// }
 	// cloudManager := types.ProjectDetails{
 	//	ProjectName:  "cloud-manager",
-	//	ActiveBranch: "master",
+	//	Version: "master",
 	//	ProdUrl:      "https://mongodb.com/docs/cloud-manager/",
 	// }
 	// projectsToParse := []types.ProjectDetails{compass}

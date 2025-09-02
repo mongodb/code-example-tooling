@@ -7,10 +7,10 @@ import (
 )
 
 func UpdateCollectionVersionDocument(existingSummaries common.CollectionReport, project types.ProjectDetails, report types.ProjectReport) common.CollectionReport {
-	existingCollectionInfo := existingSummaries.Version[project.ActiveBranch]
+	existingCollectionInfo := existingSummaries.Version[project.Version]
 	existingCollectionInfo.TotalPageCount = report.Counter.TotalCurrentPageCount
 	existingCollectionInfo.TotalCodeCount = report.Counter.IncomingCodeNodesCount
 	existingCollectionInfo.LastUpdatedAtUTC = time.Now().UTC()
-	existingSummaries.Version[project.ActiveBranch] = existingCollectionInfo
+	existingSummaries.Version[project.Version] = existingCollectionInfo
 	return existingSummaries
 }

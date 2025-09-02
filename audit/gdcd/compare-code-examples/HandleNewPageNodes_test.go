@@ -5,9 +5,10 @@ import (
 	add_code_examples "gdcd/add-code-examples"
 	"gdcd/compare-code-examples/data"
 	"gdcd/types"
-	"github.com/tmc/langchaingo/llms/ollama"
 	"log"
 	"testing"
+
+	"github.com/tmc/langchaingo/llms/ollama"
 )
 
 // NOTE: For these tests, I'm just confirming that we're creating the correct number of new code nodes. We don't need to

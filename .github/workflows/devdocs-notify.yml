@@ -17,11 +17,7 @@ jobs:
             const body = isPR
               ? context.payload.pull_request.body || ""
               : context.payload.issue.body || "";
-            const mentioned = /@(?:10gen\/)?DevDocs/i.test(body);
-            if (!mentioned) {
-              console.log("No @DevDocs mention found");
-              return;
-            }
+
             const user = isPR
               ? context.payload.pull_request.user.login
               : context.payload.issue.user.login;

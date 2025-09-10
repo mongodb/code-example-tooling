@@ -1,0 +1,35 @@
+name: DevDocs PR or Issue Creation Notifier
+on:  
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Slack notification when PR or issue is created
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const isPR = !!context.payload.pull_request;
+            const body = isPR
+              ? context.payload.pull_request.body || ""
+              : context.payload.issue.body || "";
+
+            const user = isPR
+              ? context.payload.pull_request.user.login
+              : context.payload.issue.user.login;
+            const link = isPR
+              ? context.payload.pull_request.html_url
+              : context.payload.issue.html_url;
+            const text = `:eyes: @DevDocs a PR was opened or issue created by *${user}* in a ${isPR ? "Pull Request" : "Issue"}: ${link}`;
+            const url = process.env.SLACK_WORKFLOW_WEBHOOK;
+            await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text }),
+            });
+        env:
+          SLACK_WORKFLOW_WEBHOOK: ${{ secrets.SLACK_WORKFLOW_WEBHOOK }}

@@ -25,25 +25,12 @@ jobs:
             const link = isPR
               ? context.payload.pull_request.html_url
               : context.payload.issue.html_url;
-            const message = {
-              blocks: [
-                {
-                  type: "section",
-                  text: {
-                    type: "mrkdwn",
-                    text: `:eyes: *@DevDocs* a PR was opened or issue created by *${user}*!\n\n` +
-                          `*Repo:* ${context.repo.owner}/${context.repo.repo}\n` +
-                          `*Type:* ${isPR ? "Pull Request" : "Issue"}\n` +
-                          `<${link}|View on GitHub>`
-                  }
-                }
-              ]
-            };
+            const text = `:eyes: @DevDocs a PR was opened or issue created by *${user}* in a ${isPR ? "Pull Request" : "Issue"}:\n${link}`;
             const url = process.env.SLACK_WORKFLOW_WEBHOOK;
             await fetch(url, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(message),
+              body: JSON.stringify({ text }),
             });
         env:
           SLACK_WORKFLOW_WEBHOOK: ${{ secrets.SLACK_WORKFLOW_WEBHOOK }}

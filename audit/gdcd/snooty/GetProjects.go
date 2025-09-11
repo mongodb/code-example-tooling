@@ -100,9 +100,16 @@ func GetProjects(client *http.Client) []types.ProjectDetails {
 					// have double slashes.
 					urlWithNoTrailingSlash := removeTrailingSlash(branch.FullUrl)
 
-					// A change in Snooty Data API behavior means the branch name from the projects endpoint is no longer
-					// used to fetch the documents for that project. Instead, we should use the last segment of the URL.
-					version = getLastSegment(urlWithNoTrailingSlash)
+					// If the docs project has only one branch, we can assume it's unversioned and just use "main" as
+					// the version to fetch documents. i.e. https://www.mongodb.com/docs/mongodb-shell/
+					if len(docsProject.Branches) == 1 {
+						version = "main"
+					} else {
+						// If the docs project has more than one branch, we need to use the active, stable branch name's
+						// last segment of the URL as the version to fetch documents. i.e. https://www.mongodb.com/docs/atlas/operator/current/
+						lastSegment := getLastSegment(urlWithNoTrailingSlash)
+						version = lastSegment
+					}
 					prodUrl = urlWithNoTrailingSlash
 					break
 				}

@@ -16,8 +16,8 @@ import (
 // NOTE: This func does not return data to print in our nicely-formatted tables; instead, it logs directly to console.
 func GetUniqueCodeExampleUpdatesForDocsSection(db *mongo.Database, ctx context.Context) {
 	// ------ CONFIGURATION: Set these values for your docs set and section ----------
-	collectionName := "cloud-docs"                // Replace this with the name of the docs set you want to search within
-	docsSectionSubstring := "atlas-vector-search" // Replace this with a substring that represents the docs section where you want to focus results
+	collectionName := "cloud-docs"         // Replace this with the name of the docs set you want to search within
+	docsSectionSubstring := "atlas-search" // Replace this with a substring that represents the docs section where you want to focus results
 	// ------ END CONFIGURATION --------------------------------------------------
 
 	// Define a struct to match the aggregation output
@@ -39,13 +39,20 @@ func GetUniqueCodeExampleUpdatesForDocsSection(db *mongo.Database, ctx context.C
 		{{"$match", bson.D{
 			{"$and", bson.A{
 				bson.D{{"$or", bson.A{
-					bson.D{{"nodes.date_updated", bson.M{"$gte": oneWeekAgo}}},
+					//bson.D{{"nodes.date_updated", bson.M{"$gte": oneWeekAgo}}},
 					bson.D{{"nodes.date_added", bson.M{"$gte": oneWeekAgo}}},
 				}}},
 				// Filter out any removed code examples - we only care about net new or updated code examples for this piece
 				bson.D{{"$or", bson.A{
 					bson.D{{"nodes.is_removed", bson.M{"$exists": false}}},
 					bson.D{{"nodes.is_removed", false}},
+				}}},
+				// Filter out usage examples with less than 300 characters
+				bson.D{{"$or", bson.A{
+					bson.D{{"nodes.category", bson.D{{"$ne", common.UsageExample}}}},
+					bson.D{{"$expr", bson.D{
+						{"$gte", bson.A{bson.D{{"$strLenCP", "$nodes.code"}}, 300}},
+					}}},
 				}}},
 			}},
 		}}},

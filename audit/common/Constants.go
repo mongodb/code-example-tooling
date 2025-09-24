@@ -75,6 +75,7 @@ const (
 	Django                       = "Django Integration"
 	Drivers                      = "Drivers"
 	EnterpriseKubernetesOperator = "Enterprise Kubernetes Operator"
+	EFCoreProvider               = "Entity Framework Core Provider"
 	KafkaConnector               = "Kafka Connector"
 	MCPServer                    = "MongoDB MCP Server"
 	MDBCLI                       = "MongoDB CLI"
@@ -94,6 +95,7 @@ const (
 	OnlineArchive    = "Online Archive"
 	Search           = "Search"
 	StreamProcessing = "Stream Processing"
+	Terraform        = "Terraform"
 	Triggers         = "Triggers"
 	VectorSearch     = "Vector Search"
 

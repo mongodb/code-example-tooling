@@ -137,8 +137,8 @@ var productInfoMap = map[string]ProductInfo{
 		ProductType: CollectionIsProduct,
 		SubProduct:  "",
 	},
-	"entity-framework": { // TODO: "Entity Framework Core Provider" DOCSP-50997 to add to taxonomy
-		ProductName: Drivers,
+	"entity-framework": {
+		ProductName: EFCoreProvider,
 		ProductType: CollectionIsProduct,
 		SubProduct:  "",
 	},
@@ -182,7 +182,7 @@ var productInfoMap = map[string]ProductInfo{
 		ProductType: CollectionIsProduct,
 		SubProduct:  "",
 	},
-	"mcp-server": { // DOCSP-50997 to add to taxonomy
+	"mcp-server": {
 		ProductName: MCPServer,
 		ProductType: CollectionIsProduct,
 		SubProduct:  "",
@@ -256,6 +256,11 @@ var productInfoMap = map[string]ProductInfo{
 		ProductName: SparkConnector,
 		ProductType: CollectionIsProduct,
 		SubProduct:  "",
+	},
+	"terraform": {
+		ProductName: Atlas,
+		ProductType: DirIsSubProduct,
+		SubProduct:  Terraform,
 	},
 	"triggers": {
 		ProductName: Atlas,

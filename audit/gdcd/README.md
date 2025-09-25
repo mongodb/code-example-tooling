@@ -123,6 +123,22 @@ The progress bar should immediately output to console and continue to display pr
 projects are parsed. Depending on your machine and the amount of projects specified, this can be a 
 long-running program (~1-2hrs ). 
 
+## Reviewing logs
+
+GDCD outputs logs to the local device's `logs` directory. The logs contain information about project events, including:
+
+- New pages
+- Removed pages
+- Updated pages (where updates refer to changes to code examples or page keywords)
+- Code example count changes
+- New applied usage examples
+- Project summaries and any issues with the data
+
+GDCD's handling for moved pages is currently very restrictive, and often misses pages that have been moved, counting
+them as separate removed and new page entries. As a stopgap for more accurate moved page handling, we have provided
+a script to parse the logs and summarize moved/new/removed pages and their associated code examples. Refer to the
+`scripts` directory for more details.
+
 ## Troubleshooting
 ### Permission Issues
 ```text

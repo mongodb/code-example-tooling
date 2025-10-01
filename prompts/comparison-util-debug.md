@@ -1,15 +1,31 @@
+# Debug Failing Comparison Utility
+
+## Context
 The current context is a <PROGRAMMING LANGUAGE> project designed to test the
-MongoDB <DRIVER> Driver code examples we show in the MongoDB documentation.
+MongoDB <DRIVER> Driver code examples shown in the MongoDB documentation.
 
-This project contains a utility to compare the actual output from running a
-code example with the expected output we define. The entrypoint for that
-utility is: <FILEPATH>
+This project contains a utility that compares the actual output from running a
+code example against a defined, expected output. The entrypoint for that
+utility is <ENTRYPOINT_FILEPATH>.
 
-The current test is running a function from an example file and comparing the
-output to the expected output in <FILEPATH or VAR NAME>. The test currently
-shows that these things don't match, but they should match. I believe this is
-due to an issue with the comparison utility implementation.
+## Problem Statement 
 
-Help me debug why the comparison utility is returning false for this, and fix
-any issues we find in the comparison library implementation, without making any
-changes to the example file or expected output.
+A specific test is executing a function from an example file and comparing its
+output to the expected output defined in <EXPECTED_OUTPUT_PATH_OR_VAR>. The test currently
+fails because the outputs differ, but they should match. This suggests an issue in the comparison utility's implementation.
+
+## Constraints
+
+- Do not modify the example file or expected output.
+
+## Task
+
+- Investigate and debug why the comparison utility returns false for this case.
+- Fix any issues found in the comparison utility.
+- (Optional but recommended) If helpful, update or add tests for identified edge cases to ensure robustness.
+
+If you need more information (such as sample actual/expected outputs or error messages), let me know.
+
+## Success Criteria
+
+The comparison utility should return `true` when the actual and expected outputs match for this test.

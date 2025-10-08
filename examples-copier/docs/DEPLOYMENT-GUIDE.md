@@ -1,20 +1,6 @@
 # Deployment Guide
 
-This guide walks you through deploying the refactored examples-copier application with all new features.
-
-## ✅ Integration Complete
-
-The following features have been successfully integrated:
-
-- ✅ Enhanced pattern matching (prefix, glob, regex)
-- ✅ Path transformations with variable substitution
-- ✅ YAML configuration support (with JSON backward compatibility)
-- ✅ MongoDB audit logging
-- ✅ Health and metrics endpoints
-- ✅ Template-ized commit messages and PR titles
-- ✅ Dry-run mode
-- ✅ CLI validation tool
-- ✅ ServiceContainer architecture
+This guide walks you through deploying the examples-copier application.
 
 ## Prerequisites
 
@@ -68,7 +54,7 @@ PEM_KEY_NAME=projects/123/secrets/CODE_COPIER_PEM/versions/latest
 # Application Settings
 PORT=8080
 WEBSERVER_PATH=/webhook
-CONFIG_FILE=config.yaml
+CONFIG_FILE=copier-config.yaml
 DEPRECATION_FILE=deprecated_examples.json
 
 # New Features
@@ -85,7 +71,7 @@ AUDIT_COLLECTION=audit_events
 
 ## Step 3: Create YAML Configuration
 
-Create `config.yaml` in your repository:
+Create `copier-config.yaml` in your repository:
 
 ```yaml
 source_repo: "your-org/source-repo"
@@ -114,7 +100,7 @@ copy_rules:
 
 ```bash
 # Validate config file
-./config-validator validate -config config.yaml -v
+./config-validator validate -config copier-config.yaml -v
 
 # Test pattern matching
 ./config-validator test-pattern \
@@ -155,7 +141,7 @@ env: standard
 env_variables:
   REPO_OWNER: "your-org"
   REPO_NAME: "your-repo"
-  CONFIG_FILE: "config.yaml"
+  CONFIG_FILE: "copier-config.yaml"
   AUDIT_ENABLED: "true"
   METRICS_ENABLED: "true"
   MONGO_URI: "mongodb+srv://..."
@@ -309,7 +295,7 @@ commit_strategy:
 
 ```bash
 # Check config syntax
-./config-validator validate -config config.yaml -v
+./config-validator validate -config copier-config.yaml -v
 
 # Test specific patterns
 ./config-validator test-pattern -type regex -pattern "..." -file "..."
@@ -381,21 +367,3 @@ db.audit_events.createIndex({timestamp: -1})
 db.audit_events.createIndex({rule_name: 1, timestamp: -1})
 db.audit_events.createIndex({success: 1, timestamp: -1})
 ```
-
-## Next Steps
-
-1. ✅ Application deployed and running
-2. ✅ Webhooks configured
-3. ✅ Monitoring in place
-4. 📝 Update main README.md with new features
-5. 🧪 Write unit tests for new functionality
-6. 📊 Set up alerting for failed operations
-
-## Support
-
-For issues or questions:
-- Check `REFACTORING-SUMMARY.md` for feature documentation
-- Review `INTEGRATION-GUIDE.md` for technical details
-- Check audit logs in MongoDB
-- Review application logs in Google Cloud
-

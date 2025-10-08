@@ -12,7 +12,7 @@ import (
 type ServiceContainer struct {
 	Config           *configs.Config
 	FileStateService FileStateService
-	
+
 	// New services
 	ConfigLoader     ConfigLoader
 	PatternMatcher   PatternMatcher
@@ -20,7 +20,8 @@ type ServiceContainer struct {
 	MessageTemplater MessageTemplater
 	AuditLogger      AuditLogger
 	MetricsCollector *MetricsCollector
-	
+	SlackNotifier    SlackNotifier
+
 	// Server state
 	StartTime        time.Time
 }
@@ -29,14 +30,22 @@ type ServiceContainer struct {
 func NewServiceContainer(config *configs.Config) (*ServiceContainer, error) {
 	// Initialize file state service
 	fileStateService := NewFileStateService()
-	
+
 	// Initialize new services
 	configLoader := NewConfigLoader()
 	patternMatcher := NewPatternMatcher()
 	pathTransformer := NewPathTransformer()
 	messageTemplater := NewMessageTemplater()
 	metricsCollector := NewMetricsCollector()
-	
+
+	// Initialize Slack notifier
+	slackNotifier := NewSlackNotifier(
+		config.SlackWebhookURL,
+		config.SlackChannel,
+		config.SlackUsername,
+		config.SlackIconEmoji,
+	)
+
 	// Initialize audit logger
 	ctx := context.Background()
 	auditLogger, err := NewMongoAuditLogger(
@@ -49,7 +58,7 @@ func NewServiceContainer(config *configs.Config) (*ServiceContainer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize audit logger: %w", err)
 	}
-	
+
 	return &ServiceContainer{
 		Config:           config,
 		FileStateService: fileStateService,
@@ -59,6 +68,7 @@ func NewServiceContainer(config *configs.Config) (*ServiceContainer, error) {
 		MessageTemplater: messageTemplater,
 		AuditLogger:      auditLogger,
 		MetricsCollector: metricsCollector,
+		SlackNotifier:    slackNotifier,
 		StartTime:        time.Now(),
 	}, nil
 }

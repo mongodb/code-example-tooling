@@ -189,7 +189,7 @@ Expected: Processing logged but no commits made
 - Verify signature generation
 
 ### Files Not Matched
-- Check pattern in config.yaml
+- Check pattern in copier-config.yaml
 - Use `config-validator test-pattern` to debug
 
 ### Path Transformation Wrong

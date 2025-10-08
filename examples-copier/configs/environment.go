@@ -38,6 +38,13 @@ type Config struct {
 	AuditCollection  string
 	MetricsEnabled   bool
 	WebhookSecret    string
+
+	// Slack notifications
+	SlackWebhookURL  string
+	SlackChannel     string
+	SlackUsername    string
+	SlackIconEmoji   string
+	SlackEnabled     bool
 }
 
 const (
@@ -67,6 +74,11 @@ const (
 	AuditCollection      = "AUDIT_COLLECTION"
 	MetricsEnabled       = "METRICS_ENABLED"
 	WebhookSecret        = "WEBHOOK_SECRET"
+	SlackWebhookURL      = "SLACK_WEBHOOK_URL"
+	SlackChannel         = "SLACK_CHANNEL"
+	SlackUsername        = "SLACK_USERNAME"
+	SlackIconEmoji       = "SLACK_ICON_EMOJI"
+	SlackEnabled         = "SLACK_ENABLED"
 )
 
 // NewConfig returns a new Config instance with default values
@@ -75,7 +87,7 @@ func NewConfig() *Config {
 		Port:                 "8080",
 		CommiterName:         "Copier Bot",
 		CommiterEmail:        "bot@example.com",
-		ConfigFile:           "config.json",
+		ConfigFile:           "copier-config.yaml",
 		DeprecationFile:      "deprecated_examples.json",
 		WebserverPath:        "/webhook",
 		SrcBranch:            "main",                                                           // Default branch to copy from (NOTE: we are purposefully only allowing copying from `main` branch right now)
@@ -145,6 +157,13 @@ func LoadEnvironment(envFile string) (*Config, error) {
 	config.AuditCollection = getEnvWithDefault(AuditCollection, "events")
 	config.MetricsEnabled = getBoolEnvWithDefault(MetricsEnabled, true)
 	config.WebhookSecret = os.Getenv(WebhookSecret)
+
+	// Slack notifications
+	config.SlackWebhookURL = os.Getenv(SlackWebhookURL)
+	config.SlackChannel = getEnvWithDefault(SlackChannel, "#code-examples")
+	config.SlackUsername = getEnvWithDefault(SlackUsername, "Examples Copier")
+	config.SlackIconEmoji = getEnvWithDefault(SlackIconEmoji, ":robot_face:")
+	config.SlackEnabled = getBoolEnvWithDefault(SlackEnabled, config.SlackWebhookURL != "")
 
 	// Export resolved values back into environment so downstream os.Getenv sees defaults
 	_ = os.Setenv(Port, config.Port)

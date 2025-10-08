@@ -140,7 +140,7 @@ export GITHUB_TOKEN=ghp_...
 
 ```bash
 # 1. Edit your config file
-nano config.json  # or config.yaml
+nano config.json  # or copier-config.yaml
 
 # 2. Validate it
 ./config-validator validate -config config.json -v

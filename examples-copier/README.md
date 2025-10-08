@@ -2,7 +2,7 @@
 
 A GitHub app that automatically copies code examples and files from a source repository to one or more target repositories when pull requests are merged. Features advanced pattern matching, path transformations, audit logging, and comprehensive monitoring.
 
-## ✨ Features
+## Features
 
 ### Core Functionality
 - **Automated File Copying** - Copies files from source to target repos on PR merge
@@ -70,7 +70,7 @@ PEM_KEY_NAME=projects/123/secrets/CODE_COPIER_PEM/versions/latest
 
 # Application Settings
 PORT=8080
-CONFIG_FILE=config.yaml
+CONFIG_FILE=copier-config.yaml
 DEPRECATION_FILE=deprecated_examples.json
 
 # Optional: MongoDB Audit Logging
@@ -86,7 +86,7 @@ METRICS_ENABLED=true
 
 3. **Create configuration file**
 
-Create `config.yaml` in your source repository:
+Create `copier-config.yaml` in your source repository:
 
 ```yaml
 source_repo: "your-org/source-repo"
@@ -127,7 +127,7 @@ copy_rules:
 ./examples-copier -validate
 ```
 
-## 📋 Configuration
+## Configuration
 
 ### Pattern Types
 
@@ -219,7 +219,7 @@ pr_title: "Update ${category} examples"
 - `${file_count}` - Number of files being copied
 - Any custom variables from pattern matching
 
-## 🛠️ CLI Tools
+## CLI Tools
 
 ### Config Validator
 
@@ -227,7 +227,7 @@ Validate and test configurations before deployment:
 
 ```bash
 # Validate config file
-./config-validator validate -config config.yaml -v
+./config-validator validate -config copier-config.yaml -v
 
 # Test pattern matching
 ./config-validator test-pattern \
@@ -242,13 +242,13 @@ Validate and test configurations before deployment:
   -pattern "^examples/(?P<lang>[^/]+)/(?P<file>.+)$"
 
 # Initialize new config from template
-./config-validator init -output config.yaml
+./config-validator init -output copier-config.yaml
 
 # Convert between formats
-./config-validator convert -input config.json -output config.yaml
+./config-validator convert -input config.json -output copier-config.yaml
 ```
 
-## 📊 Monitoring
+## Monitoring
 
 ### Health Endpoint
 
@@ -308,7 +308,7 @@ Response:
 }
 ```
 
-## 🔍 Audit Logging
+## Audit Logging
 
 When enabled, all operations are logged to MongoDB:
 
@@ -335,7 +335,7 @@ db.audit_events.aggregate([
 ])
 ```
 
-## 🧪 Testing
+## Testing
 
 ### Run Unit Tests
 
@@ -352,74 +352,7 @@ go test ./services -coverprofile=coverage.out
 go tool cover -html=coverage.out
 ```
 
-### Test with Real Webhooks
-
-#### Option 1: Use Example Payload
-
-```bash
-# Build test tool
-go build -o test-webhook ./cmd/test-webhook
-
-# Send example payload
-./test-webhook -payload test-payloads/example-pr-merged.json
-```
-
-#### Option 2: Use Real PR Data
-
-```bash
-# Set GitHub token
-export GITHUB_TOKEN=ghp_your_token_here
-
-# Fetch and send real PR data
-./test-webhook -pr 123 -owner myorg -repo myrepo
-
-# See payload without sending
-./test-webhook -pr 123 -owner myorg -repo myrepo -dry-run
-```
-
-#### Option 3: Interactive Testing
-
-```bash
-# Use helper script
-chmod +x scripts/test-with-pr.sh
-./scripts/test-with-pr.sh 123 myorg myrepo
-```
-
-### Test in Dry-Run Mode
-
-```bash
-# Start app in dry-run mode
-DRY_RUN=true ./examples-copier &
-
-# Send test webhook
-./test-webhook -pr 123 -owner myorg -repo myrepo
-
-# Check logs - no actual commits will be made
-```
-
-### Test Coverage
-
-- **51 unit tests** covering all new features
-- Pattern matching and transformations
-- Configuration loading and validation
-- File state management
-- Metrics collection
-- Thread safety
-
-See [TESTING-SUMMARY.md](TESTING-SUMMARY.md) for details.
-
-## 📚 Documentation
-
-- **[REFACTORING-SUMMARY.md](REFACTORING-SUMMARY.md)** - Complete feature documentation
-- **[INTEGRATION-GUIDE.md](INTEGRATION-GUIDE.md)** - Technical integration details
-- **[DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md)** - Deployment walkthrough
-- **[TESTING-SUMMARY.md](TESTING-SUMMARY.md)** - Test coverage and execution
-- **[WEBHOOK-TESTING.md](WEBHOOK-TESTING.md)** - Webhook testing with real PRs
-- **[MIGRATION-GUIDE.md](MIGRATION-GUIDE.md)** - Migration from legacy config
-- **[QUICK-REFERENCE.md](QUICK-REFERENCE.md)** - Quick reference guide
-- **[INTEGRATION-COMPLETE.md](INTEGRATION-COMPLETE.md)** - Implementation summary
-
-## 🔧 Development
+## Development
 
 ### Dry-Run Mode
 
@@ -445,7 +378,7 @@ LOG_LEVEL=debug ./examples-copier
 COPIER_DEBUG=true ./examples-copier
 ```
 
-## 🏗️ Architecture
+## Architecture
 
 ### Project Structure
 
@@ -480,7 +413,7 @@ container := NewServiceContainer(config)
 // All services initialized and wired together
 ```
 
-## 🚢 Deployment
+## Deployment
 
 See [DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md) for complete deployment instructions.
 
@@ -497,26 +430,37 @@ docker build -t examples-copier .
 docker run -p 8080:8080 --env-file .env examples-copier
 ```
 
-## 🔐 Security
+## Security
 
 - **Webhook Signature Verification** - HMAC-SHA256 validation
 - **Secret Management** - Google Cloud Secret Manager
 - **Least Privilege** - Minimal GitHub App permissions
 - **Audit Trail** - Complete operation logging
 
-## 📝 License
+## Documentation
 
-[Your License Here]
+### Getting Started
 
-## 🤝 Contributing
+- **[Configuration Guide](docs/CONFIGURATION-GUIDE.md)** - Complete configuration reference ⭐ NEW
+- **[Pattern Matching Guide](docs/PATTERN-MATCHING-GUIDE.md)** - Pattern matching with examples
+- **[Local Testing](docs/LOCAL-TESTING.md)** - Test locally before deploying
+- **[Deployment Guide](docs/DEPLOYMENT-GUIDE.md)** - Deploy to production
 
-[Your Contributing Guidelines Here]
+### Reference
 
-## 📞 Support
+- **[Pattern Matching Cheat Sheet](docs/PATTERN-MATCHING-CHEATSHEET.md)** - Quick pattern syntax reference
+- **[Architecture](docs/ARCHITECTURE.md)** - System design and components
+- **[Migration Guide](docs/MIGRATION-GUIDE.md)** - Migrate from legacy JSON config
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[FAQ](docs/FAQ.md)** - Frequently asked questions
 
-For issues or questions:
-- Check the documentation in this repository
-- Review audit logs in MongoDB
-- Check application logs in Google Cloud
-- Open an issue on GitHub
+### Features
 
+- **[Slack Notifications](docs/SLACK-NOTIFICATIONS.md)** - Slack integration guide
+- **[Webhook Testing](docs/WEBHOOK-TESTING.md)** - Test with real PR data
+
+### Tools
+
+- **[config-validator](cmd/config-validator/README.md)** - Validate and test configurations
+- **[test-webhook](cmd/test-webhook/README.md)** - Test webhook processing
+- **[Scripts](scripts/README.md)** - Helper scripts

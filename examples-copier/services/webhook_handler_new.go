@@ -134,6 +134,8 @@ func HandleWebhookWithContainer(w http.ResponseWriter, r *http.Request, config *
 
 // handleMergedPRWithContainer processes a merged PR using the new pattern matching system
 func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommitSHA string, config *configs.Config, container *ServiceContainer) {
+	startTime := time.Now()
+
 	// Configure GitHub permissions
 	if InstallationAccessToken == "" {
 		ConfigurePermissions()
@@ -144,6 +146,14 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 	if err != nil {
 		LogAndReturnError(ctx, "config_load", "failed to load config", err)
 		container.MetricsCollector.RecordWebhookFailed()
+
+		// Send error notification to Slack
+		container.SlackNotifier.NotifyError(ctx, &ErrorEvent{
+			Operation:  "config_load",
+			Error:      err,
+			PRNumber:   prNumber,
+			SourceRepo: fmt.Sprintf("%s/%s", config.RepoOwner, config.RepoName),
+		})
 		return
 	}
 
@@ -157,12 +167,25 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 	if err != nil {
 		LogAndReturnError(ctx, "get_files", "failed to get changed files", err)
 		container.MetricsCollector.RecordWebhookFailed()
+
+		// Send error notification to Slack
+		container.SlackNotifier.NotifyError(ctx, &ErrorEvent{
+			Operation:  "get_files",
+			Error:      err,
+			PRNumber:   prNumber,
+			SourceRepo: yamlConfig.SourceRepo,
+		})
 		return
 	}
 
 	LogInfoCtx(ctx, "retrieved changed files", map[string]interface{}{
 		"count": len(changedFiles),
 	})
+
+	// Track metrics before processing
+	filesMatchedBefore := container.MetricsCollector.GetFilesMatched()
+	filesUploadedBefore := container.MetricsCollector.GetFilesUploaded()
+	filesFailedBefore := container.MetricsCollector.GetFilesUploadFailed()
 
 	// Process files with new pattern matching
 	processFilesWithPatternMatching(ctx, prNumber, sourceCommitSHA, changedFiles, yamlConfig, config, container)
@@ -173,9 +196,27 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 	// Update deprecation file - use existing function
 	UpdateDeprecationFile()
 
+	// Calculate metrics after processing
+	filesMatched := container.MetricsCollector.GetFilesMatched() - filesMatchedBefore
+	filesUploaded := container.MetricsCollector.GetFilesUploaded() - filesUploadedBefore
+	filesFailed := container.MetricsCollector.GetFilesUploadFailed() - filesFailedBefore
+	processingTime := time.Since(startTime)
+
 	LogInfoCtx(ctx, "--Done--", map[string]interface{}{
 		"pr_number": prNumber,
 		"sha":       sourceCommitSHA,
+	})
+
+	// Send success notification to Slack
+	container.SlackNotifier.NotifyPRProcessed(ctx, &PRProcessedEvent{
+		PRNumber:       prNumber,
+		PRTitle:        fmt.Sprintf("PR #%d", prNumber), // TODO: Get actual PR title from GitHub
+		PRURL:          fmt.Sprintf("https://github.com/%s/pull/%d", yamlConfig.SourceRepo, prNumber),
+		SourceRepo:     yamlConfig.SourceRepo,
+		FilesMatched:   filesMatched,
+		FilesCopied:    filesUploaded,
+		FilesFailed:    filesFailed,
+		ProcessingTime: processingTime,
 	})
 }
 

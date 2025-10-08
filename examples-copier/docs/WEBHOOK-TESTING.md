@@ -353,7 +353,7 @@ db.audit_events.find().sort({timestamp: -1}).limit(10)
   -file "examples/go/main.go"
 
 # Check config file pattern syntax
-./config-validator validate -config config.yaml -v
+./config-validator validate -config copier-config.yaml -v
 ```
 
 ### Path Transformation Wrong

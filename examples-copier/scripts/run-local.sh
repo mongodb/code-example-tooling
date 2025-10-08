@@ -30,8 +30,8 @@ export METRICS_ENABLED=true
 export PORT=8080
 export AUDIT_ENABLED=false
 
-# Use config.json by default (or override)
-export CONFIG_FILE=${CONFIG_FILE:-config.json}
+# Use copier-copier-config.yaml by default (or override)
+export CONFIG_FILE=${CONFIG_FILE:-copier-copier-config.yaml}
 export DEPRECATION_FILE=${DEPRECATION_FILE:-deprecated_examples.json}
 
 # Load .env if it exists

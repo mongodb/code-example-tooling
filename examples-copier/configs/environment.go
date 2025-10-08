@@ -29,6 +29,22 @@ type Config struct {
 	DefaultRecursiveCopy bool
 	DefaultPRMerge       bool
 	DefaultCommitMessage string
+
+	// New features
+	DryRun           bool
+	AuditEnabled     bool
+	MongoURI         string
+	AuditDatabase    string
+	AuditCollection  string
+	MetricsEnabled   bool
+	WebhookSecret    string
+
+	// Slack notifications
+	SlackWebhookURL  string
+	SlackChannel     string
+	SlackUsername    string
+	SlackIconEmoji   string
+	SlackEnabled     bool
 }
 
 const (
@@ -51,6 +67,18 @@ const (
 	DefaultRecursiveCopy = "DEFAULT_RECURSIVE_COPY"
 	DefaultPRMerge       = "DEFAULT_PR_MERGE"
 	DefaultCommitMessage = "DEFAULT_COMMIT_MESSAGE"
+	DryRun               = "DRY_RUN"
+	AuditEnabled         = "AUDIT_ENABLED"
+	MongoURI             = "MONGO_URI"
+	AuditDatabase        = "AUDIT_DATABASE"
+	AuditCollection      = "AUDIT_COLLECTION"
+	MetricsEnabled       = "METRICS_ENABLED"
+	WebhookSecret        = "WEBHOOK_SECRET"
+	SlackWebhookURL      = "SLACK_WEBHOOK_URL"
+	SlackChannel         = "SLACK_CHANNEL"
+	SlackUsername        = "SLACK_USERNAME"
+	SlackIconEmoji       = "SLACK_ICON_EMOJI"
+	SlackEnabled         = "SLACK_ENABLED"
 )
 
 // NewConfig returns a new Config instance with default values
@@ -59,7 +87,7 @@ func NewConfig() *Config {
 		Port:                 "8080",
 		CommiterName:         "Copier Bot",
 		CommiterEmail:        "bot@example.com",
-		ConfigFile:           "config.json",
+		ConfigFile:           "copier-config.yaml",
 		DeprecationFile:      "deprecated_examples.json",
 		WebserverPath:        "/webhook",
 		SrcBranch:            "main",                                                           // Default branch to copy from (NOTE: we are purposefully only allowing copying from `main` branch right now)
@@ -120,6 +148,22 @@ func LoadEnvironment(envFile string) (*Config, error) {
 	config.CopierLogName = getEnvWithDefault(CopierLogName, config.CopierLogName)
 	config.GoogleCloudProjectId = getEnvWithDefault(GoogleCloudProjectId, config.GoogleCloudProjectId)
 	config.DefaultCommitMessage = getEnvWithDefault(DefaultCommitMessage, config.DefaultCommitMessage)
+
+	// New features
+	config.DryRun = getBoolEnvWithDefault(DryRun, false)
+	config.AuditEnabled = getBoolEnvWithDefault(AuditEnabled, false)
+	config.MongoURI = os.Getenv(MongoURI)
+	config.AuditDatabase = getEnvWithDefault(AuditDatabase, "copier_audit")
+	config.AuditCollection = getEnvWithDefault(AuditCollection, "events")
+	config.MetricsEnabled = getBoolEnvWithDefault(MetricsEnabled, true)
+	config.WebhookSecret = os.Getenv(WebhookSecret)
+
+	// Slack notifications
+	config.SlackWebhookURL = os.Getenv(SlackWebhookURL)
+	config.SlackChannel = getEnvWithDefault(SlackChannel, "#code-examples")
+	config.SlackUsername = getEnvWithDefault(SlackUsername, "Examples Copier")
+	config.SlackIconEmoji = getEnvWithDefault(SlackIconEmoji, ":robot_face:")
+	config.SlackEnabled = getBoolEnvWithDefault(SlackEnabled, config.SlackWebhookURL != "")
 
 	// Export resolved values back into environment so downstream os.Getenv sees defaults
 	_ = os.Setenv(Port, config.Port)

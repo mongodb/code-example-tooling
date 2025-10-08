@@ -1,214 +1,466 @@
 # GitHub Docs Code Example Copier
 
-A GitHub app that listens for PR events from a source repository. Driven by a 
-single `config.json` file in the source repo, the app copies files 
-(currently, generated code snippets and examples) to one or more target 
-repositories upon PR merge in source repo.
+A GitHub app that automatically copies code examples and files from a source repository to one or more target repositories when pull requests are merged. Features advanced pattern matching, path transformations, audit logging, and comprehensive monitoring.
 
-## Behavior
+## Features
 
-On PR merge in source repo, the app identifies changed files from the PR payload.
-1. Read files from a specific path the source repo, with optional recursion (default: recursive copy)
-2. Copy changed files to target repos/branches as defined in the config  (default: "main"); deletions are recorded to a deprecation file.
-3. Writes can be direct commits or through PRs (optional auto-merge), with clear handling for conflicts and mergeability.
+### Core Functionality
+- **Automated File Copying** - Copies files from source to target repos on PR merge
+- **Advanced Pattern Matching** - Prefix, glob, and regex patterns with variable extraction
+- **Path Transformations** - Template-based path transformations with variable substitution
+- **Multiple Targets** - Copy files to multiple repositories and branches
+- **Flexible Commit Strategies** - Direct commits or pull requests with auto-merge
+- **Deprecation Tracking** - Automatic tracking of deleted files
 
-### Configuration defaults
-- Strategy priority: per-config `copier_commit_strategy` > `COPIER_COMMIT_STRATEGY` env > default "direct" for testing.
-- Messages: per-config `commit_message` > `DEFAULT_COMMIT_MESSAGE` env > system default ("Automated PR with updated examples").
-- PR title: falls back to the resolved commit message when `pr_title` is empty.
-- Conflicts:
-  - Direct commits surface non-fast-forward (HTTP 422) with a clear error suggesting PR strategy.
-  - PR auto-merge path polls GitHub for mergeability; if not mergeable, it leaves the PR open for manual resolution.
-- Useful environment settings:
-  - `COPIER_COMMIT_STRATEGY` ("direct"|"pr"), `DEFAULT_COMMIT_MESSAGE`, `DEFAULT_RECURSIVE_COPY`, `DEFAULT_PR_MERGE`.
-  - Logging: `COPIER_DISABLE_CLOUD_LOGGING`, `LOG_LEVEL=debug` or `COPIER_DEBUG=true`.
+### Enhanced Features
+- **YAML Configuration** - Modern YAML config with JSON backward compatibility
+- **Message Templating** - Template-ized commit messages and PR titles
+- **Audit Logging** - MongoDB-based event tracking for all operations
+- **Health & Metrics** - `/health` and `/metrics` endpoints for monitoring
+- **Development Tools** - Dry-run mode, CLI validation, enhanced logging
+- **Thread-Safe** - Concurrent webhook processing with proper state management
 
-## Project Structure
+## 🚀 Quick Start
 
-| Directory Name | Use Case                                                                                                                                                                                  |
-|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `configs`      | The configuration files (.env.*) are here, as is the `environment.go` file, which creates globals for those settings. No other part of the code should read the .env files.               |
-| `services`     | The handlers for the services we're interacting with: GitHub and Webhook handlers. For better organization, GitHub handlers have been separated into Auth, Upload, and Download services. |
-| `types`        | All the `type StructName struct` should be here. These are the structs needs to map webhook json to objects we can work with.                                                             |
+### Prerequisites
 
-## Logic Flow
+- Go 1.23.4+
+- GitHub App credentials
+- Google Cloud project (for Secret Manager and logging)
+- MongoDB Atlas (optional, for audit logging)
 
-At its core, this is a simple Go web server that listens for messages and handles them
-as they come in. Handling the messages means:
-- Determining if it's a message we care about
-- Pulling out the changed file list from the message
-- Reading the config file, and if a file is in a config setting,
-- Copy/replace the file at the target repo.
+### Installation
 
-Basic flow:
+```bash
+# Clone the repository
+git clone https://github.com/your-org/code-example-tooling.git
+cd code-example-tooling/examples-copier
 
-1. Configure GitHub permissions (`services/GitHub_auth.go`)
-2. Listen for PR payloads from the GitHub webhook. (`services/web_server.go`)
-3. Is the PR closed and merged? If no, ignore. (`services/webhook_handler.go`)
-4. Parse the payload to get the list of changed files. (`services/GitHub_download.go`)
-5. Read the config file from the source repo.
-6. If the path to a changed file is defined in the config file, and it is not a
-   "DELETE" action, copy the file to the specified target repos. (`services/GitHub_upload.go`)
-7. If the path to a changed file is defined in the config file, and it *is* a "DELETE"
-   action, add the deleted file's name and path to the `deprecated_examples.json` file.
-   (`services/GitHub_download.go`)
-8. Sit idle until the next payload arrives. Rinse and repeat.
+# Install dependencies
+go mod download
 
-## Install the App on a Target Repo
-To install the app on a new target repository:
-1. [Give the App repo access](# Give the app repo access)
-2. [Install the App in the new source repo](# Install the App on a new Source Repo)
+# Build the application
+go build -o examples-copier .
 
-### Give the app repo access
-1. Go to the [App's Configuration page](https://github.com/apps/docs-examples-copier/installations/62138132).
-   You'll need to authorize your GitHub account first. You should then see the following screen:
-   !["gui request tag"](./readme_files/configure_app.png)
-2. In the `Select repositories` dropdown, select the new target repo. Then click
-   **Update access**.
-> **NOTE:** You must be a repo owner to complete the next steps. If you are not a repo owner,
-you will not see the `Select repositories` dropdown, and you will not be able
-> to select the new target repository. 
-> !["gui request tag"](./readme_files/request.png)
-
-### Confirm the new target repository
-1. In the new target repository's settings, go to the
-   [GitHub Apps section](https://GitHub.com/mongodb/stitch-tutorial-todo-backend/settings/installations).
-   Scroll down and confirm that `Docs Examples Copier` is installed.
-
-## Install the App on a new Source Repo
-In the source repo, do the following:
-1. [Set up a webhook](# Set Up A Webhook)
-2. [Update the .env file](# Update the env file)
-3. [Add config.json and deprecated_examples.json files](# Add config.json and deprecated_examples.json files)
-4. [Configure Permissions for the Web App](# Configure Permissions for the Web App)
-
-### Set Up A Webhook
-Go to the source repo's
-[webhooks settings page](https://GitHub.com/mongodb/docs-code-examples/settings/hooks/).
-- Add the new `Payload URL`.
-- Set the `Content Type` to `application/json`
-- Enable SSL Verification
-- Choose `Let me select individual events`
-    - Choose *only* `Pull Requests`. Do **not** choose any other "Pull Request"-related
-      options!
-- At the bottom of the page, make sure `Active` is checked, and then save your changes.
-
-At this point, with PR-related activity, the payload will be sent to the app.
-The app ignores all PR activity except for when a PR is closed and merged.
-
-### Update the env file
-The .env file specifies settings for the source repo.
-
-Copy the `.env.example` and update the main values for your repo:
-
-```dotenv
-GITHUB_APP_ID="GitHub App ID (numeric) for your GitHub App"
-# Optional (not required for JWT auth):
-# GITHUB_APP_CLIENT_ID="OAuth client ID of your GitHub App (starts with Iv)"
-INSTALLATION_ID="When you install the app, you get an installation ID, something like 73438188"
-
-GOOGLE_CLOUD_PROJECT_ID="The Google Cloud Project (GCP) ID"
-COPIER_LOG_NAME="The name of the log in Google Cloud Logging"
-
-REPO_NAME="The name of the *source* repo"
-REPO_OWNER="The owner of the *source* repo"
-REF="The *source* branch to monitor for changes - e.g. 'main' or 'master'"
-
-COMMITER_EMAIL="The email you want to appear as the committer of the changes, e.g. 'foo@example.com'"
-COMMITER_NAME="The name you want to appear as the committer of the changes, e.g. 'GitHub Copier App'"
-
-PORT="leave empty for the default server port, or specify a port, like 8080"
-WEBSERVER_PATH="/events"
-
-DEPRECATION_FILE="The path to the deprecation file, e.g. deprecated_examples.json"
-CONFIG_FILE="The path to the config file, e.g. config.json"
+# Build CLI tools
+go build -o config-validator ./cmd/config-validator
 ```
-Update any of the optional settings in the `.env.example` file as needed.
 
-### Add config and deprecation json files
+### Configuration
 
-Create the config file to hold config settings and an empty `.json` file to hold deprecated file paths.
-See the [config.example.json](configs/config.example.json) for reference.
+1. **Copy .env example file**
+
+```bash
+cp configs/.env.example.new configs/.env
+```
+
+2. **Set required environment variables**
+
+```bash
+# GitHub Configuration
+REPO_OWNER=your-org
+REPO_NAME=your-repo
+SRC_BRANCH=main
+GITHUB_APP_ID=123456
+GITHUB_INSTALLATION_ID=789012
+
+# Google Cloud
+GCP_PROJECT_ID=your-project
+PEM_KEY_NAME=projects/123/secrets/CODE_COPIER_PEM/versions/latest
+
+# Application Settings
+PORT=8080
+CONFIG_FILE=copier-config.yaml
+DEPRECATION_FILE=deprecated_examples.json
+
+# Optional: MongoDB Audit Logging
+AUDIT_ENABLED=true
+MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net
+AUDIT_DATABASE=code_copier
+AUDIT_COLLECTION=audit_events
+
+# Optional: Development Features
+DRY_RUN=false
+METRICS_ENABLED=true
+```
+
+3. **Create configuration file**
+
+Create `copier-config.yaml` in your source repository:
+
+```yaml
+source_repo: "your-org/source-repo"
+source_branch: "main"
+
+copy_rules:
+  - name: "Copy Go examples"
+    source_pattern:
+      type: "regex"
+      pattern: "^examples/(?P<lang>[^/]+)/(?P<category>[^/]+)/(?P<file>.+)$"
+    targets:
+      - repo: "your-org/target-repo"
+        branch: "main"
+        path_transform: "docs/examples/${lang}/${category}/${file}"
+        commit_strategy:
+          type: "pull_request"
+          commit_message: "Update ${category} examples from ${lang}"
+          pr_title: "Update ${category} examples"
+          auto_merge: false
+        deprecation_check:
+          enabled: true
+          file: "deprecated_examples.json"
+```
+
+### Running the Application
+
+```bash
+# Run with default settings
+./examples-copier
+
+# Run with custom environment file
+./examples-copier -env ./configs/.env.production
+
+# Run in dry-run mode (no actual commits)
+./examples-copier -dry-run
+
+# Validate configuration only
+./examples-copier -validate
+```
+
+## Configuration
+
+### Pattern Types
+
+#### Prefix Pattern
+Simple string prefix matching:
+
+```yaml
+source_pattern:
+  type: "prefix"
+  pattern: "examples/go/"
+```
+
+Matches: `examples/go/main.go`, `examples/go/database/connect.go`
+
+#### Glob Pattern
+Wildcard matching with `*` and `?`:
+
+```yaml
+source_pattern:
+  type: "glob"
+  pattern: "examples/*/main.go"
+```
+
+Matches: `examples/go/main.go`, `examples/python/main.go`
+
+#### Regex Pattern
+Full regex with named capture groups:
+
+```yaml
+source_pattern:
+  type: "regex"
+  pattern: "^examples/(?P<lang>[^/]+)/(?P<file>.+)$"
+```
+
+Matches: `examples/go/main.go` (extracts `lang=go`, `file=main.go`)
+
+### Path Transformations
+
+Transform source paths to target paths using variables:
+
+```yaml
+path_transform: "docs/${lang}/${category}/${file}"
+```
+
+**Built-in Variables:**
+- `${path}` - Full source path
+- `${filename}` - File name only
+- `${dir}` - Directory path
+- `${ext}` - File extension
+
+**Custom Variables:**
+- Any named groups from regex patterns
+- Example: `(?P<lang>[^/]+)` creates `${lang}`
+
+### Commit Strategies
+
+#### Direct Commit
+```yaml
+commit_strategy:
+  type: "direct"
+  commit_message: "Update examples from ${source_repo}"
+```
+
+#### Pull Request
+```yaml
+commit_strategy:
+  type: "pull_request"
+  commit_message: "Update examples"
+  pr_title: "Update ${category} examples"
+  pr_body: "Automated update from ${source_repo}"
+  auto_merge: true
+```
+
+### Message Templates
+
+Use variables in commit messages and PR titles:
+
+```yaml
+commit_message: "Update ${category} examples from ${lang}"
+pr_title: "Update ${category} examples"
+```
+
+**Available Variables:**
+- `${rule_name}` - Name of the copy rule
+- `${source_repo}` - Source repository
+- `${target_repo}` - Target repository
+- `${source_branch}` - Source branch
+- `${target_branch}` - Target branch
+- `${file_count}` - Number of files being copied
+- Any custom variables from pattern matching
+
+## CLI Tools
+
+### Config Validator
+
+Validate and test configurations before deployment:
+
+```bash
+# Validate config file
+./config-validator validate -config copier-config.yaml -v
+
+# Test pattern matching
+./config-validator test-pattern \
+  -type regex \
+  -pattern "^examples/(?P<lang>[^/]+)/(?P<file>.+)$" \
+  -file "examples/go/main.go"
+
+# Test path transformation
+./config-validator test-transform \
+  -template "docs/${lang}/${file}" \
+  -file "examples/go/main.go" \
+  -pattern "^examples/(?P<lang>[^/]+)/(?P<file>.+)$"
+
+# Initialize new config from template
+./config-validator init -output copier-config.yaml
+
+# Convert between formats
+./config-validator convert -input config.json -output copier-config.yaml
+```
+
+## Monitoring
+
+### Health Endpoint
+
+Check application health:
+
+```bash
+curl http://localhost:8080/health
+```
+
+Response:
 ```json
-[
-  {
-    "source_directory": "path/to/source/directory",
-    "target_repo": "example-repo",
-    "target_branch": "main",
-    "target_directory": "path/to/target/directory",
-    "recursive_copy": true,
-    "copier_commit_strategy": "Optional commit strategy for this config entry ('pr' or 'direct')",
-    "pr_title": "Optional PR title for this config entry",
-    "commit_message": "Optional commit message for this config entry",
-    "merge_without_review": false
+{
+  "status": "healthy",
+  "started": true,
+  "github": {
+    "status": "healthy",
+    "authenticated": true
+  },
+  "queues": {
+    "upload_count": 0,
+    "deprecation_count": 0
+  },
+  "uptime": "1h23m45s"
+}
+```
+
+### Metrics Endpoint
+
+Get performance metrics:
+
+```bash
+curl http://localhost:8080/metrics
+```
+
+Response:
+```json
+{
+  "webhooks": {
+    "received": 42,
+    "processed": 40,
+    "failed": 2,
+    "success_rate": 95.24,
+    "processing_time": {
+      "avg_ms": 234.5,
+      "p50_ms": 200,
+      "p95_ms": 450,
+      "p99_ms": 890
+    }
+  },
+  "files": {
+    "matched": 150,
+    "uploaded": 145,
+    "upload_failed": 5,
+    "deprecated": 3,
+    "upload_success_rate": 96.67
   }
-]
+}
 ```
 
-Leave the deprecation file an empty array:
-```json
-[
-]
+## Audit Logging
+
+When enabled, all operations are logged to MongoDB:
+
+```javascript
+// Query recent copy events
+db.audit_events.find({
+  event_type: "copy",
+  success: true
+}).sort({timestamp: -1}).limit(10)
+
+// Find failed operations
+db.audit_events.find({
+  success: false
+}).sort({timestamp: -1})
+
+// Statistics by rule
+db.audit_events.aggregate([
+  {$match: {event_type: "copy"}},
+  {$group: {
+    _id: "$rule_name",
+    count: {$sum: 1},
+    avg_duration: {$avg: "$duration_ms"}
+  }}
+])
 ```
 
-### Configure Permissions for the Web App
-To configure the app in the source repo, go to the repo's list of web apps.
-You should see the Docs Examples Copier listed:
-!["list of web apps"](./readme_files/webapps.png)
+## Testing
 
-## Hosting
-This app is hosted in a Google Cloud App Engine, in the organization owned by MongoDB.
-The PEM file needed for GitHub Authentication is stored as a secret in the Google Secrets Manager.
-For testing locally, you will need to download the auth file from gcloud and store it locally.
-See the [Google Cloud documentation](https://cloud.google.com/docs/authentication/application-default-credentials#GAC)
-for more information.
+### Run Unit Tests
 
-### Change Where the App is Hosted
-If you deploy this app to a new host/server, you will need to create a new webhook
-in the source repo. See [Set Up A Webhook](# Set Up A Webhook)
+```bash
+# Run all tests
+go test ./services -v
 
+# Run specific test suite
+go test ./services -v -run TestPatternMatcher
 
-## How to Modify and Test
-To make changes to this app:
-1. Clone this repo.
-2. Make the necessary changes outlined earlier.
-3. Change the `.env.test` to match your environment needs, or create a new `.env` file and reference
-   it in the next step.
-4. Test by running `go run app.go -env ./configs/.env.test`
+# Run with coverage
+go test ./services -cover
+go test ./services -coverprofile=coverage.out
+go tool cover -html=coverage.out
+```
 
-5. Note: you **do not need to change the GitHub app installation**. Why? I think
-because it is entirely self-contained within this Go app.
+## Development
 
-### Testing notes
-As of this writing, the source repo (https://GitHub.com/mongodb/docs-code-examples) has
-two webhooks configured: one points to the production version of this application, and
-the other points to a [smee.io proxy](https://smee.io/5Zchxoa1xH7WfYo).
+### Dry-Run Mode
 
-#### What is smee.io?
-Smee.io provides a simple way to point a public endpoint to localhost on your computer.
-It requires the smee cli, which is very lightweight. You run the proxy with a single
-command (`smee -u https://smee.io/5Zchxoa1xH7WfYo`) and any webhooks that go to that
-url will be directed to http://localhost:3000/. This is entirely optional, and there are
-probably other solutions for testing. I just found this dead simple.
+Test without making actual changes:
 
-**Note** The current production deployment looks for messages on the default
-port and the `/events` route, while your testing hooks (like smee) might only send
-messages on a specific port and/or the default path. This is why you can change the
-port and route in the `.env.*` files.
+```bash
+DRY_RUN=true ./examples-copier
+```
 
-## Future Work
+In dry-run mode:
+- Webhooks are processed
+- Files are matched and transformed
+- Audit events are logged
+- **NO actual commits or PRs are created**
 
-- ~~BUG/SECURITY: Move .pem to google secret.~~
-- ~~Where do we view the log for the app when it hits a snag?~~
-  Fixed in 112c8953cbb54d3743b25744fe01f6649f783faa. Added Google
-  Logging and centralized logging service for terminal logging.
-- ~~Currently each write is a separate commit. Bad. Fix.~~
-  Fixed in f91ccfce74edff56eb305068357a069d12a2020f
-- Slack integrations:
-    - notifies a channel when the
-      `deprecated_examples.json` file changes, so writers can find those deprecated examples
-      in the docs and update/remove them accordingly. See this
-      [Slack API page](https://api.slack.com/messaging/webhooks).
-    - posts log updates (e.g. PR created and ready for review)
-- Automate further with hook to Audit DB to get doc files with literal includes & iocode blocks (???)
-- ~~Mock tests~~ 
+### Enhanced Logging
+
+Enable detailed logging:
+
+```bash
+LOG_LEVEL=debug ./examples-copier
+# or
+COPIER_DEBUG=true ./examples-copier
+```
+
+## Architecture
+
+### Project Structure
+
+```
+examples-copier/
+├── app.go                    # Main application entry point
+├── cmd/
+│   └── config-validator/     # CLI validation tool
+├── configs/
+│   ├── environment.go        # Environment configuration
+│   ├── .env.example.new      # Environment template
+│   └── config.example.yaml   # Config template
+├── services/
+│   ├── pattern_matcher.go    # Pattern matching engine
+│   ├── config_loader.go      # Config loading & validation
+│   ├── audit_logger.go       # MongoDB audit logging
+│   ├── health_metrics.go     # Health & metrics endpoints
+│   ├── file_state_service.go # Thread-safe state management
+│   ├── service_container.go  # Dependency injection
+│   └── webhook_handler_new.go # New webhook handler
+└── types/
+    ├── config.go             # Configuration types
+    └── types.go              # Core types
+```
+
+### Service Container
+
+The application uses dependency injection for clean architecture:
+
+```go
+container := NewServiceContainer(config)
+// All services initialized and wired together
+```
+
+## Deployment
+
+See [DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md) for complete deployment instructions.
+
+### Google Cloud App Engine
+
+```bash
+gcloud app deploy
+```
+
+### Docker
+
+```bash
+docker build -t examples-copier .
+docker run -p 8080:8080 --env-file .env examples-copier
+```
+
+## Security
+
+- **Webhook Signature Verification** - HMAC-SHA256 validation
+- **Secret Management** - Google Cloud Secret Manager
+- **Least Privilege** - Minimal GitHub App permissions
+- **Audit Trail** - Complete operation logging
+
+## Documentation
+
+### Getting Started
+
+- **[Configuration Guide](docs/CONFIGURATION-GUIDE.md)** - Complete configuration reference ⭐ NEW
+- **[Pattern Matching Guide](docs/PATTERN-MATCHING-GUIDE.md)** - Pattern matching with examples
+- **[Local Testing](docs/LOCAL-TESTING.md)** - Test locally before deploying
+- **[Deployment Guide](docs/DEPLOYMENT-GUIDE.md)** - Deploy to production
+
+### Reference
+
+- **[Pattern Matching Cheat Sheet](docs/PATTERN-MATCHING-CHEATSHEET.md)** - Quick pattern syntax reference
+- **[Architecture](docs/ARCHITECTURE.md)** - System design and components
+- **[Migration Guide](docs/MIGRATION-GUIDE.md)** - Migrate from legacy JSON config
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[FAQ](docs/FAQ.md)** - Frequently asked questions
+
+### Features
+
+- **[Slack Notifications](docs/SLACK-NOTIFICATIONS.md)** - Slack integration guide
+- **[Webhook Testing](docs/WEBHOOK-TESTING.md)** - Test with real PR data
+
+### Tools
+
+- **[config-validator](cmd/config-validator/README.md)** - Validate and test configurations
+- **[test-webhook](cmd/test-webhook/README.md)** - Test webhook processing
+- **[Scripts](scripts/README.md)** - Helper scripts

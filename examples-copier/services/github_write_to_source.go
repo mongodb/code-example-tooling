@@ -13,6 +13,12 @@ import (
 )
 
 func UpdateDeprecationFile() {
+	// Early return if there are no files to deprecate - prevents blank commits
+	if len(FilesToDeprecate) == 0 {
+		LogInfo("No deprecated files to record; skipping deprecation file update")
+		return
+	}
+
 	content := retrieveJsonFile(os.Getenv(configs.DeprecationFile))
 
 	var deprecationFile DeprecationFile
@@ -38,6 +44,8 @@ func UpdateDeprecationFile() {
 
 	message := fmt.Sprintf("Updating %s.", os.Getenv(configs.DeprecationFile))
 	uploadDeprecationFileChanges(message, string(updatedJSON))
+
+	LogInfo(fmt.Sprintf("Successfully updated %s with %d entries", os.Getenv(configs.DeprecationFile), len(FilesToDeprecate)))
 }
 
 func uploadDeprecationFileChanges(message string, newDeprecationFileContents string) {

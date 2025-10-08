@@ -1,0 +1,14 @@
+[
+  {
+    "source_directory": "examples",
+    "target_repo": "mongodb/target-repo",
+    "target_branch": "main",
+    "target_directory": "docs/code-examples",
+    "recursive_copy": true,
+    "copier_commit_strategy": "pr",
+    "pr_title": "Update code examples",
+    "commit_message": "Sync examples from source repository",
+    "merge_without_review": false
+  }
+]
+

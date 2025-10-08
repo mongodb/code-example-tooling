@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/google/go-github/v48/github"
@@ -27,12 +28,23 @@ func NewConfigLoader() ConfigLoader {
 	return &DefaultConfigLoader{}
 }
 
-// LoadConfig loads configuration from the repository
+// LoadConfig loads configuration from the repository or local file
 func (cl *DefaultConfigLoader) LoadConfig(ctx context.Context, config *configs.Config) (*types.YAMLConfig, error) {
-	// Fetch config file from repository
-	content, err := retrieveConfigFileContent(ctx, config.ConfigFile, config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve config file: %w", err)
+	var content string
+	var err error
+
+	// Try to load from local file first (for testing)
+	content, err = loadLocalConfigFile(config.ConfigFile)
+	if err == nil {
+		LogInfoCtx(ctx, "loaded config from local file", map[string]interface{}{
+			"file": config.ConfigFile,
+		})
+	} else {
+		// Fall back to fetching from repository
+		content, err = retrieveConfigFileContent(ctx, config.ConfigFile, config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve config file: %w", err)
+		}
 	}
 
 	return cl.LoadConfigFromContent(content, config.ConfigFile)
@@ -317,3 +329,13 @@ copy_rules:
 	}
 }
 
+// loadLocalConfigFile attempts to load config from a local file
+// This is useful for local testing and development
+func loadLocalConfigFile(filename string) (string, error) {
+	// Try to read from current directory
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}

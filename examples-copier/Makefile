@@ -5,18 +5,24 @@ help:
 	@echo "Examples Copier - Makefile"
 	@echo ""
 	@echo "Available targets:"
-	@echo "  make build          - Build all binaries"
-	@echo "  make test           - Run all tests"
-	@echo "  make test-unit      - Run unit tests only"
-	@echo "  make test-webhook   - Build webhook test tool"
-	@echo "  make run            - Run application"
-	@echo "  make run-dry        - Run in dry-run mode"
-	@echo "  make install        - Install all tools to \$$GOPATH/bin"
-	@echo "  make clean          - Remove built binaries"
+	@echo "  make build              - Build all binaries"
+	@echo "  make test               - Run all tests"
+	@echo "  make test-unit          - Run unit tests only"
+	@echo "  make test-webhook       - Build webhook test tool"
+	@echo "  make run                - Run application"
+	@echo "  make run-dry            - Run in dry-run mode"
+	@echo "  make run-local          - Run in local dev mode (recommended)"
+	@echo "  make run-local-quick    - Quick local run (no cloud logging)"
+	@echo "  make install            - Install all tools to \$$GOPATH/bin"
+	@echo "  make clean              - Remove built binaries"
 	@echo ""
 	@echo "Testing with webhooks:"
 	@echo "  make test-webhook-example  - Test with example payload"
 	@echo "  make test-webhook-pr PR=123 OWNER=org REPO=repo - Test with real PR"
+	@echo ""
+	@echo "Quick start for local testing:"
+	@echo "  make run-local-quick    # Start app (Terminal 1)"
+	@echo "  make test-webhook-example  # Send test webhook (Terminal 2)"
 	@echo ""
 
 # Build all binaries
@@ -83,6 +89,16 @@ run: build
 run-dry: build
 	@echo "Starting examples-copier in dry-run mode..."
 	@DRY_RUN=true ./examples-copier
+
+# Run in local development mode (recommended)
+run-local: build
+	@echo "Starting examples-copier in local development mode..."
+	@./scripts/run-local.sh
+
+# Run with cloud logging disabled (quick local testing)
+run-local-quick: build
+	@echo "Starting examples-copier (local, no cloud logging)..."
+	@COPIER_DISABLE_CLOUD_LOGGING=true DRY_RUN=true ./examples-copier
 
 # Validate configuration
 validate: build

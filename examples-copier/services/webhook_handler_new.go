@@ -160,6 +160,10 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 		return
 	}
 
+	LogInfoCtx(ctx, "retrieved changed files", map[string]interface{}{
+		"count": len(changedFiles),
+	})
+
 	// Process files with new pattern matching
 	processFilesWithPatternMatching(ctx, prNumber, sourceCommitSHA, changedFiles, yamlConfig, config, container)
 
@@ -178,6 +182,21 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 // processFilesWithPatternMatching processes changed files using the new pattern matching system
 func processFilesWithPatternMatching(ctx context.Context, prNumber int, sourceCommitSHA string,
 	changedFiles []types.ChangedFile, yamlConfig *types.YAMLConfig, config *configs.Config, container *ServiceContainer) {
+
+	LogInfoCtx(ctx, "processing files with pattern matching", map[string]interface{}{
+		"file_count": len(changedFiles),
+		"rule_count": len(yamlConfig.CopyRules),
+	})
+
+	// Log first few files for debugging
+	for i, file := range changedFiles {
+		if i < 3 {
+			LogInfoCtx(ctx, "sample file path", map[string]interface{}{
+				"index": i,
+				"path":  file.Path,
+			})
+		}
+	}
 
 	for _, file := range changedFiles {
 		if err := ctx.Err(); err != nil {
@@ -201,11 +220,12 @@ func processFilesWithPatternMatching(ctx context.Context, prNumber int, sourceCo
 			// Record matched file
 			container.MetricsCollector.RecordFileMatched()
 
-			LogFileOperation(ctx, "match", file.Path, "", "file matched pattern", nil,
-				map[string]interface{}{
-					"rule":    rule.Name,
-					"pattern": rule.SourcePattern.Pattern,
-				})
+			LogInfoCtx(ctx, "file matched pattern", map[string]interface{}{
+				"file":      file.Path,
+				"rule":      rule.Name,
+				"pattern":   rule.SourcePattern.Pattern,
+				"variables": matchResult.Variables,
+			})
 
 			// Process each target
 			for _, target := range rule.Targets {

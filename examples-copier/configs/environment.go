@@ -29,6 +29,15 @@ type Config struct {
 	DefaultRecursiveCopy bool
 	DefaultPRMerge       bool
 	DefaultCommitMessage string
+
+	// New features
+	DryRun           bool
+	AuditEnabled     bool
+	MongoURI         string
+	AuditDatabase    string
+	AuditCollection  string
+	MetricsEnabled   bool
+	WebhookSecret    string
 }
 
 const (
@@ -51,6 +60,13 @@ const (
 	DefaultRecursiveCopy = "DEFAULT_RECURSIVE_COPY"
 	DefaultPRMerge       = "DEFAULT_PR_MERGE"
 	DefaultCommitMessage = "DEFAULT_COMMIT_MESSAGE"
+	DryRun               = "DRY_RUN"
+	AuditEnabled         = "AUDIT_ENABLED"
+	MongoURI             = "MONGO_URI"
+	AuditDatabase        = "AUDIT_DATABASE"
+	AuditCollection      = "AUDIT_COLLECTION"
+	MetricsEnabled       = "METRICS_ENABLED"
+	WebhookSecret        = "WEBHOOK_SECRET"
 )
 
 // NewConfig returns a new Config instance with default values
@@ -120,6 +136,15 @@ func LoadEnvironment(envFile string) (*Config, error) {
 	config.CopierLogName = getEnvWithDefault(CopierLogName, config.CopierLogName)
 	config.GoogleCloudProjectId = getEnvWithDefault(GoogleCloudProjectId, config.GoogleCloudProjectId)
 	config.DefaultCommitMessage = getEnvWithDefault(DefaultCommitMessage, config.DefaultCommitMessage)
+
+	// New features
+	config.DryRun = getBoolEnvWithDefault(DryRun, false)
+	config.AuditEnabled = getBoolEnvWithDefault(AuditEnabled, false)
+	config.MongoURI = os.Getenv(MongoURI)
+	config.AuditDatabase = getEnvWithDefault(AuditDatabase, "copier_audit")
+	config.AuditCollection = getEnvWithDefault(AuditCollection, "events")
+	config.MetricsEnabled = getBoolEnvWithDefault(MetricsEnabled, true)
+	config.WebhookSecret = os.Getenv(WebhookSecret)
 
 	// Export resolved values back into environment so downstream os.Getenv sees defaults
 	_ = os.Setenv(Port, config.Port)

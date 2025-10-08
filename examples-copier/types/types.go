@@ -102,9 +102,21 @@ type UploadKey struct {
 }
 
 type UploadFileContent struct {
-	TargetBranch string                     `json:"target_branch"`
-	Content      []github.RepositoryContent `json:"content"`
+	TargetBranch   string                     `json:"target_branch"`
+	Content        []github.RepositoryContent `json:"content"`
+	CommitStrategy CommitStrategy             `json:"commit_strategy,omitempty"`
+	CommitMessage  string                     `json:"commit_message,omitempty"`
+	PRTitle        string                     `json:"pr_title,omitempty"`
+	AutoMergePR    bool                       `json:"auto_merge_pr,omitempty"`
 }
+
+// CommitStrategy represents the strategy for committing changes
+type CommitStrategy string
+
+const (
+	CommitStrategyDirect CommitStrategy = "direct"
+	CommitStrategyPR     CommitStrategy = "pull_request"
+)
 
 type CreateFileRequest struct {
 	Message string `json:"message"`

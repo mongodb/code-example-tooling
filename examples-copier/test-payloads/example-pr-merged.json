@@ -1,0 +1,71 @@
+{
+  "action": "closed",
+  "number": 42,
+  "pull_request": {
+    "number": 42,
+    "state": "closed",
+    "merged": true,
+    "merge_commit_sha": "abc123def456789",
+    "title": "Add Go database examples",
+    "head": {
+      "ref": "add-go-examples",
+      "sha": "abc123def456",
+      "repo": {
+        "name": "source-repo",
+        "full_name": "myorg/source-repo"
+      }
+    },
+    "base": {
+      "ref": "main",
+      "repo": {
+        "name": "source-repo",
+        "full_name": "myorg/source-repo"
+      }
+    }
+  },
+  "repository": {
+    "name": "source-repo",
+    "full_name": "myorg/source-repo",
+    "owner": {
+      "login": "myorg"
+    }
+  },
+  "files": [
+    {
+      "filename": "examples/go/database/connect.go",
+      "status": "added",
+      "additions": 50,
+      "deletions": 0,
+      "changes": 50
+    },
+    {
+      "filename": "examples/go/database/query.go",
+      "status": "added",
+      "additions": 75,
+      "deletions": 0,
+      "changes": 75
+    },
+    {
+      "filename": "examples/go/auth/login.go",
+      "status": "modified",
+      "additions": 10,
+      "deletions": 5,
+      "changes": 15
+    },
+    {
+      "filename": "examples/python/database/connect.py",
+      "status": "added",
+      "additions": 40,
+      "deletions": 0,
+      "changes": 40
+    },
+    {
+      "filename": "examples/old-example.go",
+      "status": "removed",
+      "additions": 0,
+      "deletions": 30,
+      "changes": 30
+    }
+  ]
+}
+

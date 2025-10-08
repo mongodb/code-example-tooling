@@ -48,7 +48,7 @@ go build -o config-validator ./cmd/config-validator
 
 ### Configuration
 
-1. **Create environment file**
+1. **Copy .env example file**
 
 ```bash
 cp configs/.env.example.new configs/.env

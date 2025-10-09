@@ -66,6 +66,12 @@ func main() {
 	services.InitializeGoogleLogger()
 	defer services.CloseGoogleLogger()
 
+	// Load webhook secret from Secret Manager if not directly provided
+	if err := services.LoadWebhookSecret(config); err != nil {
+		fmt.Printf("Error loading webhook secret: %v\n", err)
+		return
+	}
+
 	// Configure GitHub permissions
 	services.ConfigurePermissions()
 

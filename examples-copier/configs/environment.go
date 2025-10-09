@@ -24,6 +24,8 @@ type Config struct {
 	WebserverPath        string
 	SrcBranch            string
 	PEMKeyName           string
+	WebhookSecretName    string
+	WebhookSecret        string
 	CopierLogName        string
 	GoogleCloudProjectId string
 	DefaultRecursiveCopy bool
@@ -62,6 +64,8 @@ const (
 	WebserverPath        = "WEBSERVER_PATH"
 	SrcBranch            = "SRC_BRANCH"
 	PEMKeyName           = "PEM_NAME"
+	WebhookSecretName    = "WEBHOOK_SECRET_NAME"
+	WebhookSecret        = "WEBHOOK_SECRET"
 	CopierLogName        = "COPIER_LOG_NAME"
 	GoogleCloudProjectId = "GOOGLE_CLOUD_PROJECT_ID"
 	DefaultRecursiveCopy = "DEFAULT_RECURSIVE_COPY"
@@ -92,6 +96,7 @@ func NewConfig() *Config {
 		WebserverPath:        "/webhook",
 		SrcBranch:            "main",                                                           // Default branch to copy from (NOTE: we are purposefully only allowing copying from `main` branch right now)
 		PEMKeyName:           "projects/1054147886816/secrets/CODE_COPIER_PEM/versions/latest", // default secret name for GCP Secret Manager
+		WebhookSecretName:    "projects/1054147886816/secrets/webhook-secret/versions/latest",  // default webhook secret name for GCP Secret Manager
 		CopierLogName:        "copy-copier-log",                                                // default log name for logging to GCP
 		GoogleCloudProjectId: "github-copy-code-examples",                                      // default project ID for logging to GCP
 		DefaultRecursiveCopy: true,                                                             // system-wide default for recursive copying that individual config entries can override.
@@ -143,6 +148,8 @@ func LoadEnvironment(envFile string) (*Config, error) {
 	config.WebserverPath = getEnvWithDefault(WebserverPath, config.WebserverPath)
 	config.SrcBranch = getEnvWithDefault(SrcBranch, config.SrcBranch)
 	config.PEMKeyName = getEnvWithDefault(PEMKeyName, config.PEMKeyName)
+	config.WebhookSecretName = getEnvWithDefault(WebhookSecretName, config.WebhookSecretName)
+	config.WebhookSecret = os.Getenv(WebhookSecret)
 	config.DefaultRecursiveCopy = getBoolEnvWithDefault(DefaultRecursiveCopy, config.DefaultRecursiveCopy)
 	config.DefaultPRMerge = getBoolEnvWithDefault(DefaultPRMerge, config.DefaultPRMerge)
 	config.CopierLogName = getEnvWithDefault(CopierLogName, config.CopierLogName)
@@ -217,7 +224,7 @@ func validateConfig(config *Config) error {
 	requiredVars := map[string]string{
 		RepoName:       config.RepoName,
 		RepoOwner:      config.RepoOwner,
-		AppId:         config.AppId,
+		AppId:          config.AppId,
 		InstallationId: config.InstallationId,
 	}
 

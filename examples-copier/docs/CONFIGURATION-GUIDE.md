@@ -885,7 +885,7 @@ Error: copy_rules[0]: name is required
 - [Pattern Matching Cheat Sheet](PATTERN-MATCHING-CHEATSHEET.md) - Quick reference
 - [Migration Guide](MIGRATION-GUIDE.md) - Migrating from legacy JSON config
 - [Quick Reference](../QUICK-REFERENCE.md) - Command reference
-- [Deployment Guide](DEPLOYMENT-GUIDE.md) - Deploying the application
+- [Deployment Guide](DEPLOYMENT.md) - Deploying the application
 
 ---
 

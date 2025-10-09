@@ -69,15 +69,15 @@ GITHUB_TOKEN=ghp_your_token_here
 
 ```bash
 # Terminal 1: Start the app
-make run-local
+make run-local-quick
 
 # You should see:
 # ╔════════════════════════════════════════════════════════════════╗
 # ║  GitHub Code Example Copier                                    ║
 # ╠════════════════════════════════════════════════════════════════╣
 # ║  Port:         8080                                            ║
-# ║  Webhook Path: /webhook                                        ║
-# ║  Config File:  config.json                                     ║
+# ║  Webhook Path: /events                                         ║
+# ║  Config File:  copier-config.example.yaml                      ║
 # ║  Dry Run:      true                                            ║
 # ║  Audit Log:    false                                           ║
 # ║  Metrics:      true                                            ║
@@ -87,12 +87,17 @@ make run-local
 ### Test with Webhook
 
 ```bash
-# Terminal 2: Send test webhook
-./test-webhook -payload test-payloads/example-pr-merged.json
+# Terminal 2: Send test webhook (automatically fetches webhook secret)
+make test-webhook-example
+
+# Or send webhook manually with secret
+export WEBHOOK_SECRET=$(gcloud secrets versions access latest --secret=webhook-secret)
+./test-webhook -payload test-payloads/example-pr-merged.json -secret "$WEBHOOK_SECRET"
 
 # Or test with real PR
 export GITHUB_TOKEN=ghp_...
-./test-webhook -pr 456 -owner mongodb -repo docs-realm
+export WEBHOOK_SECRET=$(gcloud secrets versions access latest --secret=webhook-secret)
+./test-webhook -pr 456 -owner mongodb -repo docs-realm -secret "$WEBHOOK_SECRET"
 ```
 
 ## What Happens in Local Mode
@@ -309,16 +314,23 @@ COPIER_DISABLE_CLOUD_LOGGING=true ./examples-copier
 
 ### Error: "connection refused" when sending webhook
 
-**Problem:** Application is not running
+**Problem:** Application is not running, or you're trying to run both in the same terminal
 
 **Solution:**
 ```bash
-# Make sure app is running in Terminal 1
-make run-local
+# Terminal 1: Start the app (this blocks the terminal)
+make run-local-quick
 
-# Then send webhook in Terminal 2
-./test-webhook -payload test-payloads/example-pr-merged.json
+# Terminal 2: In a NEW terminal window, send the webhook
+cd examples-copier
+make test-webhook-example
+
+# Or manually:
+export WEBHOOK_SECRET=$(gcloud secrets versions access latest --secret=webhook-secret)
+./test-webhook -payload test-payloads/example-pr-merged.json -secret "$WEBHOOK_SECRET"
 ```
+
+**Note:** The `make test-webhook-example` command requires the server to be running in a separate terminal. You cannot run both commands in the same terminal unless you background the server process.
 
 ### Error: "GITHUB_TOKEN environment variable not set"
 
@@ -411,19 +423,25 @@ Then you can:
 3. Monitor metrics and audit logs
 4. Deploy to production
 
-See [DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md) for deployment instructions.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for deployment instructions.
 
 ## Quick Reference
 
 ```bash
-# Start app locally
-make run-local
+# Terminal 1: Start app locally
+make run-local-quick
 
-# Test with example
-./test-webhook -payload test-payloads/example-pr-merged.json
+# Terminal 2: Test with example (auto-fetches webhook secret)
+make test-webhook-example
+
+# Or test manually with webhook secret
+export WEBHOOK_SECRET=$(gcloud secrets versions access latest --secret=webhook-secret)
+./test-webhook -payload test-payloads/example-pr-merged.json -secret "$WEBHOOK_SECRET"
 
 # Test with real PR
-./test-webhook -pr 456 -owner mongodb -repo docs-realm
+export GITHUB_TOKEN=ghp_...
+export WEBHOOK_SECRET=$(gcloud secrets versions access latest --secret=webhook-secret)
+./test-webhook -pr 456 -owner mongodb -repo docs-realm -secret "$WEBHOOK_SECRET"
 
 # Check metrics
 curl http://localhost:8080/metrics | jq
@@ -432,6 +450,6 @@ curl http://localhost:8080/metrics | jq
 curl http://localhost:8080/health | jq
 
 # Validate config
-./config-validator validate -config config.json -v
+./config-validator validate -config copier-config.yaml -v
 ```
 

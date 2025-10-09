@@ -66,7 +66,8 @@ GITHUB_INSTALLATION_ID=789012
 
 # Google Cloud
 GCP_PROJECT_ID=your-project
-PEM_KEY_NAME=projects/123/secrets/CODE_COPIER_PEM/versions/latest
+PEM_KEY_NAME=projects/123/secrets/<name>/versions/latest
+WEBHOOK_SECRET_NAME=projects/123/secrets/webhook-secret
 
 # Application Settings
 PORT=8080
@@ -415,7 +416,7 @@ container := NewServiceContainer(config)
 
 ## Deployment
 
-See [DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md) for complete deployment instructions.
+See [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for complete deployment guide and [DEPLOYMENT-CHECKLIST.md](./docs/DEPLOYMENT-CHECKLIST.md) for step-by-step checklist.
 
 ### Google Cloud App Engine
 
@@ -444,7 +445,8 @@ docker run -p 8080:8080 --env-file .env examples-copier
 - **[Configuration Guide](docs/CONFIGURATION-GUIDE.md)** - Complete configuration reference ⭐ NEW
 - **[Pattern Matching Guide](docs/PATTERN-MATCHING-GUIDE.md)** - Pattern matching with examples
 - **[Local Testing](docs/LOCAL-TESTING.md)** - Test locally before deploying
-- **[Deployment Guide](docs/DEPLOYMENT-GUIDE.md)** - Deploy to production
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Deploy to production
+- **[Deployment Checklist](docs/DEPLOYMENT-CHECKLIST.md)** - Step-by-step deployment checklist
 
 ### Reference
 

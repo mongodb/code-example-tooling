@@ -63,8 +63,8 @@ func uploadDeprecationFileChanges(message string, newDeprecationFileContents str
 		Message: github.String(message),
 		Content: []byte(newDeprecationFileContents),
 		Branch:  github.String(os.Getenv(configs.SrcBranch)),
-		Committer: &github.CommitAuthor{Name: github.String(os.Getenv(configs.CommiterName)),
-			Email: github.String(os.Getenv(configs.CommiterEmail))},
+		Committer: &github.CommitAuthor{Name: github.String(os.Getenv(configs.CommitterName)),
+			Email: github.String(os.Getenv(configs.CommitterEmail))},
 	}
 
 	options.SHA = targetFileContent.SHA

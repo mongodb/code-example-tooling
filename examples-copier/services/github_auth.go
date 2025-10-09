@@ -118,6 +118,97 @@ func getPrivateKeyFromSecret() []byte {
 	return result.Payload.Data
 }
 
+// getWebhookSecretFromSecretManager retrieves the webhook secret from Google Cloud Secret Manager
+func getWebhookSecretFromSecretManager(secretName string) (string, error) {
+	if os.Getenv("SKIP_SECRET_MANAGER") == "true" {
+		// For tests and local runs, use direct env var
+		if secret := os.Getenv(configs.WebhookSecret); secret != "" {
+			return secret, nil
+		}
+		return "", fmt.Errorf("SKIP_SECRET_MANAGER=true but no WEBHOOK_SECRET set")
+	}
+
+	ctx := context.Background()
+	client, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to create Secret Manager client: %w", err)
+	}
+	defer client.Close()
+
+	req := &secretmanagerpb.AccessSecretVersionRequest{
+		Name: secretName,
+	}
+	result, err := client.AccessSecretVersion(ctx, req)
+	if err != nil {
+		return "", fmt.Errorf("failed to access secret version: %w", err)
+	}
+	return string(result.Payload.Data), nil
+}
+
+// LoadWebhookSecret loads the webhook secret from Secret Manager or environment variable
+func LoadWebhookSecret(config *configs.Config) error {
+	// If webhook secret is already set directly, use it
+	if config.WebhookSecret != "" {
+		return nil
+	}
+
+	// Otherwise, load from Secret Manager
+	secret, err := getWebhookSecretFromSecretManager(config.WebhookSecretName)
+	if err != nil {
+		return fmt.Errorf("failed to load webhook secret: %w", err)
+	}
+	config.WebhookSecret = secret
+	return nil
+}
+
+// LoadMongoURI loads the MongoDB URI from Secret Manager or environment variable
+func LoadMongoURI(config *configs.Config) error {
+	// If MongoDB URI is already set directly, use it
+	if config.MongoURI != "" {
+		return nil
+	}
+
+	// If no secret name is configured, skip (audit logging is optional)
+	if config.MongoURISecretName == "" {
+		return nil
+	}
+
+	// Load from Secret Manager
+	uri, err := getSecretFromSecretManager(config.MongoURISecretName, "MONGO_URI")
+	if err != nil {
+		return fmt.Errorf("failed to load MongoDB URI: %w", err)
+	}
+	config.MongoURI = uri
+	return nil
+}
+
+// getSecretFromSecretManager is a generic function to retrieve any secret from Secret Manager
+func getSecretFromSecretManager(secretName, envVarName string) (string, error) {
+	if os.Getenv("SKIP_SECRET_MANAGER") == "true" {
+		// For tests and local runs, use direct env var
+		if secret := os.Getenv(envVarName); secret != "" {
+			return secret, nil
+		}
+		return "", fmt.Errorf("SKIP_SECRET_MANAGER=true but no %s set", envVarName)
+	}
+
+	ctx := context.Background()
+	client, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to create Secret Manager client: %w", err)
+	}
+	defer client.Close()
+
+	req := &secretmanagerpb.AccessSecretVersionRequest{
+		Name: secretName,
+	}
+	result, err := client.AccessSecretVersion(ctx, req)
+	if err != nil {
+		return "", fmt.Errorf("failed to access secret version: %w", err)
+	}
+	return string(result.Payload.Data), nil
+}
+
 // getInstallationAccessToken exchanges a JWT for a GitHub App installation access token.
 func getInstallationAccessToken(installationId, jwtToken string, hc *http.Client) (string, error) {
 	if installationId == "" || installationId == configs.InstallationId {

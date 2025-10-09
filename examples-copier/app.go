@@ -39,6 +39,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Load secrets from Secret Manager if not directly provided
+	if err := services.LoadWebhookSecret(config); err != nil {
+		fmt.Printf("❌ Error loading webhook secret: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := services.LoadMongoURI(config); err != nil {
+		fmt.Printf("❌ Error loading MongoDB URI: %v\n", err)
+		os.Exit(1)
+	}
+
 	// Override dry-run from command line
 	if dryRun {
 		config.DryRun = true

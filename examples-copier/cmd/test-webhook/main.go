@@ -20,7 +20,7 @@ func main() {
 	prNumber := flag.Int("pr", 0, "PR number to fetch from GitHub")
 	owner := flag.String("owner", "", "Repository owner")
 	repo := flag.String("repo", "", "Repository name")
-	webhookURL := flag.String("url", "http://localhost:8080/webhook", "Webhook URL")
+	webhookURL := flag.String("url", "http://localhost:8080/events", "Webhook URL")
 	secret := flag.String("secret", "", "Webhook secret for signature")
 	payloadFile := flag.String("payload", "", "Path to custom payload JSON file")
 	dryRun := flag.Bool("dry-run", false, "Print payload without sending")
@@ -95,7 +95,7 @@ Options:
   -pr int         PR number to fetch from GitHub
   -owner string   Repository owner (required with -pr)
   -repo string    Repository name (required with -pr)
-  -url string     Webhook URL (default: http://localhost:8080/webhook)
+  -url string     Webhook URL (default: http://localhost:8080/events)
   -secret string  Webhook secret for HMAC signature
   -payload string Path to custom payload JSON file
   -dry-run        Print payload without sending
@@ -117,7 +117,7 @@ Examples:
 
   # Send to production with secret
   test-webhook -pr 123 -owner myorg -repo myrepo \
-    -url https://myapp.appspot.com/webhook \
+    -url https://myapp.appspot.com/events \
     -secret "my-webhook-secret"
 
 Environment Variables:

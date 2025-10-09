@@ -382,6 +382,29 @@ curl http://localhost:8080/health
 curl http://localhost:8080/metrics | jq
 ```
 
+## Deployment 
+
+### Google Cloud Quick Commands
+
+```bash
+# Deploy (env.yaml is included via 'includes' directive in app.yaml)
+gcloud app deploy app.yaml
+
+# View logs
+gcloud app logs tail -s default
+
+# Check health
+curl https://github-copy-code-examples.appspot.com/health
+
+# List secrets
+gcloud secrets list
+
+# Grant access
+./grant-secret-access.sh
+```
+
+
+
 ## File Locations
 
 ```
@@ -390,7 +413,9 @@ examples-copier/
 ├── MIGRATION-GUIDE.md        # Migration from legacy
 ├── QUICK-REFERENCE.md        # This file
 ├── REFACTORING-SUMMARY.md    # Feature details
-├── DEPLOYMENT-GUIDE.md       # Deployment instructions
+├── docs/
+│   ├── DEPLOYMENT.md         # Deployment guide
+│   └── DEPLOYMENT-CHECKLIST.md  # Deployment checklist
 ├── TESTING-SUMMARY.md        # Test documentation
 ├── configs/
 │   ├── .env                  # Environment config

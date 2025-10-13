@@ -3,3 +3,6 @@ runtime_config:
   operating_system: "ubuntu22"
   runtime_version: "1.23"
 env: flex
+
+includes:
+  - env.yaml

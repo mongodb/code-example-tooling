@@ -60,7 +60,16 @@ test-webhook:
 # Test with example payload
 test-webhook-example: test-webhook
 	@echo "Testing with example payload..."
-	@./test-webhook -payload test-payloads/example-pr-merged.json
+	@if [ -z "$$WEBHOOK_SECRET" ]; then \
+		echo "Fetching webhook secret from Secret Manager..."; \
+		export WEBHOOK_SECRET=$$(gcloud secrets versions access latest --secret=webhook-secret 2>/dev/null); \
+	fi; \
+	if [ -n "$$WEBHOOK_SECRET" ]; then \
+		./test-webhook -payload test-payloads/example-pr-merged.json -secret "$$WEBHOOK_SECRET"; \
+	else \
+		echo "Warning: WEBHOOK_SECRET not set, sending without signature"; \
+		./test-webhook -payload test-payloads/example-pr-merged.json; \
+	fi
 
 # Test with real PR (requires PR, OWNER, REPO variables)
 test-webhook-pr: test-webhook
@@ -69,7 +78,16 @@ test-webhook-pr: test-webhook
 		echo "Usage: make test-webhook-pr PR=123 OWNER=myorg REPO=myrepo"; \
 		exit 1; \
 	fi
-	@./test-webhook -pr $(PR) -owner $(OWNER) -repo $(REPO)
+	@if [ -z "$$WEBHOOK_SECRET" ]; then \
+		echo "Fetching webhook secret from Secret Manager..."; \
+		export WEBHOOK_SECRET=$$(gcloud secrets versions access latest --secret=webhook-secret 2>/dev/null); \
+	fi; \
+	if [ -n "$$WEBHOOK_SECRET" ]; then \
+		./test-webhook -pr $(PR) -owner $(OWNER) -repo $(REPO) -secret "$$WEBHOOK_SECRET"; \
+	else \
+		echo "Warning: WEBHOOK_SECRET not set, sending without signature"; \
+		./test-webhook -pr $(PR) -owner $(OWNER) -repo $(REPO); \
+	fi
 
 # Test with real PR using helper script
 test-pr:

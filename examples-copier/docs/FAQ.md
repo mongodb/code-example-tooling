@@ -176,7 +176,7 @@ Yes! See [Local Testing](LOCAL-TESTING.md) for instructions.
 
 ### How do I deploy to Google Cloud?
 
-See [Deployment Guide](DEPLOYMENT-GUIDE.md) for step-by-step instructions.
+See [Deployment Guide](DEPLOYMENT.md) for complete guide and [Deployment Checklist](DEPLOYMENT-CHECKLIST.md) for step-by-step instructions.
 
 ### Do I need MongoDB?
 

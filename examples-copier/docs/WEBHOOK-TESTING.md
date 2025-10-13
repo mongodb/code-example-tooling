@@ -449,5 +449,5 @@ After successful webhook testing:
 5. Deploy to production
 6. Set up alerts for failures
 
-See [DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md) for deployment instructions.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for deployment instructions.
 

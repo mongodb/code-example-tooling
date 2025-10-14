@@ -237,6 +237,7 @@ func createCommitTree(ctx context.Context, client *github.Client, targetBranch U
 	files map[string]string) (treeSHA string, baseSHA string, err error) {
 
 	owner, repoName := parseRepoPath(targetBranch.RepoName)
+	LogInfo(fmt.Sprintf("DEBUG createCommitTree: targetBranch.RepoName=%q, parsed owner=%q, repoName=%q", targetBranch.RepoName, owner, repoName))
 
 	// 1) Get current ref (ONE GET)
 	ref, _, err := client.Git.GetRef(ctx, owner, repoName, targetBranch.BranchPath)

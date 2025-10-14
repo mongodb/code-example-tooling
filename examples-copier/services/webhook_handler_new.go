@@ -188,9 +188,9 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 	// Process files with new pattern matching
 	processFilesWithPatternMatching(ctx, prNumber, sourceCommitSHA, changedFiles, yamlConfig, config, container)
 
-	// Upload queued files - copy from FileStateService to global map for legacy function
+	// Upload queued files
 	FilesToUpload = container.FileStateService.GetFilesToUpload()
-	AddFilesToTargetRepoBranch(nil)
+	AddFilesToTargetRepoBranch()
 	container.FileStateService.ClearFilesToUpload()
 
 	// Update deprecation file - copy from FileStateService to global map for legacy function

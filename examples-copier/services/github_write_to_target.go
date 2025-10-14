@@ -22,35 +22,7 @@ import (
 var FilesToUpload map[UploadKey]UploadFileContent
 var FilesToDeprecate map[string]Configs
 
-// commitStrategy returns the commit strategy.
-// Priority:
-// 1) Configs.CopierCommitStrategy if provided ("direct" or "pr")
-// 2) Environment variable COPIER_COMMIT_STRATEGY ("direct" or "pr")
-// 3) Default to "direct" for minimal side effects in tests and local runs.
-func commitStrategy(c Configs) string {
-	switch v := c.CopierCommitStrategy; v {
-	case "direct", "pr":
-		return v
-	}
-	// Fallback to env var if config not specified
-	ccs := os.Getenv("COPIER_COMMIT_STRATEGY")
-	switch ccs {
-	case "direct", "pr":
-		return ccs
-	default:
-		return "direct"
-	}
-}
 
-// findConfig returns the first entry matching repoName or zero-value
-func findConfig(cfgs ConfigFileType, repoName string) Configs {
-	for _, c := range cfgs {
-		if c.TargetRepo == repoName {
-			return c
-		}
-	}
-	return Configs{}
-}
 
 // repoOwner returns the repository owner from environment variables.
 func repoOwner() string { return os.Getenv(configs.RepoOwner) }
@@ -68,54 +40,34 @@ func parseRepoPath(repoPath string) (owner, repo string) {
 
 // AddFilesToTargetRepoBranch uploads files to the target repository branch
 // using the specified commit strategy (direct or via pull request).
-func AddFilesToTargetRepoBranch(cfgs ...ConfigFileType) {
+func AddFilesToTargetRepoBranch() {
 	ctx := context.Background()
 	client := GetRestClient()
 
-	var effectiveCfgs ConfigFileType
-	if len(cfgs) > 0 {
-		effectiveCfgs = cfgs[0]
-	}
-
 	for key, value := range FilesToUpload {
-		cfg := findConfig(effectiveCfgs, key.RepoName)
-
-		// Determine commit strategy: prefer value.CommitStrategy (from new pattern-matching system),
-		// fallback to legacy config-based strategy
+		// Determine commit strategy from value (set by pattern-matching system)
 		strategy := string(value.CommitStrategy)
 		if strategy == "" {
-			strategy = commitStrategy(cfg)
+			strategy = "direct" // default
 		}
 
-		// Determine messages: prefer value fields (from new system), fallback to legacy config
+		// Get commit message from value or use default
 		commitMsg := value.CommitMessage
 		if strings.TrimSpace(commitMsg) == "" {
-			commitMsg = cfg.CommitMessage
+			commitMsg = os.Getenv(configs.DefaultCommitMessage)
 			if strings.TrimSpace(commitMsg) == "" {
-				commitMsg = os.Getenv(configs.DefaultCommitMessage)
-				if strings.TrimSpace(commitMsg) == "" {
-					commitMsg = configs.NewConfig().DefaultCommitMessage
-				}
+				commitMsg = configs.NewConfig().DefaultCommitMessage
 			}
 		}
 
+		// Get PR title from value or use commit message
 		prTitle := value.PRTitle
 		if strings.TrimSpace(prTitle) == "" {
-			prTitle = cfg.PRTitle
-			if strings.TrimSpace(prTitle) == "" {
-				prTitle = commitMsg
-			}
+			prTitle = commitMsg
 		}
 
-		// Determine auto-merge: prefer value.AutoMergePR (from new system), fallback to legacy config
+		// Get auto-merge setting from value
 		mergeWithoutReview := value.AutoMergePR
-		if !value.AutoMergePR && cfg.TargetRepo == "" {
-			// Preserve historical behavior for tests/local runs: default to auto-merge when no config present
-			mergeWithoutReview = true
-		} else if cfg.TargetRepo != "" {
-			// If legacy config exists, use its setting
-			mergeWithoutReview = cfg.MergeWithoutReview
-		}
 
 		switch strategy {
 		case "direct": // commits directly to the target branch

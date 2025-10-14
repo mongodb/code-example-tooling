@@ -2,10 +2,8 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/google/go-github/v48/github"
 	"gopkg.in/yaml.v3"
@@ -56,37 +54,9 @@ func (cl *DefaultConfigLoader) LoadConfigFromContent(content string, filename st
 		return nil, fmt.Errorf("config file is empty")
 	}
 
-	// Determine format based on file extension or content
-	isYAML := strings.HasSuffix(filename, ".yaml") || strings.HasSuffix(filename, ".yml")
-	isJSON := strings.HasSuffix(filename, ".json")
-
-	// If extension doesn't tell us, try to detect from content
-	if !isYAML && !isJSON {
-		trimmed := strings.TrimSpace(content)
-		if strings.HasPrefix(trimmed, "{") || strings.HasPrefix(trimmed, "[") {
-			isJSON = true
-		} else {
-			isYAML = true
-		}
-	}
-
+	// Parse as YAML (supports both YAML and JSON since YAML is a superset of JSON)
 	var yamlConfig types.YAMLConfig
-	var err error
-
-	if isYAML {
-		err = yaml.Unmarshal([]byte(content), &yamlConfig)
-	} else {
-		// Try to parse as legacy JSON format first
-		var legacyConfig types.ConfigFileType
-		if err := json.Unmarshal([]byte(content), &legacyConfig); err == nil {
-			// Convert legacy format to new format
-			return convertLegacyToYAML(legacyConfig), nil
-		}
-
-		// Try new JSON format
-		err = json.Unmarshal([]byte(content), &yamlConfig)
-	}
-
+	err := yaml.Unmarshal([]byte(content), &yamlConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse config file: %w", err)
 	}
@@ -100,65 +70,6 @@ func (cl *DefaultConfigLoader) LoadConfigFromContent(content string, filename st
 	}
 
 	return &yamlConfig, nil
-}
-
-// convertLegacyToYAML converts legacy JSON config to new YAML config format
-func convertLegacyToYAML(legacy types.ConfigFileType) *types.YAMLConfig {
-	yamlConfig := &types.YAMLConfig{
-		SourceRepo:   "", // Will be set from environment
-		SourceBranch: "main",
-		CopyRules:    make([]types.CopyRule, 0, len(legacy)),
-	}
-
-	for i, oldRule := range legacy {
-		// Create a prefix pattern from the old source_directory
-		pattern := types.SourcePattern{
-			Type:    types.PatternTypePrefix,
-			Pattern: oldRule.SourceDirectory,
-		}
-
-		// Determine path transform based on recursive_copy
-		var pathTransform string
-		if oldRule.RecursiveCopy {
-			pathTransform = fmt.Sprintf("%s/${relative_path}", oldRule.TargetDirectory)
-		} else {
-			pathTransform = fmt.Sprintf("%s/${filename}", oldRule.TargetDirectory)
-		}
-
-		// Create target config
-		commitStrategy := "direct"
-		if oldRule.CopierCommitStrategy != "" {
-			commitStrategy = oldRule.CopierCommitStrategy
-		}
-
-		target := types.TargetConfig{
-			Repo:          oldRule.TargetRepo,
-			Branch:        oldRule.TargetBranch,
-			PathTransform: pathTransform,
-			CommitStrategy: types.CommitStrategyConfig{
-				Type:          commitStrategy,
-				CommitMessage: oldRule.CommitMessage,
-				PRTitle:       oldRule.PRTitle,
-				AutoMerge:     oldRule.MergeWithoutReview,
-			},
-			DeprecationCheck: &types.DeprecationConfig{
-				Enabled: true,
-				File:    "deprecated_examples.json",
-			},
-		}
-
-		// Create copy rule
-		rule := types.CopyRule{
-			Name:          fmt.Sprintf("legacy-rule-%d", i+1),
-			SourcePattern: pattern,
-			Targets:       []types.TargetConfig{target},
-		}
-
-		yamlConfig.CopyRules = append(yamlConfig.CopyRules, rule)
-	}
-
-	yamlConfig.SetDefaults()
-	return yamlConfig
 }
 
 // retrieveConfigFileContent fetches the config file content from the repository

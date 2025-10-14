@@ -61,8 +61,6 @@ func RetrieveFileContentsWithConfigAndBranch(ctx context.Context, filePath strin
 	return fileContent, nil
 }
 
-
-
 // HandleWebhookWithContainer handles incoming GitHub webhook requests using the service container
 func HandleWebhookWithContainer(w http.ResponseWriter, r *http.Request, config *configs.Config, container *ServiceContainer) {
 	ctx := r.Context()
@@ -190,11 +188,22 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 	// Process files with new pattern matching
 	processFilesWithPatternMatching(ctx, prNumber, sourceCommitSHA, changedFiles, yamlConfig, config, container)
 
-	// Upload queued files - use existing function
+	// Upload queued files - copy from FileStateService to global map for legacy function
+	FilesToUpload = container.FileStateService.GetFilesToUpload()
 	AddFilesToTargetRepoBranch(nil)
+	container.FileStateService.ClearFilesToUpload()
 
-	// Update deprecation file - use existing function
+	// Update deprecation file - copy from FileStateService to global map for legacy function
+	deprecationMap := container.FileStateService.GetFilesToDeprecate()
+	FilesToDeprecate = make(map[string]types.Configs)
+	for _, entry := range deprecationMap {
+		FilesToDeprecate[entry.FileName] = types.Configs{
+			TargetRepo:   entry.Repo,
+			TargetBranch: entry.Branch,
+		}
+	}
 	UpdateDeprecationFile()
+	container.FileStateService.ClearFilesToDeprecate()
 
 	// Calculate metrics after processing
 	filesMatched := container.MetricsCollector.GetFilesMatched() - filesMatchedBefore
@@ -464,4 +473,3 @@ func addToDeprecationMapForTarget(targetPath string, target types.TargetConfig, 
 
 	fileStateService.AddFileToDeprecate(deprecationFile, entry)
 }
-

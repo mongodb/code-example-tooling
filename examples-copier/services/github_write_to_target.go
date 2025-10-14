@@ -79,34 +79,52 @@ func AddFilesToTargetRepoBranch(cfgs ...ConfigFileType) {
 
 	for key, value := range FilesToUpload {
 		cfg := findConfig(effectiveCfgs, key.RepoName)
-		// Determine messages from config with sensible defaults
-		commitMsg := cfg.CommitMessage
+
+		// Determine commit strategy: prefer value.CommitStrategy (from new pattern-matching system),
+		// fallback to legacy config-based strategy
+		strategy := string(value.CommitStrategy)
+		if strategy == "" {
+			strategy = commitStrategy(cfg)
+		}
+
+		// Determine messages: prefer value fields (from new system), fallback to legacy config
+		commitMsg := value.CommitMessage
 		if strings.TrimSpace(commitMsg) == "" {
-			commitMsg = os.Getenv(configs.DefaultCommitMessage)
+			commitMsg = cfg.CommitMessage
 			if strings.TrimSpace(commitMsg) == "" {
-				commitMsg = configs.NewConfig().DefaultCommitMessage
+				commitMsg = os.Getenv(configs.DefaultCommitMessage)
+				if strings.TrimSpace(commitMsg) == "" {
+					commitMsg = configs.NewConfig().DefaultCommitMessage
+				}
 			}
 		}
-		prTitle := cfg.PRTitle
+
+		prTitle := value.PRTitle
 		if strings.TrimSpace(prTitle) == "" {
-			prTitle = commitMsg
+			prTitle = cfg.PRTitle
+			if strings.TrimSpace(prTitle) == "" {
+				prTitle = commitMsg
+			}
 		}
 
-		// Determine default for mergeWithoutReview. If no matching config (zero-value),
-		// honor DEFAULT_PR_MERGE env var; otherwise, fall back to system default.
-		mergeWithoutReview := cfg.MergeWithoutReview
-		if cfg.TargetRepo == "" {
+		// Determine auto-merge: prefer value.AutoMergePR (from new system), fallback to legacy config
+		mergeWithoutReview := value.AutoMergePR
+		if !value.AutoMergePR && cfg.TargetRepo == "" {
 			// Preserve historical behavior for tests/local runs: default to auto-merge when no config present
 			mergeWithoutReview = true
+		} else if cfg.TargetRepo != "" {
+			// If legacy config exists, use its setting
+			mergeWithoutReview = cfg.MergeWithoutReview
 		}
 
-		switch commitStrategy(cfg) {
+		switch strategy {
 		case "direct": // commits directly to the target branch
 			LogInfo(fmt.Sprintf("Using direct commit strategy for %s on branch %s", key.RepoName, key.BranchPath))
 			if err := addFilesToBranch(ctx, client, key, value.Content, commitMsg); err != nil {
 				LogCritical(fmt.Sprintf("Failed to add files to target branch: %v\n", err))
 			}
-		default: // "pr" strategy
+		default: // "pr" or "pull_request" strategy
+			LogInfo(fmt.Sprintf("Using PR commit strategy for %s on branch %s (auto_merge=%v)", key.RepoName, key.BranchPath, mergeWithoutReview))
 			if err := addFilesViaPR(ctx, client, key, value.Content, commitMsg, prTitle, mergeWithoutReview); err != nil {
 				LogCritical(fmt.Sprintf("Failed via PR path: %v\n", err))
 			}

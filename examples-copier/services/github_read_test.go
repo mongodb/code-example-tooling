@@ -5,9 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-github/v48/github"
-	"github.com/mongodb/code-example-tooling/code-copier/configs"
 	"github.com/mongodb/code-example-tooling/code-copier/services"
-	"github.com/mongodb/code-example-tooling/code-copier/types"
 	"github.com/stretchr/testify/require"
 
 	test "github.com/mongodb/code-example-tooling/code-copier/tests"
@@ -29,6 +27,13 @@ func stubContentsForBothOwners(path, contentB64 string, owner, repo string) {
 	test.MockContentsEndpoint("REPO_OWNER", "REPO_NAME", path, contentB64)
 }
 
+// LEGACY TESTS - These tests are for legacy code that was removed in commit a64726c
+// The RetrieveAndParseConfigFile function was removed as part of the migration to YAML config
+// and the new pattern-matching system. These tests are commented out but kept for reference.
+//
+// If you need to test config loading, see config_loader_test.go for the new YAML-based system.
+
+/*
 func TestRetrieveAndParseConfigFile_Valid(t *testing.T) {
 	_ = test.WithHTTPMock(t)
 	owner, repo := ensureEnv(t)
@@ -84,6 +89,7 @@ func TestRetrieveAndParseConfigFile_InvalidJSON(t *testing.T) {
 	require.Error(t, err, "invalid JSON must return an error")
 	require.Nil(t, got)
 }
+*/
 
 func TestRetrieveFileContents_Success(t *testing.T) {
 	_ = test.WithHTTPMock(t)
@@ -101,6 +107,7 @@ func TestRetrieveFileContents_Success(t *testing.T) {
 	require.Contains(t, *rc.Content, b64(payload))
 }
 
+/*
 // Test that Retrieve and Parse round-trips with one entry
 func TestRetrieveAndParseConfigFile_RoundTripMinimal(t *testing.T) {
 	_ = test.WithHTTPMock(t)
@@ -137,3 +144,4 @@ func TestRetrieveAndParseConfigFile_RoundTripMinimal(t *testing.T) {
 	require.Equal(t, min[0].TargetDirectory, got[0].TargetDirectory)
 	require.Equal(t, min[0].RecursiveCopy, got[0].RecursiveCopy)
 }
+*/

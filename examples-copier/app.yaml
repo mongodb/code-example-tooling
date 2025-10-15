@@ -6,3 +6,39 @@ env: flex
 
 includes:
   - env.yaml
+
+# Automatic scaling configuration
+# Keeps at least 1 instance running to avoid cold starts
+automatic_scaling:
+  min_num_instances: 1
+  max_num_instances: 10
+  cool_down_period_sec: 120
+  cpu_utilization:
+    target_utilization: 0.6
+
+# Network configuration
+network:
+  session_affinity: true
+
+# Health check configuration
+# These ensure the app is ready before receiving traffic
+liveness_check:
+  path: "/health"
+  check_interval_sec: 30
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+
+readiness_check:
+  path: "/health"
+  check_interval_sec: 5
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+  app_start_timeout_sec: 300
+
+# Resources configuration
+resources:
+  cpu: 1
+  memory_gb: 2
+  disk_size_gb: 10

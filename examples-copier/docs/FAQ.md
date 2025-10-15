@@ -71,7 +71,7 @@ Use the config-validator tool:
 ./config-validator convert -input config.json -output copier-config.yaml
 ```
 
-See [Migration Guide](MIGRATION-GUIDE.md) for details.
+The tool will automatically convert your legacy JSON configuration to the new YAML format while preserving all settings.
 
 ## Pattern Matching
 

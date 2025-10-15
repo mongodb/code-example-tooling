@@ -15,8 +15,10 @@ func TestFileStateService_AddAndGetFilesToUpload(t *testing.T) {
 	service := services.NewFileStateService()
 
 	key := types.UploadKey{
-		RepoName:   "org/repo",
-		BranchPath: "refs/heads/main",
+		RepoName:       "org/repo",
+		BranchPath:     "refs/heads/main",
+		RuleName:       "test-rule",
+		CommitStrategy: "direct",
 	}
 
 	content := types.UploadFileContent{
@@ -70,8 +72,10 @@ func TestFileStateService_ClearFilesToUpload(t *testing.T) {
 	service := services.NewFileStateService()
 
 	key := types.UploadKey{
-		RepoName:   "org/repo",
-		BranchPath: "refs/heads/main",
+		RepoName:       "org/repo",
+		BranchPath:     "refs/heads/main",
+		RuleName:       "test-rule",
+		CommitStrategy: "direct",
 	}
 
 	content := types.UploadFileContent{
@@ -216,8 +220,10 @@ func TestFileStateService_IsolatedCopies(t *testing.T) {
 	service := services.NewFileStateService()
 
 	key := types.UploadKey{
-		RepoName:   "org/repo",
-		BranchPath: "refs/heads/main",
+		RepoName:       "org/repo",
+		BranchPath:     "refs/heads/main",
+		RuleName:       "test-rule",
+		CommitStrategy: "direct",
 	}
 
 	content := types.UploadFileContent{
@@ -267,8 +273,10 @@ func TestFileStateService_CommitStrategyTypes(t *testing.T) {
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			key := types.UploadKey{
-				RepoName:   "org/repo",
-				BranchPath: "refs/heads/main",
+				RepoName:       "org/repo",
+				BranchPath:     "refs/heads/main",
+				RuleName:       "test-rule",
+				CommitStrategy: string(tt.strategy),
 			}
 
 			content := types.UploadFileContent{

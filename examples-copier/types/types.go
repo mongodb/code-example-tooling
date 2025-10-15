@@ -97,8 +97,10 @@ type DeprecatedFileEntry struct {
 // **** UPLOAD TYPES **** //
 
 type UploadKey struct {
-	RepoName   string `json:"repo_name"`
-	BranchPath string `json:"branch_path"`
+	RepoName       string `json:"repo_name"`
+	BranchPath     string `json:"branch_path"`
+	RuleName       string `json:"rule_name"`        // Include rule name to allow multiple rules targeting same repo/branch
+	CommitStrategy string `json:"commit_strategy"`  // Include strategy to differentiate direct vs PR
 }
 
 type UploadFileContent struct {

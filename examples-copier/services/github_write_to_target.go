@@ -22,80 +22,70 @@ import (
 var FilesToUpload map[UploadKey]UploadFileContent
 var FilesToDeprecate map[string]Configs
 
-// commitStrategy returns the commit strategy.
-// Priority:
-// 1) Configs.CopierCommitStrategy if provided ("direct" or "pr")
-// 2) Environment variable COPIER_COMMIT_STRATEGY ("direct" or "pr")
-// 3) Default to "direct" for minimal side effects in tests and local runs.
-func commitStrategy(c Configs) string {
-	switch v := c.CopierCommitStrategy; v {
-	case "direct", "pr":
-		return v
-	}
-	// Fallback to env var if config not specified
-	ccs := os.Getenv("COPIER_COMMIT_STRATEGY")
-	switch ccs {
-	case "direct", "pr":
-		return ccs
-	default:
-		return "direct"
-	}
-}
 
-// findConfig returns the first entry matching repoName or zero-value
-func findConfig(cfgs ConfigFileType, repoName string) Configs {
-	for _, c := range cfgs {
-		if c.TargetRepo == repoName {
-			return c
-		}
-	}
-	return Configs{}
-}
 
 // repoOwner returns the repository owner from environment variables.
 func repoOwner() string { return os.Getenv(configs.RepoOwner) }
 
+// parseRepoPath parses a repository path in the format "owner/repo" and returns owner and repo separately.
+// If the path doesn't contain a slash, it returns the source repo owner from env and the path as repo name.
+func parseRepoPath(repoPath string) (owner, repo string) {
+	parts := strings.Split(repoPath, "/")
+	if len(parts) == 2 {
+		return parts[0], parts[1]
+	}
+	// Fallback to source repo owner if no slash found (backward compatibility)
+	return repoOwner(), repoPath
+}
+
 // AddFilesToTargetRepoBranch uploads files to the target repository branch
 // using the specified commit strategy (direct or via pull request).
-func AddFilesToTargetRepoBranch(cfgs ...ConfigFileType) {
+func AddFilesToTargetRepoBranch() {
 	ctx := context.Background()
-	client := GetRestClient()
-
-	var effectiveCfgs ConfigFileType
-	if len(cfgs) > 0 {
-		effectiveCfgs = cfgs[0]
-	}
 
 	for key, value := range FilesToUpload {
-		cfg := findConfig(effectiveCfgs, key.RepoName)
-		// Determine messages from config with sensible defaults
-		commitMsg := cfg.CommitMessage
+		// Parse the repository to get the organization
+		owner, _ := parseRepoPath(key.RepoName)
+
+		// Get a client authenticated for this organization
+		client, err := GetRestClientForOrg(owner)
+		if err != nil {
+			LogCritical(fmt.Sprintf("Failed to get GitHub client for org %s: %v", owner, err))
+			continue
+		}
+
+		// Determine commit strategy from value (set by pattern-matching system)
+		strategy := string(value.CommitStrategy)
+		if strategy == "" {
+			strategy = "direct" // default
+		}
+
+		// Get commit message from value or use default
+		commitMsg := value.CommitMessage
 		if strings.TrimSpace(commitMsg) == "" {
 			commitMsg = os.Getenv(configs.DefaultCommitMessage)
 			if strings.TrimSpace(commitMsg) == "" {
 				commitMsg = configs.NewConfig().DefaultCommitMessage
 			}
 		}
-		prTitle := cfg.PRTitle
+
+		// Get PR title from value or use commit message
+		prTitle := value.PRTitle
 		if strings.TrimSpace(prTitle) == "" {
 			prTitle = commitMsg
 		}
 
-		// Determine default for mergeWithoutReview. If no matching config (zero-value),
-		// honor DEFAULT_PR_MERGE env var; otherwise, fall back to system default.
-		mergeWithoutReview := cfg.MergeWithoutReview
-		if cfg.TargetRepo == "" {
-			// Preserve historical behavior for tests/local runs: default to auto-merge when no config present
-			mergeWithoutReview = true
-		}
+		// Get auto-merge setting from value
+		mergeWithoutReview := value.AutoMergePR
 
-		switch commitStrategy(cfg) {
+		switch strategy {
 		case "direct": // commits directly to the target branch
 			LogInfo(fmt.Sprintf("Using direct commit strategy for %s on branch %s", key.RepoName, key.BranchPath))
 			if err := addFilesToBranch(ctx, client, key, value.Content, commitMsg); err != nil {
 				LogCritical(fmt.Sprintf("Failed to add files to target branch: %v\n", err))
 			}
-		default: // "pr" strategy
+		default: // "pr" or "pull_request" strategy
+			LogInfo(fmt.Sprintf("Using PR commit strategy for %s on branch %s (auto_merge=%v)", key.RepoName, key.BranchPath, mergeWithoutReview))
 			if err := addFilesViaPR(ctx, client, key, value.Content, commitMsg, prTitle, mergeWithoutReview); err != nil {
 				LogCritical(fmt.Sprintf("Failed via PR path: %v\n", err))
 			}
@@ -105,14 +95,14 @@ func AddFilesToTargetRepoBranch(cfgs ...ConfigFileType) {
 
 // createPullRequest opens a pull request from head to base in the specified repository.
 func createPullRequest(ctx context.Context, client *github.Client, repo, head, base, title, body string) (*github.PullRequest, error) {
-	owner := repoOwner()
+	owner, repoName := parseRepoPath(repo)
 	pr := &github.NewPullRequest{
 		Title: github.String(title),
 		Head:  github.String(head), // for same-repo branches, just "branch"; for forks, use "owner:branch"
 		Base:  github.String(base), // e.g. "main"
 		Body:  github.String(body),
 	}
-	created, _, err := client.PullRequests.Create(ctx, owner, repo, pr)
+	created, _, err := client.PullRequests.Create(ctx, owner, repoName, pr)
 	if err != nil {
 		return nil, fmt.Errorf("could not create PR: %w", err)
 	}
@@ -165,8 +155,9 @@ func addFilesViaPR(ctx context.Context, client *github.Client, key UploadKey,
 		// We poll up to ~10s with 500ms interval
 		var mergeable *bool
 		var mergeableState string
+		owner, repoName := parseRepoPath(key.RepoName)
 		for i := 0; i < 20; i++ {
-			current, _, gerr := client.PullRequests.Get(ctx, repoOwner(), key.RepoName, pr.GetNumber())
+			current, _, gerr := client.PullRequests.Get(ctx, owner, repoName, pr.GetNumber())
 			if gerr == nil && current != nil {
 				mergeable = current.Mergeable
 				mergeableState = current.GetMergeableState()
@@ -214,7 +205,7 @@ func addFilesToBranch(ctx context.Context, client *github.Client, key UploadKey,
 
 // createBranch creates a new branch from the specified base branch (defaults to 'main') and deletes it first if it already exists.
 func createBranch(ctx context.Context, client *github.Client, repo, newBranch string, baseBranch ...string) (*github.Reference, error) {
-	owner := repoOwner()
+	owner, repoName := parseRepoPath(repo)
 
 	// Use provided base branch or default to "main"
 	base := "main"
@@ -222,14 +213,14 @@ func createBranch(ctx context.Context, client *github.Client, repo, newBranch st
 		base = baseBranch[0]
 	}
 
-	baseRef, _, err := client.Git.GetRef(ctx, owner, repo, "refs/heads/"+base)
+	baseRef, _, err := client.Git.GetRef(ctx, owner, repoName, "refs/heads/"+base)
 	if err != nil {
 		LogCritical(fmt.Sprintf("Failed to get '%s' baseRef: %s", base, err))
 		return nil, err
 	}
 
 	// *** Check if branch (newBranchRef) already exists and delete it ***
-	newBranchRef, _, err := client.Git.GetRef(ctx, owner, repo, fmt.Sprintf("%s%s", "refs/heads/", newBranch))
+	newBranchRef, _, err := client.Git.GetRef(ctx, owner, repoName, fmt.Sprintf("%s%s", "refs/heads/", newBranch))
 	deleteBranchIfExists(ctx, client, repo, newBranchRef)
 
 	newRef := &github.Reference{
@@ -239,7 +230,7 @@ func createBranch(ctx context.Context, client *github.Client, repo, newBranch st
 		},
 	}
 
-	newBranchRef, _, err = client.Git.CreateRef(ctx, owner, repo, newRef)
+	newBranchRef, _, err = client.Git.CreateRef(ctx, owner, repoName, newRef)
 	if err != nil {
 		LogCritical(fmt.Sprintf("Failed to create newBranchRef %s:  %s", newRef, err))
 		return nil, err
@@ -254,10 +245,11 @@ func createBranch(ctx context.Context, client *github.Client, repo, newBranch st
 func createCommitTree(ctx context.Context, client *github.Client, targetBranch UploadKey,
 	files map[string]string) (treeSHA string, baseSHA string, err error) {
 
-	owner := repoOwner()
+	owner, repoName := parseRepoPath(targetBranch.RepoName)
+	LogInfo(fmt.Sprintf("DEBUG createCommitTree: targetBranch.RepoName=%q, parsed owner=%q, repoName=%q", targetBranch.RepoName, owner, repoName))
 
 	// 1) Get current ref (ONE GET)
-	ref, _, err := client.Git.GetRef(ctx, owner, targetBranch.RepoName, targetBranch.BranchPath)
+	ref, _, err := client.Git.GetRef(ctx, owner, repoName, targetBranch.BranchPath)
 	if err != nil || ref == nil {
 		if err == nil {
 			err = errors.Errorf("targetRef is nil")
@@ -279,7 +271,7 @@ func createCommitTree(ctx context.Context, client *github.Client, targetBranch U
 	}
 
 	// 3) Create tree on top of baseSHA
-	tree, _, err := client.Git.CreateTree(ctx, owner, targetBranch.RepoName, baseSHA, treeEntries)
+	tree, _, err := client.Git.CreateTree(ctx, owner, repoName, baseSHA, treeEntries)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to create tree: %w", err)
 	}
@@ -290,7 +282,7 @@ func createCommitTree(ctx context.Context, client *github.Client, targetBranch U
 func createCommit(ctx context.Context, client *github.Client, targetBranch UploadKey,
 	baseSHA string, treeSHA string, message string) error {
 
-	owner := repoOwner()
+	owner, repoName := parseRepoPath(targetBranch.RepoName)
 
 	parent := &github.Commit{SHA: github.String(baseSHA)}
 	commit := &github.Commit{
@@ -299,7 +291,7 @@ func createCommit(ctx context.Context, client *github.Client, targetBranch Uploa
 		Parents: []*github.Commit{parent},
 	}
 
-	newCommit, _, err := client.Git.CreateCommit(ctx, owner, targetBranch.RepoName, commit)
+	newCommit, _, err := client.Git.CreateCommit(ctx, owner, repoName, commit)
 	if err != nil {
 		return fmt.Errorf("could not create commit: %w", err)
 	}
@@ -309,7 +301,7 @@ func createCommit(ctx context.Context, client *github.Client, targetBranch Uploa
 		Ref:    github.String(targetBranch.BranchPath), // e.g., "refs/heads/main"
 		Object: &github.GitObject{SHA: github.String(newCommit.GetSHA())},
 	}
-	if _, _, err := client.Git.UpdateRef(ctx, owner, targetBranch.RepoName, ref, false); err != nil {
+	if _, _, err := client.Git.UpdateRef(ctx, owner, repoName, ref, false); err != nil {
 		// Detect non-fast-forward / conflict scenarios and provide a clearer error
 		if eresp, ok := err.(*github.ErrorResponse); ok {
 			if eresp.Response != nil && eresp.Response.StatusCode == http.StatusUnprocessableEntity {
@@ -323,12 +315,12 @@ func createCommit(ctx context.Context, client *github.Client, targetBranch Uploa
 
 // mergePR merges the specified pull request in the given repository.
 func mergePR(ctx context.Context, client *github.Client, repo string, pr_number int) error {
-	owner := repoOwner()
+	owner, repoName := parseRepoPath(repo)
 
 	options := &github.PullRequestOptions{
 		MergeMethod: "merge", // Other options: "squash" or "rebase"
 	}
-	result, _, err := client.PullRequests.Merge(ctx, owner, repo, pr_number, "Merging the pull request", options)
+	result, _, err := client.PullRequests.Merge(ctx, owner, repoName, pr_number, "Merging the pull request", options)
 	if err != nil {
 		LogCritical(fmt.Sprintf("Failed to merge PR: %v\n", err))
 		return err
@@ -345,17 +337,17 @@ func mergePR(ctx context.Context, client *github.Client, repo string, pr_number 
 // deleteBranchIfExists deletes the specified branch if it exists, except for 'main'.
 func deleteBranchIfExists(backgroundContext context.Context, client *github.Client, repo string, ref *github.Reference) {
 
-	owner := repoOwner()
+	owner, repoName := parseRepoPath(repo)
 	if ref.GetRef() == "refs/heads/main" {
 		LogError("I refuse to delete branch 'main'.")
 		log.Fatal()
 	}
 
 	LogInfo(fmt.Sprintf("Deleting branch %s on %s", ref.GetRef(), repo))
-	_, _, err := client.Git.GetRef(backgroundContext, owner, repo, ref.GetRef())
+	_, _, err := client.Git.GetRef(backgroundContext, owner, repoName, ref.GetRef())
 
 	if err == nil { // Branch exists (there was no error fetching it)
-		_, err = client.Git.DeleteRef(backgroundContext, owner, repo, ref.GetRef())
+		_, err = client.Git.DeleteRef(backgroundContext, owner, repoName, ref.GetRef())
 		if err != nil {
 			LogCritical(fmt.Sprintf("Error deleting branch: %v\n", err))
 		}

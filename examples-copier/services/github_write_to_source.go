@@ -19,12 +19,35 @@ func UpdateDeprecationFile() {
 		return
 	}
 
-	content := retrieveJsonFile(os.Getenv(configs.DeprecationFile))
+	// Fetch the deprecation file from the repository
+	client := GetRestClient()
+	ctx := context.Background()
+
+	fileContent, _, _, err := client.Repositories.GetContents(
+		ctx,
+		os.Getenv(configs.RepoOwner),
+		os.Getenv(configs.RepoName),
+		os.Getenv(configs.DeprecationFile),
+		&github.RepositoryContentGetOptions{
+			Ref: os.Getenv(configs.SrcBranch),
+		},
+	)
+	if err != nil {
+		LogError(fmt.Sprintf("Error getting deprecation file: %v", err))
+		return
+	}
+
+	content, err := fileContent.GetContent()
+	if err != nil {
+		LogError(fmt.Sprintf("Error decoding deprecation file: %v", err))
+		return
+	}
 
 	var deprecationFile DeprecationFile
-	err := json.Unmarshal([]byte(content), &deprecationFile)
+	err = json.Unmarshal([]byte(content), &deprecationFile)
 	if err != nil {
-		LogError(fmt.Sprintf("Failed to unmarshal %s: %v", configs.ConfigFile, err))
+		LogError(fmt.Sprintf("Failed to unmarshal %s: %v", configs.DeprecationFile, err))
+		return
 	}
 
 	for key, value := range FilesToDeprecate {

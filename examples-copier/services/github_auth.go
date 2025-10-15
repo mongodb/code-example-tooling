@@ -30,6 +30,13 @@ type transport struct {
 var InstallationAccessToken string
 var HTTPClient = http.DefaultClient
 
+// installationTokenCache caches installation access tokens by organization name
+var installationTokenCache = make(map[string]string)
+
+// jwtToken caches the GitHub App JWT token
+var jwtToken string
+var jwtExpiry time.Time
+
 // ConfigurePermissions sets up the necessary permissions to interact with the GitHub API.
 // It retrieves the GitHub App's private key from Google Secret Manager, generates a JWT,
 // and exchanges it for an installation access token.
@@ -272,6 +279,139 @@ func GetGraphQLClient() *graphql.Client {
 		Transport: &transport{token: InstallationAccessToken},
 	})
 	return client
+}
+
+// getOrRefreshJWT returns a valid JWT token, generating a new one if expired
+func getOrRefreshJWT() (string, error) {
+	// Check if we have a valid cached JWT
+	if jwtToken != "" && time.Now().Before(jwtExpiry) {
+		return jwtToken, nil
+	}
+
+	// Generate new JWT
+	pemKey := getPrivateKeyFromSecret()
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(pemKey)
+	if err != nil {
+		return "", fmt.Errorf("unable to parse RSA private key: %w", err)
+	}
+
+	token, err := generateGitHubJWT(os.Getenv(configs.AppId), privateKey)
+	if err != nil {
+		return "", fmt.Errorf("error generating JWT: %w", err)
+	}
+
+	// Cache the JWT (expires in 10 minutes, cache for 9 to be safe)
+	jwtToken = token
+	jwtExpiry = time.Now().Add(9 * time.Minute)
+
+	return token, nil
+}
+
+// getInstallationIDForOrg retrieves the installation ID for a specific organization
+func getInstallationIDForOrg(org string) (string, error) {
+	token, err := getOrRefreshJWT()
+	if err != nil {
+		return "", fmt.Errorf("failed to get JWT: %w", err)
+	}
+
+	url := "https://api.github.com/app/installations"
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", fmt.Errorf("create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Accept", "application/vnd.github+json")
+
+	hc := HTTPClient
+	if hc == nil {
+		hc = http.DefaultClient
+	}
+
+	resp, err := hc.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("GET %s: %d %s %s", url, resp.StatusCode, resp.Status, body)
+	}
+
+	var installations []struct {
+		ID      int64 `json:"id"`
+		Account struct {
+			Login string `json:"login"`
+			Type  string `json:"type"`
+		} `json:"account"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&installations); err != nil {
+		return "", fmt.Errorf("decode response: %w", err)
+	}
+
+	// Find the installation for the specified organization
+	for _, inst := range installations {
+		if inst.Account.Login == org {
+			return fmt.Sprintf("%d", inst.ID), nil
+		}
+	}
+
+	return "", fmt.Errorf("no installation found for organization: %s", org)
+}
+
+// GetRestClientForOrg returns a GitHub REST API client authenticated for a specific organization
+func GetRestClientForOrg(org string) (*github.Client, error) {
+	// Check if we have a cached token for this org
+	if token, ok := installationTokenCache[org]; ok && token != "" {
+		src := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+		base := http.DefaultTransport
+		if HTTPClient != nil && HTTPClient.Transport != nil {
+			base = HTTPClient.Transport
+		}
+		httpClient := &http.Client{
+			Transport: &oauth2.Transport{
+				Source: src,
+				Base:   base,
+			},
+		}
+		return github.NewClient(httpClient), nil
+	}
+
+	// Get installation ID for the organization
+	installationID, err := getInstallationIDForOrg(org)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get installation ID for org %s: %w", org, err)
+	}
+
+	// Get JWT token
+	token, err := getOrRefreshJWT()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get JWT: %w", err)
+	}
+
+	// Get installation access token
+	installationToken, err := getInstallationAccessToken(installationID, token, HTTPClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get installation token for org %s: %w", org, err)
+	}
+
+	// Cache the token
+	installationTokenCache[org] = installationToken
+
+	// Create and return client
+	src := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: installationToken})
+	base := http.DefaultTransport
+	if HTTPClient != nil && HTTPClient.Transport != nil {
+		base = HTTPClient.Transport
+	}
+	httpClient := &http.Client{
+		Transport: &oauth2.Transport{
+			Source: src,
+			Base:   base,
+		},
+	}
+	return github.NewClient(httpClient), nil
 }
 
 // RoundTrip adds the Authorization header to each request.

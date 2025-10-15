@@ -37,7 +37,12 @@ func InitializeGoogleLogger() {
 		return
 	}
 
-	projectId := configs.GoogleCloudProjectId
+	projectId := os.Getenv(configs.GoogleCloudProjectId)
+	if projectId == "" {
+		log.Printf("[WARN] GOOGLE_CLOUD_PROJECT_ID not set, disabling cloud logging\n")
+		gcpLoggingEnabled = false
+		return
+	}
 
 	client, err := logging.NewClient(context.Background(), projectId)
 	if err != nil {
@@ -48,7 +53,10 @@ func InitializeGoogleLogger() {
 	googleLoggingClient = client
 	gcpLoggingEnabled = true
 
-	logName := configs.CopierLogName
+	logName := os.Getenv(configs.CopierLogName)
+	if logName == "" {
+		logName = "code-copier-log" // fallback default
+	}
 	googleInfoLogger = client.Logger(logName).StandardLogger(logging.Info)
 	googleWarningLogger = client.Logger(logName).StandardLogger(logging.Warning)
 	googleErrorLogger = client.Logger(logName).StandardLogger(logging.Error)

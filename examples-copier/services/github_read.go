@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -12,22 +11,6 @@ import (
 	. "github.com/mongodb/code-example-tooling/code-copier/types"
 	"github.com/shurcooL/githubv4"
 )
-
-// RetrieveAndParseConfigFile fetches the configuration file from the repository
-// and unmarshals its JSON content into a ConfigFileType structure.
-func RetrieveAndParseConfigFile() (ConfigFileType, error) {
-	content := retrieveJsonFile(configs.ConfigFile)
-	if content == "" {
-		return nil, &github.Error{Message: "Config File Not Found or is empty"}
-	}
-	var configFile ConfigFileType
-	err := json.Unmarshal([]byte(content), &configFile)
-	if err != nil {
-		LogError(fmt.Sprintf("Failed to unmarshal %s: %v", configs.ConfigFile, err))
-		return nil, err
-	}
-	return configFile, nil
-}
 
 // GetFilesChangedInPr retrieves the list of files changed in a specified pull request.
 // It returns a slice of ChangedFile structures containing details about each changed file.
@@ -63,31 +46,6 @@ func GetFilesChangedInPr(pr_number int) ([]ChangedFile, error) {
 	}
 	LogInfo(fmt.Sprintf("PR has %d changed files.", len(changedFiles)))
 	return changedFiles, nil
-}
-
-// retrieveJsonFile fetches the content of a JSON file from the specified path in the repository.
-// It returns the file content as a string.
-func retrieveJsonFile(filePath string) string {
-	client := GetRestClient()
-	owner := os.Getenv(configs.RepoOwner)
-	repo := os.Getenv(configs.RepoName)
-	ctx := context.Background()
-	fileContent, _, _, err :=
-		client.Repositories.GetContents(ctx, owner, repo,
-			filePath, &github.RepositoryContentGetOptions{
-				Ref: os.Getenv(configs.SrcBranch),
-			})
-	if err != nil {
-		LogCritical(fmt.Sprintf("Error getting file content: %v", err))
-		return ""
-	}
-
-	content, err := fileContent.GetContent()
-	if err != nil {
-		LogCritical(fmt.Sprintf("Error decoding file content: %v", err))
-		return ""
-	}
-	return content
 }
 
 // RetrieveFileContents fetches the contents of a file from the repository at the specified path.

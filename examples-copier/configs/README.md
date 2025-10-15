@@ -8,7 +8,7 @@ Overview of the different environment configuration files and when to use each.
 |-----------------------|---------------------------------------|---------------------------------|
 | `env.yaml.example`    | Complete reference with all variables | First-time setup, documentation |
 | `env.yaml.production` | Production-ready template             | Quick deployment to production  |
-| `.env.example`        | Local development template            | Local testing and development   |
+| `.env.local.example`  | Local development template            | Local testing and development   |
 
 ---
 
@@ -61,9 +61,9 @@ Overview of the different environment configuration files and when to use each.
 
 ---
 
-## .env.example.new
+## .env.local.example
 
-**Location:** `configs/.env.example.new`
+**Location:** `configs/.env.local.example`
 
 **Purpose:** Local development template (traditional .env format)
 
@@ -136,11 +136,11 @@ nano env.yaml  # Enable features you need
 
 ### Scenario 3: Local Development
 
-**Recommended:** `.env.example.new`
+**Recommended:** `.env.local.example`
 
 ```bash
 # Local development
-cp configs/.env.example.new configs/.env
+cp configs/.env.local.example configs/.env
 nano configs/.env  # Add your values
 
 # Run locally
@@ -215,7 +215,7 @@ diff configs/env.yaml.production configs/env.yaml.example
 
 - **Use `env.yaml.production` for quick production deployment**
 - **Use `env.yaml.example` as reference documentation**
-- **Use `.env.example.new` for local development**
+- **Use `.env.local.example` for local development**
 - **Add `env.yaml` and `.env` to `.gitignore`**
 - **Use Secret Manager for production secrets**
 - **Keep comments in your env.yaml for team documentation**
@@ -237,7 +237,7 @@ examples-copier/
 ├── configs/
 │   ├── env.yaml.example          # ← Complete reference (all variables)
 │   ├── env.yaml.production       # ← Production template (essential only)
-│   └── .env.example              # ← Local development template
+│   └── .env.local.example        # ← Local development template
 ├── env.yaml                      # ← Your actual config (gitignored)
 └── .env                          # ← Your local config (gitignored)
 ```
@@ -253,7 +253,7 @@ examples-copier/
 → Read `env.yaml.example`
 
 **Need to develop locally?**
-→ Use `.env.example.new`
+→ Use `.env.local.example`
 
 **Need advanced features?**
 → Start with `env.yaml.example`, customize

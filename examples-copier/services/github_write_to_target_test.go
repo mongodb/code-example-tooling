@@ -66,7 +66,7 @@ func TestAddToRepoAndFilesMap_NewEntry(t *testing.T) {
 	services.AddToRepoAndFilesMap("TargetRepo1", "main", dummyFile)
 
 	require.NotNil(t, services.FilesToUpload, "FilesToUpload map should be initialized")
-	key := types.UploadKey{RepoName: "TargetRepo1", BranchPath: "refs/heads/main"}
+	key := types.UploadKey{RepoName: "TargetRepo1", BranchPath: "refs/heads/main", RuleName: "", CommitStrategy: ""}
 	entry, exists := services.FilesToUpload[key]
 	require.True(t, exists, "Entry for TargetRepo1/main should exist")
 	require.Equal(t, "main", entry.TargetBranch)
@@ -76,7 +76,7 @@ func TestAddToRepoAndFilesMap_NewEntry(t *testing.T) {
 
 func TestAddToRepoAndFilesMap_AppendEntry(t *testing.T) {
 	services.FilesToUpload = make(map[types.UploadKey]types.UploadFileContent)
-	key := types.UploadKey{RepoName: "TargetRepo1", BranchPath: "refs/heads/main"}
+	key := types.UploadKey{RepoName: "TargetRepo1", BranchPath: "refs/heads/main", RuleName: "", CommitStrategy: ""}
 
 	initialName := "first.txt"
 	services.FilesToUpload[key] = types.UploadFileContent{
@@ -96,7 +96,7 @@ func TestAddToRepoAndFilesMap_AppendEntry(t *testing.T) {
 
 func TestAddToRepoAndFilesMap_NestedFiles(t *testing.T) {
 	services.FilesToUpload = make(map[types.UploadKey]types.UploadFileContent)
-	key := types.UploadKey{RepoName: "TargetRepo1", BranchPath: "refs/heads/main"}
+	key := types.UploadKey{RepoName: "TargetRepo1", BranchPath: "refs/heads/main", RuleName: "", CommitStrategy: ""}
 
 	initialName := "level1/first.txt"
 	services.FilesToUpload[key] = types.UploadFileContent{
@@ -616,7 +616,7 @@ func TestPriority_PRTitleDefaultsToCommitMessage_And_NoAutoMergeWhenConfigPresen
 		Content: github.String(base64.StdEncoding.EncodeToString([]byte("y"))),
 	}}
 	cfg := types.Configs{TargetRepo: repo, TargetBranch: baseBranch /* MergeWithoutReview: false (zero value) */}
-	services.FilesToUpload = map[types.UploadKey]types.UploadFileContent{{RepoName: repo, BranchPath: "refs/heads/" + baseBranch}: {TargetBranch: baseBranch, Content: files}}
+	services.FilesToUpload = map[types.UploadKey]types.UploadFileContent{{RepoName: repo, BranchPath: "refs/heads/" + baseBranch, RuleName: "", CommitStrategy: ""}: {TargetBranch: baseBranch, Content: files}}
 
 	services.AddFilesToTargetRepoBranch(types.ConfigFileType{cfg})
 

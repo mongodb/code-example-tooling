@@ -48,10 +48,14 @@ go build -o config-validator ./cmd/config-validator
 
 ### Configuration
 
-1. **Copy .env example file**
+1. **Copy environment example file**
 
 ```bash
-cp configs/.env.example.new configs/.env
+# For local development
+cp configs/.env.local.example configs/.env
+
+# Or for YAML-based configuration
+cp configs/env.yaml.example env.yaml
 ```
 
 2. **Set required environment variables**
@@ -387,11 +391,13 @@ COPIER_DEBUG=true ./examples-copier
 examples-copier/
 ├── app.go                    # Main application entry point
 ├── cmd/
-│   └── config-validator/     # CLI validation tool
+│   ├── config-validator/     # CLI validation tool
+│   └── test-webhook/         # Webhook testing tool
 ├── configs/
 │   ├── environment.go        # Environment configuration
-│   ├── .env.example.new      # Environment template
-│   └── config.example.yaml   # Config template
+│   ├── .env.local.example    # Local environment template
+│   ├── env.yaml.example      # YAML environment template
+│   └── copier-config.example.yaml # Config template
 ├── services/
 │   ├── pattern_matcher.go    # Pattern matching engine
 │   ├── config_loader.go      # Config loading & validation
@@ -399,10 +405,20 @@ examples-copier/
 │   ├── health_metrics.go     # Health & metrics endpoints
 │   ├── file_state_service.go # Thread-safe state management
 │   ├── service_container.go  # Dependency injection
-│   └── webhook_handler_new.go # New webhook handler
-└── types/
-    ├── config.go             # Configuration types
-    └── types.go              # Core types
+│   ├── webhook_handler_new.go # Webhook handler
+│   ├── github_auth.go        # GitHub authentication
+│   ├── github_read.go        # GitHub read operations
+│   ├── github_write_to_target.go # GitHub write operations
+│   └── slack_notifier.go     # Slack notifications
+├── types/
+│   ├── config.go             # Configuration types
+│   └── types.go              # Core types
+└── docs/
+    ├── ARCHITECTURE.md       # Architecture overview
+    ├── CONFIGURATION-GUIDE.md # Complete config reference
+    ├── DEPLOYMENT.md         # Deployment guide
+    ├── FAQ.md                # Frequently asked questions
+    └── ...                   # Additional documentation
 ```
 
 ### Service Container
@@ -452,9 +468,10 @@ docker run -p 8080:8080 --env-file .env examples-copier
 
 - **[Pattern Matching Cheat Sheet](docs/PATTERN-MATCHING-CHEATSHEET.md)** - Quick pattern syntax reference
 - **[Architecture](docs/ARCHITECTURE.md)** - System design and components
-- **[Migration Guide](docs/MIGRATION-GUIDE.md)** - Migrate from legacy JSON config
 - **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[FAQ](docs/FAQ.md)** - Frequently asked questions
+- **[Debug Logging](docs/DEBUG-LOGGING.md)** - Debug logging configuration
+- **[Deprecation Tracking](docs/DEPRECATION-TRACKING-EXPLAINED.md)** - How deprecation tracking works
 
 ### Features
 

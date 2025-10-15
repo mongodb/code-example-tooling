@@ -883,9 +883,10 @@ Error: copy_rules[0]: name is required
 
 - [Pattern Matching Guide](PATTERN-MATCHING-GUIDE.md) - Detailed pattern matching documentation
 - [Pattern Matching Cheat Sheet](PATTERN-MATCHING-CHEATSHEET.md) - Quick reference
-- [Migration Guide](MIGRATION-GUIDE.md) - Migrating from legacy JSON config
+- [FAQ](FAQ.md) - Frequently asked questions (includes JSON to YAML conversion)
 - [Quick Reference](../QUICK-REFERENCE.md) - Command reference
 - [Deployment Guide](DEPLOYMENT.md) - Deploying the application
+- [Architecture](ARCHITECTURE.md) - System architecture overview
 
 ---
 

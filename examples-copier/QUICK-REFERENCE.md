@@ -410,25 +410,31 @@ gcloud secrets list
 ```
 examples-copier/
 ├── README.md                 # Main documentation
-├── MIGRATION-GUIDE.md        # Migration from legacy
 ├── QUICK-REFERENCE.md        # This file
-├── REFACTORING-SUMMARY.md    # Feature details
 ├── docs/
+│   ├── ARCHITECTURE.md       # Architecture overview
+│   ├── CONFIGURATION-GUIDE.md # Complete config reference
 │   ├── DEPLOYMENT.md         # Deployment guide
-│   └── DEPLOYMENT-CHECKLIST.md  # Deployment checklist
-├── TESTING-SUMMARY.md        # Test documentation
+│   ├── DEPLOYMENT-CHECKLIST.md  # Deployment checklist
+│   ├── FAQ.md                # Frequently asked questions
+│   ├── LOCAL-TESTING.md      # Local testing guide
+│   ├── PATTERN-MATCHING-GUIDE.md # Pattern matching guide
+│   ├── PATTERN-MATCHING-CHEATSHEET.md # Quick pattern reference
+│   ├── TROUBLESHOOTING.md    # Troubleshooting guide
+│   └── WEBHOOK-TESTING.md    # Webhook testing guide
 ├── configs/
 │   ├── .env                  # Environment config
-│   ├── .env.example.new      # Environment template
-│   └── config.example.yaml   # Config template
+│   ├── env.yaml.example      # Environment template
+│   └── copier-config.example.yaml # Config template
 └── cmd/
-    └── config-validator/     # CLI tool
+    ├── config-validator/     # CLI validation tool
+    └── test-webhook/         # Webhook testing tool
 ```
 
 ## Quick Start Checklist
 
 - [ ] Clone repository
-- [ ] Copy `.env.example.new` to `.env`
+- [ ] Copy `configs/.env.local.example` to `configs/.env`
 - [ ] Set required environment variables
 - [ ] Create `copier-config.yaml` in source repo
 - [ ] Validate config: `./config-validator validate -config copier-config.yaml`
@@ -440,6 +446,8 @@ examples-copier/
 ## Support
 
 - **Documentation**: [README.md](README.md)
-- **Migration**: [MIGRATION-GUIDE.md](./docs/MIGRATION-GUIDE.md)
-- **Deployment**: [DEPLOYMENT-GUIDE.md](./docs/DEPLOYMENT-GUIDE.md)
+- **Configuration**: [Configuration Guide](./docs/CONFIGURATION-GUIDE.md)
+- **Deployment**: [Deployment Guide](./docs/DEPLOYMENT.md)
+- **Troubleshooting**: [Troubleshooting Guide](./docs/TROUBLESHOOTING.md)
+- **FAQ**: [Frequently Asked Questions](./docs/FAQ.md)
 

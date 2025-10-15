@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/mongodb/code-example-tooling/code-copier/types"
 )
 
@@ -59,42 +60,27 @@ func (pm *DefaultPatternMatcher) matchPrefix(filePath, pattern string) types.Mat
 
 // matchGlob matches using glob patterns
 func (pm *DefaultPatternMatcher) matchGlob(filePath, pattern string) types.MatchResult {
-	matched, err := filepath.Match(pattern, filePath)
+	// Use doublestar library which properly supports ** patterns
+	matched, err := doublestar.Match(pattern, filePath)
 	if err != nil {
-		// Try doublestar matching for ** patterns
-		matched = pm.matchDoublestar(filePath, pattern)
+		// Fall back to filepath.Match for simple patterns
+		matched, err = filepath.Match(pattern, filePath)
+		if err != nil {
+			return types.NewMatchResult(false, nil)
+		}
 	}
-	
+
 	if matched {
 		variables := map[string]string{
 			"matched_pattern": pattern,
 		}
 		return types.NewMatchResult(true, variables)
 	}
-	
+
 	return types.NewMatchResult(false, nil)
 }
 
-// matchDoublestar handles ** glob patterns (recursive directory matching)
-func (pm *DefaultPatternMatcher) matchDoublestar(filePath, pattern string) bool {
-	// Convert glob pattern to regex
-	// ** matches any number of directories
-	// * matches any characters except /
-	// ? matches a single character except /
-	
-	regexPattern := regexp.QuoteMeta(pattern)
-	regexPattern = strings.ReplaceAll(regexPattern, `\*\*`, ".*")
-	regexPattern = strings.ReplaceAll(regexPattern, `\*`, "[^/]*")
-	regexPattern = strings.ReplaceAll(regexPattern, `\?`, "[^/]")
-	regexPattern = "^" + regexPattern + "$"
-	
-	re, err := regexp.Compile(regexPattern)
-	if err != nil {
-		return false
-	}
-	
-	return re.MatchString(filePath)
-}
+
 
 // matchRegex matches using regular expressions with named capture groups
 func (pm *DefaultPatternMatcher) matchRegex(filePath, pattern string) types.MatchResult {

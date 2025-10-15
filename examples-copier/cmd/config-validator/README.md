@@ -338,8 +338,8 @@ EOF
 
 ## See Also
 
-- [Configuration Setup](../../docs/CONFIG-SETUP.md) - Configuration guide
+- [Configuration Guide](../../docs/CONFIGURATION-GUIDE.md) - Complete configuration reference
 - [Pattern Matching Guide](../../docs/PATTERN-MATCHING-GUIDE.md) - Pattern matching help
-- [Migration Guide](../../docs/MIGRATION-GUIDE.md) - Migrating from JSON
-- [Quick Reference](../../docs/QUICK-REFERENCE.md) - All commands
+- [FAQ](../../docs/FAQ.md) - Frequently asked questions (includes JSON to YAML conversion)
+- [Quick Reference](../../QUICK-REFERENCE.md) - All commands
 

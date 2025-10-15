@@ -42,9 +42,18 @@ func parseRepoPath(repoPath string) (owner, repo string) {
 // using the specified commit strategy (direct or via pull request).
 func AddFilesToTargetRepoBranch() {
 	ctx := context.Background()
-	client := GetRestClient()
 
 	for key, value := range FilesToUpload {
+		// Parse the repository to get the organization
+		owner, _ := parseRepoPath(key.RepoName)
+
+		// Get a client authenticated for this organization
+		client, err := GetRestClientForOrg(owner)
+		if err != nil {
+			LogCritical(fmt.Sprintf("Failed to get GitHub client for org %s: %v", owner, err))
+			continue
+		}
+
 		// Determine commit strategy from value (set by pattern-matching system)
 		strategy := string(value.CommitStrategy)
 		if strategy == "" {

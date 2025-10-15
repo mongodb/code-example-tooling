@@ -42,7 +42,7 @@ path_transform: "source/code-examples/${lang}/${category}/${file}"
 **Files Created:**
 - `types/config.go` - New configuration types
 - `services/config_loader.go` - Configuration loader with YAML/JSON support
-- `configs/config.example.yaml` - Example YAML configuration
+- `configs/copier-config.example.yaml` - Example YAML configuration
 
 **Capabilities:**
 - Native YAML support with `gopkg.in/yaml.v3`
@@ -190,7 +190,7 @@ Returns detailed metrics:
 
 ```bash
 # Validate configuration
-config-validator validate -config copier-copier-config.yaml -v
+config-validator validate -config copier-config.yaml -v
 
 # Test pattern matching
 config-validator test-pattern \

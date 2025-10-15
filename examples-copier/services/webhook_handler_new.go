@@ -63,7 +63,12 @@ func RetrieveFileContentsWithConfigAndBranch(ctx context.Context, filePath strin
 
 // HandleWebhookWithContainer handles incoming GitHub webhook requests using the service container
 func HandleWebhookWithContainer(w http.ResponseWriter, r *http.Request, config *configs.Config, container *ServiceContainer) {
+	startTime := time.Now()
 	ctx := r.Context()
+
+	LogInfoCtx(ctx, "webhook handler started", map[string]interface{}{
+		"elapsed_ms": time.Since(startTime).Milliseconds(),
+	})
 
 	// Read and validate webhook payload
 	limited := io.LimitReader(r.Body, maxWebhookBodyBytes)
@@ -83,6 +88,11 @@ func HandleWebhookWithContainer(w http.ResponseWriter, r *http.Request, config *
 		return
 	}
 
+	LogInfoCtx(ctx, "payload read", map[string]interface{}{
+		"elapsed_ms": time.Since(startTime).Milliseconds(),
+		"size_bytes": len(payload),
+	})
+
 	// Verify webhook signature
 	if config.WebhookSecret != "" {
 		sigHeader := r.Header.Get("X-Hub-Signature-256")
@@ -92,6 +102,9 @@ func HandleWebhookWithContainer(w http.ResponseWriter, r *http.Request, config *
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
+		LogInfoCtx(ctx, "signature verified", map[string]interface{}{
+			"elapsed_ms": time.Since(startTime).Milliseconds(),
+		})
 	}
 
 	// Parse webhook event
@@ -112,7 +125,19 @@ func HandleWebhookWithContainer(w http.ResponseWriter, r *http.Request, config *
 		return
 	}
 
-	if !(prEvt.GetAction() == "closed" && prEvt.GetPullRequest().GetMerged()) {
+	action := prEvt.GetAction()
+	merged := prEvt.GetPullRequest().GetMerged()
+
+	LogInfoCtx(ctx, "PR event received", map[string]interface{}{
+		"action": action,
+		"merged": merged,
+	})
+
+	if !(action == "closed" && merged) {
+		LogInfoCtx(ctx, "skipping non-merged PR", map[string]interface{}{
+			"action": action,
+			"merged": merged,
+		})
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -121,23 +146,63 @@ func HandleWebhookWithContainer(w http.ResponseWriter, r *http.Request, config *
 	prNumber := prEvt.GetPullRequest().GetNumber()
 	sourceCommitSHA := prEvt.GetPullRequest().GetMergeCommitSHA()
 
+	// Extract repository info from webhook payload
+	repo := prEvt.GetRepo()
+	if repo == nil {
+		LogWarningCtx(ctx, "webhook missing repository info", nil)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	repoOwner := repo.GetOwner().GetLogin()
+	repoName := repo.GetName()
+
 	LogInfoCtx(ctx, "processing merged PR", map[string]interface{}{
-		"pr_number": prNumber,
-		"sha":       sourceCommitSHA,
+		"pr_number":  prNumber,
+		"sha":        sourceCommitSHA,
+		"repo":       fmt.Sprintf("%s/%s", repoOwner, repoName),
+		"elapsed_ms": time.Since(startTime).Milliseconds(),
 	})
 
-	handleMergedPRWithContainer(ctx, prNumber, sourceCommitSHA, config, container)
-	w.WriteHeader(http.StatusOK)
+	// Respond immediately to avoid GitHub webhook timeout
+	LogInfoCtx(ctx, "sending immediate response", map[string]interface{}{
+		"elapsed_ms": time.Since(startTime).Milliseconds(),
+	})
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	w.Write([]byte(`{"status":"accepted"}`))
+
+	LogInfoCtx(ctx, "response sent", map[string]interface{}{
+		"elapsed_ms": time.Since(startTime).Milliseconds(),
+	})
+
+	// Flush the response immediately
+	if flusher, ok := w.(http.Flusher); ok {
+		flusher.Flush()
+		LogInfoCtx(ctx, "response flushed", map[string]interface{}{
+			"elapsed_ms": time.Since(startTime).Milliseconds(),
+		})
+	}
+
+	// Process asynchronously in background with a new context
+	// Don't use the request context as it will be cancelled when the request completes
+	bgCtx := context.Background()
+	go handleMergedPRWithContainer(bgCtx, prNumber, sourceCommitSHA, repoOwner, repoName, config, container)
 }
 
 // handleMergedPRWithContainer processes a merged PR using the new pattern matching system
-func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommitSHA string, config *configs.Config, container *ServiceContainer) {
+func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommitSHA string, repoOwner string, repoName string, config *configs.Config, container *ServiceContainer) {
 	startTime := time.Now()
 
 	// Configure GitHub permissions
 	if InstallationAccessToken == "" {
 		ConfigurePermissions()
 	}
+
+	// Update config with actual repository from webhook
+	config.RepoOwner = repoOwner
+	config.RepoName = repoName
 
 	// Load configuration using new loader
 	yamlConfig, err := container.ConfigLoader.LoadConfig(ctx, config)
@@ -150,7 +215,7 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 			Operation:  "config_load",
 			Error:      err,
 			PRNumber:   prNumber,
-			SourceRepo: fmt.Sprintf("%s/%s", config.RepoOwner, config.RepoName),
+			SourceRepo: fmt.Sprintf("%s/%s", repoOwner, repoName),
 		})
 		return
 	}
@@ -158,6 +223,17 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 	// Set source repo in config if not set
 	if yamlConfig.SourceRepo == "" {
 		yamlConfig.SourceRepo = fmt.Sprintf("%s/%s", config.RepoOwner, config.RepoName)
+	}
+
+	// Validate webhook is from expected source repository
+	webhookRepo := fmt.Sprintf("%s/%s", repoOwner, repoName)
+	if webhookRepo != yamlConfig.SourceRepo {
+		LogWarningCtx(ctx, "webhook from unexpected repository", map[string]interface{}{
+			"webhook_repo":  webhookRepo,
+			"expected_repo": yamlConfig.SourceRepo,
+		})
+		container.MetricsCollector.RecordWebhookFailed()
+		return
 	}
 
 	// Get changed files from PR
@@ -279,7 +355,7 @@ func processFilesWithPatternMatching(ctx context.Context, prNumber int, sourceCo
 
 			// Process each target
 			for _, target := range rule.Targets {
-				processFileForTarget(ctx, prNumber, sourceCommitSHA, file, rule, target, matchResult.Variables, config, container)
+				processFileForTarget(ctx, prNumber, sourceCommitSHA, file, rule, target, matchResult.Variables, yamlConfig.SourceBranch, config, container)
 			}
 		}
 	}
@@ -287,7 +363,7 @@ func processFilesWithPatternMatching(ctx context.Context, prNumber int, sourceCo
 
 // processFileForTarget processes a single file for a specific target
 func processFileForTarget(ctx context.Context, prNumber int, sourceCommitSHA string, file types.ChangedFile,
-	rule types.CopyRule, target types.TargetConfig, variables map[string]string, config *configs.Config, container *ServiceContainer) {
+	rule types.CopyRule, target types.TargetConfig, variables map[string]string, sourceBranch string, config *configs.Config, container *ServiceContainer) {
 
 	// Transform path
 	targetPath, err := container.PathTransformer.Transform(file.Path, target.PathTransform, variables)
@@ -303,29 +379,25 @@ func processFileForTarget(ctx context.Context, prNumber int, sourceCommitSHA str
 
 	// Handle deleted files
 	if file.Status == statusDeleted {
-		handleFileDeprecation(ctx, prNumber, sourceCommitSHA, file, rule, target, targetPath, config, container)
+		handleFileDeprecation(ctx, prNumber, sourceCommitSHA, file, rule, target, targetPath, sourceBranch, config, container)
 		return
 	}
 
 	// Handle file copy
-	handleFileCopyWithAudit(ctx, prNumber, sourceCommitSHA, file, rule, target, targetPath, variables, config, container)
+	handleFileCopyWithAudit(ctx, prNumber, sourceCommitSHA, file, rule, target, targetPath, variables, sourceBranch, config, container)
 }
 
 // handleFileCopyWithAudit handles file copying with audit logging
 func handleFileCopyWithAudit(ctx context.Context, prNumber int, sourceCommitSHA string, file types.ChangedFile,
-	rule types.CopyRule, target types.TargetConfig, targetPath string, variables map[string]string,
+	rule types.CopyRule, target types.TargetConfig, targetPath string, variables map[string]string, sourceBranch string,
 	config *configs.Config, container *ServiceContainer) {
 
 	startTime := time.Now()
 	sourceRepo := fmt.Sprintf("%s/%s", config.RepoOwner, config.RepoName)
 
-	// Retrieve file content - use target branch or default to main
-	sourceBranch := target.Branch
-	if sourceBranch == "" {
-		sourceBranch = "main"
-	}
-
-	fc, err := RetrieveFileContentsWithConfigAndBranch(ctx, file.Path, sourceBranch, config)
+	// Retrieve file content from the source commit SHA (the merge commit)
+	// This ensures we fetch the exact version of the file that was merged
+	fc, err := RetrieveFileContentsWithConfigAndBranch(ctx, file.Path, sourceCommitSHA, config)
 	if err != nil {
 		// Log error event
 		container.AuditLogger.LogErrorEvent(ctx, &AuditEvent{
@@ -349,7 +421,7 @@ func handleFileCopyWithAudit(ctx context.Context, prNumber int, sourceCommitSHA 
 	fc.Name = github.String(targetPath)
 
 	// Queue file for upload
-	queueFileForUploadWithStrategy(target, *fc, rule, variables, config, container)
+	queueFileForUploadWithStrategy(target, *fc, rule, variables, prNumber, sourceCommitSHA, sourceBranch, config, container)
 
 	// Log successful copy event
 	fileSize := int64(0)
@@ -384,7 +456,7 @@ func handleFileCopyWithAudit(ctx context.Context, prNumber int, sourceCommitSHA 
 
 // handleFileDeprecation handles file deprecation with audit logging
 func handleFileDeprecation(ctx context.Context, prNumber int, sourceCommitSHA string, file types.ChangedFile,
-	rule types.CopyRule, target types.TargetConfig, targetPath string, config *configs.Config, container *ServiceContainer) {
+	rule types.CopyRule, target types.TargetConfig, targetPath string, sourceBranch string, config *configs.Config, container *ServiceContainer) {
 
 	sourceRepo := fmt.Sprintf("%s/%s", config.RepoOwner, config.RepoName)
 
@@ -419,11 +491,20 @@ func handleFileDeprecation(ctx context.Context, prNumber int, sourceCommitSHA st
 
 // queueFileForUploadWithStrategy queues a file for upload with the appropriate strategy
 func queueFileForUploadWithStrategy(target types.TargetConfig, file github.RepositoryContent,
-	rule types.CopyRule, variables map[string]string, config *configs.Config, container *ServiceContainer) {
+	rule types.CopyRule, variables map[string]string, prNumber int, sourceCommitSHA string, sourceBranch string, config *configs.Config, container *ServiceContainer) {
+
+	// Include rule name and commit strategy in the key to allow multiple rules
+	// targeting the same repo/branch with different strategies
+	commitStrategy := string(target.CommitStrategy.Type)
+	if commitStrategy == "" {
+		commitStrategy = "direct" // default
+	}
 
 	key := types.UploadKey{
-		RepoName:   target.Repo,
-		BranchPath: "refs/heads/" + target.Branch,
+		RepoName:       target.Repo,
+		BranchPath:     "refs/heads/" + target.Branch,
+		RuleName:       rule.Name,
+		CommitStrategy: commitStrategy,
 	}
 
 	// Get existing entry or create new
@@ -439,12 +520,19 @@ func queueFileForUploadWithStrategy(target types.TargetConfig, file github.Repos
 	entry.CommitStrategy = types.CommitStrategy(target.CommitStrategy.Type)
 	entry.AutoMergePR = target.CommitStrategy.AutoMerge
 
+	// Add file to content first so we can get accurate file count
+	entry.Content = append(entry.Content, file)
+
 	// Render commit message and PR title using templates
 	msgCtx := types.NewMessageContext()
 	msgCtx.RuleName = rule.Name
 	msgCtx.SourceRepo = fmt.Sprintf("%s/%s", config.RepoOwner, config.RepoName)
+	msgCtx.SourceBranch = sourceBranch
 	msgCtx.TargetRepo = target.Repo
 	msgCtx.TargetBranch = target.Branch
+	msgCtx.FileCount = len(entry.Content)
+	msgCtx.PRNumber = prNumber
+	msgCtx.CommitSHA = sourceCommitSHA
 	msgCtx.Variables = variables
 
 	if target.CommitStrategy.CommitMessage != "" {
@@ -454,7 +542,6 @@ func queueFileForUploadWithStrategy(target types.TargetConfig, file github.Repos
 		entry.PRTitle = container.MessageTemplater.RenderPRTitle(target.CommitStrategy.PRTitle, msgCtx)
 	}
 
-	entry.Content = append(entry.Content, file)
 	container.FileStateService.AddFileToUpload(key, entry)
 }
 

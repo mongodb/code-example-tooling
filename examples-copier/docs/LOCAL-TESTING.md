@@ -34,7 +34,7 @@ make run-local-quick
 
 ```bash
 # Copy the local template
-cp configs/.env.local configs/.env
+cp configs/.env.local.example configs/.env
 
 # Edit with your values (optional)
 nano configs/.env

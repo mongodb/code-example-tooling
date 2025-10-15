@@ -57,6 +57,14 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+// LEGACY TESTS - These tests are for legacy code that was removed in commit a64726c
+// The AddToRepoAndFilesMap and IterateFilesForCopy functions were removed as part of the
+// migration to the new pattern-matching system. These tests are commented out but kept for reference.
+//
+// The new system uses pattern matching rules defined in YAML config files.
+// See pattern_matcher_test.go for tests of the new system.
+
+/*
 func TestAddToRepoAndFilesMap_NewEntry(t *testing.T) {
 	services.FilesToUpload = nil
 
@@ -209,6 +217,7 @@ func TestIterateFilesForCopy_RecursiveVsNonRecursive(t *testing.T) {
 		})
 	}
 }
+*/
 
 func TestAddFilesToTargetRepoBranch_Succeeds(t *testing.T) {
 	_ = test.WithHTTPMock(t)
@@ -539,10 +548,10 @@ func TestPriority_Strategy_ConfigOverridesEnv_And_MessageFallbacks(t *testing.T)
 	}
 
 	services.FilesToUpload = map[types.UploadKey]types.UploadFileContent{
-		{RepoName: repo, BranchPath: "refs/heads/" + baseBranch}: {TargetBranch: baseBranch, Content: files},
+		{RepoName: repo, BranchPath: "refs/heads/" + baseBranch, CommitStrategy: cfg.CopierCommitStrategy}: {TargetBranch: baseBranch, Content: files},
 	}
 
-	services.AddFilesToTargetRepoBranch(types.ConfigFileType{cfg})
+	services.AddFilesToTargetRepoBranch() // No longer takes parameters - uses FilesToUpload map
 
 	info := httpmock.GetCallCountInfo()
 	require.Equal(t, 1, info["GET "+baseRefURL])
@@ -615,10 +624,10 @@ func TestPriority_PRTitleDefaultsToCommitMessage_And_NoAutoMergeWhenConfigPresen
 		Name: github.String("only.txt"), Path: github.String("only.txt"),
 		Content: github.String(base64.StdEncoding.EncodeToString([]byte("y"))),
 	}}
-	cfg := types.Configs{TargetRepo: repo, TargetBranch: baseBranch /* MergeWithoutReview: false (zero value) */}
-	services.FilesToUpload = map[types.UploadKey]types.UploadFileContent{{RepoName: repo, BranchPath: "refs/heads/" + baseBranch, RuleName: "", CommitStrategy: ""}: {TargetBranch: baseBranch, Content: files}}
+	// cfg := types.Configs{TargetRepo: repo, TargetBranch: baseBranch /* MergeWithoutReview: false (zero value) */}
+	services.FilesToUpload = map[types.UploadKey]types.UploadFileContent{{RepoName: repo, BranchPath: "refs/heads/" + baseBranch, RuleName: "", CommitStrategy: "pr"}: {TargetBranch: baseBranch, Content: files}}
 
-	services.AddFilesToTargetRepoBranch(types.ConfigFileType{cfg})
+	services.AddFilesToTargetRepoBranch() // No longer takes parameters - uses FilesToUpload map
 
 	// Ensure a PR was created but no merge occurred
 	require.Equal(t, 1, test.CountByMethodAndURLRegexp("POST", regexp.MustCompile(`/pulls$`)))

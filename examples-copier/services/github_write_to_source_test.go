@@ -88,20 +88,20 @@ func TestDeprecationFileEnvironmentVariables(t *testing.T) {
 	// The UpdateDeprecationFile function uses os.Getenv to read these values
 
 	tests := []struct {
-		name              string
-		deprecationFile   string
+		name            string
+		deprecationFile string
 	}{
 		{
-			name:              "default config",
-			deprecationFile:   "deprecated-files.json",
+			name:            "default config",
+			deprecationFile: "deprecated-files.json",
 		},
 		{
-			name:              "custom file",
-			deprecationFile:   "custom-deprecated.json",
+			name:            "custom file",
+			deprecationFile: "custom-deprecated.json",
 		},
 		{
-			name:              "nested path",
-			deprecationFile:   "docs/deprecated/files.json",
+			name:            "nested path",
+			deprecationFile: "docs/deprecated/files.json",
 		},
 	}
 
@@ -116,6 +116,7 @@ func TestDeprecationFileEnvironmentVariables(t *testing.T) {
 	}
 }
 
+// TODO https://jira.mongodb.org/browse/DOCSP-54727
 // Note: Comprehensive testing of UpdateDeprecationFile would require:
 // 1. Refactoring to accept a GitHub client interface instead of using global GetRestClient()
 // 2. Creating mock implementations of the GitHub client
@@ -132,4 +133,3 @@ func TestDeprecationFileEnvironmentVariables(t *testing.T) {
 // func UpdateDeprecationFile(ctx context.Context, config *configs.Config, client GitHubClient) error
 //
 // This would allow for proper unit testing with mocked dependencies.
-

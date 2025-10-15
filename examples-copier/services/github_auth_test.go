@@ -192,6 +192,7 @@ func TestJWTExpiry_GlobalVariable(t *testing.T) {
 	}
 }
 
+// TODO https://jira.mongodb.org/browse/DOCSP-54727
 // Note: Comprehensive testing of github_auth.go would require:
 // 1. Mocking the Secret Manager client
 // 2. Mocking the GitHub API client
@@ -221,4 +222,3 @@ func TestJWTExpiry_GlobalVariable(t *testing.T) {
 // 3. Return errors instead of calling log.Fatal
 // 4. Use dependency injection for HTTP client
 // 5. Make JWT generation and caching logic more modular
-

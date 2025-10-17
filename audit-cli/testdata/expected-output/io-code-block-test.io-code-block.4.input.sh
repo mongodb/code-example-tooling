@@ -1,0 +1,1 @@
+mongosh --eval "db.users.find({age: {$gt: 25}})"

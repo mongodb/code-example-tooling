@@ -19,7 +19,7 @@ import (
 //   - verbose: If true, show detailed breakdown including file paths and language counts
 func PrintReport(report *SearchReport, verbose bool) {
 	fmt.Println("\n" + strings.Repeat("=", 60))
-	fmt.Println("CODE SEARCH REPORT")
+	fmt.Println("SEARCH REPORT")
 	fmt.Println(strings.Repeat("=", 60))
 
 	fmt.Printf("\nFiles Scanned: %d\n", report.FilesScanned)

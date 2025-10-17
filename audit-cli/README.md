@@ -116,7 +116,7 @@ After extraction, a report is displayed showing:
 
 #### `search find-string`
 
-Search through extracted code example files for a specific substring.
+Search through files for a specific substring. Can search through extracted code example files or RST source files.
 
 **Basic Usage:**
 
@@ -130,6 +130,12 @@ Search through extracted code example files for a specific substring.
 # Search recursively
 ./audit-cli search find-string path/to/output "substring" -r
 
+# Search an RST file and all files it includes
+./audit-cli search find-string path/to/source.rst "substring" -f
+
+# Search a directory recursively and follow includes in RST files
+./audit-cli search find-string path/to/source "substring" -r -f
+
 # Verbose output (show file paths and language breakdown)
 ./audit-cli search find-string path/to/output "substring" -r -v
 ```
@@ -137,6 +143,7 @@ Search through extracted code example files for a specific substring.
 **Flags:**
 
 - `-r, --recursive` - Recursively search all files in subdirectories
+- `-f, --follow-includes` - Follow `.. include::` directives in RST files
 - `-v, --verbose` - Show file paths and language breakdown
 
 **Report:**

@@ -8,6 +8,7 @@
 //
 // Supports:
 //   - Recursive directory scanning
+//   - Following include directives in RST files
 //   - Verbose output with file paths and language breakdown
 //   - Language detection based on file extension
 package find_string
@@ -18,21 +19,24 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/mongodb/code-example-tooling/audit-cli/internal/rst"
 	"github.com/spf13/cobra"
 )
 
 // NewFindStringCommand creates the find-string subcommand.
 //
 // This command searches through extracted code example files for a specific substring.
-// Supports flags for recursive search and verbose output.
+// Supports flags for recursive search, following includes, and verbose output.
 //
 // Flags:
 //   - -r, --recursive: Recursively search all files in subdirectories
+//   - -f, --follow-includes: Follow .. include:: directives in RST files
 //   - -v, --verbose: Show file paths and language breakdown
 func NewFindStringCommand() *cobra.Command {
 	var (
-		recursive bool
-		verbose   bool
+		recursive      bool
+		followIncludes bool
+		verbose        bool
 	)
 
 	cmd := &cobra.Command{
@@ -44,11 +48,12 @@ Reports the number of code examples containing the substring.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			filePath := args[0]
 			substring := args[1]
-			return runSearch(filePath, substring, recursive, verbose)
+			return runSearch(filePath, substring, recursive, followIncludes, verbose)
 		},
 	}
 
 	cmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "Recursively search all files in subdirectories")
+	cmd.Flags().BoolVarP(&followIncludes, "follow-includes", "f", false, "Follow .. include:: directives in RST files")
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Provide additional information during execution")
 
 	return cmd
@@ -63,26 +68,27 @@ Reports the number of code examples containing the substring.`,
 //   - filePath: Path to file or directory to search
 //   - substring: The substring to search for (case-sensitive)
 //   - recursive: If true, recursively search subdirectories
+//   - followIncludes: If true, follow .. include:: directives
 //   - verbose: If true, show detailed information during search
 //
 // Returns:
 //   - *SearchReport: Statistics about the search operation
 //   - error: Any error encountered during search
-func RunSearch(filePath string, substring string, recursive bool, verbose bool) (*SearchReport, error) {
-	return runSearchInternal(filePath, substring, recursive, verbose)
+func RunSearch(filePath string, substring string, recursive bool, followIncludes bool, verbose bool) (*SearchReport, error) {
+	return runSearchInternal(filePath, substring, recursive, followIncludes, verbose)
 }
 
 // runSearch executes the search operation (internal wrapper for CLI).
 //
 // This is a thin wrapper around runSearchInternal that discards the report
 // and only returns errors, suitable for use in the CLI command handler.
-func runSearch(filePath string, substring string, recursive bool, verbose bool) error {
-	_, err := runSearchInternal(filePath, substring, recursive, verbose)
+func runSearch(filePath string, substring string, recursive bool, followIncludes bool, verbose bool) error {
+	_, err := runSearchInternal(filePath, substring, recursive, followIncludes, verbose)
 	return err
 }
 
 // runSearchInternal contains the core logic for the search-code-examples command
-func runSearchInternal(filePath string, substring string, recursive bool, verbose bool) (*SearchReport, error) {
+func runSearchInternal(filePath string, substring string, recursive bool, followIncludes bool, verbose bool) (*SearchReport, error) {
 	fileInfo, err := os.Stat(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to access path %s: %w", filePath, err)
@@ -106,24 +112,46 @@ func runSearchInternal(filePath string, substring string, recursive bool, verbos
 
 	if verbose {
 		fmt.Printf("Found %d files to search\n", len(filesToSearch))
-		fmt.Printf("Searching for substring: %q\n\n", substring)
+		fmt.Printf("Searching for substring: %q\n", substring)
+		fmt.Printf("Follow includes: %v\n\n", followIncludes)
 	}
+
+	// Track visited files to prevent circular includes
+	visited := make(map[string]bool)
 
 	for _, file := range filesToSearch {
 		if verbose {
 			fmt.Printf("Searching: %s\n", file)
 		}
 
-		result, err := searchFile(file, substring)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to search %s: %v\n", file, err)
-			continue
+		// If followIncludes is enabled, collect all files including those referenced by includes
+		var filesToSearchWithIncludes []string
+		if followIncludes {
+			// Use ParseFileWithIncludes to get all files (main + includes)
+			processedFiles, err := collectFilesWithIncludes(file, visited, verbose)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: failed to follow includes for %s: %v\n", file, err)
+				filesToSearchWithIncludes = []string{file}
+			} else {
+				filesToSearchWithIncludes = processedFiles
+			}
+		} else {
+			filesToSearchWithIncludes = []string{file}
 		}
 
-		report.AddResult(result)
+		// Search all collected files
+		for _, fileToSearch := range filesToSearchWithIncludes {
+			result, err := searchFile(fileToSearch, substring)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: failed to search %s: %v\n", fileToSearch, err)
+				continue
+			}
 
-		if verbose && result.Contains {
-			fmt.Printf("  ✓ Found substring in %s\n", file)
+			report.AddResult(result)
+
+			if verbose && result.Contains {
+				fmt.Printf("  ✓ Found substring in %s\n", fileToSearch)
+			}
 		}
 	}
 
@@ -162,6 +190,24 @@ func collectFiles(dirPath string, recursive bool) ([]string, error) {
 	}
 
 	return files, nil
+}
+
+// collectFilesWithIncludes collects a file and all files it includes via .. include:: directives
+func collectFilesWithIncludes(filePath string, visited map[string]bool, verbose bool) ([]string, error) {
+	// Use the RST package's ParseFileWithIncludes to get all files
+	// We pass a no-op parseFunc since we just want the list of files
+	processedFiles, err := rst.ParseFileWithIncludes(
+		filePath,
+		true, // followIncludes = true
+		visited,
+		verbose,
+		nil, // no-op parseFunc
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return processedFiles, nil
 }
 
 // searchFile searches a single file for the substring

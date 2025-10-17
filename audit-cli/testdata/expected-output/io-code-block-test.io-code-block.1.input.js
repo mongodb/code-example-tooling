@@ -1,0 +1,1 @@
+db.restaurants.aggregate( [ { $match: { category: "cafe" } } ] )

@@ -1,0 +1,1 @@
+db.inventory.find({ status: "A" })

@@ -8,9 +8,12 @@
 //     - code-examples: Extract code examples from RST directives
 //   - search: Search through extracted content
 //     - find-string: Search for substrings in extracted files
+//   - analyze: Analyze RST file structures
+//     - includes: Analyze include directive relationships
 package main
 
 import (
+	"github.com/mongodb/code-example-tooling/audit-cli/commands/analyze"
 	"github.com/mongodb/code-example-tooling/audit-cli/commands/extract"
 	"github.com/mongodb/code-example-tooling/audit-cli/commands/search"
 	"github.com/spf13/cobra"
@@ -30,6 +33,7 @@ with special handling for MongoDB documentation conventions.`,
 	// Add parent commands
 	rootCmd.AddCommand(extract.NewExtractCommand())
 	rootCmd.AddCommand(search.NewSearchCommand())
+	rootCmd.AddCommand(analyze.NewAnalyzeCommand())
 
 	rootCmd.Execute()
 }

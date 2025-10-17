@@ -580,9 +580,10 @@ func TestNoFlagsOnDirectory(t *testing.T) {
 
 	// Without recursive flag, should only process files in the top-level directory
 	// Should NOT include files in includes/ subdirectory
-	// Expected: code-block-test.rst, include-test.rst, io-code-block-test.rst,
-	//           literalinclude-test.rst, nested-code-block-test.rst (5 files)
-	expectedFiles := 5
+	// Expected: code-block-test.rst, duplicate-include-test.rst, include-test.rst,
+	//           io-code-block-test.rst, literalinclude-test.rst, nested-code-block-test.rst,
+	//           nested-include-test.rst (7 files)
+	expectedFiles := 7
 	if report.FilesTraversed != expectedFiles {
 		t.Errorf("Expected %d files traversed (top-level only), got %d",
 			expectedFiles, report.FilesTraversed)

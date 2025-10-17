@@ -9,6 +9,7 @@ A Go CLI tool for extracting and analyzing code examples from MongoDB documentat
 - [Usage](#usage)
   - [Extract Commands](#extract-commands)
   - [Search Commands](#search-commands)
+  - [Analyze Commands](#analyze-commands)
 - [Development](#development)
   - [Project Structure](#project-structure)
   - [Adding New Commands](#adding-new-commands)
@@ -22,8 +23,9 @@ This CLI tool helps maintain code quality across MongoDB's documentation by:
 
 1. **Extracting code examples** from RST files into individual, testable files
 2. **Searching extracted code** for specific patterns or substrings
-3. **Following include directives** to process entire documentation trees
-4. **Handling MongoDB-specific conventions** like steps files, extracts, and template variables
+3. **Analyzing include relationships** to understand file dependencies
+4. **Following include directives** to process entire documentation trees
+5. **Handling MongoDB-specific conventions** like steps files, extracts, and template variables
 
 ## Installation
 
@@ -51,8 +53,10 @@ The CLI is organized into parent commands with subcommands:
 audit-cli
 ├── extract          # Extract content from RST files
 │   └── code-examples
-└── search           # Search through extracted content
-    └── find-string
+├── search           # Search through extracted content
+│   └── find-string
+└── analyze          # Analyze RST file structures
+    └── includes
 ```
 
 ### Extract Commands
@@ -156,6 +160,67 @@ With `-v` flag, also shows:
 - List of file paths where substring appears
 - Count broken down by language (file extension)
 
+### Analyze Commands
+
+#### `analyze includes`
+
+Analyze include directive relationships in RST files to understand file dependencies.
+
+**Basic Usage:**
+
+```bash
+# Analyze a single file (shows summary)
+./audit-cli analyze includes path/to/file.rst
+
+# Show hierarchical tree structure
+./audit-cli analyze includes path/to/file.rst --tree
+
+# Show flat list of all included files
+./audit-cli analyze includes path/to/file.rst --list
+
+# Show both tree and list
+./audit-cli analyze includes path/to/file.rst --tree --list
+
+# Verbose output (show processing details)
+./audit-cli analyze includes path/to/file.rst --tree -v
+```
+
+**Flags:**
+
+- `--tree` - Display results as a hierarchical tree structure
+- `--list` - Display results as a flat list of all files
+- `-v, --verbose` - Show detailed processing information
+
+**Output Formats:**
+
+**Summary** (default - no flags):
+- Root file path
+- Total number of files
+- Maximum depth of include nesting
+- Hints to use --tree or --list for more details
+
+**Tree** (--tree flag):
+- Hierarchical tree structure showing include relationships
+- Uses box-drawing characters for visual clarity
+- Shows which files include which other files
+
+**List** (--list flag):
+- Flat numbered list of all files
+- Files listed in depth-first traversal order
+- Shows absolute paths to all files
+
+**Use Cases:**
+
+This command helps writers:
+- Understand the impact of changes to widely-included files
+- Identify circular include dependencies (files included multiple times)
+- Document file relationships for maintenance
+- Plan refactoring of complex include structures
+
+**Note on File Counting:**
+
+The total file count represents **unique files** discovered through include directives. If a file is included multiple times (e.g., file A includes file C, and file B also includes file C), it is counted only once in the total. However, the tree view will show it in all locations where it appears, with subsequent occurrences marked as circular includes in verbose mode.
+
 ## Development
 
 ### Project Structure
@@ -174,17 +239,25 @@ audit-cli/
 │   │       ├── report.go           # Report generation
 │   │       ├── types.go            # Type definitions
 │   │       └── language.go         # Language normalization
-│   └── search/                      # Search parent command
-│       ├── search.go               # Parent command definition
-│       └── find-string/            # Find string subcommand
-│           ├── find_string.go      # Command logic
-│           ├── types.go            # Type definitions
-│           └── report.go           # Report generation
+│   ├── search/                      # Search parent command
+│   │   ├── search.go               # Parent command definition
+│   │   └── find-string/            # Find string subcommand
+│   │       ├── find_string.go      # Command logic
+│   │       ├── types.go            # Type definitions
+│   │       └── report.go           # Report generation
+│   └── analyze/                     # Analyze parent command
+│       ├── analyze.go              # Parent command definition
+│       └── includes/               # Includes analysis subcommand
+│           ├── includes.go         # Command logic
+│           ├── analyzer.go         # Include tree building
+│           ├── output.go           # Output formatting
+│           └── types.go            # Type definitions
 ├── internal/                        # Internal packages
 │   └── rst/                        # RST parsing utilities
-│       ├── include.go              # Include directive resolution
-│       ├── traverse.go             # Directory traversal
-│       └── directive.go            # Directive parsing
+│       ├── parser.go               # Generic parsing with includes
+│       ├── include_resolver.go     # Include directive resolution
+│       ├── directive_parser.go     # Directive parsing
+│       └── file_utils.go           # File utilities
 └── testdata/                        # Test fixtures
     ├── input-files/                # Test RST files
     │   └── source/                 # Source directory (required)

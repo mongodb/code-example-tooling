@@ -122,11 +122,17 @@ After extraction, a report is displayed showing:
 
 Search through files for a specific substring. Can search through extracted code example files or RST source files.
 
+**Default Behavior:**
+- **Case-insensitive** search (matches "curl", "CURL", "Curl", etc.)
+- **Exact word matching** (excludes partial matches like "curl" in "libcurl")
+
+Use `--case-sensitive` to make the search case-sensitive, or `--partial-match` to allow matching the substring as part of larger words.
+
 **Basic Usage:**
 
 ```bash
-# Search in a single file
-./audit-cli search find-string path/to/file.js "substring"
+# Search in a single file (case-insensitive, exact word match)
+./audit-cli search find-string path/to/file.js "curl"
 
 # Search in a directory (non-recursive)
 ./audit-cli search find-string path/to/output "substring"
@@ -142,6 +148,15 @@ Search through files for a specific substring. Can search through extracted code
 
 # Verbose output (show file paths and language breakdown)
 ./audit-cli search find-string path/to/output "substring" -r -v
+
+# Case-sensitive search (only matches exact case)
+./audit-cli search find-string path/to/output "CURL" --case-sensitive
+
+# Partial match (includes "curl" in "libcurl")
+./audit-cli search find-string path/to/output "curl" --partial-match
+
+# Combine flags for case-sensitive partial matching
+./audit-cli search find-string path/to/output "curl" --case-sensitive --partial-match
 ```
 
 **Flags:**
@@ -149,6 +164,8 @@ Search through files for a specific substring. Can search through extracted code
 - `-r, --recursive` - Recursively search all files in subdirectories
 - `-f, --follow-includes` - Follow `.. include::` directives in RST files
 - `-v, --verbose` - Show file paths and language breakdown
+- `--case-sensitive` - Make search case-sensitive (default: case-insensitive)
+- `--partial-match` - Allow partial matches within words (default: exact word matching)
 
 **Report:**
 

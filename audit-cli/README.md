@@ -10,6 +10,7 @@ A Go CLI tool for extracting and analyzing code examples from MongoDB documentat
   - [Extract Commands](#extract-commands)
   - [Search Commands](#search-commands)
   - [Analyze Commands](#analyze-commands)
+  - [Compare Commands](#compare-commands)
 - [Development](#development)
   - [Project Structure](#project-structure)
   - [Adding New Commands](#adding-new-commands)
@@ -24,8 +25,9 @@ This CLI tool helps maintain code quality across MongoDB's documentation by:
 1. **Extracting code examples** from RST files into individual, testable files
 2. **Searching extracted code** for specific patterns or substrings
 3. **Analyzing include relationships** to understand file dependencies
-4. **Following include directives** to process entire documentation trees
-5. **Handling MongoDB-specific conventions** like steps files, extracts, and template variables
+4. **Comparing file contents** across documentation versions to identify differences
+5. **Following include directives** to process entire documentation trees
+6. **Handling MongoDB-specific conventions** like steps files, extracts, and template variables
 
 ## Installation
 
@@ -55,8 +57,10 @@ audit-cli
 │   └── code-examples
 ├── search           # Search through extracted content
 │   └── find-string
-└── analyze          # Analyze RST file structures
-    └── includes
+├── analyze          # Analyze RST file structures
+│   └── includes
+└── compare          # Compare files across versions
+    └── file-contents
 ```
 
 ### Extract Commands
@@ -238,6 +242,166 @@ This command helps writers:
 
 The total file count represents **unique files** discovered through include directives. If a file is included multiple times (e.g., file A includes file C, and file B also includes file C), it is counted only once in the total. However, the tree view will show it in all locations where it appears, with subsequent occurrences marked as circular includes in verbose mode.
 
+### Compare Commands
+
+#### `compare file-contents`
+
+Compare file contents to identify differences between files. Supports two modes:
+1. **Direct comparison** - Compare two specific files
+2. **Version comparison** - Compare the same file across multiple documentation versions
+
+**Use Cases:**
+
+This command helps writers:
+- Identify content drift across documentation versions
+- Verify that updates have been applied consistently
+- Scope maintenance work when updating shared content
+- Understand how files have diverged over time
+
+**Basic Usage:**
+
+```bash
+# Direct comparison of two files
+./audit-cli compare file-contents file1.rst file2.rst
+
+# Compare with diff output
+./audit-cli compare file-contents file1.rst file2.rst --show-diff
+
+# Version comparison across MongoDB documentation versions
+./audit-cli compare file-contents \
+  /path/to/manual/manual/source/includes/example.rst \
+  --product-dir /path/to/manual \
+  --versions manual,upcoming,v8.0,v7.0
+
+# Show which files differ
+./audit-cli compare file-contents \
+  /path/to/manual/manual/source/includes/example.rst \
+  --product-dir /path/to/manual \
+  --versions manual,upcoming,v8.0,v7.0 \
+  --show-paths
+
+# Show detailed diffs
+./audit-cli compare file-contents \
+  /path/to/manual/manual/source/includes/example.rst \
+  --product-dir /path/to/manual \
+  --versions manual,upcoming,v8.0,v7.0 \
+  --show-diff
+
+# Verbose output (show processing details)
+./audit-cli compare file-contents file1.rst file2.rst -v
+```
+
+**Flags:**
+
+- `-p, --product-dir <dir>` - Product directory path (required for version comparison)
+- `-V, --versions <list>` - Comma-separated list of versions (e.g., `manual,upcoming,v8.0`)
+- `--show-paths` - Display file paths grouped by status (matching, differing, not found)
+- `-d, --show-diff` - Display unified diff output (implies `--show-paths`)
+- `-v, --verbose` - Show detailed processing information
+
+**Comparison Modes:**
+
+**1. Direct Comparison (Two Files)**
+
+Provide two file paths as arguments:
+
+```bash
+./audit-cli compare file-contents path/to/file1.rst path/to/file2.rst
+```
+
+This mode:
+- Compares exactly two files
+- Reports whether they are identical or different
+- Can show unified diff with `--show-diff`
+
+**2. Version Comparison (Product Directory)**
+
+Provide one file path plus `--product-dir` and `--versions`:
+
+```bash
+./audit-cli compare file-contents \
+  /path/to/manual/manual/source/includes/example.rst \
+  --product-dir /path/to/manual \
+  --versions manual,upcoming,v8.0
+```
+
+This mode:
+- Extracts the relative path from the reference file
+- Resolves the same relative path in each version directory
+- Compares all versions against the reference file
+- Reports matching, differing, and missing files
+
+**Version Directory Structure:**
+
+The tool expects MongoDB documentation to be organized as:
+```
+product-dir/
+├── manual/
+│   └── source/
+│       └── includes/
+│           └── example.rst
+├── upcoming/
+│   └── source/
+│       └── includes/
+│           └── example.rst
+└── v8.0/
+    └── source/
+        └── includes/
+            └── example.rst
+```
+
+**Output Formats:**
+
+**Summary** (default - no flags):
+- Total number of versions compared
+- Count of matching, differing, and missing files
+- Hints to use `--show-paths` or `--show-diff` for more details
+
+**With --show-paths:**
+- Summary (as above)
+- List of files that match (with ✓)
+- List of files that differ (with ✗)
+- List of files not found (with -)
+
+**With --show-diff:**
+- Summary and paths (as above)
+- Unified diff output for each differing file
+- Shows added lines (prefixed with +)
+- Shows removed lines (prefixed with -)
+- Shows context lines around changes
+
+**Examples:**
+
+```bash
+# Check if a file is consistent across all versions
+./audit-cli compare file-contents \
+  ~/workspace/docs-mongodb-internal/content/manual/manual/source/includes/fact-atlas-search.rst \
+  --product-dir ~/workspace/docs-mongodb-internal/content/manual \
+  --versions manual,upcoming,v8.0,v7.0,v6.0
+
+# Find differences and see what changed
+./audit-cli compare file-contents \
+  ~/workspace/docs-mongodb-internal/content/manual/manual/source/includes/fact-atlas-search.rst \
+  --product-dir ~/workspace/docs-mongodb-internal/content/manual \
+  --versions manual,upcoming,v8.0,v7.0,v6.0 \
+  --show-diff
+
+# Compare two specific versions of a file
+./audit-cli compare file-contents \
+  ~/workspace/docs-mongodb-internal/content/manual/manual/source/includes/example.rst \
+  ~/workspace/docs-mongodb-internal/content/manual/v8.0/source/includes/example.rst \
+  --show-diff
+```
+
+**Exit Codes:**
+
+- `0` - Success (files compared successfully, regardless of whether they match)
+- `1` - Error (invalid arguments, file not found, read error, etc.)
+
+**Note on Missing Files:**
+
+Files that don't exist in certain versions are reported separately and do not cause errors. This is expected behavior since features may be added or removed across versions.
+
 ## Development
 
 ### Project Structure
@@ -262,13 +426,23 @@ audit-cli/
 │   │       ├── find_string.go      # Command logic
 │   │       ├── types.go            # Type definitions
 │   │       └── report.go           # Report generation
-│   └── analyze/                     # Analyze parent command
-│       ├── analyze.go              # Parent command definition
-│       └── includes/               # Includes analysis subcommand
-│           ├── includes.go         # Command logic
-│           ├── analyzer.go         # Include tree building
+│   ├── analyze/                     # Analyze parent command
+│   │   ├── analyze.go              # Parent command definition
+│   │   └── includes/               # Includes analysis subcommand
+│   │       ├── includes.go         # Command logic
+│   │       ├── analyzer.go         # Include tree building
+│   │       ├── output.go           # Output formatting
+│   │       └── types.go            # Type definitions
+│   └── compare/                     # Compare parent command
+│       ├── compare.go              # Parent command definition
+│       └── file-contents/          # File contents comparison subcommand
+│           ├── file_contents.go    # Command logic
+│           ├── file_contents_test.go # Tests
+│           ├── comparer.go         # Comparison logic
+│           ├── differ.go           # Diff generation
 │           ├── output.go           # Output formatting
-│           └── types.go            # Type definitions
+│           ├── types.go            # Type definitions
+│           └── version_resolver.go # Version path resolution
 ├── internal/                        # Internal packages
 │   └── rst/                        # RST parsing utilities
 │       ├── parser.go               # Generic parsing with includes
@@ -281,7 +455,13 @@ audit-cli/
     │       ├── *.rst               # Test files
     │       ├── includes/           # Included RST files
     │       └── code-examples/      # Code files for literalinclude
-    └── expected-output/            # Expected extraction results
+    ├── expected-output/            # Expected extraction results
+    └── compare/                    # Compare command test data
+        ├── product/                # Version structure tests
+        │   ├── manual/             # Manual version
+        │   ├── upcoming/           # Upcoming version
+        │   └── v8.0/               # v8.0 version
+        └── *.txt                   # Direct comparison tests
 ```
 
 ### Adding New Commands

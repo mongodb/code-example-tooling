@@ -10,10 +10,13 @@
 //     - find-string: Search for substrings in extracted files
 //   - analyze: Analyze RST file structures
 //     - includes: Analyze include directive relationships
+//   - compare: Compare files across different versions
+//     - file-contents: Compare file contents across versions
 package main
 
 import (
 	"github.com/mongodb/code-example-tooling/audit-cli/commands/analyze"
+	"github.com/mongodb/code-example-tooling/audit-cli/commands/compare"
 	"github.com/mongodb/code-example-tooling/audit-cli/commands/extract"
 	"github.com/mongodb/code-example-tooling/audit-cli/commands/search"
 	"github.com/spf13/cobra"
@@ -34,6 +37,7 @@ with special handling for MongoDB documentation conventions.`,
 	rootCmd.AddCommand(extract.NewExtractCommand())
 	rootCmd.AddCommand(search.NewSearchCommand())
 	rootCmd.AddCommand(analyze.NewAnalyzeCommand())
+	rootCmd.AddCommand(compare.NewCompareCommand())
 
 	rootCmd.Execute()
 }

@@ -55,7 +55,7 @@ The CLI is organized into parent commands with subcommands:
 audit-cli
 ├── extract          # Extract content from RST files
 │   └── code-examples
-├── search           # Search through extracted content
+├── search           # Search through extracted content or source files
 │   └── find-string
 ├── analyze          # Analyze RST file structures
 │   └── includes
@@ -67,7 +67,18 @@ audit-cli
 
 #### `extract code-examples`
 
-Extract code examples from reStructuredText files into individual files.
+Extract code examples from reStructuredText files into individual files. For details about what code example directives
+are supported and how, refer to the [Supported rST Directives - Code Example Extraction](#code-example-extraction)
+section below.
+
+**Use Cases:**
+
+This command helps writers:
+- Examine all the code examples that make up a specific page or section
+- Split out code examples into individual files for migration to test infrastructure
+- Report on the number of code examples by language
+- Report on the number of code examples by directive type
+- Use additional commands, such as search, to find strings within specific code examples
 
 **Basic Usage:**
 
@@ -97,8 +108,16 @@ Extract code examples from reStructuredText files into individual files.
 **Flags:**
 
 - `-o, --output <dir>` - Output directory for extracted files (default: `./output`)
-- `-r, --recursive` - Recursively scan directories for RST files
-- `-f, --follow-includes` - Follow `.. include::` directives in RST files
+- `-r, --recursive` - Recursively scan directories for RST files. If you do not provide this flag, the tool will only
+  extract code examples from the top-level RST file. If you do provide this flag, the tool will recursively scan all
+  subdirectories for RST files and extract code examples from all files.
+- `-f, --follow-includes` - Follow `.. include::` directives in RST files. If you do not provide this flag, the tool
+  will only extract code examples from the top-level RST file. If you do provide this flag, the tool will follow any
+  `.. include::` directives in the RST file and extract code examples from all included files. When combined with `-r`,
+  the tool will recursively scan all subdirectories for RST files and follow `.. include::` directives in all files. If
+  an include filepath is *outside* the input directory, the `-r` flag would not parse it, but the `-f` flag would
+  follow the include directive and parse the included file. This effectively lets you parse all the files that make up
+  a single page, if you start from the page's root `.txt` file.
 - `--dry-run` - Show what would be extracted without writing files
 - `-v, --verbose` - Show detailed processing information
 
@@ -114,7 +133,7 @@ Examples:
 
 **Report:**
 
-After extraction, a report is displayed showing:
+After extraction, the code extraction report shows:
 - Number of files traversed
 - Number of output files written
 - Code examples by language
@@ -130,7 +149,17 @@ Search through files for a specific substring. Can search through extracted code
 - **Case-insensitive** search (matches "curl", "CURL", "Curl", etc.)
 - **Exact word matching** (excludes partial matches like "curl" in "libcurl")
 
-Use `--case-sensitive` to make the search case-sensitive, or `--partial-match` to allow matching the substring as part of larger words.
+Use `--case-sensitive` to make the search case-sensitive, or `--partial-match` to allow matching the substring as part
+of larger words.
+
+**Use Cases:**
+
+This command helps writers:
+- Find specific strings across documentation files or pages
+  - Search for product names, command names, API methods, or other strings that may need to be updated
+- Understand the number of references and impact of changes across documentation files or pages
+- Identify files that need to be updated when a string needs to be changed
+- Scope work related to specific changes
 
 **Basic Usage:**
 
@@ -165,8 +194,16 @@ Use `--case-sensitive` to make the search case-sensitive, or `--partial-match` t
 
 **Flags:**
 
-- `-r, --recursive` - Recursively search all files in subdirectories
-- `-f, --follow-includes` - Follow `.. include::` directives in RST files
+- `-r, --recursive` - Recursively scan directories for RST files. If you do not provide this flag, the tool will only
+  search within the top-level RST file or directory. If you do provide this flag, the tool will recursively scan all
+  subdirectories for RST files and search across all files.
+- `-f, --follow-includes` - Follow `.. include::` directives in RST files. If you do not provide this flag, the tool
+  will search only the top-level RST file or directory. If you do provide this flag, the tool will follow any
+  `.. include::` directives in any RST file in the input path and search across all included files. When
+  combined with `-r`, the tool will recursively scan all subdirectories for RST files and follow `.. include::` directives
+  in all files. If an include filepath is *outside* the input directory, the `-r` flag would not parse it, but the `-f`
+  flag would follow the include directive and search the included file. This effectively lets you parse all the files
+  that make up a single page, if you start from the page's root `.txt` file.
 - `-v, --verbose` - Show file paths and language breakdown
 - `--case-sensitive` - Make search case-sensitive (default: case-insensitive)
 - `--partial-match` - Allow partial matches within words (default: exact word matching)
@@ -185,7 +222,15 @@ With `-v` flag, also shows:
 
 #### `analyze includes`
 
-Analyze include directive relationships in RST files to understand file dependencies.
+Analyze `include` directive relationships in RST files to understand file dependencies.
+
+**Use Cases:**
+
+This command helps writers:
+- Understand the impact of changes to widely-included files
+- Identify circular include dependencies (files included multiple times)
+- Document file relationships for maintenance
+- Plan refactoring of complex include structures
 
 **Basic Usage:**
 
@@ -230,17 +275,12 @@ Analyze include directive relationships in RST files to understand file dependen
 - Files listed in depth-first traversal order
 - Shows absolute paths to all files
 
-**Use Cases:**
-
-This command helps writers:
-- Understand the impact of changes to widely-included files
-- Identify circular include dependencies (files included multiple times)
-- Document file relationships for maintenance
-- Plan refactoring of complex include structures
-
 **Note on File Counting:**
 
-The total file count represents **unique files** discovered through include directives. If a file is included multiple times (e.g., file A includes file C, and file B also includes file C), it is counted only once in the total. However, the tree view will show it in all locations where it appears, with subsequent occurrences marked as circular includes in verbose mode.
+The total file count represents **unique files** discovered through include directives. If a file is included multiple
+times (e.g., file A includes file C, and file B also includes file C), the file is counted only once in the total.
+However, the tree view will show it in all locations where it appears, with subsequent occurrences marked as circular
+includes in verbose mode.
 
 ### Compare Commands
 
@@ -400,7 +440,8 @@ product-dir/
 
 **Note on Missing Files:**
 
-Files that don't exist in certain versions are reported separately and do not cause errors. This is expected behavior since features may be added or removed across versions.
+Files that don't exist in certain versions are reported separately and do not cause errors. This is expected behavior
+since features may be added or removed across versions.
 
 ## Development
 
@@ -559,8 +600,6 @@ Example: Adding `analyze` parent command
    }
    ```
 
-
-
 ### Testing
 
 #### Running Tests
@@ -588,7 +627,8 @@ Tests use a table-driven approach with test fixtures in the `testdata/` director
 - **Expected output**: `testdata/expected-output/` - Expected extracted files
 - **Test pattern**: Compare actual extraction output against expected files
 
-**Note**: The `testdata` directory name is special in Go - it's automatically ignored during builds, which is important since it contains non-Go files (`.cpp`, `.rst`, etc.).
+**Note**: The `testdata` directory name is special in Go - it's automatically ignored during builds, which is important
+since it contains non-Go files (`.cpp`, `.rst`, etc.).
 
 #### Adding New Tests
 
@@ -634,7 +674,8 @@ Tests use a table-driven approach with test fixtures in the `testdata/` director
 
 #### Test Conventions
 
-- **Relative paths**: Tests use `filepath.Join("..", "..", "..", "testdata")` to reference test data (three levels up from `commands/extract/code-examples/`)
+- **Relative paths**: Tests use `filepath.Join("..", "..", "..", "testdata")` to reference test data (three levels up
+  from `commands/extract/code-examples/`)
 - **Temporary directories**: Use `os.MkdirTemp()` for test output, clean up with `defer os.RemoveAll()`
 - **Exact content matching**: Tests compare byte-for-byte content
 - **No trailing newlines**: Expected output files should not have trailing blank lines
@@ -848,13 +889,13 @@ func processWithVerbose(filePath string, verbose bool) error {
 }
 ```
 
-
-
 ## Supported RST Directives
+
+### Code Example Extraction
 
 The tool extracts code examples from the following reStructuredText directives:
 
-### 1. `literalinclude`
+#### 1. `literalinclude`
 
 Extracts code from external files with support for partial extraction and dedenting.
 
@@ -899,7 +940,7 @@ result = calculate(42)
 print(result)
 ```
 
-### 2. `code-block`
+#### 2. `code-block`
 
 Inline code blocks with automatic dedenting based on the first line's indentation.
 
@@ -932,14 +973,15 @@ The content is automatically dedented based on the indentation of the first cont
           print("Hello")
 ```
 
-The code has 6 spaces of indentation (3 from `note`, 3 from `code-block`). The tool automatically removes these 6 spaces, resulting in:
+The code has 6 spaces of indentation (3 from `note`, 3 from `code-block`). The tool automatically removes these 6 spaces,
+resulting in:
 
 ```python
 def hello():
     print("Hello")
 ```
 
-### 3. `io-code-block`
+#### 3. `io-code-block`
 
 Input/output code blocks for interactive examples with nested sub-directives.
 
@@ -991,7 +1033,9 @@ Generates two files:
 
 Example: `my-doc.io-code-block.1.input.js` and `my-doc.io-code-block.1.output.json`
 
-### 4. `include`
+### Include handling
+
+#### 4. `include`
 
 Follows include directives to process entire documentation trees (when `-f` flag is used).
 
@@ -1004,18 +1048,18 @@ Follows include directives to process entire documentation trees (when `-f` flag
 
 The tool handles several MongoDB-specific include patterns:
 
-#### Steps Files
+##### Steps Files
 Converts directory-based paths to filename-based paths:
 - Input: `/includes/steps/run-mongodb-on-linux.rst`
 - Resolves to: `/includes/steps-run-mongodb-on-linux.yaml`
 
-#### Extracts and Release Files
+##### Extracts and Release Files
 Resolves ref-based includes by searching YAML files:
 - Input: `/includes/extracts/install-mongodb.rst`
 - Searches: `/includes/extracts-*.yaml` for `ref: install-mongodb`
 - Resolves to: The YAML file containing that ref
 
-#### Template Variables
+##### Template Variables
 Resolves template variables from YAML replacement sections:
 ```yaml
 replacement:
@@ -1026,7 +1070,8 @@ replacement:
 
 **Source Directory Resolution:**
 
-The tool walks up the directory tree to find a directory named "source" or containing a "source" subdirectory. This is used as the base for resolving relative include paths.
+The tool walks up the directory tree to find a directory named "source" or containing a "source" subdirectory. This is
+used as the base for resolving relative include paths.
 
 ## Internal Packages
 
@@ -1048,15 +1093,47 @@ The tool normalizes language identifiers to standard file extensions:
 
 | Input | Normalized | Extension |
 |-------|-----------|-----------|
-| `ts` | `typescript` | `.ts` |
+| `bash` | `bash` | `.sh` |
+| `c` | `c` | `.c` |
 | `c++` | `cpp` | `.cpp` |
+| `c#` | `csharp` | `.cs` |
+| `console` | `console` | `.sh` |
+| `cpp` | `cpp` | `.cpp` |
+| `cs` | `csharp` | `.cs` |
+| `csharp` | `csharp` | `.cs` |
+| `go` | `go` | `.go` |
 | `golang` | `go` | `.go` |
+| `java` | `java` | `.java` |
 | `javascript` | `javascript` | `.js` |
+| `js` | `javascript` | `.js` |
+| `kotlin` | `kotlin` | `.kt` |
+| `kt` | `kotlin` | `.kt` |
+| `php` | `php` | `.php` |
+| `powershell` | `powershell` | `.ps1` |
+| `ps1` | `powershell` | `.ps1` |
+| `ps5` | `ps5` | `.ps1` |
+| `py` | `python` | `.py` |
 | `python` | `python` | `.py` |
-| `shell` / `sh` | `sh` | `.sh` |
-| `json` | `json` | `.json` |
-| `yaml` | `yaml` | `.yaml` |
-| (none) | `txt` | `.txt` |
+| `rb` | `ruby` | `.rb` |
+| `rs` | `rust` | `.rs` |
+| `ruby` | `ruby` | `.rb` |
+| `rust` | `rust` | `.rs` |
+| `scala` | `scala` | `.scala` |
+| `sh` | `shell` | `.sh` |
+| `shell` | `shell` | `.sh` |
+| `swift` | `swift` | `.swift` |
+| `text` | `text` | `.txt` |
+| `ts` | `typescript` | `.ts` |
+| `txt` | `text` | `.txt` |
+| `typescript` | `typescript` | `.ts` |
+| (empty string) | `undefined` | `.txt` |
+| `none` | `undefined` | `.txt` |
+| (unknown) | (unchanged) | `.txt` |
+
+**Notes:**
+- Language identifiers are case-insensitive
+- Unknown languages are returned unchanged by `NormalizeLanguage()` but map to `.txt` extension
+- The normalization handles common aliases (e.g., `ts` → `typescript`, `golang` → `go`, `c++` → `cpp`)
 
 ## Contributing
 
@@ -1067,7 +1144,3 @@ When contributing to this project:
 3. **Update documentation** - Keep this README up to date with new features
 4. **Run tests before committing** - Ensure `go test ./...` passes
 5. **Use meaningful commit messages** - Describe what changed and why
-
-## License
-
-[Add license information here]

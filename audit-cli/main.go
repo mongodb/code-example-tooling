@@ -5,13 +5,13 @@
 //
 // The CLI is organized into parent commands with subcommands:
 //   - extract: Extract content from RST files
-//     - code-examples: Extract code examples from RST directives
+//   - code-examples: Extract code examples from RST directives
 //   - search: Search through extracted content
-//     - find-string: Search for substrings in extracted files
+//   - find-string: Search for substrings in extracted files
 //   - analyze: Analyze RST file structures
-//     - includes: Analyze include directive relationships
+//   - includes: Analyze include directive relationships
 //   - compare: Compare files across different versions
-//     - file-contents: Compare file contents across versions
+//   - file-contents: Compare file contents across versions
 package main
 
 import (
@@ -39,5 +39,8 @@ with special handling for MongoDB documentation conventions.`,
 	rootCmd.AddCommand(analyze.NewAnalyzeCommand())
 	rootCmd.AddCommand(compare.NewCompareCommand())
 
-	rootCmd.Execute()
+	err := rootCmd.Execute()
+	if err != nil {
+		return
+	}
 }

@@ -1,0 +1,4 @@
+This file has CURL in uppercase.
+Also has Curl in mixed case.
+And curl in lowercase.
+

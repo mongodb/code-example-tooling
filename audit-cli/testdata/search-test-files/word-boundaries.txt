@@ -1,0 +1,8 @@
+Testing word boundaries:
+curl is a tool
+libcurl is a library
+curlopt is an option
+_curl_ with underscores
+curl-config is a script
+precurl and postcurl
+

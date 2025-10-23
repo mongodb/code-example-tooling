@@ -1,0 +1,2 @@
+This is a code block with no language specified.
+It should still be extracted.

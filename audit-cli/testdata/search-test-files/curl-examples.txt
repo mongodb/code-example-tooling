@@ -1,0 +1,4 @@
+This file contains curl command examples.
+Use curl to make HTTP requests.
+The curl tool is very useful.
+

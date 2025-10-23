@@ -1,0 +1,4 @@
+This file uses libcurl library.
+The libcurl API is powerful.
+You can use libcurl in C programs.
+

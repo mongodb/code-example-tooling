@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/mongodb/code-example-tooling/audit-cli/internal/pathresolver"
 )
 
 // IncludeDirectiveRegex matches .. include:: directives in RST files.
@@ -84,7 +86,7 @@ func ResolveIncludePath(currentFilePath, includePath string) (string, error) {
 	}
 
 	// Find the source directory by walking up from the current file
-	sourceDir, err := FindSourceDirectory(currentFilePath)
+	sourceDir, err := pathresolver.FindSourceDirectory(currentFilePath)
 	if err != nil {
 		return "", err
 	}
@@ -317,44 +319,5 @@ func ResolveTemplateVariable(yamlFilePath, varName string) (string, error) {
 	return "", fmt.Errorf("template variable %s not found in replacement section of %s", varName, yamlFilePath)
 }
 
-// FindSourceDirectory walks up the directory tree to find the "source" directory.
-//
-// MongoDB documentation is typically organized with a "source" directory at the root.
-// This function walks up from the current file to find that directory, which is used
-// as the base for resolving include paths.
-//
-// Parameters:
-//   - filePath: Path to a file within the documentation tree
-//
-// Returns:
-//   - string: Absolute path to the source directory
-//   - error: Error if source directory cannot be found
-func FindSourceDirectory(filePath string) (string, error) {
-	// Get the directory containing the file
-	dir := filepath.Dir(filePath)
 
-	// Walk up the directory tree
-	for {
-		// Check if the current directory is named "source"
-		if filepath.Base(dir) == "source" {
-			return dir, nil
-		}
-
-		// Check if there's a "source" subdirectory
-		sourceSubdir := filepath.Join(dir, "source")
-		if info, err := os.Stat(sourceSubdir); err == nil && info.IsDir() {
-			return sourceSubdir, nil
-		}
-
-		// Move up one directory
-		parent := filepath.Dir(dir)
-
-		// If we've reached the root, stop
-		if parent == dir {
-			return "", fmt.Errorf("could not find source directory for %s", filePath)
-		}
-
-		dir = parent
-	}
-}
 

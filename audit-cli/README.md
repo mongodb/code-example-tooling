@@ -58,7 +58,8 @@ audit-cli
 ├── search           # Search through extracted content or source files
 │   └── find-string
 ├── analyze          # Analyze RST file structures
-│   └── includes
+│   ├── includes
+│   └── references
 └── compare          # Compare files across versions
     └── file-contents
 ```
@@ -282,6 +283,196 @@ times (e.g., file A includes file C, and file B also includes file C), the file 
 However, the tree view will show it in all locations where it appears, with subsequent occurrences marked as circular
 includes in verbose mode.
 
+#### `analyze references`
+
+Find all files that reference a target file through RST directives. This performs reverse dependency analysis, showing which files reference the target file through `include`, `literalinclude`, or `io-code-block` directives.
+
+The command searches all RST files (both `.rst` and `.txt` extensions) in the source directory tree.
+
+**Use Cases:**
+
+This command helps writers:
+- Understand the impact of changes to a file (what pages will be affected)
+- Find all usages of an include file across the documentation
+- Track where code examples are referenced
+- Identify orphaned files (files with no references)
+- Plan refactoring by understanding file dependencies
+
+**Basic Usage:**
+
+```bash
+# Find what references an include file
+./audit-cli analyze references path/to/includes/fact.rst
+
+# Find what references a code example
+./audit-cli analyze references path/to/code-examples/example.js
+
+# Get JSON output for automation
+./audit-cli analyze references path/to/file.rst --format json
+
+# Show detailed information with line numbers
+./audit-cli analyze references path/to/file.rst --verbose
+```
+
+**Flags:**
+
+- `--format <format>` - Output format: `text` (default) or `json`
+- `-v, --verbose` - Show detailed information including line numbers and reference paths
+- `-c, --count-only` - Only show the count of references (useful for quick checks and scripting)
+- `--paths-only` - Only show the file paths, one per line (useful for piping to other commands)
+- `-t, --directive-type <type>` - Filter by directive type: `include`, `literalinclude`, or `io-code-block`
+
+**Understanding the Counts:**
+
+The command shows two metrics:
+- **Total Files**: Number of unique files that reference the target (deduplicated)
+- **Total References**: Total number of directive occurrences (includes duplicates)
+
+When a file includes the target multiple times, it counts as:
+- 1 file (in Total Files)
+- Multiple references (in Total References)
+
+This helps identify both the impact scope (how many files) and duplicate includes (when references > files).
+
+**Supported Directive Types:**
+
+The command tracks three types of RST directives:
+
+1. **`.. include::`** - RST content includes
+   ```rst
+   .. include:: /includes/intro.rst
+   ```
+
+2. **`.. literalinclude::`** - Code file references
+   ```rst
+   .. literalinclude:: /code-examples/example.py
+      :language: python
+   ```
+
+3. **`.. io-code-block::`** - Input/output examples with file arguments
+   ```rst
+   .. io-code-block::
+
+      .. input:: /code-examples/query.js
+         :language: javascript
+
+      .. output:: /code-examples/result.json
+         :language: json
+   ```
+
+**Note:** Only file-based references are tracked. Inline content (e.g., `.. input::` with `:language:` but no file path) is not tracked.
+
+**Output Formats:**
+
+**Text** (default):
+```
+============================================================
+REFERENCE ANALYSIS
+============================================================
+Target File: /path/to/includes/intro.rst
+Total Files: 3
+Total References: 4
+============================================================
+
+include             : 3 files, 4 references
+
+  1. [include] duplicate-include-test.rst (2 references)
+  2. [include] include-test.rst
+  3. [include] page.rst
+
+```
+
+**Text with --verbose:**
+```
+============================================================
+REFERENCE ANALYSIS
+============================================================
+Target File: /path/to/includes/intro.rst
+Total Files: 3
+Total References: 4
+============================================================
+
+include             : 3 files, 4 references
+
+  1. [include] duplicate-include-test.rst (2 references)
+     Line 6: /includes/intro.rst
+     Line 13: /includes/intro.rst
+  2. [include] include-test.rst
+     Line 6: /includes/intro.rst
+  3. [include] page.rst
+     Line 12: /includes/intro.rst
+
+```
+
+**JSON** (--format json):
+```json
+{
+  "target_file": "/path/to/includes/intro.rst",
+  "source_dir": "/path/to/source",
+  "total_files": 3,
+  "total_references": 4,
+  "referencing_files": [
+    {
+      "FilePath": "/path/to/duplicate-include-test.rst",
+      "DirectiveType": "include",
+      "ReferencePath": "/includes/intro.rst",
+      "LineNumber": 6
+    },
+    {
+      "FilePath": "/path/to/duplicate-include-test.rst",
+      "DirectiveType": "include",
+      "ReferencePath": "/includes/intro.rst",
+      "LineNumber": 13
+    },
+    {
+      "FilePath": "/path/to/include-test.rst",
+      "DirectiveType": "include",
+      "ReferencePath": "/includes/intro.rst",
+      "LineNumber": 6
+    }
+  ]
+}
+```
+
+**Examples:**
+
+```bash
+# Check if an include file is being used
+./audit-cli analyze references ~/docs/source/includes/fact-atlas.rst
+
+# Find all pages that use a specific code example
+./audit-cli analyze references ~/docs/source/code-examples/connect.py
+
+# Get machine-readable output for scripting
+./audit-cli analyze references ~/docs/source/includes/fact.rst --format json | jq '.total_references'
+
+# See exactly where a file is referenced (with line numbers)
+./audit-cli analyze references ~/docs/source/includes/intro.rst --verbose
+
+# Quick check: just show the count
+./audit-cli analyze references ~/docs/source/includes/fact.rst --count-only
+# Output: 5
+
+# Get list of files for piping to other commands
+./audit-cli analyze references ~/docs/source/includes/fact.rst --paths-only
+# Output:
+# page1.rst
+# page2.rst
+# page3.rst
+
+# Filter to only show include directives (not literalinclude or io-code-block)
+./audit-cli analyze references ~/docs/source/includes/fact.rst --directive-type include
+
+# Filter to only show literalinclude references
+./audit-cli analyze references ~/docs/source/code-examples/example.py --directive-type literalinclude
+
+# Combine filters: count only literalinclude references
+./audit-cli analyze references ~/docs/source/code-examples/example.py -t literalinclude -c
+
+# Combine filters: list files that use this as an io-code-block
+./audit-cli analyze references ~/docs/source/code-examples/query.js -t io-code-block --paths-only
+```
+
 ### Compare Commands
 
 #### `compare file-contents`
@@ -469,9 +660,15 @@ audit-cli/
 │   │       └── report.go           # Report generation
 │   ├── analyze/                     # Analyze parent command
 │   │   ├── analyze.go              # Parent command definition
-│   │   └── includes/               # Includes analysis subcommand
-│   │       ├── includes.go         # Command logic
-│   │       ├── analyzer.go         # Include tree building
+│   │   ├── includes/               # Includes analysis subcommand
+│   │   │   ├── includes.go         # Command logic
+│   │   │   ├── analyzer.go         # Include tree building
+│   │   │   ├── output.go           # Output formatting
+│   │   │   └── types.go            # Type definitions
+│   │   └── references/             # References analysis subcommand
+│   │       ├── references.go       # Command logic
+│   │       ├── references_test.go  # Tests
+│   │       ├── analyzer.go         # Reference finding logic
 │   │       ├── output.go           # Output formatting
 │   │       └── types.go            # Type definitions
 │   └── compare/                     # Compare parent command
@@ -485,6 +682,12 @@ audit-cli/
 │           ├── types.go            # Type definitions
 │           └── version_resolver.go # Version path resolution
 ├── internal/                        # Internal packages
+│   ├── pathresolver/               # Path resolution utilities
+│   │   ├── pathresolver.go         # Core path resolution
+│   │   ├── pathresolver_test.go    # Tests
+│   │   ├── source_finder.go        # Source directory detection
+│   │   ├── version_resolver.go     # Version path resolution
+│   │   └── types.go                # Type definitions
 │   └── rst/                        # RST parsing utilities
 │       ├── parser.go               # Generic parsing with includes
 │       ├── include_resolver.go     # Include directive resolution
@@ -1074,6 +1277,23 @@ The tool walks up the directory tree to find a directory named "source" or conta
 used as the base for resolving relative include paths.
 
 ## Internal Packages
+
+### `internal/pathresolver`
+
+Provides centralized path resolution utilities for working with MongoDB documentation structure:
+
+- **Source directory detection** - Finds the documentation root by walking up the directory tree
+- **Project info detection** - Identifies product directory, version, and whether a project is versioned
+- **Version path resolution** - Resolves file paths across multiple documentation versions
+- **Relative path resolution** - Resolves paths relative to the source directory
+
+**Key Functions:**
+- `FindSourceDirectory(filePath string)` - Finds the source directory for a given file
+- `DetectProjectInfo(filePath string)` - Detects project structure information
+- `ResolveVersionPaths(referenceFile, productDir string, versions []string)` - Resolves paths across versions
+- `ResolveRelativeToSource(sourceDir, relativePath string)` - Resolves relative paths
+
+See the code in `internal/pathresolver/` for implementation details.
 
 ### `internal/rst`
 

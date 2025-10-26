@@ -108,19 +108,25 @@ commit_strategy:
 ## Message Templates
 
 ### Available Variables
-- `${rule_name}` - Copy rule name
-- `${source_repo}` - Source repository
-- `${target_repo}` - Target repository
-- `${source_branch}` - Source branch
-- `${target_branch}` - Target branch
-- `${file_count}` - Number of files
-- Custom variables from regex patterns
+- `${rule_name}` - Copy rule name (e.g., "java-aggregation-examples")
+- `${source_repo}` - Source repository (e.g., "cbullinger/aggregation-tasks")
+- `${target_repo}` - Target repository (e.g., "cbullinger/vector-search")
+- `${source_branch}` - Source branch (e.g., "main")
+- `${target_branch}` - Target branch (e.g., "main")
+- `${file_count}` - Number of files (e.g., "3")
+- `${pr_number}` - Source PR number (e.g., "42")
+- `${commit_sha}` - Source commit SHA (e.g., "abc123")
+- Custom variables from regex patterns (e.g., `${lang}`, `${file}`)
 
 ### Examples
 ```yaml
 commit_message: "Update ${category} examples from ${lang}"
-pr_title: "Update ${category} examples"
-pr_body: "Copying ${file_count} files from ${source_repo}"
+pr_title: "Update ${lang} examples"
+pr_body: |
+  Files updated: ${file_count} using ${rule_name} match pattern
+
+  Source: ${source_repo}
+  PR: #${pr_number}
 ```
 
 ## API Endpoints

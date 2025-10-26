@@ -423,18 +423,33 @@ Variables extracted from pattern matching:
 
 ### Message Variables
 
-Available in commit messages and PR templates:
+Available in commit messages, PR titles, and PR body templates:
 
-| Variable           | Description                   |
-|--------------------|-------------------------------|
-| `${source_repo}`   | Source repository             |
-| `${target_repo}`   | Target repository             |
-| `${source_branch}` | Source branch                 |
-| `${target_branch}` | Target branch                 |
-| `${file_count}`    | Number of files               |
-| `${pr_number}`     | PR number that triggered copy |
-| `${commit_sha}`    | Source commit SHA             |
-| `${rule_name}`     | Name of the copy rule         |
+| Variable           | Description                   | Example                          |
+|--------------------|-------------------------------|----------------------------------|
+| `${rule_name}`     | Name of the copy rule         | `java-aggregation-examples`      |
+| `${source_repo}`   | Source repository             | `cbullinger/aggregation-tasks`   |
+| `${target_repo}`   | Target repository             | `cbullinger/vector-search`       |
+| `${source_branch}` | Source branch                 | `main`                           |
+| `${target_branch}` | Target branch                 | `main`                           |
+| `${file_count}`    | Number of files               | `3`                              |
+| `${pr_number}`     | PR number that triggered copy | `42`                             |
+| `${commit_sha}`    | Source commit SHA             | `abc123def456`                   |
+
+**Example Usage:**
+```yaml
+commit_strategy:
+  type: "pull_request"
+  pr_title: "Update ${lang} examples"
+  pr_body: |
+    Automated update of ${lang} examples
+
+    **Details:**
+    - Rule: ${rule_name}
+    - Source: ${source_repo}
+    - Files updated: ${file_count}
+    - Source PR: #${pr_number}
+```
 
 ## Complete Examples
 

@@ -385,6 +385,15 @@ func TestMessageTemplater_RenderPRBody(t *testing.T) {
 			want: "Automated update of java examples\n\nFiles updated: 3\nSource: cbullinger/aggregation-tasks",
 		},
 		{
+			name:     "body with rule_name variable",
+			template: "Files updated: ${file_count} using ${rule_name} match pattern",
+			context: &types.MessageContext{
+				RuleName:  "java-aggregation-examples",
+				FileCount: 5,
+			},
+			want: "Files updated: 5 using java-aggregation-examples match pattern",
+		},
+		{
 			name:     "empty template uses default",
 			template: "",
 			context: &types.MessageContext{

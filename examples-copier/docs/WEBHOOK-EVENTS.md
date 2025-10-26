@@ -221,7 +221,6 @@ Periodically review:
 
 - [DEPLOYMENT.md](DEPLOYMENT.md) - Webhook configuration during deployment
 - [WEBHOOK-TESTING.md](WEBHOOK-TESTING.md) - Testing webhook processing
-- [MONITORING.md](MONITORING.md) - Monitoring and alerting setup
 
 ## Summary
 

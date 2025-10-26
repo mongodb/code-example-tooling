@@ -458,15 +458,13 @@ docker run -p 8080:8080 --env-file .env examples-copier
 
 ### Getting Started
 
-- **[Configuration Guide](docs/CONFIGURATION-GUIDE.md)** - Complete configuration reference ⭐ NEW
+- **[Configuration Guide](docs/CONFIGURATION-GUIDE.md)** - Complete configuration reference
 - **[Pattern Matching Guide](docs/PATTERN-MATCHING-GUIDE.md)** - Pattern matching with examples
 - **[Local Testing](docs/LOCAL-TESTING.md)** - Test locally before deploying
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Deploy to production
-- **[Deployment Checklist](docs/DEPLOYMENT-CHECKLIST.md)** - Step-by-step deployment checklist
 
 ### Reference
 
-- **[Pattern Matching Cheat Sheet](docs/PATTERN-MATCHING-CHEATSHEET.md)** - Quick pattern syntax reference
 - **[Architecture](docs/ARCHITECTURE.md)** - System design and components
 - **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[FAQ](docs/FAQ.md)** - Frequently asked questions

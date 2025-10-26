@@ -369,7 +369,6 @@ Potential improvements:
 ---
 
 **See Also:**
-- [Blank Commit Fix](../BLANK-COMMIT-FIX.md) - Details of the fix applied
 - [Configuration Guide](CONFIGURATION-GUIDE.md) - Deprecation configuration
 - [Architecture](ARCHITECTURE.md) - System design
 - [Troubleshooting](TROUBLESHOOTING.md) - Common issues

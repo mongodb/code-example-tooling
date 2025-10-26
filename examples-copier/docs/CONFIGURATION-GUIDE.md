@@ -426,16 +426,16 @@ Variables extracted from pattern matching:
 
 Available in commit messages, PR titles, and PR body templates:
 
-| Variable           | Description                   | Example                          |
-|--------------------|-------------------------------|----------------------------------|
-| `${rule_name}`     | Name of the copy rule         | `java-aggregation-examples`      |
-| `${source_repo}`   | Source repository             | `cbullinger/aggregation-tasks`   |
-| `${target_repo}`   | Target repository             | `cbullinger/vector-search`       |
-| `${source_branch}` | Source branch                 | `main`                           |
-| `${target_branch}` | Target branch                 | `main`                           |
-| `${file_count}`    | Number of files               | `3`                              |
-| `${pr_number}`     | PR number that triggered copy | `42`                             |
-| `${commit_sha}`    | Source commit SHA             | `abc123def456`                   |
+| Variable           | Description                   | Example                     |
+|--------------------|-------------------------------|-----------------------------|
+| `${rule_name}`     | Name of the copy rule         | `java-aggregation-examples` |
+| `${source_repo}`   | Source repository             | `mongodb/aggregation-tasks` |
+| `${target_repo}`   | Target repository             | `mongodb/vector-search`     |
+| `${source_branch}` | Source branch                 | `main`                      |
+| `${target_branch}` | Target branch                 | `main`                      |
+| `${file_count}`    | Number of files               | `3`                         |
+| `${pr_number}`     | PR number that triggered copy | `42`                        |
+| `${commit_sha}`    | Source commit SHA             | `abc123def456`              |
 
 **Example Usage:**
 ```yaml

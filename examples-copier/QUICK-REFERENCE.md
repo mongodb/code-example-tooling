@@ -109,8 +109,8 @@ commit_strategy:
 
 ### Available Variables
 - `${rule_name}` - Copy rule name (e.g., "java-aggregation-examples")
-- `${source_repo}` - Source repository (e.g., "cbullinger/aggregation-tasks")
-- `${target_repo}` - Target repository (e.g., "cbullinger/vector-search")
+- `${source_repo}` - Source repository (e.g., "mongodb/aggregation-tasks")
+- `${target_repo}` - Target repository (e.g., "mongodb/vector-search")
 - `${source_branch}` - Source branch (e.g., "main")
 - `${target_branch}` - Target branch (e.g., "main")
 - `${file_count}` - Number of files (e.g., "3")

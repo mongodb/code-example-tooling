@@ -117,10 +117,17 @@ func HandleWebhookWithContainer(w http.ResponseWriter, r *http.Request, config *
 		return
 	}
 
-	// Check if it's a merged PR event
+	// Check if it's a pull_request event
 	prEvt, ok := evt.(*github.PullRequestEvent)
 	if !ok || prEvt.GetPullRequest() == nil {
-		LogWarningCtx(ctx, "payload not pull_request event", nil)
+		// Record ignored webhook with event type
+		container.MetricsCollector.RecordWebhookIgnored(eventType)
+
+		// Log with event type for better debugging
+		LogInfoCtx(ctx, "ignoring non-pull_request event", map[string]interface{}{
+			"event_type": eventType,
+			"size_bytes": len(payload),
+		})
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}

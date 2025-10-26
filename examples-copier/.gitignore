@@ -1,5 +1,6 @@
 # Binaries
 examples-copier
+code-copier
 *.exe
 *.exe~
 *.dll

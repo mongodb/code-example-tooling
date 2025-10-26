@@ -165,11 +165,26 @@ func addFilesViaPR(ctx context.Context, client *github.Client, key UploadKey,
 	LogInfo(fmt.Sprintf("PR URL: %s", pr.GetHTMLURL()))
 	if mergeWithoutReview {
 		// Poll PR for mergeability; GitHub may take a moment to compute it
-		// We poll up to ~10s with 500ms interval
+		// Get polling configuration from environment or use defaults
+		cfg := configs.NewConfig()
+		maxAttempts := cfg.PRMergePollMaxAttempts
+		if envAttempts := os.Getenv(configs.PRMergePollMaxAttempts); envAttempts != "" {
+			if parsed, err := parseIntWithDefault(envAttempts, maxAttempts); err == nil {
+				maxAttempts = parsed
+			}
+		}
+
+		pollInterval := cfg.PRMergePollInterval
+		if envInterval := os.Getenv(configs.PRMergePollInterval); envInterval != "" {
+			if parsed, err := parseIntWithDefault(envInterval, pollInterval); err == nil {
+				pollInterval = parsed
+			}
+		}
+
 		var mergeable *bool
 		var mergeableState string
 		owner, repoName := parseRepoPath(key.RepoName)
-		for i := 0; i < 20; i++ {
+		for i := 0; i < maxAttempts; i++ {
 			current, _, gerr := client.PullRequests.Get(ctx, owner, repoName, pr.GetNumber())
 			if gerr == nil && current != nil {
 				mergeable = current.Mergeable
@@ -178,7 +193,7 @@ func addFilesViaPR(ctx context.Context, client *github.Client, key UploadKey,
 					break
 				}
 			}
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(time.Duration(pollInterval) * time.Millisecond)
 		}
 		if mergeable != nil && !*mergeable || strings.EqualFold(mergeableState, "dirty") {
 			LogWarning(fmt.Sprintf("PR #%d is not mergeable (state=%s). Likely merge conflicts. Leaving PR open for manual resolution.", pr.GetNumber(), mergeableState))
@@ -269,8 +284,24 @@ func createCommitTree(ctx context.Context, client *github.Client, targetBranch U
 	// 1) Get current ref with retry logic to handle GitHub API eventual consistency
 	// When a branch is just created, it may take a moment to be visible
 	var ref *github.Reference
-	maxRetries := 3
-	retryDelay := 500 * time.Millisecond
+
+	// Get retry configuration from environment or use defaults
+	cfg := configs.NewConfig()
+	maxRetries := cfg.GitHubAPIMaxRetries
+	if envRetries := os.Getenv(configs.GitHubAPIMaxRetries); envRetries != "" {
+		if parsed, err := parseIntWithDefault(envRetries, maxRetries); err == nil {
+			maxRetries = parsed
+		}
+	}
+
+	initialRetryDelay := cfg.GitHubAPIInitialRetryDelay
+	if envDelay := os.Getenv(configs.GitHubAPIInitialRetryDelay); envDelay != "" {
+		if parsed, err := parseIntWithDefault(envDelay, initialRetryDelay); err == nil {
+			initialRetryDelay = parsed
+		}
+	}
+
+	retryDelay := time.Duration(initialRetryDelay) * time.Millisecond
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		ref, _, err = client.Git.GetRef(ctx, owner, repoName, targetBranch.BranchPath)
@@ -400,4 +431,13 @@ func deleteBranchIfExists(backgroundContext context.Context, client *github.Clie
 // DeleteBranchIfExistsExported is an exported wrapper for testing deleteBranchIfExists
 func DeleteBranchIfExistsExported(ctx context.Context, client *github.Client, repo string, ref *github.Reference) {
 	deleteBranchIfExists(ctx, client, repo, ref)
+}
+
+// parseIntWithDefault parses a string to int, returning defaultValue on error
+func parseIntWithDefault(s string, defaultValue int) (int, error) {
+	var result int
+	if _, err := fmt.Sscanf(s, "%d", &result); err != nil {
+		return defaultValue, err
+	}
+	return result, nil
 }

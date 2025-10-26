@@ -1,0 +1,127 @@
+# Configuration for copying code examples from aggregation-tasks repository
+# Repository: https://github.com/cbullinger/aggregation-tasks
+# 
+# This repository contains MongoDB aggregation pipeline examples in multiple languages:
+# - java/
+# - nodejs/
+# - python/
+
+source_repo: "cbullinger/aggregation-tasks"
+source_branch: "main"
+
+copy_rules:
+  # Rule 1: Match all language directories with regex pattern
+  # This pattern extracts the language name and file path
+  - name: "aggregation-language-examples"
+    source_pattern:
+      type: "regex"
+      pattern: "^(?P<lang>java|nodejs|python)/(?P<file>.+)$"
+    targets:
+      - repo: "mongodb/docs"
+        branch: "main"
+        path_transform: "source/code-examples/aggregation/${lang}/${file}"
+        commit_strategy:
+          type: "pull_request"
+          pr_title: "Update ${lang} aggregation examples"
+          pr_body: |
+            Automated update of ${lang} aggregation pipeline examples
+
+            **Details:**
+            - Rule: ${rule_name}
+            - Source: ${source_repo}
+            - Files updated: ${file_count}
+          auto_merge: false
+        deprecation_check:
+          enabled: true
+          file: "deprecated_examples.json"
+
+  # Rule 2: Match specific language - Java only
+  - name: "java-aggregation-examples"
+    source_pattern:
+      type: "regex"
+      pattern: "^java/(?P<file>.+\\.java)$"
+    targets:
+      - repo: "mongodb/docs-java"
+        branch: "main"
+        path_transform: "source/examples/aggregation/${file}"
+        commit_strategy:
+          type: "pull_request"
+          pr_title: "Update Java aggregation examples"
+          pr_body: "Automated update of Java aggregation pipeline examples"
+          auto_merge: false
+
+  # Rule 3: Match specific language - Node.js only
+  - name: "nodejs-aggregation-examples"
+    source_pattern:
+      type: "regex"
+      pattern: "^nodejs/(?P<file>.+\\.(js|ts))$"
+    targets:
+      - repo: "mongodb/docs-node"
+        branch: "main"
+        path_transform: "source/examples/aggregation/${file}"
+        commit_strategy:
+          type: "pull_request"
+          pr_title: "Update Node.js aggregation examples"
+          pr_body: "Automated update of Node.js aggregation pipeline examples"
+          auto_merge: false
+
+  # Rule 4: Match specific language - Python only
+  - name: "python-aggregation-examples"
+    source_pattern:
+      type: "regex"
+      pattern: "^python/(?P<file>.+\\.py)$"
+    targets:
+      - repo: "mongodb/docs-python"
+        branch: "main"
+        path_transform: "source/examples/aggregation/${file}"
+        commit_strategy:
+          type: "pull_request"
+          pr_title: "Update Python aggregation examples"
+          pr_body: "Automated update of Python aggregation pipeline examples"
+          auto_merge: false
+
+  # Rule 5: Alternative pattern - match with subdirectories
+  # Use this if the repository structure has subdirectories within language folders
+  - name: "aggregation-with-subdirs"
+    source_pattern:
+      type: "regex"
+      pattern: "^(?P<lang>java|nodejs|python)/(?P<subdir>[^/]+)/(?P<file>.+)$"
+    targets:
+      - repo: "mongodb/docs"
+        branch: "main"
+        path_transform: "source/code-examples/aggregation/${lang}/${subdir}/${file}"
+        commit_strategy:
+          type: "pull_request"
+          pr_title: "Update ${lang} aggregation examples (${subdir})"
+          pr_body: |
+            Automated update of ${lang} aggregation examples
+            Category: ${subdir}
+            Files updated: ${file_count}
+          auto_merge: false
+
+  # Rule 6: Glob pattern alternative - simpler but less flexible
+  - name: "all-java-files-glob"
+    source_pattern:
+      type: "glob"
+      pattern: "java/**/*.java"
+    targets:
+      - repo: "mongodb/docs"
+        branch: "main"
+        path_transform: "source/code-examples/aggregation/java/${filename}"
+        commit_strategy:
+          type: "direct"
+          commit_message: "Update Java aggregation examples"
+
+  # Rule 7: Prefix pattern - simplest approach
+  - name: "all-languages-prefix"
+    source_pattern:
+      type: "prefix"
+      pattern: "java"
+    targets:
+      - repo: "mongodb/docs"
+        branch: "main"
+        path_transform: "source/code-examples/aggregation/${relative_path}"
+        commit_strategy:
+          type: "direct"
+          commit_message: "Update aggregation examples from ${source_repo}"
+

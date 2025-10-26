@@ -274,7 +274,9 @@ func GetRestClient() *github.Client {
 }
 
 func GetGraphQLClient() *graphql.Client {
-	ConfigurePermissions()
+	if InstallationAccessToken == "" {
+		ConfigurePermissions()
+	}
 	client := graphql.NewClient("https://api.github.com/graphql", &http.Client{
 		Transport: &transport{token: InstallationAccessToken},
 	})
@@ -358,6 +360,12 @@ func getInstallationIDForOrg(org string) (string, error) {
 	}
 
 	return "", fmt.Errorf("no installation found for organization: %s", org)
+}
+
+// SetInstallationTokenForOrg sets a cached installation token for an organization.
+// This is primarily used for testing to bypass the GitHub App authentication flow.
+func SetInstallationTokenForOrg(org, token string) {
+	installationTokenCache[org] = token
 }
 
 // GetRestClientForOrg returns a GitHub REST API client authenticated for a specific organization

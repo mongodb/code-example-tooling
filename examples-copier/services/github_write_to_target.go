@@ -75,6 +75,9 @@ func AddFilesToTargetRepoBranch() {
 			prTitle = commitMsg
 		}
 
+		// Get PR body from value
+		prBody := value.PRBody
+
 		// Get auto-merge setting from value
 		mergeWithoutReview := value.AutoMergePR
 
@@ -86,7 +89,7 @@ func AddFilesToTargetRepoBranch() {
 			}
 		default: // "pr" or "pull_request" strategy
 			LogInfo(fmt.Sprintf("Using PR commit strategy for %s on branch %s (auto_merge=%v)", key.RepoName, key.BranchPath, mergeWithoutReview))
-			if err := addFilesViaPR(ctx, client, key, value.Content, commitMsg, prTitle, mergeWithoutReview); err != nil {
+			if err := addFilesViaPR(ctx, client, key, value.Content, commitMsg, prTitle, prBody, mergeWithoutReview); err != nil {
 				LogCritical(fmt.Sprintf("Failed via PR path: %v\n", err))
 			}
 		}
@@ -110,9 +113,9 @@ func createPullRequest(ctx context.Context, client *github.Client, repo, head, b
 }
 
 // addFilesViaPR creates a temporary branch, commits files to it using the provided commitMessage,
-// opens a pull request with prTitle, and optionally merges it automatically.
+// opens a pull request with prTitle and prBody, and optionally merges it automatically.
 func addFilesViaPR(ctx context.Context, client *github.Client, key UploadKey,
-	files []github.RepositoryContent, commitMessage string, prTitle string, mergeWithoutReview bool,
+	files []github.RepositoryContent, commitMessage string, prTitle string, prBody string, mergeWithoutReview bool,
 ) error {
 	tempBranch := "copier/" + time.Now().UTC().Format("20060102-150405")
 
@@ -142,7 +145,7 @@ func addFilesViaPR(ctx context.Context, client *github.Client, key UploadKey,
 
 	// 3) Create PR from temp branch to base branch
 	base := strings.TrimPrefix(key.BranchPath, "refs/heads/")
-	pr, err := createPullRequest(ctx, client, key.RepoName, tempBranch, base, prTitle, "")
+	pr, err := createPullRequest(ctx, client, key.RepoName, tempBranch, base, prTitle, prBody)
 	if err != nil {
 		return fmt.Errorf("create PR: %w", err)
 	}

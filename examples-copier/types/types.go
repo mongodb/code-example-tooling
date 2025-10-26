@@ -109,6 +109,7 @@ type UploadFileContent struct {
 	CommitStrategy CommitStrategy             `json:"commit_strategy,omitempty"`
 	CommitMessage  string                     `json:"commit_message,omitempty"`
 	PRTitle        string                     `json:"pr_title,omitempty"`
+	PRBody         string                     `json:"pr_body,omitempty"`
 	AutoMergePR    bool                       `json:"auto_merge_pr,omitempty"`
 }
 

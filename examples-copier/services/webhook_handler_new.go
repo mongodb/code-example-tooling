@@ -523,7 +523,7 @@ func queueFileForUploadWithStrategy(target types.TargetConfig, file github.Repos
 	// Add file to content first so we can get accurate file count
 	entry.Content = append(entry.Content, file)
 
-	// Render commit message and PR title using templates
+	// Render commit message, PR title, and PR body using templates
 	msgCtx := types.NewMessageContext()
 	msgCtx.RuleName = rule.Name
 	msgCtx.SourceRepo = fmt.Sprintf("%s/%s", config.RepoOwner, config.RepoName)
@@ -540,6 +540,9 @@ func queueFileForUploadWithStrategy(target types.TargetConfig, file github.Repos
 	}
 	if target.CommitStrategy.PRTitle != "" {
 		entry.PRTitle = container.MessageTemplater.RenderPRTitle(target.CommitStrategy.PRTitle, msgCtx)
+	}
+	if target.CommitStrategy.PRBody != "" {
+		entry.PRBody = container.MessageTemplater.RenderPRBody(target.CommitStrategy.PRBody, msgCtx)
 	}
 
 	container.FileStateService.AddFileToUpload(key, entry)

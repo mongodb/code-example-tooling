@@ -38,6 +38,16 @@ func parseRepoPath(repoPath string) (owner, repo string) {
 	return repoOwner(), repoPath
 }
 
+// normalizeRepoName ensures a repository name includes the owner prefix.
+// If the repo name already has an owner (contains "/"), returns it as-is.
+// Otherwise, prepends the default repo owner from environment.
+func normalizeRepoName(repoName string) string {
+	if strings.Contains(repoName, "/") {
+		return repoName
+	}
+	return repoOwner() + "/" + repoName
+}
+
 // AddFilesToTargetRepoBranch uploads files to the target repository branch
 // using the specified commit strategy (direct or via pull request).
 func AddFilesToTargetRepoBranch() {
@@ -208,7 +218,9 @@ func addFilesToBranch(ctx context.Context, client *github.Client, key UploadKey,
 
 // createBranch creates a new branch from the specified base branch (defaults to 'main') and deletes it first if it already exists.
 func createBranch(ctx context.Context, client *github.Client, repo, newBranch string, baseBranch ...string) (*github.Reference, error) {
-	owner, repoName := parseRepoPath(repo)
+	// Normalize repo name for consistent logging and operations
+	normalizedRepo := normalizeRepoName(repo)
+	owner, repoName := parseRepoPath(normalizedRepo)
 
 	// Use provided base branch or default to "main"
 	base := "main"
@@ -224,7 +236,7 @@ func createBranch(ctx context.Context, client *github.Client, repo, newBranch st
 
 	// *** Check if branch (newBranchRef) already exists and delete it ***
 	newBranchRef, _, err := client.Git.GetRef(ctx, owner, repoName, fmt.Sprintf("%s%s", "refs/heads/", newBranch))
-	deleteBranchIfExists(ctx, client, repo, newBranchRef)
+	deleteBranchIfExists(ctx, client, normalizedRepo, newBranchRef)
 
 	newRef := &github.Reference{
 		Ref: github.String(fmt.Sprintf("%s%s", "refs/heads/", newBranch)),
@@ -239,7 +251,7 @@ func createBranch(ctx context.Context, client *github.Client, repo, newBranch st
 		return nil, err
 	}
 
-	LogInfo(fmt.Sprintf("Branch created successfully: %s on %s (from %s)", newRef, repo, base))
+	LogInfo(fmt.Sprintf("Branch created successfully: %s on %s (from %s)", newRef, normalizedRepo, base))
 
 	return newBranchRef, nil
 }
@@ -248,16 +260,37 @@ func createBranch(ctx context.Context, client *github.Client, repo, newBranch st
 func createCommitTree(ctx context.Context, client *github.Client, targetBranch UploadKey,
 	files map[string]string) (treeSHA string, baseSHA string, err error) {
 
-	owner, repoName := parseRepoPath(targetBranch.RepoName)
-	LogInfo(fmt.Sprintf("DEBUG createCommitTree: targetBranch.RepoName=%q, parsed owner=%q, repoName=%q", targetBranch.RepoName, owner, repoName))
+	// Normalize repo name for consistent logging
+	normalizedRepo := normalizeRepoName(targetBranch.RepoName)
+	owner, repoName := parseRepoPath(normalizedRepo)
+	LogInfo(fmt.Sprintf("DEBUG createCommitTree: targetBranch.RepoName=%q, normalized=%q, parsed owner=%q, repoName=%q",
+		targetBranch.RepoName, normalizedRepo, owner, repoName))
 
-	// 1) Get current ref (ONE GET)
-	ref, _, err := client.Git.GetRef(ctx, owner, repoName, targetBranch.BranchPath)
+	// 1) Get current ref with retry logic to handle GitHub API eventual consistency
+	// When a branch is just created, it may take a moment to be visible
+	var ref *github.Reference
+	maxRetries := 3
+	retryDelay := 500 * time.Millisecond
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		ref, _, err = client.Git.GetRef(ctx, owner, repoName, targetBranch.BranchPath)
+		if err == nil && ref != nil {
+			break // Success
+		}
+
+		if attempt < maxRetries {
+			LogWarning(fmt.Sprintf("Failed to get ref for %s (attempt %d/%d): %v. Retrying in %v...",
+				normalizedRepo, attempt, maxRetries, err, retryDelay))
+			time.Sleep(retryDelay)
+			retryDelay *= 2 // Exponential backoff
+		}
+	}
+
 	if err != nil || ref == nil {
 		if err == nil {
-			err = errors.Errorf("targetRef is nil")
+			err = errors.Errorf("targetRef is nil after %d attempts", maxRetries)
 		}
-		LogCritical(fmt.Sprintf("Failed to get ref for %s: %v\n", targetBranch.RepoName, err))
+		LogCritical(fmt.Sprintf("Failed to get ref for %s after %d attempts: %v\n", normalizedRepo, maxRetries, err))
 		return "", "", err
 	}
 	baseSHA = ref.GetObject().GetSHA()
@@ -344,13 +377,16 @@ func deleteBranchIfExists(backgroundContext context.Context, client *github.Clie
 		return
 	}
 
-	owner, repoName := parseRepoPath(repo)
+	// Normalize repo name for consistent logging
+	normalizedRepo := normalizeRepoName(repo)
+	owner, repoName := parseRepoPath(normalizedRepo)
+
 	if ref.GetRef() == "refs/heads/main" {
 		LogError("I refuse to delete branch 'main'.")
 		log.Fatal()
 	}
 
-	LogInfo(fmt.Sprintf("Deleting branch %s on %s", ref.GetRef(), repo))
+	LogInfo(fmt.Sprintf("Deleting branch %s on %s", ref.GetRef(), normalizedRepo))
 	_, _, err := client.Git.GetRef(backgroundContext, owner, repoName, ref.GetRef())
 
 	if err == nil { // Branch exists (there was no error fetching it)

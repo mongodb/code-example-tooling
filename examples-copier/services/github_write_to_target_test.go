@@ -1,6 +1,7 @@
 package services_test
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -634,4 +635,25 @@ func TestPriority_PRTitleDefaultsToCommitMessage_And_NoAutoMergeWhenConfigPresen
 	require.Equal(t, 0, test.CountByMethodAndURLRegexp("PUT", regexp.MustCompile(`/pulls/5/merge$`)))
 
 	services.FilesToUpload = nil
+}
+
+// TestDeleteBranchIfExists_NilReference tests that deleteBranchIfExists handles nil references gracefully
+func TestDeleteBranchIfExists_NilReference(t *testing.T) {
+	_ = test.WithHTTPMock(t)
+
+	// Force fresh token
+	services.InstallationAccessToken = ""
+	test.MockGitHubAppTokenEndpoint(os.Getenv(configs.InstallationId))
+	services.ConfigurePermissions()
+
+	// This should not panic or make any API calls when ref is nil
+	// We're testing that the function returns early without attempting to delete
+	ctx := context.Background()
+	client := services.GetRestClient()
+
+	// Call with nil reference - should return immediately without error
+	services.DeleteBranchIfExistsExported(ctx, client, "test-org/test-repo", nil)
+
+	// Verify no DELETE requests were made (since ref was nil)
+	require.Equal(t, 0, test.CountByMethodAndURLRegexp("DELETE", regexp.MustCompile(`/git/refs/`)))
 }

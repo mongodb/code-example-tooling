@@ -339,6 +339,10 @@ func mergePR(ctx context.Context, client *github.Client, repo string, pr_number 
 
 // deleteBranchIfExists deletes the specified branch if it exists, except for 'main'.
 func deleteBranchIfExists(backgroundContext context.Context, client *github.Client, repo string, ref *github.Reference) {
+	// Early return if ref is nil (branch doesn't exist)
+	if ref == nil {
+		return
+	}
 
 	owner, repoName := parseRepoPath(repo)
 	if ref.GetRef() == "refs/heads/main" {
@@ -355,4 +359,9 @@ func deleteBranchIfExists(backgroundContext context.Context, client *github.Clie
 			LogCritical(fmt.Sprintf("Error deleting branch: %v\n", err))
 		}
 	}
+}
+
+// DeleteBranchIfExistsExported is an exported wrapper for testing deleteBranchIfExists
+func DeleteBranchIfExistsExported(ctx context.Context, client *github.Client, repo string, ref *github.Reference) {
+	deleteBranchIfExists(ctx, client, repo, ref)
 }

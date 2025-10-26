@@ -18,7 +18,9 @@ import (
 
 const (
 	maxWebhookBodyBytes = 1 << 20 // 1MB
-	statusDeleted       = "DELETED"
+	// GitHub GraphQL API returns file status in uppercase for the ChangeType field
+	// Possible values: ADDED, MODIFIED, DELETED, RENAMED, COPIED, CHANGED
+	statusDeleted = "DELETED"
 )
 
 // simpleVerifySignature verifies the webhook signature
@@ -386,11 +388,21 @@ func processFileForTarget(ctx context.Context, prNumber int, sourceCommitSHA str
 
 	// Handle deleted files
 	if file.Status == statusDeleted {
+		LogInfoCtx(ctx, "file marked as deleted, handling deprecation", map[string]interface{}{
+			"file":   file.Path,
+			"status": file.Status,
+			"target": targetPath,
+		})
 		handleFileDeprecation(ctx, prNumber, sourceCommitSHA, file, rule, target, targetPath, sourceBranch, config, container)
 		return
 	}
 
 	// Handle file copy
+	LogInfoCtx(ctx, "file marked for copy", map[string]interface{}{
+		"file":   file.Path,
+		"status": file.Status,
+		"target": targetPath,
+	})
 	handleFileCopyWithAudit(ctx, prNumber, sourceCommitSHA, file, rule, target, targetPath, variables, sourceBranch, config, container)
 }
 
@@ -557,16 +569,14 @@ func queueFileForUploadWithStrategy(target types.TargetConfig, file github.Repos
 
 // addToDeprecationMapForTarget adds a file to the deprecation map
 func addToDeprecationMapForTarget(targetPath string, target types.TargetConfig, fileStateService FileStateService) {
-	deprecationFile := "deprecated_examples.json"
-	if target.DeprecationCheck != nil && target.DeprecationCheck.File != "" {
-		deprecationFile = target.DeprecationCheck.File
-	}
-
 	entry := types.DeprecatedFileEntry{
 		FileName: targetPath,
 		Repo:     target.Repo,
 		Branch:   target.Branch,
 	}
 
-	fileStateService.AddFileToDeprecate(deprecationFile, entry)
+	// Use a composite key to ensure uniqueness: repo + targetPath
+	// This allows multiple files to be deprecated to the same deprecation file
+	key := target.Repo + ":" + targetPath
+	fileStateService.AddFileToDeprecate(key, entry)
 }

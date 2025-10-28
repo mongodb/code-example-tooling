@@ -1,0 +1,10 @@
+[
+  {
+    "owner": "mongodb",
+    "repo": "docs-notebooks"
+  },
+  {
+    "owner": "mongodb",
+    "repo": "atlas-architecture-go-sdk"
+  }
+]

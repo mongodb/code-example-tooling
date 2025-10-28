@@ -13,7 +13,7 @@
   "type": "module",
   "dependencies": {
     "esm": "^3.2.25",
-    "mongodb": "^6.12.0",
-    "octokit": "^4.1.0"
+    "mongodb": "^6.20.0",
+    "octokit": "^5.0.4"
   }
 }

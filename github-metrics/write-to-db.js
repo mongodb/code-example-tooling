@@ -1,5 +1,4 @@
 import { MongoClient } from 'mongodb';
-import {getGitHubMetrics} from "./get-github-metrics.js";
 
 async function addMetricsToAtlas(metricsDocs) {
     const uri =  process.env.ATLAS_CONNECTION_STRING;

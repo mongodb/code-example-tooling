@@ -39,14 +39,30 @@ This code is in the `get-github-metrics.js` file.
 
 ### Change repos to track
 
-This project uses `RepoDetails` declared in the `index.js` file to track the owner and repo name for a given project
-whose metrics we want to track.
+This project pulls the configuration data from [repo-details.json](repo-details.json) to track the owner and repo name for repositories whose metrics we want to track.
 
-Declare as many `RepoDetails` as you need, and add them to the `repos` array in ln 19 of the `index.js` file. The code
-handles tracking and writing to Atlas for multiple repos.
+#### Add a new repository
 
-Inserting a new repo automatically creates a new corresponding collection in Atlas. You will need to manually create
-Charts to correspond to the new collection.
+To add a new repository, create a new entry in the `repo-details.json` file in the following format:
+
+```json
+{
+  "owner": "<repo-owner>",
+  "repo": "<repo-name>"
+}
+```
+
+You can get the owner and name from the repo URL: `https://github.com/<owner>/<repo>`
+For example, to add the MongoDB docs-notebooks repository, you'd add the following to the `repo-details.json`:
+
+```json
+{
+  "owner": "mongodb",
+  "repo": "docs-notebooks"
+}
+```
+
+The code handles tracking and writing to Atlas for multiple repos. Inserting a new repo automatically creates a new corresponding collection in Atlas. You will need to manually create Charts to correspond to the new collection.
 
 ### Write metrics to Atlas
 

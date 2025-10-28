@@ -1,0 +1,22 @@
+[
+  {
+    "owner": "mongodb",
+    "repo": "docs-notebooks"
+  },
+  {
+    "owner": "mongodb",
+    "repo": "atlas-architecture-go-sdk"
+  },
+  {
+    "owner": "mongodb",
+    "repo": "sample-app-java-mflix"
+  },
+  {
+    "owner": "mongodb",
+    "repo": "sample-app-nodejs-mflix"
+  },
+  {
+    "owner": "mongodb",
+    "repo": "sample-app-python-mflix"
+  }
+]

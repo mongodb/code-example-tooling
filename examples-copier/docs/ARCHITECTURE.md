@@ -1,10 +1,58 @@
 # Examples Copier Architecture
 
-This document describes the architecture and design of the examples-copier application, including its core components, pattern matching system, configuration management, and operational features.
+This document describes the architecture and design of the examples-copier application, including its core components, pattern matching system, configuration management, deprecation tracking, and operational features.
+
+## Core Architecture
+
+### Service Container Pattern
+
+The application uses a **Service Container** to manage dependencies and provide thread-safe access to shared services:
+
+**Files:**
+- `services/webhook_handler_new.go` - ServiceContainer struct and initialization
+
+**Components:**
+- `FileStateService` - Thread-safe state management for files to upload/deprecate
+- `PatternMatcher` - Pattern matching engine
+- `MessageTemplater` - Template rendering for messages
+- `AuditLogger` - MongoDB audit logging
+- `MetricsCollector` - Metrics tracking
+
+**Benefits:**
+- Dependency injection for testability
+- Thread-safe operations with mutex locks
+- Clean separation of concerns
+- Easy to mock for testing
+
+### File State Management
+
+**Files:**
+- `services/file_state_service.go` - FileStateService interface and implementation
+
+**Capabilities:**
+- Thread-safe file queuing with `sync.RWMutex`
+- Separate queues for uploads and deprecations
+- Composite keys to prevent collisions
+- Copy-on-read to prevent external modification
+
+**Upload Key Structure:**
+```go
+type UploadKey struct {
+    RepoName       string  // Target repository
+    BranchPath     string  // Target branch
+    RuleName       string  // Rule name (allows multiple rules per repo)
+    CommitStrategy string  // "direct" or "pull_request"
+}
+```
+
+**Deprecation Key Structure:**
+- Composite key: `{repo}:{targetPath}` (e.g., `mongodb/docs:code/example.go`)
+- Ensures uniqueness when multiple files are deprecated to the same deprecation file
+- Prevents map key collisions
 
 ## Features
 
-### Enhanced Pattern Matching
+### 1. Enhanced Pattern Matching
 
 **Files Created:**
 - `services/pattern_matcher.go` - Pattern matching engine
@@ -21,7 +69,7 @@ source_pattern:
   pattern: "^examples/(?P<lang>[^/]+)/(?P<category>[^/]+)/(?P<file>.+)$"
 ```
 
-### Path Transformations
+### 2. Path Transformations
 
 **Files Created:**
 - `services/pattern_matcher.go` (PathTransformer interface)
@@ -37,7 +85,66 @@ source_pattern:
 path_transform: "source/code-examples/${lang}/${category}/${file}"
 ```
 
-### YAML Configuration Support
+### 3. Deprecation Tracking
+
+**Files:**
+- `services/webhook_handler_new.go` - Deprecation detection and queuing
+- `services/github_write_to_source.go` - Deprecation file updates
+- `services/file_state_service.go` - Deprecation queue management
+
+**How It Works:**
+
+1. **Detection**: When a PR is merged, files with status `DELETED` are identified
+2. **Pattern Matching**: Deleted files are matched against copy rules
+3. **Path Calculation**: Target repository paths are calculated using path transforms
+4. **Queuing**: Files are added to deprecation queue with composite key `{repo}:{targetPath}`
+5. **File Update**: Deprecation file in source repository is updated with all entries
+
+**Key Implementation Details:**
+
+**Composite Key Fix (Critical):**
+```go
+// Use composite key to prevent collisions when multiple files
+// are deprecated to the same deprecation file
+key := target.Repo + ":" + targetPath
+fileStateService.AddFileToDeprecate(key, entry)
+```
+
+**Why Composite Keys?**
+- Multiple rules can target the same deprecation file
+- Without composite keys, entries would overwrite each other in the map
+- Example: 3 files (Java, Node.js, Python) all using `deprecated_examples.json`
+- With simple key: Only 1 entry survives (last one wins)
+- With composite key: All 3 entries preserved
+
+**Deprecation File Format:**
+```json
+[
+  {
+    "filename": "code/example.go",
+    "repo": "mongodb/docs",
+    "branch": "main",
+    "deleted_on": "2025-10-26T18:34:43Z"
+  }
+]
+```
+
+**Configuration:**
+```yaml
+targets:
+  - repo: "mongodb/docs"
+    branch: "main"
+    deprecation_check:
+      enabled: true
+      file: "deprecated_examples.json"  # Optional, defaults to deprecated_examples.json
+```
+
+**Protection Against Empty Commits:**
+- Checks if deprecation queue is empty before updating file
+- Returns early if no files to deprecate
+- Prevents blank commits to source repository
+
+### 4. YAML Configuration Support
 
 **Files Created:**
 - `types/config.go` - New configuration types
@@ -51,7 +158,7 @@ path_transform: "source/code-examples/${lang}/${category}/${file}"
 - Comprehensive validation
 - Default value handling
 
-**Example:**
+**Configuration Structure:**
 ```yaml
 source_repo: "mongodb/docs-code-examples"
 source_branch: "main"
@@ -65,9 +172,17 @@ copy_rules:
       - repo: "mongodb/docs"
         branch: "main"
         path_transform: "code/${filename}"
+        commit_strategy:
+          type: "pull_request"  # or "direct"
+          pr_title: "Update Go examples"
+          pr_body: "Automated update"
+          auto_merge: false
+        deprecation_check:
+          enabled: true
+          file: "deprecated_examples.json"
 ```
 
-### Template Engine for Messages
+### 5. Template Engine for Messages
 
 **Files Created:**
 - `services/pattern_matcher.go` (MessageTemplater interface)
@@ -87,7 +202,7 @@ commit_strategy:
   pr_body: "Automated update of ${lang} examples (${file_count} files)"
 ```
 
-### MongoDB Audit Logging
+### 6. MongoDB Audit Logging
 
 **Files Created:**
 - `services/audit_logger.go` - MongoDB audit logger
@@ -126,7 +241,13 @@ AUDIT_COLLECTION="events"
 }
 ```
 
-### Health Check and Metrics Endpoints
+**Integration:**
+- Logs copy operations with success/failure status
+- Logs deprecation events when files are deleted
+- Logs errors with full context
+- Thread-safe operation through ServiceContainer
+
+### 7. Health Check and Metrics Endpoints
 
 **Files Created:**
 - `services/health_metrics.go` - Health and metrics implementation
@@ -147,9 +268,19 @@ Returns application health status:
     "upload_count": 0,
     "deprecation_count": 0
   },
+  "audit_logger": {
+    "status": "healthy",
+    "connected": true
+  },
   "uptime": "2h15m30s"
 }
 ```
+
+**Health Check Features:**
+- GitHub authentication verification
+- Queue status (upload and deprecation)
+- Audit logger connection status
+- Application uptime tracking
 
 #### GET /metrics
 Returns detailed metrics:
@@ -181,7 +312,13 @@ Returns detailed metrics:
 }
 ```
 
-### CLI Validation Tool
+**Metrics Tracking:**
+- Webhook processing statistics
+- File operation counters (matched, uploaded, deprecated, failed)
+- GitHub API call tracking
+- Success rates and error rates
+
+### 8. CLI Validation Tool
 
 **Files Created:**
 - `cmd/config-validator/main.go` - CLI tool for configuration management
@@ -210,15 +347,77 @@ config-validator init -template basic -output my-copier-config.yaml
 config-validator convert -input config.json -output copier-config.yaml
 ```
 
-### 8. Development/Testing Features
+### 9. Development/Testing Features
 
 **Features:**
 - **Dry Run Mode**: `DRY_RUN="true"` - No actual changes made
 - **Non-main Branch Support**: Configure any target branch
-- **Enhanced Logging**: Structured logging with context
+- **Enhanced Logging**: Structured logging with context (JSON format)
 - **Metrics Collection**: Optional metrics tracking
+- **Context-aware Operations**: All operations support context cancellation
 
-## Usage Examples
+**Logging Features:**
+- Structured JSON logs with contextual information
+- Operation tracking with elapsed time
+- File status logging (ADDED, MODIFIED, DELETED)
+- Deprecation event logging
+- Error logging with full context
+
+## Webhook Processing Flow
+
+### High-Level Flow
+
+1. **Webhook Received** → Verify signature and parse payload
+2. **PR Validation** → Check if PR is merged
+3. **File Retrieval** → Get changed files from GitHub GraphQL API
+4. **Pattern Matching** → Match files against copy rules
+5. **File Processing** → Handle copies and deprecations
+6. **Queue Processing** → Upload files and update deprecation file
+7. **Metrics & Audit** → Record metrics and log events
+
+### Detailed Processing Steps
+
+#### 1. File Status Detection
+```go
+// GitHub GraphQL API returns file status
+type ChangedFile struct {
+    Path      string
+    Status    string  // "ADDED", "MODIFIED", "DELETED", "RENAMED", etc.
+    Additions int
+    Deletions int
+}
+```
+
+#### 2. Pattern Matching
+- Each file is tested against all copy rules
+- First matching rule wins
+- Variables extracted from regex capture groups
+- Path transformation applied
+
+#### 3. File Routing
+```go
+if file.Status == "DELETED" {
+    // Route to deprecation handler
+    handleFileDeprecation(...)
+} else {
+    // Route to copy handler
+    handleFileCopyWithAudit(...)
+}
+```
+
+#### 4. Queue Management
+- Files queued with composite keys to prevent collisions
+- Upload queue: `{repo}:{branch}:{rule}:{strategy}`
+- Deprecation queue: `{repo}:{targetPath}`
+- Thread-safe operations with mutex locks
+
+#### 5. Batch Operations
+- All files for same target are batched together
+- Single commit per target repository
+- Single PR per target (if using PR strategy)
+- Deprecation file updated once with all entries
+
+## Configuration Examples
 
 ### Basic YAML Config
 ```yaml
@@ -236,10 +435,14 @@ copy_rules:
         path_transform: "code/go/${relative_path}"
         commit_strategy:
           type: "direct"
+          commit_message: "Update Go examples from ${source_repo}"
 ```
 
-### Advanced Regex Config
+### Advanced Regex Config with Deprecation
 ```yaml
+source_repo: "mongodb/docs-code-examples"
+source_branch: "main"
+
 copy_rules:
   - name: "language-examples"
     source_pattern:
@@ -252,18 +455,145 @@ copy_rules:
         commit_strategy:
           type: "pull_request"
           pr_title: "Update ${lang} examples"
-          pr_body: "Updated ${file_count} ${lang} files"
+          pr_body: "Updated ${file_count} ${lang} files from ${source_repo}"
+          auto_merge: false
+        deprecation_check:
+          enabled: true
+          file: "deprecated_examples.json"
 ```
 
-## Benefits
+### Multi-Target Config
+```yaml
+source_repo: "mongodb/aggregation-examples"
+source_branch: "main"
 
-1. **More Flexible**: Regex patterns with variable extraction
-2. **Better DX**: YAML configs are more readable and maintainable
-3. **Observable**: Health checks, metrics, and audit logging
-4. **Testable**: CLI tools for validation and testing
-5. **Production Ready**: Dry-run mode, proper error handling, monitoring
+copy_rules:
+  # Java examples
+  - name: "java-examples"
+    source_pattern:
+      type: "regex"
+      pattern: "^java/(?P<file>.+\\.java)$"
+    targets:
+      - repo: "mongodb/docs"
+        branch: "main"
+        path_transform: "java/${file}"
+        commit_strategy:
+          type: "pull_request"
+          pr_title: "Update Java examples"
+          auto_merge: false
+        deprecation_check:
+          enabled: true
+          file: "deprecated_examples.json"
+
+  # Node.js examples
+  - name: "nodejs-examples"
+    source_pattern:
+      type: "regex"
+      pattern: "^nodejs/(?P<file>.+\\.(js|ts))$"
+    targets:
+      - repo: "mongodb/docs"
+        branch: "main"
+        path_transform: "node/${file}"
+        commit_strategy:
+          type: "pull_request"
+          pr_title: "Update Node.js examples"
+          auto_merge: true
+        deprecation_check:
+          enabled: true
+          file: "deprecated_examples.json"
+
+  # Python examples
+  - name: "python-examples"
+    source_pattern:
+      type: "regex"
+      pattern: "^python/(?P<file>.+\\.py)$"
+    targets:
+      - repo: "mongodb/docs"
+        branch: "main"
+        path_transform: "python/${file}"
+        commit_strategy:
+          type: "direct"
+          commit_message: "Update Python examples"
+        deprecation_check:
+          enabled: true
+          file: "deprecated_examples.json"
+```
+
+## Key Benefits
+
+1. **Flexible Pattern Matching**: Regex patterns with variable extraction and multiple pattern types
+2. **Better Developer Experience**: YAML configs are more readable and maintainable
+3. **Observable**: Health checks, metrics, and comprehensive audit logging
+4. **Testable**: CLI tools for validation and testing, dry-run mode
+5. **Production Ready**: Thread-safe operations, proper error handling, monitoring
+6. **Deprecation Tracking**: Automatic detection and tracking of deleted files
+7. **Batch Operations**: Efficient batching of multiple files per target
+8. **Template Engine**: Dynamic message generation with variables
+
+## Thread Safety
+
+The application is designed for concurrent operations:
+
+- **FileStateService**: Thread-safe with `sync.RWMutex`
+- **MetricsCollector**: Thread-safe counters
+- **AuditLogger**: Thread-safe MongoDB operations
+- **ServiceContainer**: Immutable after initialization
+
+## Error Handling
+
+- Context-aware cancellation support
+- Graceful degradation (audit logging optional)
+- Detailed error logging with full context
+- Metrics tracking for failed operations
+- No-op implementations for optional features
+
+## Performance Considerations
+
+- **Batch Operations**: Multiple files committed in single operation
+- **Composite Keys**: Prevent map collisions and overwrites
+- **Copy-on-Read**: FileStateService returns copies to prevent external modification
+- **GraphQL API**: Efficient file retrieval with single query
+- **Mutex Locks**: Read/write locks for optimal concurrency
+
+## Deployment
+
+**Platform**: Google Cloud App Engine (Flexible Environment)
+
+**Environment Variables:**
+```bash
+# Required
+REPO_OWNER="mongodb"
+REPO_NAME="docs-code-examples"
+SRC_BRANCH="main"
+GITHUB_TOKEN="ghp_..."
+WEBHOOK_SECRET="..."
+
+# Optional
+AUDIT_ENABLED="true"
+MONGO_URI="mongodb+srv://..."
+DRY_RUN="false"
+CONFIG_FILE="copier-config.yaml"
+```
+
+**Health Monitoring:**
+- `/health` endpoint for liveness checks
+- `/metrics` endpoint for monitoring
+- Structured JSON logs for analysis
 
 ## Breaking Changes
 
 None - the refactoring maintains backward compatibility with existing JSON configs through automatic conversion.
+
+## Future Enhancements
+
+Potential improvements documented in codebase:
+
+1. **Automatic Cleanup PRs** - Create PRs to remove deprecated files from targets
+2. **Expiration Dates** - Auto-remove deprecation entries after X days
+3. **Cleanup Verification** - Check if deprecated files still exist in targets
+4. **Batch Cleanup Tool** - CLI tool to clean up all deprecated files
+5. **Notifications** - Alert when deprecation file grows large
+6. **Retry Logic** - Automatic retry for failed GitHub API calls
+7. **Rate Limiting** - Respect GitHub API rate limits
+8. **Webhook Queue** - Queue webhooks for processing during high load
 

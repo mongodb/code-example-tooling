@@ -68,6 +68,31 @@ func MockGitHubAppTokenEndpoint(installationID string) {
 	)
 }
 
+// MockGitHubAppInstallations mocks the GitHub App installations list endpoint.
+// Used to simulate fetching installation IDs for organizations.
+func MockGitHubAppInstallations(orgToInstallationID map[string]string) {
+	installations := []map[string]any{}
+	for org, installID := range orgToInstallationID {
+		installations = append(installations, map[string]any{
+			"id": installID,
+			"account": map[string]any{
+				"login": org,
+				"type":  "Organization",
+			},
+		})
+	}
+	httpmock.RegisterResponder("GET",
+		"https://api.github.com/app/installations",
+		httpmock.NewJsonResponderOrPanic(200, installations),
+	)
+}
+
+// SetupOrgToken sets up a cached installation token for an organization.
+// This bypasses the need to mock the installations and token endpoints.
+func SetupOrgToken(org, token string) {
+	services.SetInstallationTokenForOrg(org, token)
+}
+
 // MockGitHubWriteEndpoints mocks the full direct-commit flow endpoints for a single branch: GET base ref, POST trees, POST commits, PATCH ref.
 // Used to simulate writing to a GitHub repo without creating a PR.
 // Returns the URLs for the base ref, commits, and update ref endpoints.

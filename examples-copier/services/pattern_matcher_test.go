@@ -357,6 +357,63 @@ func TestMessageTemplater_RenderCommitMessage(t *testing.T) {
 	}
 }
 
+func TestMessageTemplater_RenderPRBody(t *testing.T) {
+	templater := services.NewMessageTemplater()
+
+	tests := []struct {
+		name     string
+		template string
+		context  *types.MessageContext
+		want     string
+	}{
+		{
+			name:     "simple body",
+			template: "Automated update of code examples",
+			context:  types.NewMessageContext(),
+			want:     "Automated update of code examples",
+		},
+		{
+			name:     "body with multiple variables",
+			template: "Automated update of ${lang} examples\n\nFiles updated: ${file_count}\nSource: ${source_repo}",
+			context: &types.MessageContext{
+				SourceRepo: "cbullinger/aggregation-tasks",
+				FileCount:  3,
+				Variables: map[string]string{
+					"lang": "java",
+				},
+			},
+			want: "Automated update of java examples\n\nFiles updated: 3\nSource: cbullinger/aggregation-tasks",
+		},
+		{
+			name:     "body with rule_name variable",
+			template: "Files updated: ${file_count} using ${rule_name} match pattern",
+			context: &types.MessageContext{
+				RuleName:  "java-aggregation-examples",
+				FileCount: 5,
+			},
+			want: "Files updated: 5 using java-aggregation-examples match pattern",
+		},
+		{
+			name:     "empty template uses default",
+			template: "",
+			context: &types.MessageContext{
+				SourceRepo: "org/source",
+				FileCount:  5,
+				PRNumber:   42,
+			},
+			want: "Automated update of 5 file(s) from org/source (PR #42)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := templater.RenderPRBody(tt.template, tt.context)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+
 func TestMatchAndTransform(t *testing.T) {
 	tests := []struct {
 		name         string

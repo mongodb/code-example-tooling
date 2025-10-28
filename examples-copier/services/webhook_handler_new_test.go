@@ -3,11 +3,17 @@ package services
 import (
 	"bytes"
 	"crypto/hmac"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/google/go-github/v48/github"
@@ -249,10 +255,37 @@ func TestHandleWebhookWithContainer_NonMergedPR(t *testing.T) {
 }
 
 func TestHandleWebhookWithContainer_MergedPR(t *testing.T) {
+	// Note: This test triggers a background goroutine that processes the merged PR.
+	// The goroutine will fail when trying to load config/fetch files from GitHub,
+	// but that's expected in a unit test environment. The test only verifies that
+	// the webhook handler returns the correct HTTP response.
+
+	// Set up environment variables to prevent ConfigurePermissions from failing
+	// We don't clean these up because:
+	// 1. The background goroutine may still need them after the test completes
+	// 2. TestMain in github_write_to_target_test.go sets them up properly anyway
+	// 3. These are test values that won't affect other tests
+	os.Setenv(configs.AppId, "123456")
+	os.Setenv(configs.InstallationId, "789012")
+	os.Setenv(configs.RepoOwner, "test-owner")
+	os.Setenv(configs.RepoName, "test-repo")
+	os.Setenv("SKIP_SECRET_MANAGER", "true")
+
+	// Generate a valid RSA private key for testing
+	key, _ := rsa.GenerateKey(rand.Reader, 1024)
+	der := x509.MarshalPKCS1PrivateKey(key)
+	pemBytes := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: der})
+	os.Setenv("GITHUB_APP_PRIVATE_KEY", string(pemBytes))
+	os.Setenv("GITHUB_APP_PRIVATE_KEY_B64", base64.StdEncoding.EncodeToString(pemBytes))
+
+	// Set InstallationAccessToken to prevent ConfigurePermissions from being called
+	// We don't reset this because the background goroutine may still need it after the test completes
+	InstallationAccessToken = "test-token"
+
 	config := &configs.Config{
 		RepoOwner:      "test-owner",
 		RepoName:       "test-repo",
-		
+		ConfigFile:     "nonexistent-config.yaml", // Use nonexistent file to prevent actual config loading
 		AuditEnabled:   false,
 	}
 
@@ -296,6 +329,9 @@ func TestHandleWebhookWithContainer_MergedPR(t *testing.T) {
 	if response["status"] != "accepted" {
 		t.Errorf("Response status = %v, want accepted", response["status"])
 	}
+
+	// Note: The background goroutine will continue running and will eventually fail
+	// when trying to access GitHub APIs. This is expected and doesn't affect the test result.
 }
 
 func TestRetrieveFileContentsWithConfigAndBranch(t *testing.T) {

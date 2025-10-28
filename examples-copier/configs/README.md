@@ -267,6 +267,5 @@ examples-copier/
 
 - [CONFIGURATION-GUIDE.md](../docs/CONFIGURATION-GUIDE.md) - Variable validation and reference
 - [DEPLOYMENT.md](../docs/DEPLOYMENT.md) - Complete deployment guide
-- [DEPLOYMENT-CHECKLIST.md](../docs/DEPLOYMENT-CHECKLIST.md) - Step-by-step checklist
 - [LOCAL-TESTING.md](../docs/LOCAL-TESTING.md) - Local development guide
 

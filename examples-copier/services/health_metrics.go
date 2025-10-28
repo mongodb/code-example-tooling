@@ -49,6 +49,8 @@ type WebhookMetrics struct {
 	Received       int64              `json:"received"`
 	Processed      int64              `json:"processed"`
 	Failed         int64              `json:"failed"`
+	Ignored        int64              `json:"ignored"` // Non-PR events
+	EventTypes     map[string]int64   `json:"event_types"` // Count by event type
 	SuccessRate    float64            `json:"success_rate"`
 	ProcessingTime ProcessingTimeStats `json:"processing_time"`
 }
@@ -106,6 +108,8 @@ type MetricsCollector struct {
 	webhookReceived int64
 	webhookProcessed int64
 	webhookFailed   int64
+	webhookIgnored  int64 // Non-PR events that were ignored
+	eventTypes      map[string]int64 // Count by event type
 	filesMatched    int64
 	filesUploaded   int64
 	filesUploadFailed int64
@@ -120,6 +124,7 @@ type MetricsCollector struct {
 func NewMetricsCollector() *MetricsCollector {
 	return &MetricsCollector{
 		startTime:       time.Now(),
+		eventTypes:      make(map[string]int64),
 		processingTimes: make([]time.Duration, 0, 1000),
 		uploadTimes:     make([]time.Duration, 0, 1000),
 	}
@@ -150,6 +155,14 @@ func (mc *MetricsCollector) RecordWebhookFailed() {
 	mc.mu.Lock()
 	defer mc.mu.Unlock()
 	mc.webhookFailed++
+}
+
+// RecordWebhookIgnored increments webhook ignored counter and tracks event type
+func (mc *MetricsCollector) RecordWebhookIgnored(eventType string) {
+	mc.mu.Lock()
+	defer mc.mu.Unlock()
+	mc.webhookIgnored++
+	mc.eventTypes[eventType]++
 }
 
 // RecordFileMatched increments file matched counter
@@ -246,11 +259,19 @@ func (mc *MetricsCollector) GetMetrics(fileStateService FileStateService) Metric
 	uploadQueue := fileStateService.GetFilesToUpload()
 	deprecationQueue := fileStateService.GetFilesToDeprecate()
 
+	// Copy event types map
+	eventTypesCopy := make(map[string]int64, len(mc.eventTypes))
+	for k, v := range mc.eventTypes {
+		eventTypesCopy[k] = v
+	}
+
 	return MetricsData{
 		Webhooks: WebhookMetrics{
 			Received:       mc.webhookReceived,
 			Processed:      mc.webhookProcessed,
 			Failed:         mc.webhookFailed,
+			Ignored:        mc.webhookIgnored,
+			EventTypes:     eventTypesCopy,
 			SuccessRate:    webhookSuccessRate,
 			ProcessingTime: calculateStats(mc.processingTimes),
 		},

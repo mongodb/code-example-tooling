@@ -414,5 +414,5 @@ jobs:
 - [Webhook Testing Guide](../../docs/WEBHOOK-TESTING.md) - Comprehensive testing guide
 - [Local Testing](../../docs/LOCAL-TESTING.md) - Local development
 - [Test Payloads](../../test-payloads/README.md) - Example payloads
-- [Quick Reference](../../docs/QUICK-REFERENCE.md) - All commands
+- [Quick Reference](../../QUICK-REFERENCE.md) - All commands
 

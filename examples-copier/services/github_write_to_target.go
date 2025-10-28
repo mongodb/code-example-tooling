@@ -38,6 +38,16 @@ func parseRepoPath(repoPath string) (owner, repo string) {
 	return repoOwner(), repoPath
 }
 
+// normalizeRepoName ensures a repository name includes the owner prefix.
+// If the repo name already has an owner (contains "/"), returns it as-is.
+// Otherwise, prepends the default repo owner from environment.
+func normalizeRepoName(repoName string) string {
+	if strings.Contains(repoName, "/") {
+		return repoName
+	}
+	return repoOwner() + "/" + repoName
+}
+
 // AddFilesToTargetRepoBranch uploads files to the target repository branch
 // using the specified commit strategy (direct or via pull request).
 func AddFilesToTargetRepoBranch() {
@@ -75,6 +85,9 @@ func AddFilesToTargetRepoBranch() {
 			prTitle = commitMsg
 		}
 
+		// Get PR body from value
+		prBody := value.PRBody
+
 		// Get auto-merge setting from value
 		mergeWithoutReview := value.AutoMergePR
 
@@ -86,7 +99,7 @@ func AddFilesToTargetRepoBranch() {
 			}
 		default: // "pr" or "pull_request" strategy
 			LogInfo(fmt.Sprintf("Using PR commit strategy for %s on branch %s (auto_merge=%v)", key.RepoName, key.BranchPath, mergeWithoutReview))
-			if err := addFilesViaPR(ctx, client, key, value.Content, commitMsg, prTitle, mergeWithoutReview); err != nil {
+			if err := addFilesViaPR(ctx, client, key, value.Content, commitMsg, prTitle, prBody, mergeWithoutReview); err != nil {
 				LogCritical(fmt.Sprintf("Failed via PR path: %v\n", err))
 			}
 		}
@@ -110,9 +123,9 @@ func createPullRequest(ctx context.Context, client *github.Client, repo, head, b
 }
 
 // addFilesViaPR creates a temporary branch, commits files to it using the provided commitMessage,
-// opens a pull request with prTitle, and optionally merges it automatically.
+// opens a pull request with prTitle and prBody, and optionally merges it automatically.
 func addFilesViaPR(ctx context.Context, client *github.Client, key UploadKey,
-	files []github.RepositoryContent, commitMessage string, prTitle string, mergeWithoutReview bool,
+	files []github.RepositoryContent, commitMessage string, prTitle string, prBody string, mergeWithoutReview bool,
 ) error {
 	tempBranch := "copier/" + time.Now().UTC().Format("20060102-150405")
 
@@ -142,7 +155,7 @@ func addFilesViaPR(ctx context.Context, client *github.Client, key UploadKey,
 
 	// 3) Create PR from temp branch to base branch
 	base := strings.TrimPrefix(key.BranchPath, "refs/heads/")
-	pr, err := createPullRequest(ctx, client, key.RepoName, tempBranch, base, prTitle, "")
+	pr, err := createPullRequest(ctx, client, key.RepoName, tempBranch, base, prTitle, prBody)
 	if err != nil {
 		return fmt.Errorf("create PR: %w", err)
 	}
@@ -152,11 +165,26 @@ func addFilesViaPR(ctx context.Context, client *github.Client, key UploadKey,
 	LogInfo(fmt.Sprintf("PR URL: %s", pr.GetHTMLURL()))
 	if mergeWithoutReview {
 		// Poll PR for mergeability; GitHub may take a moment to compute it
-		// We poll up to ~10s with 500ms interval
+		// Get polling configuration from environment or use defaults
+		cfg := configs.NewConfig()
+		maxAttempts := cfg.PRMergePollMaxAttempts
+		if envAttempts := os.Getenv(configs.PRMergePollMaxAttempts); envAttempts != "" {
+			if parsed, err := parseIntWithDefault(envAttempts, maxAttempts); err == nil {
+				maxAttempts = parsed
+			}
+		}
+
+		pollInterval := cfg.PRMergePollInterval
+		if envInterval := os.Getenv(configs.PRMergePollInterval); envInterval != "" {
+			if parsed, err := parseIntWithDefault(envInterval, pollInterval); err == nil {
+				pollInterval = parsed
+			}
+		}
+
 		var mergeable *bool
 		var mergeableState string
 		owner, repoName := parseRepoPath(key.RepoName)
-		for i := 0; i < 20; i++ {
+		for i := 0; i < maxAttempts; i++ {
 			current, _, gerr := client.PullRequests.Get(ctx, owner, repoName, pr.GetNumber())
 			if gerr == nil && current != nil {
 				mergeable = current.Mergeable
@@ -165,7 +193,7 @@ func addFilesViaPR(ctx context.Context, client *github.Client, key UploadKey,
 					break
 				}
 			}
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(time.Duration(pollInterval) * time.Millisecond)
 		}
 		if mergeable != nil && !*mergeable || strings.EqualFold(mergeableState, "dirty") {
 			LogWarning(fmt.Sprintf("PR #%d is not mergeable (state=%s). Likely merge conflicts. Leaving PR open for manual resolution.", pr.GetNumber(), mergeableState))
@@ -205,7 +233,9 @@ func addFilesToBranch(ctx context.Context, client *github.Client, key UploadKey,
 
 // createBranch creates a new branch from the specified base branch (defaults to 'main') and deletes it first if it already exists.
 func createBranch(ctx context.Context, client *github.Client, repo, newBranch string, baseBranch ...string) (*github.Reference, error) {
-	owner, repoName := parseRepoPath(repo)
+	// Normalize repo name for consistent logging and operations
+	normalizedRepo := normalizeRepoName(repo)
+	owner, repoName := parseRepoPath(normalizedRepo)
 
 	// Use provided base branch or default to "main"
 	base := "main"
@@ -221,7 +251,7 @@ func createBranch(ctx context.Context, client *github.Client, repo, newBranch st
 
 	// *** Check if branch (newBranchRef) already exists and delete it ***
 	newBranchRef, _, err := client.Git.GetRef(ctx, owner, repoName, fmt.Sprintf("%s%s", "refs/heads/", newBranch))
-	deleteBranchIfExists(ctx, client, repo, newBranchRef)
+	deleteBranchIfExists(ctx, client, normalizedRepo, newBranchRef)
 
 	newRef := &github.Reference{
 		Ref: github.String(fmt.Sprintf("%s%s", "refs/heads/", newBranch)),
@@ -236,7 +266,7 @@ func createBranch(ctx context.Context, client *github.Client, repo, newBranch st
 		return nil, err
 	}
 
-	LogInfo(fmt.Sprintf("Branch created successfully: %s on %s (from %s)", newRef, repo, base))
+	LogInfo(fmt.Sprintf("Branch created successfully: %s on %s (from %s)", newRef, normalizedRepo, base))
 
 	return newBranchRef, nil
 }
@@ -245,16 +275,53 @@ func createBranch(ctx context.Context, client *github.Client, repo, newBranch st
 func createCommitTree(ctx context.Context, client *github.Client, targetBranch UploadKey,
 	files map[string]string) (treeSHA string, baseSHA string, err error) {
 
-	owner, repoName := parseRepoPath(targetBranch.RepoName)
-	LogInfo(fmt.Sprintf("DEBUG createCommitTree: targetBranch.RepoName=%q, parsed owner=%q, repoName=%q", targetBranch.RepoName, owner, repoName))
+	// Normalize repo name for consistent logging
+	normalizedRepo := normalizeRepoName(targetBranch.RepoName)
+	owner, repoName := parseRepoPath(normalizedRepo)
+	LogInfo(fmt.Sprintf("DEBUG createCommitTree: targetBranch.RepoName=%q, normalized=%q, parsed owner=%q, repoName=%q",
+		targetBranch.RepoName, normalizedRepo, owner, repoName))
 
-	// 1) Get current ref (ONE GET)
-	ref, _, err := client.Git.GetRef(ctx, owner, repoName, targetBranch.BranchPath)
+	// 1) Get current ref with retry logic to handle GitHub API eventual consistency
+	// When a branch is just created, it may take a moment to be visible
+	var ref *github.Reference
+
+	// Get retry configuration from environment or use defaults
+	cfg := configs.NewConfig()
+	maxRetries := cfg.GitHubAPIMaxRetries
+	if envRetries := os.Getenv(configs.GitHubAPIMaxRetries); envRetries != "" {
+		if parsed, err := parseIntWithDefault(envRetries, maxRetries); err == nil {
+			maxRetries = parsed
+		}
+	}
+
+	initialRetryDelay := cfg.GitHubAPIInitialRetryDelay
+	if envDelay := os.Getenv(configs.GitHubAPIInitialRetryDelay); envDelay != "" {
+		if parsed, err := parseIntWithDefault(envDelay, initialRetryDelay); err == nil {
+			initialRetryDelay = parsed
+		}
+	}
+
+	retryDelay := time.Duration(initialRetryDelay) * time.Millisecond
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		ref, _, err = client.Git.GetRef(ctx, owner, repoName, targetBranch.BranchPath)
+		if err == nil && ref != nil {
+			break // Success
+		}
+
+		if attempt < maxRetries {
+			LogWarning(fmt.Sprintf("Failed to get ref for %s (attempt %d/%d): %v. Retrying in %v...",
+				normalizedRepo, attempt, maxRetries, err, retryDelay))
+			time.Sleep(retryDelay)
+			retryDelay *= 2 // Exponential backoff
+		}
+	}
+
 	if err != nil || ref == nil {
 		if err == nil {
-			err = errors.Errorf("targetRef is nil")
+			err = errors.Errorf("targetRef is nil after %d attempts", maxRetries)
 		}
-		LogCritical(fmt.Sprintf("Failed to get ref for %s: %v\n", targetBranch.RepoName, err))
+		LogCritical(fmt.Sprintf("Failed to get ref for %s after %d attempts: %v\n", normalizedRepo, maxRetries, err))
 		return "", "", err
 	}
 	baseSHA = ref.GetObject().GetSHA()
@@ -336,14 +403,21 @@ func mergePR(ctx context.Context, client *github.Client, repo string, pr_number 
 
 // deleteBranchIfExists deletes the specified branch if it exists, except for 'main'.
 func deleteBranchIfExists(backgroundContext context.Context, client *github.Client, repo string, ref *github.Reference) {
+	// Early return if ref is nil (branch doesn't exist)
+	if ref == nil {
+		return
+	}
 
-	owner, repoName := parseRepoPath(repo)
+	// Normalize repo name for consistent logging
+	normalizedRepo := normalizeRepoName(repo)
+	owner, repoName := parseRepoPath(normalizedRepo)
+
 	if ref.GetRef() == "refs/heads/main" {
 		LogError("I refuse to delete branch 'main'.")
 		log.Fatal()
 	}
 
-	LogInfo(fmt.Sprintf("Deleting branch %s on %s", ref.GetRef(), repo))
+	LogInfo(fmt.Sprintf("Deleting branch %s on %s", ref.GetRef(), normalizedRepo))
 	_, _, err := client.Git.GetRef(backgroundContext, owner, repoName, ref.GetRef())
 
 	if err == nil { // Branch exists (there was no error fetching it)
@@ -352,4 +426,18 @@ func deleteBranchIfExists(backgroundContext context.Context, client *github.Clie
 			LogCritical(fmt.Sprintf("Error deleting branch: %v\n", err))
 		}
 	}
+}
+
+// DeleteBranchIfExistsExported is an exported wrapper for testing deleteBranchIfExists
+func DeleteBranchIfExistsExported(ctx context.Context, client *github.Client, repo string, ref *github.Reference) {
+	deleteBranchIfExists(ctx, client, repo, ref)
+}
+
+// parseIntWithDefault parses a string to int, returning defaultValue on error
+func parseIntWithDefault(s string, defaultValue int) (int, error) {
+	var result int
+	if _, err := fmt.Sscanf(s, "%d", &result); err != nil {
+		return defaultValue, err
+	}
+	return result, nil
 }

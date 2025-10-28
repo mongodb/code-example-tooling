@@ -1,6 +1,7 @@
 package services_test
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -224,6 +225,10 @@ func TestAddFilesToTargetRepoBranch_Succeeds(t *testing.T) {
 
 	owner, repo := test.EnvOwnerRepo(t)
 	branch := "main"
+
+	// Set up cached token for the org to bypass GitHub App auth
+	test.SetupOrgToken(owner, "test-token")
+
 	baseRefURL, commitsURL, updateRefURL := test.MockGitHubWriteEndpoints(owner, repo, branch)
 
 	files := []github.RepositoryContent{
@@ -277,6 +282,9 @@ func TestAddFilesToTargetRepoBranch_ViaPR_Succeeds(t *testing.T) {
 	test.MockGitHubAppTokenEndpoint(os.Getenv(configs.InstallationId))
 	services.ConfigurePermissions()
 
+	// Set up cached token for the org to bypass GitHub App auth
+	test.SetupOrgToken(owner, "test-token")
+
 	// Base ref used to create temp branch
 	httpmock.RegisterRegexpResponder("GET",
 		regexp.MustCompile(`^https://api\.github\.com/repos/`+owner+`/`+repo+`/git/ref/(?:refs/)?heads/`+baseBranch+`$`),
@@ -328,8 +336,10 @@ func TestAddFilesToTargetRepoBranch_ViaPR_Succeeds(t *testing.T) {
 	}
 	services.FilesToUpload = map[types.UploadKey]types.UploadFileContent{
 		{RepoName: repo, BranchPath: "refs/heads/" + baseBranch}: {
-			TargetBranch: baseBranch,
-			Content:      files,
+			TargetBranch:   baseBranch,
+			Content:        files,
+			CommitStrategy: "pr",
+			AutoMergePR:    true,
 		},
 	}
 
@@ -389,6 +399,9 @@ func TestAddFiles_DirectConflict_NonFastForward(t *testing.T) {
 	owner, repo := test.EnvOwnerRepo(t)
 	branch := "main"
 
+	// Set up cached token for the org to bypass GitHub App auth
+	test.SetupOrgToken(owner, "test-token")
+
 	// Mock standard direct write endpoints
 	baseRefURL, commitsURL, updateRefURL := test.MockGitHubWriteEndpoints(owner, repo, branch)
 
@@ -433,6 +446,9 @@ func TestAddFiles_ViaPR_MergeConflict_Dirty_NotMerged(t *testing.T) {
 	services.InstallationAccessToken = ""
 	test.MockGitHubAppTokenEndpoint(os.Getenv(configs.InstallationId))
 	services.ConfigurePermissions()
+
+	// Set up cached token for the org to bypass GitHub App auth
+	test.SetupOrgToken(owner, "test-token")
 
 	// Base ref for creating temp branch
 	httpmock.RegisterRegexpResponder("GET",
@@ -486,8 +502,9 @@ func TestAddFiles_ViaPR_MergeConflict_Dirty_NotMerged(t *testing.T) {
 	}}
 	services.FilesToUpload = map[types.UploadKey]types.UploadFileContent{
 		{RepoName: repo, BranchPath: "refs/heads/" + baseBranch}: {
-			TargetBranch: baseBranch,
-			Content:      files,
+			TargetBranch:   baseBranch,
+			Content:        files,
+			CommitStrategy: "pr",
 		},
 	}
 
@@ -516,6 +533,9 @@ func TestPriority_Strategy_ConfigOverridesEnv_And_MessageFallbacks(t *testing.T)
 
 	// Env specifies PR, but config will override to direct
 	t.Setenv("COPIER_COMMIT_STRATEGY", "pr")
+
+	// Set up cached token for the org to bypass GitHub App auth
+	test.SetupOrgToken(owner, "test-token")
 
 	// Mocks for direct flow
 	baseRefURL, commitsURL, updateRefURL := test.MockGitHubWriteEndpoints(owner, repo, baseBranch)
@@ -575,6 +595,9 @@ func TestPriority_PRTitleDefaultsToCommitMessage_And_NoAutoMergeWhenConfigPresen
 	test.MockGitHubAppTokenEndpoint(os.Getenv(configs.InstallationId))
 	services.ConfigurePermissions()
 
+	// Set up cached token for the org to bypass GitHub App auth
+	test.SetupOrgToken(owner, "test-token")
+
 	// Base ref and temp branch setup
 	httpmock.RegisterRegexpResponder("GET",
 		regexp.MustCompile(`^https://api\.github\.com/repos/`+owner+`/`+repo+`/git/ref/(?:refs/)?heads/`+baseBranch+`$`),
@@ -625,7 +648,7 @@ func TestPriority_PRTitleDefaultsToCommitMessage_And_NoAutoMergeWhenConfigPresen
 		Content: github.String(base64.StdEncoding.EncodeToString([]byte("y"))),
 	}}
 	// cfg := types.Configs{TargetRepo: repo, TargetBranch: baseBranch /* MergeWithoutReview: false (zero value) */}
-	services.FilesToUpload = map[types.UploadKey]types.UploadFileContent{{RepoName: repo, BranchPath: "refs/heads/" + baseBranch, RuleName: "", CommitStrategy: "pr"}: {TargetBranch: baseBranch, Content: files}}
+	services.FilesToUpload = map[types.UploadKey]types.UploadFileContent{{RepoName: repo, BranchPath: "refs/heads/" + baseBranch, RuleName: "", CommitStrategy: "pr"}: {TargetBranch: baseBranch, Content: files, CommitStrategy: "pr"}}
 
 	services.AddFilesToTargetRepoBranch() // No longer takes parameters - uses FilesToUpload map
 
@@ -634,4 +657,25 @@ func TestPriority_PRTitleDefaultsToCommitMessage_And_NoAutoMergeWhenConfigPresen
 	require.Equal(t, 0, test.CountByMethodAndURLRegexp("PUT", regexp.MustCompile(`/pulls/5/merge$`)))
 
 	services.FilesToUpload = nil
+}
+
+// TestDeleteBranchIfExists_NilReference tests that deleteBranchIfExists handles nil references gracefully
+func TestDeleteBranchIfExists_NilReference(t *testing.T) {
+	_ = test.WithHTTPMock(t)
+
+	// Force fresh token
+	services.InstallationAccessToken = ""
+	test.MockGitHubAppTokenEndpoint(os.Getenv(configs.InstallationId))
+	services.ConfigurePermissions()
+
+	// This should not panic or make any API calls when ref is nil
+	// We're testing that the function returns early without attempting to delete
+	ctx := context.Background()
+	client := services.GetRestClient()
+
+	// Call with nil reference - should return immediately without error
+	services.DeleteBranchIfExistsExported(ctx, client, "test-org/test-repo", nil)
+
+	// Verify no DELETE requests were made (since ref was nil)
+	require.Equal(t, 0, test.CountByMethodAndURLRegexp("DELETE", regexp.MustCompile(`/git/refs/`)))
 }

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/mongodb/code-example-tooling/audit-cli/internal/pathresolver"
 )
 
 // CompareFiles performs a direct comparison between two files.
@@ -160,7 +162,7 @@ func CompareVersions(referenceFile, productDir string, versions []string, genera
 //
 // Returns:
 //   - FileComparison: The comparison result for this file
-func compareFile(referencePath, referenceContent string, versionPath VersionPath, generateDiff bool, verbose bool) FileComparison {
+func compareFile(referencePath, referenceContent string, versionPath pathresolver.VersionPath, generateDiff bool, verbose bool) FileComparison {
 	comparison := FileComparison{
 		Version:  versionPath.Version,
 		FilePath: versionPath.FilePath,

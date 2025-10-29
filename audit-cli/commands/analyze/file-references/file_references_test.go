@@ -19,7 +19,7 @@ func TestAnalyzeReferences(t *testing.T) {
 		{
 			name:               "Include file with multiple references",
 			targetFile:         "includes/intro.rst",
-			expectedReferences: 6, // 4 RST files + 1 YAML file + 1 toctree
+			expectedReferences: 5, // 4 RST files + 1 YAML file (no toctree by default)
 			expectedDirectiveType: "include",
 		},
 		{
@@ -51,8 +51,8 @@ func TestAnalyzeReferences(t *testing.T) {
 				t.Fatalf("failed to get absolute path: %v", err)
 			}
 
-			// Run analysis
-			analysis, err := AnalyzeReferences(absTargetPath)
+			// Run analysis (without toctree by default)
+			analysis, err := AnalyzeReferences(absTargetPath, false)
 			if err != nil {
 				t.Fatalf("AnalyzeReferences failed: %v", err)
 			}
@@ -105,6 +105,7 @@ func TestFindReferencesInFile(t *testing.T) {
 		targetFile         string
 		expectedReferences int
 		expectedDirective  string
+		includeToctree     bool
 	}{
 		{
 			name:               "Include directive",
@@ -112,6 +113,7 @@ func TestFindReferencesInFile(t *testing.T) {
 			targetFile:         "includes/intro.rst",
 			expectedReferences: 1,
 			expectedDirective:  "include",
+			includeToctree:     false,
 		},
 		{
 			name:               "Literalinclude directive",
@@ -119,6 +121,7 @@ func TestFindReferencesInFile(t *testing.T) {
 			targetFile:         "code-examples/example.py",
 			expectedReferences: 1,
 			expectedDirective:  "literalinclude",
+			includeToctree:     false,
 		},
 		{
 			name:               "IO code block directive",
@@ -126,6 +129,7 @@ func TestFindReferencesInFile(t *testing.T) {
 			targetFile:         "code-examples/example.js",
 			expectedReferences: 1,
 			expectedDirective:  "io-code-block",
+			includeToctree:     false,
 		},
 		{
 			name:               "Duplicate includes",
@@ -133,6 +137,7 @@ func TestFindReferencesInFile(t *testing.T) {
 			targetFile:         "includes/intro.rst",
 			expectedReferences: 2, // Same file included twice
 			expectedDirective:  "include",
+			includeToctree:     false,
 		},
 		{
 			name:               "Toctree directive",
@@ -140,6 +145,7 @@ func TestFindReferencesInFile(t *testing.T) {
 			targetFile:         "include-test.rst",
 			expectedReferences: 1,
 			expectedDirective:  "toctree",
+			includeToctree:     true, // Must enable toctree flag
 		},
 		{
 			name:               "No references",
@@ -147,6 +153,7 @@ func TestFindReferencesInFile(t *testing.T) {
 			targetFile:         "includes/intro.rst",
 			expectedReferences: 0,
 			expectedDirective:  "",
+			includeToctree:     false,
 		},
 	}
 
@@ -169,7 +176,7 @@ func TestFindReferencesInFile(t *testing.T) {
 				t.Fatalf("failed to get absolute source dir: %v", err)
 			}
 
-			refs, err := findReferencesInFile(absSearchPath, absTargetPath, absSourceDir)
+			refs, err := findReferencesInFile(absSearchPath, absTargetPath, absSourceDir, tt.includeToctree)
 			if err != nil {
 				t.Fatalf("findReferencesInFile failed: %v", err)
 			}

@@ -1,4 +1,4 @@
-package references
+package filereferences
 
 import (
 	"path/filepath"
@@ -19,13 +19,13 @@ func TestAnalyzeReferences(t *testing.T) {
 		{
 			name:               "Include file with multiple references",
 			targetFile:         "includes/intro.rst",
-			expectedReferences: 4,
+			expectedReferences: 6, // 4 RST files + 1 YAML file + 1 toctree
 			expectedDirectiveType: "include",
 		},
 		{
 			name:               "Code example with literalinclude",
 			targetFile:         "code-examples/example.py",
-			expectedReferences: 1,
+			expectedReferences: 2, // 1 RST file + 1 YAML file
 			expectedDirectiveType: "literalinclude",
 		},
 		{
@@ -133,6 +133,13 @@ func TestFindReferencesInFile(t *testing.T) {
 			targetFile:         "includes/intro.rst",
 			expectedReferences: 2, // Same file included twice
 			expectedDirective:  "include",
+		},
+		{
+			name:               "Toctree directive",
+			searchFile:         "index.rst",
+			targetFile:         "include-test.rst",
+			expectedReferences: 1,
+			expectedDirective:  "toctree",
 		},
 		{
 			name:               "No references",

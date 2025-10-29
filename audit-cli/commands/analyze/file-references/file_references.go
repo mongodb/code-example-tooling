@@ -1,15 +1,18 @@
-// Package references provides functionality for analyzing which files reference a target file.
+// Package filereferences provides functionality for analyzing which files reference a target file.
 //
-// This package implements the "analyze references" subcommand, which finds all files
-// that reference a given file through RST directives (include, literalinclude, io-code-block).
+// This package implements the "analyze file-references" subcommand, which finds all files
+// that reference a given file through RST directives (include, literalinclude, io-code-block, toctree).
+//
+// The command searches both RST files (.rst, .txt) and YAML files (.yaml, .yml) since
+// extract and release YAML files contain RST directives within their content blocks.
 //
 // The command performs reverse dependency analysis, showing which files depend on the
 // target file. This is useful for:
 //   - Understanding the impact of changes to a file
 //   - Finding all usages of an include file
 //   - Tracking code example references
-//   - Identifying orphaned files (files with no references)
-package references
+//   - Identifying orphaned files (files with no references, including toctree entries)
+package filereferences
 
 import (
 	"fmt"
@@ -17,22 +20,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewReferencesCommand creates the references subcommand.
+// NewFileReferencesCommand creates the file-references subcommand.
 //
 // This command analyzes which files reference a given target file through
-// RST directives (include, literalinclude, io-code-block).
+// RST directives (include, literalinclude, io-code-block, toctree).
 //
 // Usage:
-//   analyze references /path/to/file.rst
-//   analyze references /path/to/code-example.js
+//   analyze file-references /path/to/file.rst
+//   analyze file-references /path/to/code-example.js
 //
 // Flags:
 //   - --format: Output format (text or json)
 //   - -v, --verbose: Show detailed information including line numbers
 //   - -c, --count-only: Only show the count of references
 //   - --paths-only: Only show the file paths
-//   - -t, --directive-type: Filter by directive type (include, literalinclude, io-code-block)
-func NewReferencesCommand() *cobra.Command {
+//   - -t, --directive-type: Filter by directive type (include, literalinclude, io-code-block, toctree)
+func NewFileReferencesCommand() *cobra.Command {
 	var (
 		format        string
 		verbose       bool
@@ -42,46 +45,50 @@ func NewReferencesCommand() *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "references [filepath]",
+		Use:   "file-references [filepath]",
 		Short: "Find all files that reference a target file",
 		Long: `Find all files that reference a target file through RST directives.
 
 This command performs reverse dependency analysis, showing which files reference
-the target file through include, literalinclude, or io-code-block directives.
+the target file through include, literalinclude, io-code-block, or toctree directives.
 
 Supported directive types:
   - .. include::         RST content includes
   - .. literalinclude::  Code file references
   - .. io-code-block::   Input/output examples with file arguments
+  - .. toctree::         Table of contents entries
 
-The command searches all RST files in the source directory tree and identifies
-files that reference the target file. This is useful for:
+The command searches all RST files (.rst, .txt) and YAML files (.yaml, .yml) in
+the source directory tree. YAML files are included because extract and release
+files contain RST directives within their content blocks.
+
+This is useful for:
   - Understanding the impact of changes to a file
   - Finding all usages of an include file
   - Tracking code example references
-  - Identifying orphaned files (files with no references)
+  - Identifying orphaned files (files with no references, including toctree entries)
 
 Examples:
   # Find what references an include file
-  analyze references /path/to/includes/fact.rst
+  analyze file-references /path/to/includes/fact.rst
 
   # Find what references a code example
-  analyze references /path/to/code-examples/example.js
+  analyze file-references /path/to/code-examples/example.js
 
   # Get JSON output
-  analyze references /path/to/file.rst --format json
+  analyze file-references /path/to/file.rst --format json
 
   # Show detailed information with line numbers
-  analyze references /path/to/file.rst --verbose
+  analyze file-references /path/to/file.rst --verbose
 
   # Just show the count
-  analyze references /path/to/file.rst --count-only
+  analyze file-references /path/to/file.rst --count-only
 
   # Just show the file paths
-  analyze references /path/to/file.rst --paths-only
+  analyze file-references /path/to/file.rst --paths-only
 
   # Filter by directive type
-  analyze references /path/to/file.rst --directive-type include`,
+  analyze file-references /path/to/file.rst --directive-type include`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runReferences(args[0], format, verbose, countOnly, pathsOnly, directiveType)
@@ -92,7 +99,7 @@ Examples:
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Show detailed information including line numbers")
 	cmd.Flags().BoolVarP(&countOnly, "count-only", "c", false, "Only show the count of references")
 	cmd.Flags().BoolVar(&pathsOnly, "paths-only", false, "Only show the file paths (one per line)")
-	cmd.Flags().StringVarP(&directiveType, "directive-type", "t", "", "Filter by directive type (include, literalinclude, io-code-block)")
+	cmd.Flags().StringVarP(&directiveType, "directive-type", "t", "", "Filter by directive type (include, literalinclude, io-code-block, toctree)")
 
 	return cmd
 }
@@ -118,9 +125,10 @@ func runReferences(targetFile, format string, verbose, countOnly, pathsOnly bool
 			"include":         true,
 			"literalinclude":  true,
 			"io-code-block":   true,
+			"toctree":         true,
 		}
 		if !validTypes[directiveType] {
-			return fmt.Errorf("invalid directive type: %s (must be 'include', 'literalinclude', or 'io-code-block')", directiveType)
+			return fmt.Errorf("invalid directive type: %s (must be 'include', 'literalinclude', 'io-code-block', or 'toctree')", directiveType)
 		}
 	}
 

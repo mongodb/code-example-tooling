@@ -223,7 +223,9 @@ With `-v` flag, also shows:
 
 #### `analyze includes`
 
-Analyze `include` directive relationships in RST files to understand file dependencies.
+Analyze `include` directive and `toctree` relationships in RST files to understand file dependencies.
+
+This command recursively follows both `.. include::` directives and `.. toctree::` entries to show all files that are referenced from a starting file. This provides a complete picture of file dependencies including both content includes and table of contents structure.
 
 **Use Cases:**
 
@@ -232,6 +234,7 @@ This command helps writers:
 - Identify circular include dependencies (files included multiple times)
 - Document file relationships for maintenance
 - Plan refactoring of complex include structures
+- Understand table of contents structure and page hierarchies
 
 **Basic Usage:**
 
@@ -283,11 +286,11 @@ times (e.g., file A includes file C, and file B also includes file C), the file 
 However, the tree view will show it in all locations where it appears, with subsequent occurrences marked as circular
 includes in verbose mode.
 
-#### `analyze references`
+#### `analyze file-references`
 
-Find all files that reference a target file through RST directives. This performs reverse dependency analysis, showing which files reference the target file through `include`, `literalinclude`, or `io-code-block` directives.
+Find all files that reference a target file through RST directives. This performs reverse dependency analysis, showing which files reference the target file through `include`, `literalinclude`, `io-code-block`, or `toctree` directives.
 
-The command searches all RST files (both `.rst` and `.txt` extensions) in the source directory tree.
+The command searches all RST files (`.rst` and `.txt` extensions) and YAML files (`.yaml` and `.yml` extensions) in the source directory tree. YAML files are included because extract and release files contain RST directives within their content blocks.
 
 **Use Cases:**
 
@@ -295,23 +298,23 @@ This command helps writers:
 - Understand the impact of changes to a file (what pages will be affected)
 - Find all usages of an include file across the documentation
 - Track where code examples are referenced
-- Identify orphaned files (files with no references)
+- Identify orphaned files (files with no references, including toctree entries)
 - Plan refactoring by understanding file dependencies
 
 **Basic Usage:**
 
 ```bash
 # Find what references an include file
-./audit-cli analyze references path/to/includes/fact.rst
+./audit-cli analyze file-references path/to/includes/fact.rst
 
 # Find what references a code example
-./audit-cli analyze references path/to/code-examples/example.js
+./audit-cli analyze file-references path/to/code-examples/example.js
 
 # Get JSON output for automation
-./audit-cli analyze references path/to/file.rst --format json
+./audit-cli analyze file-references path/to/file.rst --format json
 
 # Show detailed information with line numbers
-./audit-cli analyze references path/to/file.rst --verbose
+./audit-cli analyze file-references path/to/file.rst --verbose
 ```
 
 **Flags:**
@@ -438,39 +441,39 @@ include             : 3 files, 4 references
 
 ```bash
 # Check if an include file is being used
-./audit-cli analyze references ~/docs/source/includes/fact-atlas.rst
+./audit-cli analyze file-references ~/docs/source/includes/fact-atlas.rst
 
 # Find all pages that use a specific code example
-./audit-cli analyze references ~/docs/source/code-examples/connect.py
+./audit-cli analyze file-references ~/docs/source/code-examples/connect.py
 
 # Get machine-readable output for scripting
-./audit-cli analyze references ~/docs/source/includes/fact.rst --format json | jq '.total_references'
+./audit-cli analyze file-references ~/docs/source/includes/fact.rst --format json | jq '.total_references'
 
 # See exactly where a file is referenced (with line numbers)
-./audit-cli analyze references ~/docs/source/includes/intro.rst --verbose
+./audit-cli analyze file-references ~/docs/source/includes/intro.rst --verbose
 
 # Quick check: just show the count
-./audit-cli analyze references ~/docs/source/includes/fact.rst --count-only
+./audit-cli analyze file-references ~/docs/source/includes/fact.rst --count-only
 # Output: 5
 
 # Get list of files for piping to other commands
-./audit-cli analyze references ~/docs/source/includes/fact.rst --paths-only
+./audit-cli analyze file-references ~/docs/source/includes/fact.rst --paths-only
 # Output:
 # page1.rst
 # page2.rst
 # page3.rst
 
 # Filter to only show include directives (not literalinclude or io-code-block)
-./audit-cli analyze references ~/docs/source/includes/fact.rst --directive-type include
+./audit-cli analyze file-references ~/docs/source/includes/fact.rst --directive-type include
 
 # Filter to only show literalinclude references
-./audit-cli analyze references ~/docs/source/code-examples/example.py --directive-type literalinclude
+./audit-cli analyze file-references ~/docs/source/code-examples/example.py --directive-type literalinclude
 
 # Combine filters: count only literalinclude references
-./audit-cli analyze references ~/docs/source/code-examples/example.py -t literalinclude -c
+./audit-cli analyze file-references ~/docs/source/code-examples/example.py -t literalinclude -c
 
 # Combine filters: list files that use this as an io-code-block
-./audit-cli analyze references ~/docs/source/code-examples/query.js -t io-code-block --paths-only
+./audit-cli analyze file-references ~/docs/source/code-examples/query.js -t io-code-block --paths-only
 ```
 
 ### Compare Commands

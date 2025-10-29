@@ -1,4 +1,4 @@
-package references
+package filereferences
 
 // ReferenceAnalysis contains the results of analyzing which files reference a target file.
 //
@@ -33,7 +33,7 @@ type FileReference struct {
 	FilePath string
 
 	// DirectiveType is the type of directive used to reference the file
-	// Possible values: "include", "literalinclude", "io-code-block"
+	// Possible values: "include", "literalinclude", "io-code-block", "toctree"
 	DirectiveType string
 
 	// ReferencePath is the path used in the directive (as written in the file)

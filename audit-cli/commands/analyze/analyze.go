@@ -3,14 +3,14 @@
 // This package serves as the parent command for various analysis operations.
 // Currently supports:
 //   - includes: Analyze include directive relationships in RST files
-//   - references: Find all files that reference a target file
+//   - file-references: Find all files that reference a target file
 //
 // Future subcommands could include analyzing cross-references, broken links, or content metrics.
 package analyze
 
 import (
 	"github.com/mongodb/code-example-tooling/audit-cli/commands/analyze/includes"
-	"github.com/mongodb/code-example-tooling/audit-cli/commands/analyze/references"
+	filereferences "github.com/mongodb/code-example-tooling/audit-cli/commands/analyze/file-references"
 	"github.com/spf13/cobra"
 )
 
@@ -26,14 +26,14 @@ func NewAnalyzeCommand() *cobra.Command {
 
 Currently supports:
   - includes: Analyze include directive relationships (forward dependencies)
-  - references: Find all files that reference a target file (reverse dependencies)
+  - file-references: Find all files that reference a target file (reverse dependencies)
 
 Future subcommands may support analyzing cross-references, broken links, or content metrics.`,
 	}
 
 	// Add subcommands
 	cmd.AddCommand(includes.NewIncludesCommand())
-	cmd.AddCommand(references.NewReferencesCommand())
+	cmd.AddCommand(filereferences.NewFileReferencesCommand())
 
 	return cmd
 }

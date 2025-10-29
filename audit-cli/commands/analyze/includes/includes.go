@@ -1,11 +1,12 @@
-// Package includes provides functionality for analyzing include directive relationships.
+// Package includes provides functionality for analyzing include and toctree relationships.
 //
 // This package implements the "analyze includes" subcommand, which analyzes RST files
-// to understand their include directive relationships. It can display results as:
-//   - A hierarchical tree structure showing include relationships
-//   - A flat list of all files referenced through includes
+// to understand their include directive and toctree relationships. It can display results as:
+//   - A hierarchical tree structure showing include and toctree relationships
+//   - A flat list of all files referenced through includes and toctree entries
 //
-// This helps writers understand the impact of changes to files that are widely included.
+// This helps writers understand the impact of changes to files that are widely included
+// or referenced in table of contents.
 package includes
 
 import (
@@ -16,7 +17,7 @@ import (
 
 // NewIncludesCommand creates the includes subcommand.
 //
-// This command analyzes include directive relationships in RST files.
+// This command analyzes include directive and toctree relationships in RST files.
 // Supports flags for different output formats (tree or list).
 //
 // Flags:
@@ -32,16 +33,17 @@ func NewIncludesCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "includes [filepath]",
-		Short: "Analyze include directive relationships in RST files",
-		Long: `Analyze include directive relationships to understand file dependencies.
+		Short: "Analyze include and toctree relationships in RST files",
+		Long: `Analyze include directive and toctree relationships to understand file dependencies.
 
-This command recursively follows .. include:: directives and shows all files
-that are referenced. This helps writers understand the impact of changes to
-files that are widely included across the documentation.
+This command recursively follows .. include:: directives and .. toctree:: entries
+and shows all files that are referenced. This helps writers understand the impact
+of changes to files that are widely included or referenced in table of contents
+across the documentation.
 
 Output formats:
-  --tree: Show hierarchical tree structure of includes
-  --list: Show flat list of all included files
+  --tree: Show hierarchical tree structure of includes and toctree entries
+  --list: Show flat list of all included and toctree files
 
 If neither flag is specified, shows a summary with basic statistics.`,
 		Args: cobra.ExactArgs(1),

@@ -1,0 +1,17 @@
+---
+ref: test-extract-intro
+content: |
+  This is a test extract that includes another file.
+  
+  .. include:: /includes/intro.rst
+  
+  And references a code example:
+  
+  .. literalinclude:: /code-examples/example.py
+     :language: python
+---
+ref: test-extract-examples
+content: |
+  This extract references the examples file.
+  
+  .. include:: /includes/examples.rst

@@ -1,4 +1,4 @@
-package references
+package filereferences
 
 import (
 	"bufio"
@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/mongodb/code-example-tooling/audit-cli/internal/pathresolver"
+	"github.com/mongodb/code-example-tooling/audit-cli/internal/rst"
 )
 
 // Regular expressions for matching directives
@@ -32,9 +33,10 @@ var (
 
 // AnalyzeReferences finds all files that reference the target file.
 //
-// This function searches through all RST files in the source directory to find
-// files that reference the target file using include, literalinclude, or
-// io-code-block directives.
+// This function searches through all RST files (.rst, .txt) and YAML files (.yaml, .yml)
+// in the source directory to find files that reference the target file using include,
+// literalinclude, or io-code-block directives. YAML files are included because extract
+// and release files contain RST directives within their content blocks.
 //
 // Parameters:
 //   - targetFile: Absolute path to the file to analyze
@@ -62,7 +64,7 @@ func AnalyzeReferences(targetFile string) (*ReferenceAnalysis, error) {
 		ReferencingFiles: []FileReference{},
 	}
 
-	// Walk through all RST files in the source directory
+	// Walk through all RST and YAML files in the source directory
 	err = filepath.Walk(sourceDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -73,9 +75,10 @@ func AnalyzeReferences(targetFile string) (*ReferenceAnalysis, error) {
 			return nil
 		}
 
-		// Only process RST files (.rst and .txt extensions)
+		// Only process RST files (.rst, .txt) and YAML files (.yaml, .yml)
+		// YAML files may contain RST directives in extract/release content blocks
 		ext := filepath.Ext(path)
-		if ext != ".rst" && ext != ".txt" {
+		if ext != ".rst" && ext != ".txt" && ext != ".yaml" && ext != ".yml" {
 			return nil
 		}
 
@@ -107,7 +110,7 @@ func AnalyzeReferences(targetFile string) (*ReferenceAnalysis, error) {
 // findReferencesInFile searches a single file for references to the target file.
 //
 // This function scans through the file line by line looking for include,
-// literalinclude, and io-code-block directives that reference the target file.
+// literalinclude, io-code-block, and toctree directives that reference the target file.
 //
 // Parameters:
 //   - filePath: Path to the file to search
@@ -129,17 +132,31 @@ func findReferencesInFile(filePath, targetFile, sourceDir string) ([]FileReferen
 	lineNum := 0
 	inIOCodeBlock := false
 	ioCodeBlockStartLine := 0
+	inToctree := false
+	toctreeStartLine := 0
 
 	for scanner.Scan() {
 		lineNum++
 		line := scanner.Text()
 		trimmedLine := strings.TrimSpace(line)
 
+		// Check for toctree start (use shared regex from rst package)
+		if rst.ToctreeDirectiveRegex.MatchString(trimmedLine) {
+			inToctree = true
+			toctreeStartLine = lineNum
+			continue
+		}
+
 		// Check for io-code-block start
 		if ioCodeBlockRegex.MatchString(trimmedLine) {
 			inIOCodeBlock = true
 			ioCodeBlockStartLine = lineNum
 			continue
+		}
+
+		// Check if we're exiting toctree (unindented line that's not empty and not an option)
+		if inToctree && len(line) > 0 && line[0] != ' ' && line[0] != '\t' {
+			inToctree = false
 		}
 
 		// Check if we're exiting io-code-block (unindented line that's not empty)
@@ -205,6 +222,26 @@ func findReferencesInFile(filePath, targetFile, sourceDir string) ([]FileReferen
 				continue
 			}
 		}
+
+		// Check for toctree entries (indented document names)
+		if inToctree {
+			// Skip empty lines and option lines (starting with :)
+			if trimmedLine == "" || strings.HasPrefix(trimmedLine, ":") {
+				continue
+			}
+
+			// This is a document name in the toctree
+			// Document names can be relative or absolute (starting with /)
+			docName := trimmedLine
+			if referencesToctreeTarget(docName, targetFile, sourceDir, filePath) {
+				references = append(references, FileReference{
+					FilePath:      filePath,
+					DirectiveType: "toctree",
+					ReferencePath: docName,
+					LineNumber:    toctreeStartLine,
+				})
+			}
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -248,6 +285,31 @@ func referencesTarget(refPath, targetFile, sourceDir, currentFile string) bool {
 
 	// Compare with target file
 	return absResolvedPath == targetFile
+}
+
+// referencesToctreeTarget checks if a toctree document name points to the target file.
+//
+// This function uses the shared rst.ResolveToctreePath to resolve the document name
+// and then compares it to the target file.
+//
+// Parameters:
+//   - docName: The document name from the toctree (e.g., "intro" or "/includes/intro")
+//   - targetFile: Absolute path to the target file
+//   - sourceDir: Source directory (for resolving relative paths)
+//   - currentFile: Path to the file containing the toctree
+//
+// Returns:
+//   - bool: true if the document name points to the target file
+func referencesToctreeTarget(docName, targetFile, sourceDir, currentFile string) bool {
+	// Use the shared toctree path resolution from rst package
+	resolvedPath, err := rst.ResolveToctreePath(currentFile, docName)
+	if err != nil {
+		// If we can't resolve it, it doesn't match
+		return false
+	}
+
+	// Compare with target file
+	return resolvedPath == targetFile
 }
 
 // FilterByDirectiveType filters the analysis results to only include references

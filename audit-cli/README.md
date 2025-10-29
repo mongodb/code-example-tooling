@@ -298,7 +298,7 @@ This command helps writers:
 - Understand the impact of changes to a file (what pages will be affected)
 - Find all usages of an include file across the documentation
 - Track where code examples are referenced
-- Identify orphaned files (files with no references, including toctree entries)
+- Identify orphaned files (files with no references from include, literalinclude, io-code-block, or toctree directives)
 - Plan refactoring by understanding file dependencies
 
 **Basic Usage:**

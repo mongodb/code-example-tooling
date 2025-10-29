@@ -12,6 +12,7 @@ Complete guide to pattern matching and path transformation in the examples-copie
 - [Path Transformation](#path-transformation)
 - [Built-in Variables](#built-in-variables)
 - [Common Patterns](#common-patterns)
+- [Ignore Patterns](#ignore-patterns)
 - [Testing Patterns](#testing-patterns)
 - [Best Practices](#best-practices)
 - [Troubleshooting](#troubleshooting)
@@ -461,6 +462,274 @@ targets:
 examples/go/main.go → docs/examples/go/main.go
 examples/python/test.py → docs/examples/python/test.py
 ```
+
+## Ignore Patterns
+
+### Basic Template
+
+```yaml
+source_pattern:
+  type: "regex"
+  pattern: "^base/path/(?P<file>(?!IGNORE_PATTERN).+)$"
+```
+
+###  Common Ignore Patterns
+
+#### Ignore Single Directory
+
+```yaml
+# Ignore node_modules/
+pattern: "^mflix/client/(?P<file>(?!node_modules/).+)$"
+```
+
+#### Ignore Multiple Directories
+
+```yaml
+# Ignore node_modules/, .next/, dist/, build/
+pattern: "^mflix/client/(?P<file>(?!(?:node_modules|.next|dist|build)/).+)$"
+```
+
+#### Ignore Files by Extension
+
+```yaml
+# Ignore .test.js files
+pattern: "^mflix/server/(?P<file>(?!.*\\.test\\.js$).+)$"
+
+# Ignore .pyc files
+pattern: "^mflix/server/(?P<file>(?!.*\\.pyc$).+)$"
+
+# Ignore multiple extensions
+pattern: "^mflix/server/(?P<file>(?!.*\\.(?:test\\.js|spec\\.js|pyc)$).+)$"
+```
+
+#### Ignore Files by Name Pattern
+
+```yaml
+# Ignore test files (containing "test" or "Test")
+pattern: "^mflix/server/(?P<file>(?!.*[Tt]est.*).+)$"
+
+# Ignore files starting with "test_"
+pattern: "^mflix/server/(?P<file>(?!test_.*).+)$"
+
+# Ignore files ending with "_test.py"
+pattern: "^mflix/server/(?P<file>(?!.*_test\\.py$).+)$"
+```
+
+#### Ignore Hidden Files
+
+```yaml
+# Ignore files starting with .
+pattern: "^mflix/client/(?P<file>(?!\\.).+)$"
+```
+
+#### Ignore Specific File
+
+```yaml
+# Ignore config.json
+pattern: "^mflix/client/(?P<file>(?!config\\.json$).+)$"
+
+# Ignore .gitignore in server directory
+pattern: "^mflix/server/java-spring/(?P<file>(?!\\.gitignore$).+)$"
+```
+
+### Language-Specific Patterns
+
+#### JavaScript/Node.js
+
+```yaml
+# Ignore common Node.js artifacts
+pattern: "^path/(?P<file>(?!(?:node_modules|dist|build|coverage|\\.next)/).+)$"
+
+# Ignore test files
+pattern: "^path/(?P<file>(?!.*\\.(?:test|spec)\\.(?:js|jsx|ts|tsx)$).+)$"
+
+# Ignore config files
+pattern: "^path/(?P<file>(?!.*\\.config\\.js$).+)$"
+```
+
+#### Python
+
+```yaml
+# Ignore Python artifacts
+pattern: "^path/(?P<file>(?!(?:__pycache__|.*\\.pyc$|\\.pytest_cache)).+)$"
+
+# Ignore test files
+pattern: "^path/(?P<file>(?!(?:test_.*\\.py$|.*_test\\.py$)).+)$"
+
+# Ignore virtual environments
+pattern: "^path/(?P<file>(?!(?:venv|env|\\.venv)/).+)$"
+```
+
+#### Java
+
+```yaml
+# Ignore build artifacts
+pattern: "^path/(?P<file>(?!(?:target|build|out)/).+)$"
+
+# Ignore test files
+pattern: "^path/(?P<file>(?!.*[Tt]est\\.java$).+)$"
+
+# Ignore compiled classes
+pattern: "^path/(?P<file>(?!.*\\.class$).+)$"
+```
+
+#### Go
+
+```yaml
+# Ignore test files
+pattern: "^path/(?P<file>(?!.*_test\\.go$).+)$"
+
+# Ignore vendor directory
+pattern: "^path/(?P<file>(?!vendor/).+)$"
+```
+
+### Complex Ignore Patterns
+
+#### Ignore Multiple Patterns (OR)
+
+```yaml
+# Ignore: test files OR config files OR markdown files
+pattern: "^path/(?P<file>(?!.*(?:_test\\.go|\\.config\\.js|\\.md)$).+)$"
+```
+
+#### Ignore at Any Depth
+
+```yaml
+# Ignore node_modules at any level
+pattern: "^path/(?P<file>(?!.*node_modules.*).+)$"
+```
+
+#### Ignore Multiple Directories with Different Patterns
+
+```yaml
+# Ignore: build directories AND test files
+pattern: "^path/(?P<file>(?!(?:build|dist|out)/|.*_test\\.py$).+)$"
+```
+
+### Real-World Examples
+
+#### Next.js Project
+
+```yaml
+source_pattern:
+  type: "regex"
+  pattern: "^mflix/client/(?P<file>(?!(?:node_modules|.next|out|build|\\.cache|coverage)/).+)$"
+```
+
+**Ignores**: node_modules/, .next/, out/, build/, .cache/, coverage/
+
+#### Express Server
+
+```yaml
+source_pattern:
+  type: "regex"
+  pattern: "^mflix/server/express/(?P<file>(?!(?:node_modules|.*\\.test\\.js$|.*\\.spec\\.js$)).+)$"
+```
+
+**Ignores**: node_modules/, *.test.js, *.spec.js
+
+#### Python Flask Server
+
+```yaml
+source_pattern:
+  type: "regex"
+  pattern: "^mflix/server/python/(?P<file>(?!(?:__pycache__|.*\\.pyc$|test_.*\\.py$|.*_test\\.py$|\\.pytest_cache|venv)/).+)$"
+```
+
+**Ignores**: __pycache__/, *.pyc, test_*.py, *_test.py, .pytest_cache/, venv/
+
+#### Java Spring Boot
+
+```yaml
+source_pattern:
+  type: "regex"
+  pattern: "^mflix/server/java-spring/(?P<file>(?!(?:target|.*[Tt]est\\.java$|.*\\.class$)).+)$"
+```
+
+**Ignores**: target/, *Test.java, *test.java, *.class
+
+## Testing Your Pattern
+
+```bash
+cd examples-copier
+
+# Test if a file matches
+./config-validator test-pattern \
+  -type regex \
+  -pattern "^mflix/client/(?P<file>(?!node_modules/).+)$" \
+  -file "mflix/client/src/App.js"
+# Should match: ✅
+
+./config-validator test-pattern \
+  -type regex \
+  -pattern "^mflix/client/(?P<file>(?!node_modules/).+)$" \
+  -file "mflix/client/node_modules/react/index.js"
+# Should NOT match: ❌
+```
+
+## Common Mistakes
+
+### ❌ Wrong: Dot not escaped
+
+```yaml
+pattern: "^path/(?P<file>(?!.test.js$).+)$"
+```
+
+### ✅ Right: Dot escaped
+
+```yaml
+pattern: "^path/(?P<file>(?!.*\\.test\\.js$).+)$"
+```
+
+---
+
+### ❌ Wrong: Negative lookahead at end
+
+```yaml
+pattern: "^path/.+(?!node_modules/)$"
+```
+
+### ✅ Right: Negative lookahead at start
+
+```yaml
+pattern: "^path/(?!node_modules/).+$"
+```
+
+---
+
+### ❌ Wrong: Missing capture group
+
+```yaml
+pattern: "^path/(?!node_modules/).+$"
+```
+
+### ✅ Right: With named capture group
+
+```yaml
+pattern: "^path/(?P<file>(?!node_modules/).+)$"
+```
+
+## Cheat Sheet
+
+| Goal | Pattern |
+|------|---------|
+| Ignore 1 dir | `(?!dirname/)` |
+| Ignore 2+ dirs | `(?!(?:dir1\|dir2\|dir3)/)` |
+| Ignore extension | `(?!.*\\.ext$)` |
+| Ignore 2+ extensions | `(?!.*\\.(?:ext1\|ext2)$)` |
+| Ignore prefix | `(?!prefix.*)` |
+| Ignore suffix | `(?!.*suffix$)` |
+| Ignore hidden files | `(?!\\.)` |
+| Ignore test files | `(?!.*[Tt]est.*)` |
+| Ignore at any depth | `(?!.*pattern.*)` |
+
+## See Also
+
+- [Ignoring Files Guide](IGNORING-FILES-GUIDE.md) - Detailed guide with explanations
+- [Pattern Matching Guide](PATTERN-MATCHING-GUIDE.md) - Complete pattern reference
+- [Example Config](../configs/mflix-with-ignores.yaml) - Real-world examples
+
+
 
 ## Testing Patterns
 

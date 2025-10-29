@@ -104,13 +104,16 @@ type UploadKey struct {
 }
 
 type UploadFileContent struct {
-	TargetBranch   string                     `json:"target_branch"`
-	Content        []github.RepositoryContent `json:"content"`
-	CommitStrategy CommitStrategy             `json:"commit_strategy,omitempty"`
-	CommitMessage  string                     `json:"commit_message,omitempty"`
-	PRTitle        string                     `json:"pr_title,omitempty"`
-	PRBody         string                     `json:"pr_body,omitempty"`
-	AutoMergePR    bool                       `json:"auto_merge_pr,omitempty"`
+	TargetBranch        string                     `json:"target_branch"`
+	Content             []github.RepositoryContent `json:"content"`
+	CommitStrategy      CommitStrategy             `json:"commit_strategy,omitempty"`
+	CommitMessage       string                     `json:"commit_message,omitempty"`
+	PRTitle             string                     `json:"pr_title,omitempty"`
+	PRBody              string                     `json:"pr_body,omitempty"`
+	AutoMergePR         bool                       `json:"auto_merge_pr,omitempty"`
+	UseTargetPRTemplate bool                       `json:"use_target_pr_template,omitempty"` // Fetch PR template from target repo
+	PRTemplatePath      string                     `json:"pr_template_path,omitempty"`       // Path to PR template in target repo
+	PRBodyAppend        string                     `json:"pr_body_append,omitempty"`         // Additional content to append after template
 }
 
 // CommitStrategy represents the strategy for committing changes

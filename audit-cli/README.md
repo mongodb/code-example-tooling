@@ -59,7 +59,7 @@ audit-cli
 │   └── find-string
 ├── analyze          # Analyze RST file structures
 │   ├── includes
-│   └── references
+│   └── file-references
 └── compare          # Compare files across versions
     └── file-contents
 ```
@@ -223,9 +223,9 @@ With `-v` flag, also shows:
 
 #### `analyze includes`
 
-Analyze `include` directive and `toctree` relationships in RST files to understand file dependencies.
+Analyze `include` directive relationships in RST files to understand file dependencies.
 
-This command recursively follows both `.. include::` directives and `.. toctree::` entries to show all files that are referenced from a starting file. This provides a complete picture of file dependencies including both content includes and table of contents structure.
+This command recursively follows `.. include::` directives to show all files that are referenced from a starting file. This helps you understand which content is transcluded into a page.
 
 **Use Cases:**
 
@@ -234,7 +234,7 @@ This command helps writers:
 - Identify circular include dependencies (files included multiple times)
 - Document file relationships for maintenance
 - Plan refactoring of complex include structures
-- Understand table of contents structure and page hierarchies
+- See what content is actually pulled into a page
 
 **Basic Usage:**
 
@@ -285,6 +285,12 @@ The total file count represents **unique files** discovered through include dire
 times (e.g., file A includes file C, and file B also includes file C), the file is counted only once in the total.
 However, the tree view will show it in all locations where it appears, with subsequent occurrences marked as circular
 includes in verbose mode.
+
+**Note on Toctree:**
+
+This command does **not** follow `.. toctree::` entries. Toctree entries are navigation links to other pages, not content
+that's transcluded into the page. If you need to find which files reference a target file through toctree entries, use
+the `analyze file-references` command with the `--include-toctree` flag.
 
 #### `analyze file-references`
 
@@ -382,8 +388,7 @@ With `--include-toctree`, also tracks:
       getting-started
    ```
 
-**Note:** Only file-based references are tracked. Inline content (e.g., `.. input::` with `:language:` but no file path) is not tracked.
-
+**Note:** Only file-based references are tracked. Inline content (e.g., `.. input::` with `:language:` but no file path) aly
 **Output Formats:**
 
 **Text** (default):
@@ -687,9 +692,9 @@ audit-cli/
 │   │   │   ├── analyzer.go         # Include tree building
 │   │   │   ├── output.go           # Output formatting
 │   │   │   └── types.go            # Type definitions
-│   │   └── references/             # References analysis subcommand
-│   │       ├── references.go       # Command logic
-│   │       ├── references_test.go  # Tests
+│   │   └── file-references/        # File-references analysis subcommand
+│   │       ├── file-references.go  # Command logic
+│   │       ├── file-references_test.go  # Tests
 │   │       ├── analyzer.go         # Reference finding logic
 │   │       ├── output.go           # Output formatting
 │   │       └── types.go            # Type definitions

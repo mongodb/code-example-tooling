@@ -106,23 +106,13 @@ func buildIncludeTree(filePath string, visited map[string]bool, verbose bool, de
 		includeFiles = []string{}
 	}
 
-	// Find toctree entries in this file
-	toctreeFiles, err := rst.FindToctreeEntries(absPath)
-	if err != nil {
-		// Not a fatal error - file might not have toctree
-		toctreeFiles = []string{}
-	}
-
-	// Combine include and toctree files
-	allFiles := append(includeFiles, toctreeFiles...)
-
-	if verbose && len(allFiles) > 0 {
+	if verbose && len(includeFiles) > 0 {
 		indent := getIndent(depth)
-		fmt.Printf("%s📄 %s (%d includes, %d toctree entries)\n", indent, filepath.Base(absPath), len(includeFiles), len(toctreeFiles))
+		fmt.Printf("%s📄 %s (%d includes)\n", indent, filepath.Base(absPath), len(includeFiles))
 	}
 
-	// Recursively process each included/toctree file
-	for _, includeFile := range allFiles {
+	// Recursively process each included file
+	for _, includeFile := range includeFiles {
 		childNode, err := buildIncludeTree(includeFile, visited, verbose, depth+1)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: failed to process file %s: %v\n", includeFile, err)

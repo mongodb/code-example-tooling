@@ -37,11 +37,12 @@ import (
 //   - -t, --directive-type: Filter by directive type (include, literalinclude, io-code-block, toctree)
 func NewFileReferencesCommand() *cobra.Command {
 	var (
-		format        string
-		verbose       bool
-		countOnly     bool
-		pathsOnly     bool
-		directiveType string
+		format         string
+		verbose        bool
+		countOnly      bool
+		pathsOnly      bool
+		directiveType  string
+		includeToctree bool
 	)
 
 	cmd := &cobra.Command{
@@ -50,13 +51,15 @@ func NewFileReferencesCommand() *cobra.Command {
 		Long: `Find all files that reference a target file through RST directives.
 
 This command performs reverse dependency analysis, showing which files reference
-the target file through include, literalinclude, io-code-block, or toctree directives.
+the target file through content inclusion directives (include, literalinclude,
+io-code-block). Use --include-toctree to also search for toctree entries, which
+are navigation links rather than content transclusion.
 
 Supported directive types:
-  - .. include::         RST content includes
-  - .. literalinclude::  Code file references
-  - .. io-code-block::   Input/output examples with file arguments
-  - .. toctree::         Table of contents entries
+  - .. include::         RST content includes (transcluded)
+  - .. literalinclude::  Code file references (transcluded)
+  - .. io-code-block::   Input/output examples with file arguments (transcluded)
+  - .. toctree::         Table of contents entries (navigation links, requires --include-toctree)
 
 The command searches all RST files (.rst, .txt) and YAML files (.yaml, .yml) in
 the source directory tree. YAML files are included because extract and release
@@ -66,7 +69,7 @@ This is useful for:
   - Understanding the impact of changes to a file
   - Finding all usages of an include file
   - Tracking code example references
-  - Identifying orphaned files (files with no references, including toctree entries)
+  - Identifying orphaned files (files with no references from content inclusion directives)
 
 Examples:
   # Find what references an include file
@@ -74,6 +77,9 @@ Examples:
 
   # Find what references a code example
   analyze file-references /path/to/code-examples/example.js
+
+  # Include toctree references (navigation links)
+  analyze file-references /path/to/file.rst --include-toctree
 
   # Get JSON output
   analyze file-references /path/to/file.rst --format json
@@ -91,7 +97,7 @@ Examples:
   analyze file-references /path/to/file.rst --directive-type include`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runReferences(args[0], format, verbose, countOnly, pathsOnly, directiveType)
+			return runReferences(args[0], format, verbose, countOnly, pathsOnly, directiveType, includeToctree)
 		},
 	}
 
@@ -100,6 +106,7 @@ Examples:
 	cmd.Flags().BoolVarP(&countOnly, "count-only", "c", false, "Only show the count of references")
 	cmd.Flags().BoolVar(&pathsOnly, "paths-only", false, "Only show the file paths (one per line)")
 	cmd.Flags().StringVarP(&directiveType, "directive-type", "t", "", "Filter by directive type (include, literalinclude, io-code-block, toctree)")
+	cmd.Flags().BoolVar(&includeToctree, "include-toctree", false, "Include toctree entries (navigation links) in addition to content inclusion directives")
 
 	return cmd
 }
@@ -115,10 +122,11 @@ Examples:
 //   - countOnly: If true, only show the count
 //   - pathsOnly: If true, only show the file paths
 //   - directiveType: Filter by directive type (empty string means all types)
+//   - includeToctree: If true, include toctree entries in the search
 //
 // Returns:
 //   - error: Any error encountered during analysis
-func runReferences(targetFile, format string, verbose, countOnly, pathsOnly bool, directiveType string) error {
+func runReferences(targetFile, format string, verbose, countOnly, pathsOnly bool, directiveType string, includeToctree bool) error {
 	// Validate directive type if specified
 	if directiveType != "" {
 		validTypes := map[string]bool{
@@ -147,7 +155,7 @@ func runReferences(targetFile, format string, verbose, countOnly, pathsOnly bool
 	}
 
 	// Perform analysis
-	analysis, err := AnalyzeReferences(targetFile)
+	analysis, err := AnalyzeReferences(targetFile, includeToctree)
 	if err != nil {
 		return fmt.Errorf("failed to analyze references: %w", err)
 	}

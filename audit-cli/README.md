@@ -294,21 +294,28 @@ The command searches all RST files (`.rst` and `.txt` extensions) and YAML files
 
 **Use Cases:**
 
+By default, this command searches for content inclusion directives (include, literalinclude,
+io-code-block) that transclude content into pages. Use `--include-toctree` to also search
+for toctree entries, which are navigation links rather than content transclusion.
+
 This command helps writers:
 - Understand the impact of changes to a file (what pages will be affected)
 - Find all usages of an include file across the documentation
 - Track where code examples are referenced
-- Identify orphaned files (files with no references from include, literalinclude, io-code-block, or toctree directives)
+- Identify orphaned files (files with no references from content inclusion directives)
 - Plan refactoring by understanding file dependencies
 
 **Basic Usage:**
 
 ```bash
-# Find what references an include file
+# Find what references an include file (content inclusion only)
 ./audit-cli analyze file-references path/to/includes/fact.rst
 
 # Find what references a code example
 ./audit-cli analyze file-references path/to/code-examples/example.js
+
+# Include toctree references (navigation links)
+./audit-cli analyze file-references path/to/file.rst --include-toctree
 
 # Get JSON output for automation
 ./audit-cli analyze file-references path/to/file.rst --format json
@@ -323,7 +330,8 @@ This command helps writers:
 - `-v, --verbose` - Show detailed information including line numbers and reference paths
 - `-c, --count-only` - Only show the count of references (useful for quick checks and scripting)
 - `--paths-only` - Only show the file paths, one per line (useful for piping to other commands)
-- `-t, --directive-type <type>` - Filter by directive type: `include`, `literalinclude`, or `io-code-block`
+- `-t, --directive-type <type>` - Filter by directive type: `include`, `literalinclude`, `io-code-block`, or `toctree`
+- `--include-toctree` - Include toctree entries (navigation links) in addition to content inclusion directives
 
 **Understanding the Counts:**
 
@@ -339,20 +347,20 @@ This helps identify both the impact scope (how many files) and duplicate include
 
 **Supported Directive Types:**
 
-The command tracks three types of RST directives:
+By default, the command tracks content inclusion directives:
 
-1. **`.. include::`** - RST content includes
+1. **`.. include::`** - RST content includes (transcluded)
    ```rst
    .. include:: /includes/intro.rst
    ```
 
-2. **`.. literalinclude::`** - Code file references
+2. **`.. literalinclude::`** - Code file references (transcluded)
    ```rst
    .. literalinclude:: /code-examples/example.py
       :language: python
    ```
 
-3. **`.. io-code-block::`** - Input/output examples with file arguments
+3. **`.. io-code-block::`** - Input/output examples with file arguments (transcluded)
    ```rst
    .. io-code-block::
 
@@ -361,6 +369,17 @@ The command tracks three types of RST directives:
 
       .. output:: /code-examples/result.json
          :language: json
+   ```
+
+With `--include-toctree`, also tracks:
+
+4. **`.. toctree::`** - Table of contents entries (navigation links, not transcluded)
+   ```rst
+   .. toctree::
+      :maxdepth: 2
+
+      intro
+      getting-started
    ```
 
 **Note:** Only file-based references are tracked. Inline content (e.g., `.. input::` with `:language:` but no file path) is not tracked.

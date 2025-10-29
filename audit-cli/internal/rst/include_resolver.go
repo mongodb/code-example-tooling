@@ -5,17 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/mongodb/code-example-tooling/audit-cli/internal/pathresolver"
 )
-
-// IncludeDirectiveRegex matches .. include:: directives in RST files.
-var IncludeDirectiveRegex = regexp.MustCompile(`^\.\.\s+include::\s+(.+)$`)
-
-// ToctreeDirectiveRegex matches .. toctree:: directives in RST files.
-var ToctreeDirectiveRegex = regexp.MustCompile(`^\.\.\s+toctree::`)
 
 // FindIncludeDirectives finds all include directives in a file and resolves their paths.
 //

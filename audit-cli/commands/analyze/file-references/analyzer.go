@@ -5,30 +5,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/mongodb/code-example-tooling/audit-cli/internal/pathresolver"
 	"github.com/mongodb/code-example-tooling/audit-cli/internal/rst"
-)
-
-// Regular expressions for matching directives
-var (
-	// includeRegex matches: .. include:: /path/to/file.rst
-	includeRegex = regexp.MustCompile(`^\.\.\s+include::\s+(.+)$`)
-
-	// literalIncludeRegex matches: .. literalinclude:: /path/to/file.ext
-	literalIncludeRegex = regexp.MustCompile(`^\.\.\s+literalinclude::\s+(.+)$`)
-
-	// ioCodeBlockRegex matches: .. io-code-block::
-	ioCodeBlockRegex = regexp.MustCompile(`^\.\.\s+io-code-block::`)
-
-	// inputRegex matches: .. input:: /path/to/file.ext (within io-code-block)
-	inputRegex = regexp.MustCompile(`^\.\.\s+input::\s+(.+)$`)
-
-	// outputRegex matches: .. output:: /path/to/file.ext (within io-code-block)
-	outputRegex = regexp.MustCompile(`^\.\.\s+output::\s+(.+)$`)
 )
 
 // AnalyzeReferences finds all files that reference the target file.
@@ -38,13 +19,17 @@ var (
 // literalinclude, or io-code-block directives. YAML files are included because extract
 // and release files contain RST directives within their content blocks.
 //
+// By default, only content inclusion directives are searched. Set includeToctree to true
+// to also search for toctree entries (navigation links).
+//
 // Parameters:
 //   - targetFile: Absolute path to the file to analyze
+//   - includeToctree: If true, include toctree entries in the search
 //
 // Returns:
 //   - *ReferenceAnalysis: The analysis results
 //   - error: Any error encountered during analysis
-func AnalyzeReferences(targetFile string) (*ReferenceAnalysis, error) {
+func AnalyzeReferences(targetFile string, includeToctree bool) (*ReferenceAnalysis, error) {
 	// Get absolute path
 	absTargetFile, err := filepath.Abs(targetFile)
 	if err != nil {
@@ -83,7 +68,7 @@ func AnalyzeReferences(targetFile string) (*ReferenceAnalysis, error) {
 		}
 
 		// Search for references in this file
-		refs, err := findReferencesInFile(path, absTargetFile, sourceDir)
+		refs, err := findReferencesInFile(path, absTargetFile, sourceDir, includeToctree)
 		if err != nil {
 			// Log error but continue processing other files
 			fmt.Fprintf(os.Stderr, "Warning: failed to process %s: %v\n", path, err)
@@ -110,17 +95,19 @@ func AnalyzeReferences(targetFile string) (*ReferenceAnalysis, error) {
 // findReferencesInFile searches a single file for references to the target file.
 //
 // This function scans through the file line by line looking for include,
-// literalinclude, io-code-block, and toctree directives that reference the target file.
+// literalinclude, and io-code-block directives that reference the target file.
+// If includeToctree is true, also searches for toctree entries.
 //
 // Parameters:
 //   - filePath: Path to the file to search
 //   - targetFile: Absolute path to the target file
 //   - sourceDir: Source directory (for resolving relative paths)
+//   - includeToctree: If true, include toctree entries in the search
 //
 // Returns:
 //   - []FileReference: List of references found in this file
 //   - error: Any error encountered during processing
-func findReferencesInFile(filePath, targetFile, sourceDir string) ([]FileReference, error) {
+func findReferencesInFile(filePath, targetFile, sourceDir string, includeToctree bool) ([]FileReference, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -140,15 +127,15 @@ func findReferencesInFile(filePath, targetFile, sourceDir string) ([]FileReferen
 		line := scanner.Text()
 		trimmedLine := strings.TrimSpace(line)
 
-		// Check for toctree start (use shared regex from rst package)
-		if rst.ToctreeDirectiveRegex.MatchString(trimmedLine) {
+		// Check for toctree start (only if includeToctree is enabled)
+		if includeToctree && rst.ToctreeDirectiveRegex.MatchString(trimmedLine) {
 			inToctree = true
 			toctreeStartLine = lineNum
 			continue
 		}
 
 		// Check for io-code-block start
-		if ioCodeBlockRegex.MatchString(trimmedLine) {
+		if rst.IOCodeBlockDirectiveRegex.MatchString(trimmedLine) {
 			inIOCodeBlock = true
 			ioCodeBlockStartLine = lineNum
 			continue
@@ -165,7 +152,7 @@ func findReferencesInFile(filePath, targetFile, sourceDir string) ([]FileReferen
 		}
 
 		// Check for include directive
-		if matches := includeRegex.FindStringSubmatch(trimmedLine); matches != nil {
+		if matches := rst.IncludeDirectiveRegex.FindStringSubmatch(trimmedLine); matches != nil {
 			refPath := strings.TrimSpace(matches[1])
 			if referencesTarget(refPath, targetFile, sourceDir, filePath) {
 				references = append(references, FileReference{
@@ -179,7 +166,7 @@ func findReferencesInFile(filePath, targetFile, sourceDir string) ([]FileReferen
 		}
 
 		// Check for literalinclude directive
-		if matches := literalIncludeRegex.FindStringSubmatch(trimmedLine); matches != nil {
+		if matches := rst.LiteralIncludeDirectiveRegex.FindStringSubmatch(trimmedLine); matches != nil {
 			refPath := strings.TrimSpace(matches[1])
 			if referencesTarget(refPath, targetFile, sourceDir, filePath) {
 				references = append(references, FileReference{
@@ -195,7 +182,7 @@ func findReferencesInFile(filePath, targetFile, sourceDir string) ([]FileReferen
 		// Check for input/output directives within io-code-block
 		if inIOCodeBlock {
 			// Check for input directive
-			if matches := inputRegex.FindStringSubmatch(trimmedLine); matches != nil {
+			if matches := rst.InputDirectiveRegex.FindStringSubmatch(trimmedLine); matches != nil {
 				refPath := strings.TrimSpace(matches[1])
 				if referencesTarget(refPath, targetFile, sourceDir, filePath) {
 					references = append(references, FileReference{
@@ -209,7 +196,7 @@ func findReferencesInFile(filePath, targetFile, sourceDir string) ([]FileReferen
 			}
 
 			// Check for output directive
-			if matches := outputRegex.FindStringSubmatch(trimmedLine); matches != nil {
+			if matches := rst.OutputDirectiveRegex.FindStringSubmatch(trimmedLine); matches != nil {
 				refPath := strings.TrimSpace(matches[1])
 				if referencesTarget(refPath, targetFile, sourceDir, filePath) {
 					references = append(references, FileReference{

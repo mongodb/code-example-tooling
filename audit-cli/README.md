@@ -1338,44 +1338,44 @@ See the code in `internal/rst/` for implementation details.
 
 The tool normalizes language identifiers to standard file extensions:
 
-| Input | Normalized | Extension |
-|-------|-----------|-----------|
-| `bash` | `bash` | `.sh` |
-| `c` | `c` | `.c` |
-| `c++` | `cpp` | `.cpp` |
-| `c#` | `csharp` | `.cs` |
-| `console` | `console` | `.sh` |
-| `cpp` | `cpp` | `.cpp` |
-| `cs` | `csharp` | `.cs` |
-| `csharp` | `csharp` | `.cs` |
-| `go` | `go` | `.go` |
-| `golang` | `go` | `.go` |
-| `java` | `java` | `.java` |
-| `javascript` | `javascript` | `.js` |
-| `js` | `javascript` | `.js` |
-| `kotlin` | `kotlin` | `.kt` |
-| `kt` | `kotlin` | `.kt` |
-| `php` | `php` | `.php` |
-| `powershell` | `powershell` | `.ps1` |
-| `ps1` | `powershell` | `.ps1` |
-| `ps5` | `ps5` | `.ps1` |
-| `py` | `python` | `.py` |
-| `python` | `python` | `.py` |
-| `rb` | `ruby` | `.rb` |
-| `rs` | `rust` | `.rs` |
-| `ruby` | `ruby` | `.rb` |
-| `rust` | `rust` | `.rs` |
-| `scala` | `scala` | `.scala` |
-| `sh` | `shell` | `.sh` |
-| `shell` | `shell` | `.sh` |
-| `swift` | `swift` | `.swift` |
-| `text` | `text` | `.txt` |
-| `ts` | `typescript` | `.ts` |
-| `txt` | `text` | `.txt` |
-| `typescript` | `typescript` | `.ts` |
-| (empty string) | `undefined` | `.txt` |
-| `none` | `undefined` | `.txt` |
-| (unknown) | (unchanged) | `.txt` |
+| Input          | Normalized   | Extension |
+|----------------|--------------|-----------|
+| `bash`         | `bash`       | `.sh`     |
+| `c`            | `c`          | `.c`      |
+| `c++`          | `cpp`        | `.cpp`    |
+| `c#`           | `csharp`     | `.cs`     |
+| `console`      | `console`    | `.sh`     |
+| `cpp`          | `cpp`        | `.cpp`    |
+| `cs`           | `csharp`     | `.cs`     |
+| `csharp`       | `csharp`     | `.cs`     |
+| `go`           | `go`         | `.go`     |
+| `golang`       | `go`         | `.go`     |
+| `java`         | `java`       | `.java`   |
+| `javascript`   | `javascript` | `.js`     |
+| `js`           | `javascript` | `.js`     |
+| `kotlin`       | `kotlin`     | `.kt`     |
+| `kt`           | `kotlin`     | `.kt`     |
+| `php`          | `php`        | `.php`    |
+| `powershell`   | `powershell` | `.ps1`    |
+| `ps1`          | `powershell` | `.ps1`    |
+| `ps5`          | `ps5`        | `.ps1`    |
+| `py`           | `python`     | `.py`     |
+| `python`       | `python`     | `.py`     |
+| `rb`           | `ruby`       | `.rb`     |
+| `rs`           | `rust`       | `.rs`     |
+| `ruby`         | `ruby`       | `.rb`     |
+| `rust`         | `rust`       | `.rs`     |
+| `scala`        | `scala`      | `.scala`  |
+| `sh`           | `shell`      | `.sh`     |
+| `shell`        | `shell`      | `.sh`     |
+| `swift`        | `swift`      | `.swift`  |
+| `text`         | `text`       | `.txt`    |
+| `ts`           | `typescript` | `.ts`     |
+| `txt`          | `text`       | `.txt`    |
+| `typescript`   | `typescript` | `.ts`     |
+| (empty string) | `undefined`  | `.txt`    |
+| `none`         | `undefined`  | `.txt`    |
+| (unknown)      | (unchanged)  | `.txt`    |
 
 **Notes:**
 - Language identifiers are case-insensitive

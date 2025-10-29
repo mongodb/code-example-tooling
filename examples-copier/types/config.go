@@ -55,12 +55,15 @@ type TargetConfig struct {
 
 // CommitStrategyConfig defines how to commit changes
 type CommitStrategyConfig struct {
-	Type          string `yaml:"type" json:"type"` // "direct", "pull_request", or "batch"
-	CommitMessage string `yaml:"commit_message,omitempty" json:"commit_message,omitempty"`
-	PRTitle       string `yaml:"pr_title,omitempty" json:"pr_title,omitempty"`
-	PRBody        string `yaml:"pr_body,omitempty" json:"pr_body,omitempty"`
-	AutoMerge     bool   `yaml:"auto_merge,omitempty" json:"auto_merge,omitempty"`
-	BatchSize     int    `yaml:"batch_size,omitempty" json:"batch_size,omitempty"`
+	Type                 string `yaml:"type" json:"type"` // "direct", "pull_request", or "batch"
+	CommitMessage        string `yaml:"commit_message,omitempty" json:"commit_message,omitempty"`
+	PRTitle              string `yaml:"pr_title,omitempty" json:"pr_title,omitempty"`
+	PRBody               string `yaml:"pr_body,omitempty" json:"pr_body,omitempty"`
+	AutoMerge            bool   `yaml:"auto_merge,omitempty" json:"auto_merge,omitempty"`
+	BatchSize            int    `yaml:"batch_size,omitempty" json:"batch_size,omitempty"`
+	UseTargetPRTemplate  bool   `yaml:"use_target_pr_template,omitempty" json:"use_target_pr_template,omitempty"`     // Fetch PR template from target repo
+	PRTemplatePath       string `yaml:"pr_template_path,omitempty" json:"pr_template_path,omitempty"`                 // Path to PR template in target repo (defaults to .github/pull_request_template.md)
+	PRBodyAppend         string `yaml:"pr_body_append,omitempty" json:"pr_body_append,omitempty"`                     // Additional content to append after the template
 }
 
 // DeprecationConfig defines deprecation tracking settings

@@ -1,0 +1,130 @@
+# Example: Using PR Templates from Target Repository
+# This configuration demonstrates the hybrid PR template approach
+
+source_repo: "myorg/source-repo"
+source_branch: "main"
+
+copy_rules:
+  # Example 1: Use target repo's PR template with appended copier info
+  - name: "use-target-template-with-append"
+    source_pattern:
+      type: "prefix"
+      pattern: "examples/"
+    targets:
+      - repo: "myorg/target-repo"
+        branch: "main"
+        path_transform: "code-examples/${relative_path}"
+        commit_strategy:
+          type: "pull_request"
+          pr_title: "Update code examples from ${source_repo}"
+          
+          # Fetch and use the PR template from the target repository
+          use_target_pr_template: true
+          
+          # Optional: Specify custom template path (defaults to .github/pull_request_template.md)
+          pr_template_path: ".github/pull_request_template.md"
+          
+          # Append copier-specific information after the template
+          pr_body_append: |
+            
+            ---
+            ## 🤖 Automated Copy Information
+            
+            This PR was automatically created by the examples-copier service.
+            
+            - **Source Repository**: ${source_repo}
+            - **Source Branch**: ${source_branch}
+            - **Source PR**: #${pr_number}
+            - **Source Commit**: ${commit_sha}
+            - **Files Updated**: ${file_count}
+            - **Copy Rule**: ${rule_name}
+            
+            ### Review Checklist
+            - [ ] Verify all files copied correctly
+            - [ ] Check for any breaking changes
+            - [ ] Run tests locally
+          
+          auto_merge: false
+
+  # Example 2: Use target repo's PR template without appending
+  - name: "use-target-template-only"
+    source_pattern:
+      type: "prefix"
+      pattern: "docs/"
+    targets:
+      - repo: "myorg/target-repo"
+        branch: "main"
+        path_transform: "documentation/${relative_path}"
+        commit_strategy:
+          type: "pull_request"
+          pr_title: "Update documentation from ${source_repo}"
+          
+          # Just use the target repo's template as-is
+          use_target_pr_template: true
+          
+          auto_merge: false
+
+  # Example 3: Traditional approach - define PR body in config
+  - name: "define-pr-body-in-config"
+    source_pattern:
+      type: "prefix"
+      pattern: "scripts/"
+    targets:
+      - repo: "myorg/target-repo"
+        branch: "main"
+        path_transform: "scripts/${relative_path}"
+        commit_strategy:
+          type: "pull_request"
+          pr_title: "Update scripts from ${source_repo}"
+          
+          # Define the entire PR body in the config
+          pr_body: |
+            ## Automated Update
+            
+            This PR updates scripts from the source repository.
+            
+            ### Details
+            - **Source**: ${source_repo}
+            - **PR**: #${pr_number}
+            - **Commit**: ${commit_sha}
+            - **Files**: ${file_count}
+            
+            ### Testing
+            Please verify that all scripts work as expected.
+          
+          auto_merge: false
+
+  # Example 4: Fallback behavior - template not found
+  - name: "template-with-fallback"
+    source_pattern:
+      type: "prefix"
+      pattern: "config/"
+    targets:
+      - repo: "myorg/target-repo"
+        branch: "main"
+        path_transform: "config/${relative_path}"
+        commit_strategy:
+          type: "pull_request"
+          pr_title: "Update config from ${source_repo}"
+          
+          # Try to use target template, but provide fallback via pr_body
+          use_target_pr_template: true
+          pr_template_path: ".github/pull_request_template.md"
+          
+          # This will be used if the template file is not found
+          pr_body: |
+            ## Configuration Update
+            
+            Automated update of configuration files.
+            
+            - Source: ${source_repo}
+            - Files: ${file_count}
+          
+          # This will be appended if the template IS found
+          pr_body_append: |
+            
+            ---
+            **Automated by**: examples-copier
+          
+          auto_merge: false
+

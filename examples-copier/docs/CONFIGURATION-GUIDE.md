@@ -321,7 +321,7 @@ commit_strategy:
   pr_title: "Update ${lang} examples"
   pr_body: |
     Automated update of ${lang} examples
-    
+
     Files updated: ${file_count}
     Source: ${source_repo}
     PR: #${pr_number}
@@ -334,11 +334,49 @@ commit_strategy:
 - `pr_body` - (optional) PR body template
 - `auto_merge` - (optional) Auto-merge if checks pass (default: false)
 - `commit_message` - (optional) Commit message template
+- `use_target_pr_template` - (optional) Fetch PR template from target repo (default: false)
+- `pr_template_path` - (optional) Path to PR template in target repo (default: `.github/pull_request_template.md`)
+- `pr_body_append` - (optional) Additional content to append after the template
 
 **Use When:**
 - Changes require review
 - You want CI checks to run
 - Multiple approvers needed
+
+#### Using PR Templates from Target Repository
+
+You can configure the copier to use PR templates that exist in the target repository:
+
+```yaml
+commit_strategy:
+  type: "pull_request"
+  use_target_pr_template: true
+  pr_template_path: ".github/pull_request_template.md"  # Optional, this is the default
+  pr_body_append: |
+
+    ---
+    **Automated Copy Information:**
+    - Source: ${source_repo}
+    - PR: #${pr_number}
+    - Commit: ${commit_sha}
+    - Files: ${file_count}
+  auto_merge: false
+```
+
+**How it works:**
+1. The copier fetches the PR template file from the target repository
+2. Uses the template content as the PR body
+3. Optionally appends additional copier-specific information via `pr_body_append`
+4. If the template file is not found, falls back to using `pr_body` (if configured)
+
+**Template Variables:**
+Both `pr_body` and `pr_body_append` support template variables like `${source_repo}`, `${pr_number}`, `${file_count}`, etc.
+
+**Common PR Template Locations:**
+- `.github/pull_request_template.md` (default, hidden directory)
+- `pull_request_template.md` (root directory)
+- `docs/pull_request_template.md` (docs directory)
+- `.github/PULL_REQUEST_TEMPLATE/template_name.md` (multiple templates)
 
 ### Batch Commit
 

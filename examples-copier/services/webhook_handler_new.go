@@ -539,6 +539,11 @@ func queueFileForUploadWithStrategy(target types.TargetConfig, file github.Repos
 	entry.CommitStrategy = types.CommitStrategy(target.CommitStrategy.Type)
 	entry.AutoMergePR = target.CommitStrategy.AutoMerge
 
+	// Set PR template configuration
+	entry.UseTargetPRTemplate = target.CommitStrategy.UseTargetPRTemplate
+	entry.PRTemplatePath = target.CommitStrategy.PRTemplatePath
+	entry.PRBodyAppend = target.CommitStrategy.PRBodyAppend
+
 	// Add file to content first so we can get accurate file count
 	entry.Content = append(entry.Content, file)
 
@@ -562,6 +567,11 @@ func queueFileForUploadWithStrategy(target types.TargetConfig, file github.Repos
 	}
 	if target.CommitStrategy.PRBody != "" {
 		entry.PRBody = container.MessageTemplater.RenderPRBody(target.CommitStrategy.PRBody, msgCtx)
+	}
+
+	// Render pr_body_append if provided
+	if target.CommitStrategy.PRBodyAppend != "" {
+		entry.PRBodyAppend = container.MessageTemplater.RenderPRBody(target.CommitStrategy.PRBodyAppend, msgCtx)
 	}
 
 	container.FileStateService.AddFileToUpload(key, entry)

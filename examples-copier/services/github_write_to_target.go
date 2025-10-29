@@ -48,6 +48,34 @@ func normalizeRepoName(repoName string) string {
 	return repoOwner() + "/" + repoName
 }
 
+// fetchFileFromRepo fetches a file from a target repository
+// Returns the file content as a string, or an error if the file doesn't exist or can't be fetched
+func fetchFileFromRepo(ctx context.Context, client *github.Client, repo, branch, filePath string) (string, error) {
+	owner, repoName := parseRepoPath(repo)
+
+	fileContent, _, _, err := client.Repositories.GetContents(
+		ctx,
+		owner,
+		repoName,
+		filePath,
+		&github.RepositoryContentGetOptions{
+			Ref: branch,
+		},
+	)
+
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch file %s from %s: %w", filePath, repo, err)
+	}
+
+	// Decode the content
+	content, err := fileContent.GetContent()
+	if err != nil {
+		return "", fmt.Errorf("failed to decode file content: %w", err)
+	}
+
+	return content, nil
+}
+
 // AddFilesToTargetRepoBranch uploads files to the target repository branch
 // using the specified commit strategy (direct or via pull request).
 func AddFilesToTargetRepoBranch() {
@@ -91,6 +119,11 @@ func AddFilesToTargetRepoBranch() {
 		// Get auto-merge setting from value
 		mergeWithoutReview := value.AutoMergePR
 
+		// Get PR template settings
+		useTargetPRTemplate := value.UseTargetPRTemplate
+		prTemplatePath := value.PRTemplatePath
+		prBodyAppend := value.PRBodyAppend
+
 		switch strategy {
 		case "direct": // commits directly to the target branch
 			LogInfo(fmt.Sprintf("Using direct commit strategy for %s on branch %s", key.RepoName, key.BranchPath))
@@ -99,7 +132,7 @@ func AddFilesToTargetRepoBranch() {
 			}
 		default: // "pr" or "pull_request" strategy
 			LogInfo(fmt.Sprintf("Using PR commit strategy for %s on branch %s (auto_merge=%v)", key.RepoName, key.BranchPath, mergeWithoutReview))
-			if err := addFilesViaPR(ctx, client, key, value.Content, commitMsg, prTitle, prBody, mergeWithoutReview); err != nil {
+			if err := addFilesViaPR(ctx, client, key, value.Content, commitMsg, prTitle, prBody, mergeWithoutReview, useTargetPRTemplate, prTemplatePath, prBodyAppend); err != nil {
 				LogCritical(fmt.Sprintf("Failed via PR path: %v\n", err))
 			}
 		}
@@ -124,20 +157,52 @@ func createPullRequest(ctx context.Context, client *github.Client, repo, head, b
 
 // addFilesViaPR creates a temporary branch, commits files to it using the provided commitMessage,
 // opens a pull request with prTitle and prBody, and optionally merges it automatically.
+// If useTargetPRTemplate is true, it fetches the PR template from the target repo and uses it as the PR body.
 func addFilesViaPR(ctx context.Context, client *github.Client, key UploadKey,
 	files []github.RepositoryContent, commitMessage string, prTitle string, prBody string, mergeWithoutReview bool,
+	useTargetPRTemplate bool, prTemplatePath string, prBodyAppend string,
 ) error {
 	tempBranch := "copier/" + time.Now().UTC().Format("20060102-150405")
 
 	// 1) Create branch off the target branch specified in key.BranchPath or default to "main"
 	baseBranch := strings.TrimPrefix(key.BranchPath, "refs/heads/")
+
+	// 2) Fetch PR template from target repo if configured
+	if useTargetPRTemplate {
+		// Default to standard GitHub PR template location if not specified
+		templatePath := prTemplatePath
+		if templatePath == "" {
+			templatePath = ".github/pull_request_template.md"
+		}
+
+		LogInfo(fmt.Sprintf("Fetching PR template from %s at %s", key.RepoName, templatePath))
+		templateContent, err := fetchFileFromRepo(ctx, client, key.RepoName, baseBranch, templatePath)
+		if err != nil {
+			// Log warning but continue - don't fail the PR creation if template is missing
+			LogWarning(fmt.Sprintf("Failed to fetch PR template from %s: %v. Using configured pr_body instead.", templatePath, err))
+		} else {
+			// Use template as the base PR body
+			prBody = templateContent
+			LogInfo(fmt.Sprintf("Successfully fetched PR template (%d characters)", len(templateContent)))
+		}
+	}
+
+	// 3) Append additional content if configured
+	if prBodyAppend != "" {
+		if prBody != "" {
+			prBody = prBody + "\n\n" + prBodyAppend
+		} else {
+			prBody = prBodyAppend
+		}
+	}
+
 	newRef, err := createBranch(ctx, client, key.RepoName, tempBranch, baseBranch)
 	if err != nil {
 		return fmt.Errorf("create branch: %w", err)
 	}
 	_ = newRef // we just need it created; ref is not reused directly
 
-	// 2) Commit files to temp branch
+	// 4) Commit files to temp branch
 	entries := make(map[string]string, len(files))
 	for _, f := range files {
 		content, _ := f.GetContent()
@@ -153,14 +218,14 @@ func addFilesViaPR(ctx context.Context, client *github.Client, key UploadKey,
 		return fmt.Errorf("create commit on temp branch: %w", err)
 	}
 
-	// 3) Create PR from temp branch to base branch
+	// 5) Create PR from temp branch to base branch
 	base := strings.TrimPrefix(key.BranchPath, "refs/heads/")
 	pr, err := createPullRequest(ctx, client, key.RepoName, tempBranch, base, prTitle, prBody)
 	if err != nil {
 		return fmt.Errorf("create PR: %w", err)
 	}
 
-	// 4) Optionally merge the PR without review if MergeWithoutReview is true
+	// 6) Optionally merge the PR without review if MergeWithoutReview is true
 	LogInfo(fmt.Sprintf("PR created: #%d from %s to %s", pr.GetNumber(), tempBranch, base))
 	LogInfo(fmt.Sprintf("PR URL: %s", pr.GetHTMLURL()))
 	if mergeWithoutReview {

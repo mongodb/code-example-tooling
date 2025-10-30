@@ -142,6 +142,43 @@ Test 5: Sending deprecation notification...
 Check your Slack channel for 5 test notifications
 ```
 
+### convert-env-format.sh
+
+Convert between App Engine and Cloud Run environment file formats.
+
+**Usage:**
+```bash
+./scripts/convert-env-format.sh to-cloudrun <input> <output>
+./scripts/convert-env-format.sh to-appengine <input> <output>
+```
+
+**What it does:**
+- Converts between App Engine format (with `env_variables:` wrapper) and Cloud Run format (plain YAML)
+- Handles indentation automatically
+- Validates input file exists
+- Prompts before overwriting existing files
+
+**Example:**
+```bash
+# Convert App Engine → Cloud Run
+./scripts/convert-env-format.sh to-cloudrun env.yaml env-cloudrun.yaml
+
+# Convert Cloud Run → App Engine
+./scripts/convert-env-format.sh to-appengine env-cloudrun.yaml env.yaml
+```
+
+**Format differences:**
+```yaml
+# App Engine format (env.yaml)
+env_variables:
+  GITHUB_APP_ID: "123456"
+  REPO_OWNER: "mongodb"
+
+# Cloud Run format (env-cloudrun.yaml)
+GITHUB_APP_ID: "123456"
+REPO_OWNER: "mongodb"
+```
+
 ### test-with-pr.sh
 
 Fetch real PR data from GitHub and send it to the webhook.

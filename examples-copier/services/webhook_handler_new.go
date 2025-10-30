@@ -273,9 +273,14 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 	// Process files with new pattern matching
 	processFilesWithPatternMatching(ctx, prNumber, sourceCommitSHA, changedFiles, yamlConfig, config, container)
 
+	// Finalize PR metadata for batched PRs with accurate file counts
+	if yamlConfig.BatchByRepo {
+		finalizeBatchPRMetadata(yamlConfig, config, prNumber, sourceCommitSHA, container)
+	}
+
 	// Upload queued files
 	FilesToUpload = container.FileStateService.GetFilesToUpload()
-	AddFilesToTargetRepoBranch()
+	AddFilesToTargetRepoBranchWithFetcher(container.PRTemplateFetcher)
 	container.FileStateService.ClearFilesToUpload()
 
 	// Update deprecation file - copy from FileStateService to global map for legacy function
@@ -364,7 +369,7 @@ func processFilesWithPatternMatching(ctx context.Context, prNumber int, sourceCo
 
 			// Process each target
 			for _, target := range rule.Targets {
-				processFileForTarget(ctx, prNumber, sourceCommitSHA, file, rule, target, matchResult.Variables, yamlConfig.SourceBranch, config, container)
+				processFileForTarget(ctx, prNumber, sourceCommitSHA, file, rule, target, matchResult.Variables, yamlConfig, config, container)
 			}
 		}
 	}
@@ -372,7 +377,7 @@ func processFilesWithPatternMatching(ctx context.Context, prNumber int, sourceCo
 
 // processFileForTarget processes a single file for a specific target
 func processFileForTarget(ctx context.Context, prNumber int, sourceCommitSHA string, file types.ChangedFile,
-	rule types.CopyRule, target types.TargetConfig, variables map[string]string, sourceBranch string, config *configs.Config, container *ServiceContainer) {
+	rule types.CopyRule, target types.TargetConfig, variables map[string]string, yamlConfig *types.YAMLConfig, config *configs.Config, container *ServiceContainer) {
 
 	// Transform path
 	targetPath, err := container.PathTransformer.Transform(file.Path, target.PathTransform, variables)
@@ -393,7 +398,7 @@ func processFileForTarget(ctx context.Context, prNumber int, sourceCommitSHA str
 			"status": file.Status,
 			"target": targetPath,
 		})
-		handleFileDeprecation(ctx, prNumber, sourceCommitSHA, file, rule, target, targetPath, sourceBranch, config, container)
+		handleFileDeprecation(ctx, prNumber, sourceCommitSHA, file, rule, target, targetPath, yamlConfig.SourceBranch, config, container)
 		return
 	}
 
@@ -403,12 +408,12 @@ func processFileForTarget(ctx context.Context, prNumber int, sourceCommitSHA str
 		"status": file.Status,
 		"target": targetPath,
 	})
-	handleFileCopyWithAudit(ctx, prNumber, sourceCommitSHA, file, rule, target, targetPath, variables, sourceBranch, config, container)
+	handleFileCopyWithAudit(ctx, prNumber, sourceCommitSHA, file, rule, target, targetPath, variables, yamlConfig, config, container)
 }
 
 // handleFileCopyWithAudit handles file copying with audit logging
 func handleFileCopyWithAudit(ctx context.Context, prNumber int, sourceCommitSHA string, file types.ChangedFile,
-	rule types.CopyRule, target types.TargetConfig, targetPath string, variables map[string]string, sourceBranch string,
+	rule types.CopyRule, target types.TargetConfig, targetPath string, variables map[string]string, yamlConfig *types.YAMLConfig,
 	config *configs.Config, container *ServiceContainer) {
 
 	startTime := time.Now()
@@ -440,7 +445,7 @@ func handleFileCopyWithAudit(ctx context.Context, prNumber int, sourceCommitSHA 
 	fc.Name = github.String(targetPath)
 
 	// Queue file for upload
-	queueFileForUploadWithStrategy(target, *fc, rule, variables, prNumber, sourceCommitSHA, sourceBranch, config, container)
+	queueFileForUploadWithStrategy(target, *fc, rule, variables, prNumber, sourceCommitSHA, yamlConfig, config, container)
 
 	// Log successful copy event
 	fileSize := int64(0)
@@ -510,20 +515,26 @@ func handleFileDeprecation(ctx context.Context, prNumber int, sourceCommitSHA st
 
 // queueFileForUploadWithStrategy queues a file for upload with the appropriate strategy
 func queueFileForUploadWithStrategy(target types.TargetConfig, file github.RepositoryContent,
-	rule types.CopyRule, variables map[string]string, prNumber int, sourceCommitSHA string, sourceBranch string, config *configs.Config, container *ServiceContainer) {
+	rule types.CopyRule, variables map[string]string, prNumber int, sourceCommitSHA string, yamlConfig *types.YAMLConfig, config *configs.Config, container *ServiceContainer) {
 
-	// Include rule name and commit strategy in the key to allow multiple rules
-	// targeting the same repo/branch with different strategies
+	// Determine commit strategy
 	commitStrategy := string(target.CommitStrategy.Type)
 	if commitStrategy == "" {
 		commitStrategy = "direct" // default
 	}
 
+	// Create upload key
+	// If batch_by_repo is true, exclude rule name to batch all changes into one PR per repo
+	// Otherwise, include rule name to create separate PRs per rule
 	key := types.UploadKey{
 		RepoName:       target.Repo,
 		BranchPath:     "refs/heads/" + target.Branch,
-		RuleName:       rule.Name,
 		CommitStrategy: commitStrategy,
+	}
+
+	if !yamlConfig.BatchByRepo {
+		// Include rule name to create separate PRs per rule (default behavior)
+		key.RuleName = rule.Name
 	}
 
 	// Get existing entry or create new
@@ -538,6 +549,7 @@ func queueFileForUploadWithStrategy(target types.TargetConfig, file github.Repos
 	// Set commit strategy
 	entry.CommitStrategy = types.CommitStrategy(target.CommitStrategy.Type)
 	entry.AutoMergePR = target.CommitStrategy.AutoMerge
+	entry.UsePRTemplate = target.CommitStrategy.UsePRTemplate
 
 	// Add file to content first so we can get accurate file count
 	entry.Content = append(entry.Content, file)
@@ -546,7 +558,7 @@ func queueFileForUploadWithStrategy(target types.TargetConfig, file github.Repos
 	msgCtx := types.NewMessageContext()
 	msgCtx.RuleName = rule.Name
 	msgCtx.SourceRepo = fmt.Sprintf("%s/%s", config.RepoOwner, config.RepoName)
-	msgCtx.SourceBranch = sourceBranch
+	msgCtx.SourceBranch = yamlConfig.SourceBranch
 	msgCtx.TargetRepo = target.Repo
 	msgCtx.TargetBranch = target.Branch
 	msgCtx.FileCount = len(entry.Content)
@@ -554,14 +566,26 @@ func queueFileForUploadWithStrategy(target types.TargetConfig, file github.Repos
 	msgCtx.CommitSHA = sourceCommitSHA
 	msgCtx.Variables = variables
 
-	if target.CommitStrategy.CommitMessage != "" {
-		entry.CommitMessage = container.MessageTemplater.RenderCommitMessage(target.CommitStrategy.CommitMessage, msgCtx)
-	}
-	if target.CommitStrategy.PRTitle != "" {
-		entry.PRTitle = container.MessageTemplater.RenderPRTitle(target.CommitStrategy.PRTitle, msgCtx)
-	}
-	if target.CommitStrategy.PRBody != "" {
-		entry.PRBody = container.MessageTemplater.RenderPRBody(target.CommitStrategy.PRBody, msgCtx)
+	// For batched PRs, skip setting PR metadata here - it will be set later with accurate file counts
+	// For non-batched PRs, always update with current rule's messages
+	if yamlConfig.BatchByRepo {
+		// Batching by repo - PR metadata will be set in finalizeBatchPRMetadata()
+		// Only set commit message if not already set
+		if entry.CommitMessage == "" && target.CommitStrategy.CommitMessage != "" {
+			entry.CommitMessage = container.MessageTemplater.RenderCommitMessage(target.CommitStrategy.CommitMessage, msgCtx)
+		}
+		// Leave PRTitle and PRBody empty - will be set with accurate file count later
+	} else {
+		// Not batching - update messages for each rule (last one wins)
+		if target.CommitStrategy.CommitMessage != "" {
+			entry.CommitMessage = container.MessageTemplater.RenderCommitMessage(target.CommitStrategy.CommitMessage, msgCtx)
+		}
+		if target.CommitStrategy.PRTitle != "" {
+			entry.PRTitle = container.MessageTemplater.RenderPRTitle(target.CommitStrategy.PRTitle, msgCtx)
+		}
+		if target.CommitStrategy.PRBody != "" {
+			entry.PRBody = container.MessageTemplater.RenderPRBody(target.CommitStrategy.PRBody, msgCtx)
+		}
 	}
 
 	container.FileStateService.AddFileToUpload(key, entry)
@@ -579,4 +603,61 @@ func addToDeprecationMapForTarget(targetPath string, target types.TargetConfig, 
 	// This allows multiple files to be deprecated to the same deprecation file
 	key := target.Repo + ":" + targetPath
 	fileStateService.AddFileToDeprecate(key, entry)
+}
+
+// finalizeBatchPRMetadata sets PR metadata for batched PRs with accurate file counts
+// This is called after all files have been collected
+func finalizeBatchPRMetadata(yamlConfig *types.YAMLConfig, config *configs.Config, prNumber int, sourceCommitSHA string, container *ServiceContainer) {
+	filesToUpload := container.FileStateService.GetFilesToUpload()
+
+	for key, entry := range filesToUpload {
+		// Create message context with accurate file count
+		msgCtx := types.NewMessageContext()
+		msgCtx.SourceRepo = fmt.Sprintf("%s/%s", config.RepoOwner, config.RepoName)
+		msgCtx.SourceBranch = yamlConfig.SourceBranch
+		msgCtx.TargetRepo = key.RepoName
+		msgCtx.TargetBranch = entry.TargetBranch
+		msgCtx.FileCount = len(entry.Content) // Accurate file count!
+		msgCtx.PRNumber = prNumber
+		msgCtx.CommitSHA = sourceCommitSHA
+
+		// Use batch_pr_config if available, otherwise use defaults
+		if yamlConfig.BatchPRConfig != nil {
+			// Use dedicated batch PR config
+			if yamlConfig.BatchPRConfig.PRTitle != "" {
+				entry.PRTitle = container.MessageTemplater.RenderPRTitle(yamlConfig.BatchPRConfig.PRTitle, msgCtx)
+			} else {
+				// Default title
+				entry.PRTitle = fmt.Sprintf("Update files from %s PR #%d", msgCtx.SourceRepo, prNumber)
+			}
+
+			if yamlConfig.BatchPRConfig.PRBody != "" {
+				entry.PRBody = container.MessageTemplater.RenderPRBody(yamlConfig.BatchPRConfig.PRBody, msgCtx)
+			} else {
+				// Default body
+				entry.PRBody = fmt.Sprintf("Automated update from %s\n\nSource PR: #%d\nCommit: %s\nFiles: %d",
+					msgCtx.SourceRepo, prNumber, sourceCommitSHA[:7], len(entry.Content))
+			}
+
+			// Override commit message if specified in batch config
+			if yamlConfig.BatchPRConfig.CommitMessage != "" && entry.CommitMessage == "" {
+				entry.CommitMessage = container.MessageTemplater.RenderCommitMessage(yamlConfig.BatchPRConfig.CommitMessage, msgCtx)
+			}
+
+			// Set UsePRTemplate from batch config
+			entry.UsePRTemplate = yamlConfig.BatchPRConfig.UsePRTemplate
+		} else {
+			// No batch_pr_config - use generic defaults
+			if entry.PRTitle == "" {
+				entry.PRTitle = fmt.Sprintf("Update files from %s PR #%d", msgCtx.SourceRepo, prNumber)
+			}
+			if entry.PRBody == "" {
+				entry.PRBody = fmt.Sprintf("Automated update from %s\n\nSource PR: #%d\nCommit: %s\nFiles: %d",
+					msgCtx.SourceRepo, prNumber, sourceCommitSHA[:7], len(entry.Content))
+			}
+		}
+
+		// Update the entry in the map
+		container.FileStateService.AddFileToUpload(key, entry)
+	}
 }

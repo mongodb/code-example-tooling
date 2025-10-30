@@ -25,16 +25,31 @@ func NewPatternMatcher() PatternMatcher {
 
 // Match matches a file path against a source pattern
 func (pm *DefaultPatternMatcher) Match(filePath string, pattern types.SourcePattern) types.MatchResult {
+	// First, check if the main pattern matches
+	var result types.MatchResult
 	switch pattern.Type {
 	case types.PatternTypePrefix:
-		return pm.matchPrefix(filePath, pattern.Pattern)
+		result = pm.matchPrefix(filePath, pattern.Pattern)
 	case types.PatternTypeGlob:
-		return pm.matchGlob(filePath, pattern.Pattern)
+		result = pm.matchGlob(filePath, pattern.Pattern)
 	case types.PatternTypeRegex:
-		return pm.matchRegex(filePath, pattern.Pattern)
+		result = pm.matchRegex(filePath, pattern.Pattern)
 	default:
 		return types.NewMatchResult(false, nil)
 	}
+
+	// If the main pattern didn't match, return early
+	if !result.Matched {
+		return result
+	}
+
+	// Check if the file should be excluded
+	if pm.shouldExclude(filePath, pattern.ExcludePatterns) {
+		return types.NewMatchResult(false, nil)
+	}
+
+	// Main pattern matched and file is not excluded
+	return result
 }
 
 // matchPrefix matches using simple prefix matching
@@ -86,14 +101,19 @@ func (pm *DefaultPatternMatcher) matchGlob(filePath, pattern string) types.Match
 func (pm *DefaultPatternMatcher) matchRegex(filePath, pattern string) types.MatchResult {
 	re, err := regexp.Compile(pattern)
 	if err != nil {
+		LogInfo(fmt.Sprintf("REGEX COMPILE ERROR: pattern=%s, error=%v", pattern, err))
 		return types.NewMatchResult(false, nil)
 	}
-	
+
 	match := re.FindStringSubmatch(filePath)
 	if match == nil {
+		// Log server file pattern attempts for debugging
+		if strings.Contains(pattern, "server/") && strings.Contains(filePath, "server/") {
+			LogInfo(fmt.Sprintf("REGEX NO MATCH: file=%s, pattern=%s", filePath, pattern))
+		}
 		return types.NewMatchResult(false, nil)
 	}
-	
+
 	// Extract named capture groups
 	variables := make(map[string]string)
 	for i, name := range re.SubexpNames() {
@@ -101,7 +121,12 @@ func (pm *DefaultPatternMatcher) matchRegex(filePath, pattern string) types.Matc
 			variables[name] = match[i]
 		}
 	}
-	
+
+	// Log server file matches for debugging
+	if strings.Contains(pattern, "server/") {
+		LogInfo(fmt.Sprintf("REGEX MATCH SUCCESS: file=%s, pattern=%s, variables=%v", filePath, pattern, variables))
+	}
+
 	return types.NewMatchResult(true, variables)
 }
 
@@ -226,23 +251,46 @@ func (mt *DefaultMessageTemplater) render(template string, ctx *types.MessageCon
 	return result
 }
 
+// shouldExclude checks if a file path matches any of the exclude patterns
+func (pm *DefaultPatternMatcher) shouldExclude(filePath string, excludePatterns []string) bool {
+	if len(excludePatterns) == 0 {
+		return false
+	}
+
+	for _, excludePattern := range excludePatterns {
+		// Compile and match the exclude pattern
+		re, err := regexp.Compile(excludePattern)
+		if err != nil {
+			// If the pattern is invalid, log and skip it
+			// (validation should have caught this earlier)
+			continue
+		}
+
+		if re.MatchString(filePath) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // MatchAndTransform is a helper that combines pattern matching and path transformation
 func MatchAndTransform(filePath string, rule types.CopyRule, target types.TargetConfig) (string, map[string]string, bool) {
 	matcher := NewPatternMatcher()
 	transformer := NewPathTransformer()
-	
+
 	// Match the file against the pattern
 	matchResult := matcher.Match(filePath, rule.SourcePattern)
 	if !matchResult.Matched {
 		return "", nil, false
 	}
-	
+
 	// Transform the path
 	targetPath, err := transformer.Transform(filePath, target.PathTransform, matchResult.Variables)
 	if err != nil {
 		return "", nil, false
 	}
-	
+
 	return targetPath, matchResult.Variables, true
 }
 

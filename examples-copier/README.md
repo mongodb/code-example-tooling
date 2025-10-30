@@ -1,6 +1,8 @@
 # GitHub Docs Code Example Copier
 
-A GitHub app that automatically copies code examples and files from a source repository to one or more target repositories when pull requests are merged. Features advanced pattern matching, path transformations, audit logging, and comprehensive monitoring.
+A GitHub app that automatically copies code examples and files from a source repository to one or more target 
+repositories when pull requests are merged. Features advanced pattern matching, path transformations, audit logging, 
+and comprehensive monitoring.
 
 ## Features
 
@@ -15,6 +17,9 @@ A GitHub app that automatically copies code examples and files from a source rep
 ### Enhanced Features
 - **YAML Configuration** - Modern YAML config with JSON backward compatibility
 - **Message Templating** - Template-ized commit messages and PR titles
+- **Batch PR Support** - Combine multiple rules into one PR per target repo
+- **PR Template Integration** - Fetch and merge PR templates from target repos
+- **File Exclusion** - Exclude patterns to filter out unwanted files (`.gitignore`, `node_modules`, etc.)
 - **Audit Logging** - MongoDB-based event tracking for all operations
 - **Health & Metrics** - `/health` and `/metrics` endpoints for monitoring
 - **Development Tools** - Dry-run mode, CLI validation, enhanced logging
@@ -96,12 +101,28 @@ Create `copier-config.yaml` in your source repository:
 ```yaml
 source_repo: "your-org/source-repo"
 source_branch: "main"
+batch_by_repo: true  # Optional: batch all changes into one PR per target repo
+
+# Optional: Customize batched PR metadata
+batch_pr_config:
+  pr_title: "Update code examples from ${source_repo}"
+  pr_body: |
+    🤖 Automated update of code examples
+
+    **Source:** ${source_repo} PR #${pr_number}
+    **Files:** ${file_count}
+  use_pr_template: true  # Fetch PR template from target repos
+  commit_message: "Update examples from ${source_repo} PR #${pr_number}"
 
 copy_rules:
   - name: "Copy Go examples"
     source_pattern:
       type: "regex"
       pattern: "^examples/(?P<lang>[^/]+)/(?P<category>[^/]+)/(?P<file>.+)$"
+      exclude_patterns:  # Optional: exclude unwanted files
+        - "\.gitignore$"
+        - "node_modules/"
+        - "\.env$"
     targets:
       - repo: "your-org/target-repo"
         branch: "main"
@@ -110,6 +131,8 @@ copy_rules:
           type: "pull_request"
           commit_message: "Update ${category} examples from ${lang}"
           pr_title: "Update ${category} examples"
+          pr_body: "Automated update of ${lang} examples"
+          use_pr_template: true  # Merge with target repo's PR template
           auto_merge: false
         deprecation_check:
           enabled: true
@@ -203,8 +226,70 @@ commit_strategy:
   commit_message: "Update examples"
   pr_title: "Update ${category} examples"
   pr_body: "Automated update from ${source_repo}"
+  use_pr_template: true  # Fetch and merge PR template from target repo
   auto_merge: true
 ```
+
+### Advanced Features
+
+#### Batch PRs by Repository
+
+Combine all changes from a single source PR into one PR per target repository:
+
+```yaml
+batch_by_repo: true
+
+batch_pr_config:
+  pr_title: "Update code examples from ${source_repo}"
+  pr_body: |
+    🤖 Automated update
+
+    Files: ${file_count}
+    Source: ${source_repo} PR #${pr_number}
+  use_pr_template: true
+  commit_message: "Update from ${source_repo} PR #${pr_number}"
+```
+
+**Benefits:**
+- Single PR per target repo instead of multiple PRs
+- Accurate `${file_count}` across all matched rules
+- Easier review process for related changes
+
+#### PR Template Integration
+
+Automatically fetch and merge PR templates from target repositories:
+
+```yaml
+commit_strategy:
+  type: "pull_request"
+  pr_body: |
+    🤖 Automated update
+    Files: ${file_count}
+  use_pr_template: true  # Fetches .github/pull_request_template.md
+```
+
+**Result:** PR description shows the target repo's template first (with checklists and guidelines), followed by your configured content.
+
+#### File Exclusion Patterns
+
+Exclude unwanted files from being copied:
+
+```yaml
+source_pattern:
+  type: "prefix"
+  pattern: "examples/"
+  exclude_patterns:
+    - "\.gitignore$"      # Exclude .gitignore files
+    - "node_modules/"     # Exclude dependencies
+    - "\.env$"            # Exclude environment files
+    - "/dist/"            # Exclude build artifacts
+    - "\.test\.(js|ts)$"  # Exclude test files
+```
+
+**Use cases:**
+- Filter out configuration files
+- Exclude build artifacts and dependencies
+- Skip test files or documentation
 
 ### Message Templates
 
@@ -432,7 +517,7 @@ container := NewServiceContainer(config)
 
 ## Deployment
 
-See [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for complete deployment guide and [DEPLOYMENT-CHECKLIST.md](./docs/DEPLOYMENT-CHECKLIST.md) for step-by-step checklist.
+See [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for complete deployment guide for step-by-step checklist.
 
 ### Google Cloud App Engine
 

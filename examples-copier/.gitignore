@@ -1,6 +1,7 @@
 # Binaries
 examples-copier
 code-copier
+copier
 *.exe
 *.exe~
 *.dll
@@ -47,5 +48,3 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
-
-env.yaml

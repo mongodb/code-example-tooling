@@ -1,0 +1,51 @@
+# Git
+.git
+.gitignore
+.github
+
+# Documentation
+*.md
+!README.md
+docs/
+readme_files/
+
+# Test files
+*_test.go
+test-payloads/
+tests/
+
+# Config examples (not needed in container)
+configs/*.example
+configs/*.production
+configs/README.md
+configs/.env*
+
+# Scripts (not needed in container)
+scripts/
+
+# Build artifacts
+*.log
+all.log
+
+# Environment files (will be set via Cloud Run env vars)
+.env
+.env.*
+env.yaml
+env-cloudrun.yaml
+app.yaml
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+

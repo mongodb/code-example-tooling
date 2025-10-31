@@ -86,7 +86,7 @@ func main() {
 }
 
 func printHelp() {
-	fmt.Println(`Test Webhook Tool
+	fmt.Print(`Test Webhook Tool
 
 Usage:
   test-webhook [options]

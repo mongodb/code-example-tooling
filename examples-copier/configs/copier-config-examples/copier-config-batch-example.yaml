@@ -1,0 +1,78 @@
+# Example configuration demonstrating batch_by_repo with batch_pr_config
+# This shows how to batch multiple copy rules into a single PR per target repo
+# with custom PR metadata and accurate file counts
+
+source_repo: "mongodb/code-examples"
+source_branch: "main"
+
+# Enable batching - all rules targeting the same repo will be combined into one PR
+batch_by_repo: true
+
+# Configure PR metadata for batched PRs
+# These templates will be rendered with accurate file counts after all files are collected
+batch_pr_config:
+  pr_title: "Update code examples from ${source_repo}"
+  pr_body: |
+    🤖 Automated update of code examples
+
+    **Source Information:**
+    - Repository: ${source_repo}
+    - Branch: ${source_branch}
+    - PR: #${pr_number}
+    - Commit: ${commit_sha}
+
+    **Changes:**
+    - Total files: ${file_count}
+    - Target branch: ${target_branch}
+
+    This PR includes files from multiple copy rules batched together for easier review.
+  use_pr_template: true  # Optional: Fetch PR template from target repos
+  commit_message: "Update examples from ${source_repo} PR #${pr_number} (${file_count} files)"
+
+copy_rules:
+  # Rule 1: Copy client files
+  - name: "client-files"
+    source_pattern:
+      type: "prefix"
+      pattern: "examples/client/"
+    targets:
+      - repo: "mongodb/docs"
+        branch: "main"
+        path_transform: "source/code-examples/client/${relative_path}"
+        commit_strategy:
+          type: "pull_request"
+          # Individual rule commit messages are still used for commits
+          # But PR title/body come from batch_pr_config above
+          commit_message: "Update client examples"
+
+  # Rule 2: Copy server files
+  - name: "server-files"
+    source_pattern:
+      type: "prefix"
+      pattern: "examples/server/"
+    targets:
+      - repo: "mongodb/docs"
+        branch: "main"
+        path_transform: "source/code-examples/server/${relative_path}"
+        commit_strategy:
+          type: "pull_request"
+          commit_message: "Update server examples"
+
+  # Rule 3: Copy README files
+  - name: "readme-files"
+    source_pattern:
+      type: "glob"
+      pattern: "examples/**/README.md"
+    targets:
+      - repo: "mongodb/docs"
+        branch: "main"
+        path_transform: "source/code-examples/${matched_pattern}"
+        commit_strategy:
+          type: "pull_request"
+          commit_message: "Update README files"
+
+# Result: All three rules will be batched into ONE PR in mongodb/docs
+# The PR will use the title/body from batch_pr_config with accurate file count
+# For example, if rule 1 matches 10 files, rule 2 matches 5 files, and rule 3 matches 2 files,
+# the PR will show "Total files: 17" in the body
+

@@ -1,0 +1,136 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    run.googleapis.com/build-enable-automatic-updates: 'false'
+    run.googleapis.com/build-id: b757980d-a5c4-4c4e-8080-e592075e3d98
+    run.googleapis.com/build-image-uri: us-central1-docker.pkg.dev/github-copy-code-examples/cloud-run-source-deploy/examples-copier
+    run.googleapis.com/build-name: projects/1054147886816/locations/us-central1/builds/b757980d-a5c4-4c4e-8080-e592075e3d98
+    run.googleapis.com/build-source-location: gs://run-sources-github-copy-code-examples-us-central1/services/examples-copier/1761840094.638811-19107807ada84a65915888b814b6e6dd.zip#1761840095211493
+    run.googleapis.com/client-name: gcloud
+    run.googleapis.com/client-version: 542.0.0
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+    run.googleapis.com/operation-id: 5b7f8ffb-c7c1-42f7-a0c5-8ec5532bc0c4
+    run.googleapis.com/urls: '["https://examples-copier-1054147886816.us-central1.run.app","https://examples-copier-7c5nckqo6a-uc.a.run.app"]'
+    serving.knative.dev/creator: cory.bullinger@gcp.corp.mongodb.com
+    serving.knative.dev/lastModifier: cory.bullinger@gcp.corp.mongodb.com
+  creationTimestamp: '2025-10-06T18:32:15.311946Z'
+  generation: 24
+  labels:
+    cloud.googleapis.com/location: us-central1
+  name: examples-copier
+  namespace: '1054147886816'
+  resourceVersion: AAZCYmPd434
+  selfLink: /apis/serving.knative.dev/v1/namespaces/1054147886816/services/examples-copier
+  uid: c8854b49-365c-4168-a33a-f8a58682a348
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '10'
+        run.googleapis.com/client-name: gcloud
+        run.googleapis.com/client-version: 542.0.0
+        run.googleapis.com/startup-cpu-boost: 'true'
+      labels:
+        client.knative.dev/nonce: xoklrkvxac
+        run.googleapis.com/startupProbeType: Default
+    spec:
+      containerConcurrency: 80
+      containers:
+      - env:
+        - name: WEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: webhook-secret
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: mongo-uri
+        - name: ADMIN_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: admin-token
+        - name: GITHUB_APP_ID
+          value: '1166559'
+        - name: INSTALLATION_ID
+          value: '62138132'
+        - name: REPO_OWNER
+          value: mongodb
+        - name: REPO_NAME
+          value: docs-sample-apps
+        - name: SRC_BRANCH
+          value: main
+        - name: GITHUB_APP_PRIVATE_KEY_SECRET_NAME
+          value: projects/1054147886816/secrets/CODE_COPIER_PEM/versions/latest
+        - name: WEBHOOK_SECRET_NAME
+          value: projects/1054147886816/secrets/webhook-secret/versions/latest
+        - name: MONGO_URI_SECRET_NAME
+          value: projects/1054147886816/secrets/mongo-uri/versions/latest
+        - name: WEBSERVER_PATH
+          value: /events
+        - name: CONFIG_FILE
+          value: copier-config.yaml
+        - name: DEPRECATION_FILE
+          value: deprecated_examples.json
+        - name: COMMITTER_NAME
+          value: GitHub Copier App
+        - name: COMMITTER_EMAIL
+          value: bot@mongodb.com
+        - name: GOOGLE_CLOUD_PROJECT_ID
+          value: github-copy-code-examples
+        - name: COPIER_LOG_NAME
+          value: code-copier-log
+        - name: LOG_LEVEL
+          value: debug
+        - name: COPIER_DEBUG
+          value: 'true'
+        - name: AUDIT_ENABLED
+          value: 'false'
+        - name: METRICS_ENABLED
+          value: 'true'
+        - name: DRY_RUN
+          value: 'false'
+        image: us-central1-docker.pkg.dev/github-copy-code-examples/cloud-run-source-deploy/examples-copier@sha256:d61a9184ff45bea59d3dceba098f99c0bbce2242898607dac65009b8f9f0eae7
+        ports:
+        - containerPort: 8080
+          name: http1
+        resources:
+          limits:
+            cpu: '1'
+            memory: 512Mi
+        startupProbe:
+          failureThreshold: 1
+          periodSeconds: 240
+          tcpSocket:
+            port: 8080
+          timeoutSeconds: 240
+      serviceAccountName: 1054147886816-compute@developer.gserviceaccount.com
+      timeoutSeconds: 300
+  traffic:
+  - latestRevision: true
+    percent: 100
+status:
+  address:
+    url: https://examples-copier-7c5nckqo6a-uc.a.run.app
+  conditions:
+  - lastTransitionTime: '2025-10-30T16:03:29.978238Z'
+    status: 'True'
+    type: Ready
+  - lastTransitionTime: '2025-10-30T16:03:25.908981Z'
+    status: 'True'
+    type: ConfigurationsReady
+  - lastTransitionTime: '2025-10-30T16:03:29.928929Z'
+    status: 'True'
+    type: RoutesReady
+  latestCreatedRevisionName: examples-copier-00024-h29
+  latestReadyRevisionName: examples-copier-00024-h29
+  observedGeneration: 24
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: examples-copier-00024-h29
+  url: https://examples-copier-7c5nckqo6a-uc.a.run.app

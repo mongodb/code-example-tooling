@@ -22,6 +22,9 @@ Examples-copier is a GitHub app that automatically copies code examples and file
 - Path transformations with variable substitution
 - Multiple target repositories
 - Flexible commit strategies (direct or PR)
+- **Batch PRs** - Combine multiple rules into one PR per target repo
+- **PR Template Integration** - Fetch and merge PR templates from target repos
+- **File Exclusion** - Exclude patterns to filter out unwanted files
 - Deprecation tracking
 - MongoDB audit logging
 - Health and metrics endpoints
@@ -333,6 +336,70 @@ commit_strategy:
 - `${pr_number}` - PR number
 - `${commit_sha}` - Commit SHA
 - Plus any variables extracted from pattern matching
+
+### How do I batch multiple rules into one PR?
+
+Use `batch_by_repo: true` to combine all changes into one PR per target repository:
+
+```yaml
+batch_by_repo: true
+
+batch_pr_config:
+  pr_title: "Update from ${source_repo}"
+  pr_body: |
+    🤖 Automated update
+    Files: ${file_count}  # Accurate count across all rules
+  use_pr_template: true
+  commit_message: "Update from ${source_repo} PR #${pr_number}"
+```
+
+**Benefits:**
+- Single PR per target repo instead of multiple PRs
+- Accurate `${file_count}` across all matched rules
+- Easier review for related changes
+
+### How do I use PR templates from target repos?
+
+Set `use_pr_template: true` in your commit strategy or batch config:
+
+```yaml
+commit_strategy:
+  type: "pull_request"
+  pr_body: |
+    🤖 Automated update
+    Files: ${file_count}
+  use_pr_template: true  # Fetches .github/pull_request_template.md
+```
+
+The service will:
+1. Fetch the PR template from the target repo
+2. Place the template content first (checklists, guidelines)
+3. Add a separator (`---`)
+4. Append your configured content (automation info)
+
+This ensures reviewers see the target repo's review guidelines prominently.
+
+### How do I exclude files from being copied?
+
+Use `exclude_patterns` in your source pattern:
+
+```yaml
+source_pattern:
+  type: "prefix"
+  pattern: "examples/"
+  exclude_patterns:
+    - "\.gitignore$"      # Exclude .gitignore
+    - "node_modules/"     # Exclude dependencies
+    - "\.env$"            # Exclude .env files
+    - "/dist/"            # Exclude build output
+    - "\.test\.(js|ts)$"  # Exclude test files
+```
+
+**Common use cases:**
+- Filter out configuration files (`.gitignore`, `.env`)
+- Exclude dependencies (`node_modules/`, `vendor/`)
+- Skip build artifacts (`/dist/`, `/build/`)
+- Exclude test files (`*.test.js`, `*_test.go`)
 
 ## Performance
 

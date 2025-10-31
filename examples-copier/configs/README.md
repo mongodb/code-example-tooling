@@ -1,14 +1,16 @@
-# Environment Files Comparison
+# Environment Configuration Guide
 
-Overview of the different environment configuration files and when to use each.
+This directory contains **template files** for different deployment scenarios. Copy the appropriate template to create your working configuration file.
 
-## Files Overview
+## Template Files Overview
 
-| File                  | Purpose                               | Use Case                        |
+| Template File         | Purpose                               | Use Case                        |
 |-----------------------|---------------------------------------|---------------------------------|
 | `env.yaml.example`    | Complete reference with all variables | First-time setup, documentation |
 | `env.yaml.production` | Production-ready template             | Quick deployment to production  |
 | `.env.local.example`  | Local development template            | Local testing and development   |
+
+**Note:** Your actual working files (`env.yaml`, `.env`) should be created from these templates and are gitignored to protect secrets.
 
 ---
 
@@ -96,6 +98,54 @@ env_variables:
   REPO_OWNER: "mongodb"
   REPO_NAME: "docs-code-examples"
 ```
+
+---
+
+## Deployment Targets
+
+This service supports **two Google Cloud deployment options**:
+
+### App Engine (Flexible Environment)
+
+**Config file:** `env.yaml` (with `env_variables:` wrapper)
+
+**Format:**
+```yaml
+env_variables:
+  GITHUB_APP_ID: "123456"
+  REPO_OWNER: "mongodb"
+```
+
+**Deploy:**
+```bash
+cp configs/env.yaml.production env.yaml
+# Edit env.yaml with your values
+gcloud app deploy app.yaml  # Includes env.yaml automatically
+```
+
+**Best for:** Long-running services, always-on applications
+
+---
+
+### Cloud Run (Serverless Containers)
+
+**Config file:** `env-cloudrun.yaml` (plain YAML, no wrapper)
+
+**Format:**
+```yaml
+GITHUB_APP_ID: "123456"
+REPO_OWNER: "mongodb"
+```
+
+**Deploy:**
+```bash
+cp configs/env.yaml.production env-cloudrun.yaml
+# Remove the 'env_variables:' wrapper
+# Edit env-cloudrun.yaml with your values
+gcloud run deploy examples-copier --source . --env-vars-file=env-cloudrun.yaml
+```
+
+**Best for:** Cost-effective, scales to zero, serverless
 
 ---
 
@@ -196,6 +246,22 @@ env_variables:
   REPO_OWNER: "mongodb"
 ```
 
+### Between App Engine and Cloud Run formats
+
+Use the format conversion script:
+
+```bash
+# Convert App Engine → Cloud Run
+./scripts/convert-env-format.sh to-cloudrun env.yaml env-cloudrun.yaml
+
+# Convert Cloud Run → App Engine
+./scripts/convert-env-format.sh to-appengine env-cloudrun.yaml env.yaml
+```
+
+**Key difference:**
+- **App Engine**: Requires `env_variables:` wrapper with 2-space indentation
+- **Cloud Run**: Plain YAML without wrapper
+
 ### From env.yaml.production to env.yaml.example
 
 ```bash
@@ -238,9 +304,15 @@ examples-copier/
 │   ├── env.yaml.example          # ← Complete reference (all variables)
 │   ├── env.yaml.production       # ← Production template (essential only)
 │   └── .env.local.example        # ← Local development template
-├── env.yaml                      # ← Your actual config (gitignored)
-└── .env                          # ← Your local config (gitignored)
+├── env.yaml                      # ← App Engine config (create from template, gitignored)
+├── env-cloudrun.yaml             # ← Cloud Run config (create from template, gitignored)
+└── .env                          # ← Local config (create from template, gitignored)
 ```
+
+**Working files (not in repo):**
+- `env.yaml` - App Engine deployment (YAML with `env_variables:` wrapper)
+- `env-cloudrun.yaml` - Cloud Run deployment (plain YAML, no wrapper)
+- `.env` - Local development (KEY=value format)
 
 ---
 

@@ -1,6 +1,6 @@
 # Deployment Guide
 
-Complete guide for deploying the GitHub Code Example Copier to Google Cloud App Engine with Secret Manager.
+Complete guide for deploying the GitHub Code Example Copier to Google Cloud Run with Secret Manager.
 
 ## Table of Contents
 
@@ -67,9 +67,9 @@ gcloud config get-value project
                      │ Webhook (PR merged)
                      ↓
 ┌─────────────────────────────────────────────────────────────┐
-│              Google Cloud App Engine                        │
+│              Google Cloud Run                               │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │  examples-copier Application                         │   │
+│  │  examples-copier Service (Container)                 │   │
 │  │  - Receives webhook                                  │   │
 │  │  - Validates signature                               │   │
 │  │  - Loads config from source repo                     │   │
@@ -94,28 +94,27 @@ gcloud config get-value project
 └────────────────────────┘
 ```
 
-### Environment: Flexible vs Standard
+### Why Cloud Run?
 
-This application uses **App Engine Flexible Environment**:
+This application uses **Google Cloud Run** (serverless containers):
 
-**app.yaml:**
-```yaml
-runtime: go
-runtime_config:
-  operating_system: "ubuntu22"
-  runtime_version: "1.23"
-env: flex  # ← Flexible Environment
+**Key benefits:**
+- **Serverless** - Scales to zero when not in use, scales up automatically
+- **Container-based** - Uses Dockerfile for consistent builds
+- **Cost-effective** - Pay only for actual usage (webhook processing time)
+- **Fast deployments** - Typically deploys in 1-2 minutes
+- **Built-in Secret Manager integration** - Secure secret access
+- **Automatic HTTPS** - Managed SSL certificates
+
+**Deployment:**
+```bash
+gcloud run deploy examples-copier \
+  --source . \
+  --region us-central1 \
+  --env-vars-file=env-cloudrun.yaml
 ```
 
-**Key differences:**
-- Environment variables in **separate file** (`env.yaml`) included via `includes` directive
-- Deployment: `gcloud app deploy app.yaml`
-- Better Secret Manager integration
-- More flexible runtime configuration
-
 ## Secret Manager Setup
-
-### Why Secret Manager?
 
 - **Security**: Secrets encrypted at rest and in transit  
 - **Audit Trail**: All access logged  
@@ -165,14 +164,14 @@ echo -n "mongodb+srv://user:pass@cluster.mongodb.net/dbname" | \
   --replication-policy="automatic"
 ```
 
-### Grant App Engine Access
+### Grant Cloud Run Access
 
 ```bash
 # Get your project number
 PROJECT_NUMBER=$(gcloud projects describe $(gcloud config get-value project) --format="value(projectNumber)")
 
-# App Engine service account
-SERVICE_ACCOUNT="${PROJECT_NUMBER}@appspot.gserviceaccount.com"
+# Cloud Run service account (default compute service account)
+SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
 
 # Grant access to each secret
 gcloud secrets add-iam-policy-binding CODE_COPIER_PEM \
@@ -187,6 +186,8 @@ gcloud secrets add-iam-policy-binding mongo-uri \
   --member="serviceAccount:${SERVICE_ACCOUNT}" \
   --role="roles/secretmanager.secretAccessor"
 ```
+
+**Note:** Cloud Run uses the default compute service account by default. You can also create a dedicated service account for better security isolation.
 
 **Or use the provided script:**
 ```bash
@@ -209,93 +210,99 @@ gcloud secrets get-iam-policy CODE_COPIER_PEM
 
 ## Configuration
 
-### Create env.yaml
+### Create env-cloudrun.yaml
 
-The `env.yaml` file contains environment variables for App Engine deployment.
+The `env-cloudrun.yaml` file contains environment variables for Cloud Run deployment.
 
 ```bash
 cd examples-copier
 
-# Copy from production template
-cp configs/env.yaml.production env.yaml
+# Copy from production template (if available) or create new
+cp configs/env.yaml.production env-cloudrun.yaml
 
-# Or convert from .env file
-./scripts/convert-env-to-yaml.sh configs/.env env.yaml
+# Edit with your values
+nano env-cloudrun.yaml  # or vim, code, etc.
 
-# Edit if needed
-nano env.yaml
+# Add to .gitignore (if not already there)
+echo "env-cloudrun.yaml" >> .gitignore
 ```
 
-### env.yaml Structure
+### env-cloudrun.yaml Structure
 
 **Important Notes:**
-- Do NOT set `PORT` in `env.yaml` - App Engine Flexible automatically sets this
+- Do NOT set `PORT` in `env-cloudrun.yaml` - Cloud Run automatically sets this
 - The application defaults to port 8080 for local development
 - Secret Manager references must include `/versions/latest` or a specific version number
+- Format: Simple `KEY: value` pairs (not nested under `env_variables:`)
 
 ```yaml
-env_variables:
-  # =============================================================================
-  # GitHub Configuration (Non-sensitive)
-  # =============================================================================
-  GITHUB_APP_ID: "YOUR_APP_ID"
-  INSTALLATION_ID: "YOUR_INSTALLATION_ID"
-  REPO_OWNER: "your-org"
-  REPO_NAME: "your-repo"
-  SRC_BRANCH: "main"
-  
-  # =============================================================================
-  # Secret Manager References (Sensitive - SECURE!)
-  # =============================================================================
-  GITHUB_APP_PRIVATE_KEY_SECRET_NAME: "projects/PROJECT_NUMBER/secrets/CODE_COPIER_PEM/versions/latest"
-  WEBHOOK_SECRET_NAME: "projects/PROJECT_NUMBER/secrets/webhook-secret/versions/latest"
-  MONGO_URI_SECRET_NAME: "projects/PROJECT_NUMBER/secrets/mongo-uri/versions/latest"
-  
-  # =============================================================================
-  # Application Settings
-  # =============================================================================
-  # PORT: "8080"                                   # DO NOT SET - App Engine sets this automatically
-  WEBSERVER_PATH: "/events"
-  CONFIG_FILE: "copier-config.yaml"
-  DEPRECATION_FILE: "deprecated_examples.json"
-  
-  # =============================================================================
-  # Committer Information
-  # =============================================================================
-  COMMITTER_NAME: "GitHub Copier App"
-  COMMITTER_EMAIL: "bot@example.com"
-  
-  # =============================================================================
-  # Google Cloud Configuration
-  # =============================================================================
-  GOOGLE_PROJECT_ID: "your-project-id"
-  GOOGLE_LOG_NAME: "code-copier-log"
-  
-  # =============================================================================
-  # Feature Flags
-  # =============================================================================
-  AUDIT_ENABLED: "true"
-  METRICS_ENABLED: "true"
-  # DRY_RUN: "false"
+# =============================================================================
+# GitHub Configuration (Non-sensitive)
+# =============================================================================
+GITHUB_APP_ID: "YOUR_APP_ID"
+INSTALLATION_ID: "YOUR_INSTALLATION_ID"
+REPO_OWNER: "your-org"
+REPO_NAME: "your-repo"
+SRC_BRANCH: "main"
+
+# =============================================================================
+# Secret Manager References (Sensitive - SECURE!)
+# =============================================================================
+GITHUB_APP_PRIVATE_KEY_SECRET_NAME: "projects/PROJECT_NUMBER/secrets/CODE_COPIER_PEM/versions/latest"
+WEBHOOK_SECRET_NAME: "projects/PROJECT_NUMBER/secrets/webhook-secret/versions/latest"
+MONGO_URI_SECRET_NAME: "projects/PROJECT_NUMBER/secrets/mongo-uri/versions/latest"
+
+# =============================================================================
+# Application Settings
+# =============================================================================
+# PORT: "8080"                                   # DO NOT SET - Cloud Run sets this automatically
+WEBSERVER_PATH: "/events"
+CONFIG_FILE: "copier-config.yaml"
+DEPRECATION_FILE: "deprecated_examples.json"
+
+# =============================================================================
+# Committer Information
+# =============================================================================
+COMMITTER_NAME: "GitHub Copier App"
+COMMITTER_EMAIL: "bot@example.com"
+
+# =============================================================================
+# Google Cloud Configuration
+# =============================================================================
+GOOGLE_CLOUD_PROJECT_ID: "your-project-id"
+COPIER_LOG_NAME: "code-copier-log"
+
+# =============================================================================
+# Feature Flags
+# =============================================================================
+AUDIT_ENABLED: "true"
+METRICS_ENABLED: "true"
+# DRY_RUN: "false"
 ```
 
 ### Important Notes
 
+**About env-cloudrun.yaml:**
+- This file contains **environment variables only** (application configuration)
+- It does **NOT** contain infrastructure settings (CPU, memory, timeout, etc.)
+- Infrastructure settings must be specified via command-line flags or a `service.yaml` file
+- Use the deployment script (`./scripts/deploy-cloudrun.sh`) to avoid typing all the flags
+
 **✅ DO:**
 - Use Secret Manager references (`*_SECRET_NAME` variables)
-- Keep `env.yaml` in `.gitignore`
-- Use `env.yaml.production` as template
+- Keep `env-cloudrun.yaml` in `.gitignore`
+- Use simple `KEY: value` format (no `env_variables:` wrapper)
 
 **❌ DON'T:**
-- Put actual secrets in `env.yaml` (use `*_SECRET_NAME` instead)
-- Commit `env.yaml` to version control
-- Share `env.yaml` via email/chat
+- Put actual secrets in `env-cloudrun.yaml` (use `*_SECRET_NAME` instead)
+- Commit `env-cloudrun.yaml` to version control
+- Share `env-cloudrun.yaml` via email/chat
 
 ### How Secrets Are Loaded
 
 ```
 Application Startup:
-1. Load env.yaml → environment variables
+1. Cloud Run loads env-cloudrun.yaml → environment variables
 2. Read WEBHOOK_SECRET_NAME from env
 3. Call Secret Manager API to get actual secret
 4. Store in config.WebhookSecret
@@ -315,42 +322,90 @@ services.LoadMongoURI(config)       // Loads from Secret Manager
 ### Pre-Deployment Checklist
 
 - [ ] Secrets created in Secret Manager
-- [ ] IAM permissions granted to App Engine
-- [ ] `env.yaml` created and configured
-- [ ] `env.yaml` in `.gitignore`
-- [ ] `app.yaml` uses Flexible Environment
+- [ ] IAM permissions granted to Cloud Run service account
+- [ ] `env-cloudrun.yaml` created and configured
+- [ ] `env-cloudrun.yaml` in `.gitignore`
+- [ ] `Dockerfile` exists in project root
 
-### Deploy to App Engine
+### Deploy to Cloud Run
+
+#### Option 1: Use the deployment script (Recommended)
+
+The simplest way to deploy is using the provided script:
 
 ```bash
 cd examples-copier
 
-# Deploy (env.yaml is included via 'includes' directive in app.yaml)
-gcloud app deploy app.yaml
+# Deploy to default region (us-central1)
+./scripts/deploy-cloudrun.sh
 
-# Or specify project
-gcloud app deploy app.yaml --project=your-project-id
+# Or specify a different region
+./scripts/deploy-cloudrun.sh us-east1
 ```
+
+The script will:
+- ✅ Check that `env-cloudrun.yaml` exists
+- ✅ Verify your Google Cloud project is set
+- ✅ Show configuration before deploying
+- ✅ Deploy with all recommended settings
+- ✅ Display the service URL and next steps
+
+#### Option 2: Manual deployment command
+
+If you prefer to run the command directly:
+
+```bash
+cd examples-copier
+
+gcloud run deploy examples-copier \
+  --source . \
+  --region us-central1 \
+  --env-vars-file=env-cloudrun.yaml \
+  --allow-unauthenticated \
+  --max-instances=10 \
+  --cpu=1 \
+  --memory=512Mi \
+  --timeout=300s \
+  --concurrency=80 \
+  --port=8080
+```
+
+**Deployment options explained:**
+- `--source .` - Build from Dockerfile in current directory
+- `--region us-central1` - Deploy to US Central region
+- `--env-vars-file` - Load environment variables from file
+- `--allow-unauthenticated` - Allow public webhook access (required for GitHub webhooks)
+- `--max-instances=10` - Limit concurrent instances (cost control)
+- `--cpu=1` - 1 vCPU per instance
+- `--memory=512Mi` - 512MB RAM per instance
+- `--timeout=300s` - 5 minute timeout for webhook processing
+- `--concurrency=80` - Handle up to 80 concurrent requests per instance
+- `--port=8080` - Container port (matches Dockerfile EXPOSE)
 
 ### Verify Deployment
 
 ```bash
 # Check deployment status
-gcloud app versions list
+gcloud run services list --region=us-central1
 
-# Get app URL
-APP_URL=$(gcloud app describe --format="value(defaultHostname)")
-echo "App URL: https://${APP_URL}"
+# Get service URL
+SERVICE_URL=$(gcloud run services describe examples-copier \
+  --region=us-central1 \
+  --format="value(status.url)")
+echo "Service URL: ${SERVICE_URL}"
 
 # View logs
-gcloud app logs tail -s default
+gcloud run services logs read examples-copier --region=us-central1 --limit=50
+
+# Or tail logs in real-time
+gcloud run services logs tail examples-copier --region=us-central1
 ```
 
 ### Test Health Endpoint
 
 ```bash
 # Test health
-curl https://${APP_URL}/health
+curl ${SERVICE_URL}/health
 
 # Expected response:
 # {
@@ -376,7 +431,7 @@ curl https://${APP_URL}/health
    - Go to: `https://github.com/YOUR_ORG/YOUR_REPO/settings/hooks`
 
 2. **Add or edit webhook**
-   - **Payload URL:** `https://YOUR_APP.appspot.com/events`
+   - **Payload URL:** `https://examples-copier-XXXXXXXXXX-uc.a.run.app/events` (use your Cloud Run URL)
    - **Content type:** `application/json`
    - **Secret:** (the webhook secret from Secret Manager)
    - **Events:** Select "Pull requests"
@@ -1007,6 +1062,5 @@ gcloud app deploy app.yaml
 
 **See also:**
 - [FAQ.md](FAQ.md) - Frequently asked questions
-- [../WEBHOOK-SECRET-MANAGER-GUIDE.md](../WEBHOOK-SECRET-MANAGER-GUIDE.md) - Secret Manager details
-- [../ENV-FILES-EXPLAINED.md](../ENV-FILES-EXPLAINED.md) - Environment file explanation
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Troubleshooting guide
 

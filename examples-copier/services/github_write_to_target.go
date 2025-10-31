@@ -51,6 +51,13 @@ func normalizeRepoName(repoName string) string {
 // AddFilesToTargetRepoBranch uploads files to the target repository branch
 // using the specified commit strategy (direct or via pull request).
 func AddFilesToTargetRepoBranch() {
+	AddFilesToTargetRepoBranchWithFetcher(nil)
+}
+
+// AddFilesToTargetRepoBranchWithFetcher uploads files to the target repository branch
+// using the specified commit strategy (direct or via pull request).
+// If prTemplateFetcher is provided, it will be used to fetch PR templates when use_pr_template is true.
+func AddFilesToTargetRepoBranchWithFetcher(prTemplateFetcher PRTemplateFetcher) {
 	ctx := context.Background()
 
 	for key, value := range FilesToUpload {
@@ -87,6 +94,19 @@ func AddFilesToTargetRepoBranch() {
 
 		// Get PR body from value
 		prBody := value.PRBody
+
+		// Fetch and merge PR template if requested
+		if value.UsePRTemplate && prTemplateFetcher != nil && strategy != "direct" {
+			targetBranch := strings.TrimPrefix(key.BranchPath, "refs/heads/")
+			template, err := prTemplateFetcher.FetchPRTemplate(ctx, client, key.RepoName, targetBranch)
+			if err != nil {
+				LogWarning(fmt.Sprintf("Failed to fetch PR template for %s: %v", key.RepoName, err))
+			} else if template != "" {
+				// Merge configured body with template
+				prBody = MergePRBodyWithTemplate(prBody, template)
+				LogInfo(fmt.Sprintf("Merged PR template for %s", key.RepoName))
+			}
+		}
 
 		// Get auto-merge setting from value
 		mergeWithoutReview := value.AutoMergePR

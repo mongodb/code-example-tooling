@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -26,9 +27,19 @@ func (p PatternType) String() string {
 
 // YAMLConfig represents the new YAML-based configuration structure
 type YAMLConfig struct {
-	SourceRepo   string     `yaml:"source_repo" json:"source_repo"`
-	SourceBranch string     `yaml:"source_branch" json:"source_branch"`
-	CopyRules    []CopyRule `yaml:"copy_rules" json:"copy_rules"`
+	SourceRepo    string         `yaml:"source_repo" json:"source_repo"`
+	SourceBranch  string         `yaml:"source_branch" json:"source_branch"`
+	BatchByRepo   bool           `yaml:"batch_by_repo,omitempty" json:"batch_by_repo,omitempty"`       // If true, batch all changes into one PR per target repo
+	BatchPRConfig *BatchPRConfig `yaml:"batch_pr_config,omitempty" json:"batch_pr_config,omitempty"` // PR config used when batch_by_repo is true
+	CopyRules     []CopyRule     `yaml:"copy_rules" json:"copy_rules"`
+}
+
+// BatchPRConfig defines PR metadata for batched PRs
+type BatchPRConfig struct {
+	PRTitle       string `yaml:"pr_title,omitempty" json:"pr_title,omitempty"`
+	PRBody        string `yaml:"pr_body,omitempty" json:"pr_body,omitempty"`
+	CommitMessage string `yaml:"commit_message,omitempty" json:"commit_message,omitempty"`
+	UsePRTemplate bool   `yaml:"use_pr_template,omitempty" json:"use_pr_template,omitempty"`
 }
 
 // CopyRule defines a single rule for copying files with pattern matching
@@ -40,8 +51,9 @@ type CopyRule struct {
 
 // SourcePattern defines how to match source files
 type SourcePattern struct {
-	Type    PatternType `yaml:"type" json:"type"`
-	Pattern string      `yaml:"pattern" json:"pattern"`
+	Type            PatternType `yaml:"type" json:"type"`
+	Pattern         string      `yaml:"pattern" json:"pattern"`
+	ExcludePatterns []string    `yaml:"exclude_patterns,omitempty" json:"exclude_patterns,omitempty"` // Optional: regex patterns to exclude from matches
 }
 
 // TargetConfig defines where and how to copy matched files
@@ -59,6 +71,7 @@ type CommitStrategyConfig struct {
 	CommitMessage string `yaml:"commit_message,omitempty" json:"commit_message,omitempty"`
 	PRTitle       string `yaml:"pr_title,omitempty" json:"pr_title,omitempty"`
 	PRBody        string `yaml:"pr_body,omitempty" json:"pr_body,omitempty"`
+	UsePRTemplate bool   `yaml:"use_pr_template,omitempty" json:"use_pr_template,omitempty"` // If true, fetch and use PR template from target repo
 	AutoMerge     bool   `yaml:"auto_merge,omitempty" json:"auto_merge,omitempty"`
 	BatchSize     int    `yaml:"batch_size,omitempty" json:"batch_size,omitempty"`
 }
@@ -119,6 +132,20 @@ func (p *SourcePattern) Validate() error {
 	if p.Pattern == "" {
 		return fmt.Errorf("pattern is required")
 	}
+
+	// Validate exclude patterns if provided
+	if len(p.ExcludePatterns) > 0 {
+		for i, excludePattern := range p.ExcludePatterns {
+			if excludePattern == "" {
+				return fmt.Errorf("exclude_patterns[%d] is empty", i)
+			}
+			// Validate that it's a valid regex pattern
+			if _, err := regexp.Compile(excludePattern); err != nil {
+				return fmt.Errorf("exclude_patterns[%d] is not a valid regex: %w", i, err)
+			}
+		}
+	}
+
 	return nil
 }
 

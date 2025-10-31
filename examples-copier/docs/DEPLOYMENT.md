@@ -282,6 +282,12 @@ METRICS_ENABLED: "true"
 
 ### Important Notes
 
+**About env-cloudrun.yaml:**
+- This file contains **environment variables only** (application configuration)
+- It does **NOT** contain infrastructure settings (CPU, memory, timeout, etc.)
+- Infrastructure settings must be specified via command-line flags or a `service.yaml` file
+- Use the deployment script (`./scripts/deploy-cloudrun.sh`) to avoid typing all the flags
+
 **✅ DO:**
 - Use Secret Manager references (`*_SECRET_NAME` variables)
 - Keep `env-cloudrun.yaml` in `.gitignore`
@@ -323,10 +329,34 @@ services.LoadMongoURI(config)       // Loads from Secret Manager
 
 ### Deploy to Cloud Run
 
+#### Option 1: Use the deployment script (Recommended)
+
+The simplest way to deploy is using the provided script:
+
 ```bash
 cd examples-copier
 
-# Deploy from source (Cloud Run builds the container automatically)
+# Deploy to default region (us-central1)
+./scripts/deploy-cloudrun.sh
+
+# Or specify a different region
+./scripts/deploy-cloudrun.sh us-east1
+```
+
+The script will:
+- ✅ Check that `env-cloudrun.yaml` exists
+- ✅ Verify your Google Cloud project is set
+- ✅ Show configuration before deploying
+- ✅ Deploy with all recommended settings
+- ✅ Display the service URL and next steps
+
+#### Option 2: Manual deployment command
+
+If you prefer to run the command directly:
+
+```bash
+cd examples-copier
+
 gcloud run deploy examples-copier \
   --source . \
   --region us-central1 \
@@ -338,14 +368,6 @@ gcloud run deploy examples-copier \
   --timeout=300s \
   --concurrency=80 \
   --port=8080
-
-# Or specify project
-gcloud run deploy examples-copier \
-  --source . \
-  --region us-central1 \
-  --env-vars-file=env-cloudrun.yaml \
-  --project=your-project-id \
-  --allow-unauthenticated
 ```
 
 **Deployment options explained:**
@@ -358,6 +380,7 @@ gcloud run deploy examples-copier \
 - `--memory=512Mi` - 512MB RAM per instance
 - `--timeout=300s` - 5 minute timeout for webhook processing
 - `--concurrency=80` - Handle up to 80 concurrent requests per instance
+- `--port=8080` - Container port (matches Dockerfile EXPOSE)
 
 ### Verify Deployment
 

@@ -51,7 +51,7 @@ go build -o examples-copier .
 go build -o config-validator ./cmd/config-validator
 ```
 
-### Configuration
+### Local Configuration
 
 1. **Copy environment example file**
 

@@ -4,10 +4,15 @@
 
 set -e
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get the project root (parent of scripts directory)
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 # Configuration
 SERVICE_NAME="examples-copier"
 REGION="${1:-us-central1}"
-ENV_FILE="env-cloudrun.yaml"
+ENV_FILE="$PROJECT_ROOT/env-cloudrun.yaml"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -57,7 +62,11 @@ echo ""
 echo -e "${BLUE}🚀 Deploying...${NC}"
 echo ""
 
-# Deploy to Cloud Run
+# Change to project root for deployment
+cd "$PROJECT_ROOT"
+
+# Deploy to Cloud Run using Dockerfile
+# Note: Using --source with Dockerfile to ensure it uses Docker build, not buildpacks
 gcloud run deploy "$SERVICE_NAME" \
   --source . \
   --region "$REGION" \
@@ -68,7 +77,8 @@ gcloud run deploy "$SERVICE_NAME" \
   --memory=512Mi \
   --timeout=300s \
   --concurrency=80 \
-  --port=8080
+  --port=8080 \
+  --platform=managed
 
 echo ""
 echo -e "${GREEN}✅ Deployment complete!${NC}"

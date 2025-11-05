@@ -36,6 +36,7 @@ The examples-copier uses a YAML configuration file (default: `copier-config.yaml
 # Top-level configuration
 source_repo: "owner/source-repository"
 source_branch: "main"
+batch_by_repo: false  # Optional: batch all changes into one PR per target repo
 
 # Copy rules define what to copy and where
 copy_rules:
@@ -70,7 +71,7 @@ source_repo: "mongodb/docs-code-examples"
 
 ### source_branch
 
-**Type:** String (optional)  
+**Type:** String (optional)
 **Default:** `"main"`
 
 The branch to copy files from.
@@ -79,9 +80,118 @@ The branch to copy files from.
 source_branch: "main"
 ```
 
+### batch_by_repo
+
+**Type:** Boolean (optional)
+**Default:** `false`
+
+When `true`, all changes from a single source PR are batched into **one pull request per target repository**, regardless of how many copy rules match files.
+
+When `false` (default), each copy rule creates a **separate pull request** in the target repository.
+
+**Example - Separate PRs per rule (default):**
+```yaml
+batch_by_repo: false  # or omit this field
+
+copy_rules:
+  - name: "copy-client"
+    # ... matches 5 files
+  - name: "copy-server"
+    # ... matches 3 files
+  - name: "copy-readme"
+    # ... matches 1 file
+
+# Result: 3 separate PRs in the target repo
+```
+
+**Example - Single batched PR:**
+```yaml
+batch_by_repo: true
+
+copy_rules:
+  - name: "copy-client"
+    # ... matches 5 files
+  - name: "copy-server"
+    # ... matches 3 files
+  - name: "copy-readme"
+    # ... matches 1 file
+
+# Result: 1 PR containing all 9 files in the target repo
+```
+
+**Use Cases:**
+- ✅ **Use `batch_by_repo: true`** when you want all related changes in a single PR for easier review
+- ✅ **Use `batch_by_repo: false`** when different rules need separate review processes or different reviewers
+
+**Note:** When batching is enabled, use `batch_pr_config` (see below) to customize PR metadata, or a generic title/body will be generated.
+
+### batch_pr_config
+
+**Type:** Object (optional)
+**Used when:** `batch_by_repo: true`
+
+Defines PR metadata (title, body, commit message) for batched pull requests. This allows you to customize the PR with accurate file counts and custom messaging.
+
+**Fields:**
+- `pr_title` - (optional) PR title template
+- `pr_body` - (optional) PR body template
+- `commit_message` - (optional) Commit message template
+- `use_pr_template` - (optional) Fetch and merge PR template from target repo (default: false)
+
+**Available template variables:**
+- `${source_repo}` - Source repository (e.g., "owner/repo")
+- `${target_repo}` - Target repository
+- `${source_branch}` - Source branch name
+- `${target_branch}` - Target branch name
+- `${file_count}` - **Accurate** total number of files in the batched PR
+- `${pr_number}` - Source PR number
+- `${commit_sha}` - Source commit SHA
+
+**Example:**
+```yaml
+source_repo: "mongodb/code-examples"
+source_branch: "main"
+batch_by_repo: true
+
+batch_pr_config:
+  pr_title: "Update code examples from ${source_repo}"
+  pr_body: |
+    🤖 Automated update of code examples
+
+    **Source Information:**
+    - Repository: ${source_repo}
+    - PR: #${pr_number}
+    - Commit: ${commit_sha}
+
+    **Changes:**
+    - Total files: ${file_count}
+    - Target branch: ${target_branch}
+  commit_message: "Update examples from ${source_repo} PR #${pr_number}"
+  use_pr_template: true  # Fetch PR template from target repos
+
+copy_rules:
+  - name: "copy-client"
+    # ... rule config
+  - name: "copy-server"
+    # ... rule config
+```
+
+**Default behavior (if `batch_pr_config` is not specified):**
+```yaml
+# Default PR title:
+"Update files from owner/repo PR #123"
+
+# Default PR body:
+"Automated update from owner/repo
+
+Source PR: #123
+Commit: abc1234
+Files: 42"
+```
+
 ### copy_rules
 
-**Type:** Array (required)  
+**Type:** Array (required)
 **Minimum:** 1 rule
 
 List of copy rules that define what files to copy and where.
@@ -222,6 +332,164 @@ pattern: "^examples/v(?P<version>[0-9]+)/(?P<lang>[^/]+)/(?P<file>.+)$"
 pattern: "^examples/(?P<lang>[^/]+)(/(?P<category>[^/]+))?/(?P<file>[^/]+)$"
 ```
 
+### Excluding Files with `exclude_patterns`
+
+**Type:** Array of strings (optional)
+**Format:** Go-compatible regex patterns
+
+You can exclude specific files from being matched by adding `exclude_patterns` to any source pattern. This is useful for filtering out files like `.gitignore`, `.env`, `node_modules`, build artifacts, etc.
+
+**Important:** Exclude patterns use **Go regex syntax** (no negative lookahead `(?!...)`).
+
+#### Basic Example
+
+```yaml
+source_pattern:
+  type: "prefix"
+  pattern: "examples/"
+  exclude_patterns:
+    - "\.gitignore$"      # Exclude .gitignore files
+    - "\.env$"            # Exclude .env files
+    - "node_modules/"     # Exclude node_modules directory
+```
+
+#### How It Works
+
+1. **Main pattern matches first** - The file must match the main pattern (`type` and `pattern`)
+2. **Then exclusions are checked** - If the file matches any `exclude_patterns`, it's excluded
+3. **Result** - File is only copied if it matches the main pattern AND doesn't match any exclusions
+
+#### Examples by Pattern Type
+
+**Prefix Pattern with Exclusions:**
+```yaml
+- name: "copy-examples-no-config"
+  source_pattern:
+    type: "prefix"
+    pattern: "examples/"
+    exclude_patterns:
+      - "\.gitignore$"
+      - "\.env$"
+      - "/node_modules/"
+      - "/dist/"
+      - "/build/"
+  targets:
+    - repo: "mongodb/docs"
+      branch: "main"
+      path_transform: "code-examples/${relative_path}"
+```
+
+**Regex Pattern with Exclusions:**
+```yaml
+- name: "java-server-no-tests"
+  source_pattern:
+    type: "regex"
+    pattern: "^mflix/server/java-spring/(?P<file>.+)$"
+    exclude_patterns:
+      - "/test/"           # Exclude test directories
+      - "Test\.java$"      # Exclude test files
+      - "\.gitignore$"     # Exclude .gitignore
+  targets:
+    - repo: "mongodb/sample-app-java"
+      branch: "main"
+      path_transform: "server/${file}"
+```
+
+**Glob Pattern with Exclusions:**
+```yaml
+- name: "js-files-no-minified"
+  source_pattern:
+    type: "glob"
+    pattern: "examples/**/*.js"
+    exclude_patterns:
+      - "\.min\.js$"       # Exclude minified files
+      - "\.test\.js$"      # Exclude test files
+  targets:
+    - repo: "mongodb/docs"
+      branch: "main"
+      path_transform: "code/${matched_pattern}"
+```
+
+#### Common Exclusion Patterns
+
+```yaml
+# Exclude hidden files (starting with .)
+exclude_patterns:
+  - "/\\.[^/]+$"
+
+# Exclude build artifacts
+exclude_patterns:
+  - "/dist/"
+  - "/build/"
+  - "\.min\\.(js|css)$"
+
+# Exclude dependencies
+exclude_patterns:
+  - "node_modules/"
+  - "vendor/"
+  - "__pycache__/"
+
+# Exclude config files
+exclude_patterns:
+  - "\.gitignore$"
+  - "\.env$"
+  - "\.env\\..*$"
+  - "config\\.local\\."
+
+# Exclude test files
+exclude_patterns:
+  - "/test/"
+  - "/tests/"
+  - "Test\\.java$"
+  - "_test\\.go$"
+  - "\\.test\\.(js|ts)$"
+  - "\\.spec\\.(js|ts)$"
+
+# Exclude documentation
+exclude_patterns:
+  - "README\\.md$"
+  - "\\.md$"
+  - "/docs/"
+```
+
+#### Regex Syntax Notes
+
+**✅ Supported (Go regex):**
+- Character classes: `[abc]`, `[a-z]`, `[^abc]`
+- Quantifiers: `*`, `+`, `?`, `{n}`, `{n,}`, `{n,m}`
+- Anchors: `^` (start), `$` (end)
+- Alternation: `(js|ts|jsx|tsx)`
+- Escaping: `\.`, `\(`, `\[`, etc.
+
+**❌ Not Supported:**
+- Negative lookahead: `(?!...)` - Use multiple patterns instead
+- Lookbehind: `(?<=...)`, `(?<!...)`
+- Named groups in exclusions (not needed)
+
+#### Multiple Exclusions
+
+You can specify multiple exclusion patterns. A file is excluded if it matches **any** of them:
+
+```yaml
+source_pattern:
+  type: "prefix"
+  pattern: "mflix/"
+  exclude_patterns:
+    - "\.gitignore$"           # OR
+    - "\.env$"                 # OR
+    - "node_modules/"          # OR
+    - "/dist/"                 # OR
+    - "\.min\\.js$"            # OR
+    - "README\\.md$"           # Any match = excluded
+```
+
+#### Validation
+
+Exclude patterns are validated when the config is loaded:
+- ✅ Must be valid Go regex syntax
+- ✅ Cannot be empty strings
+- ❌ Invalid regex will cause config validation to fail
+
 ## Target Configuration
 
 Defines where and how to copy matched files.
@@ -321,10 +589,11 @@ commit_strategy:
   pr_title: "Update ${lang} examples"
   pr_body: |
     Automated update of ${lang} examples
-    
+
     Files updated: ${file_count}
     Source: ${source_repo}
     PR: #${pr_number}
+  use_pr_template: false
   auto_merge: false
 ```
 
@@ -332,6 +601,7 @@ commit_strategy:
 - `type` - Must be `"pull_request"`
 - `pr_title` - (optional) PR title template
 - `pr_body` - (optional) PR body template
+- `use_pr_template` - (optional) Fetch and merge PR template from target repo (default: false)
 - `auto_merge` - (optional) Auto-merge if checks pass (default: false)
 - `commit_message` - (optional) Commit message template
 
@@ -339,6 +609,62 @@ commit_strategy:
 - Changes require review
 - You want CI checks to run
 - Multiple approvers needed
+
+#### Using PR Templates
+
+When `use_pr_template: true`, the service will:
+1. Fetch the PR template from the target repository (`.github/pull_request_template.md`)
+2. Merge it with your configured `pr_body`
+3. Create the PR with the combined content as the **actual PR description** (not a comment)
+
+**Example:**
+
+```yaml
+commit_strategy:
+  type: "pull_request"
+  pr_title: "Update ${lang} examples"
+  pr_body: |
+    🤖 **Automated Update**
+
+    - Files: ${file_count}
+    - Source: ${source_repo}
+    - PR: #${pr_number}
+  use_pr_template: true  # Fetch template from target repo
+  auto_merge: false
+```
+
+**Result:** The PR description will contain the target repo's PR template first, followed by your configured content:
+
+```markdown
+## Checklist (from target repo's template)
+
+- [ ] Tests added
+- [ ] Documentation updated
+- [ ] Breaking changes documented
+
+---
+
+🤖 **Automated Update**
+
+- Files: 10
+- Source: mongodb/code-examples
+- PR: #42
+```
+
+**Template Locations Checked (in order):**
+1. `.github/pull_request_template.md`
+2. `.github/PULL_REQUEST_TEMPLATE.md`
+3. `docs/pull_request_template.md`
+4. `PULL_REQUEST_TEMPLATE.md`
+5. `pull_request_template.md`
+
+**Notes:**
+- If no template is found, only the configured `pr_body` is used
+- **The PR template appears first**, followed by a separator (`---`), then your configured body
+- This ensures the target repo's review guidelines and checklists are prominently displayed
+- Templates are fetched from the target repository's branch
+- If template fetching fails, a warning is logged but the PR is still created with your configured body
+- Works with both individual rules and `batch_pr_config` (when `batch_by_repo: true`)
 
 ### Batch Commit
 

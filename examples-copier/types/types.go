@@ -110,6 +110,7 @@ type UploadFileContent struct {
 	CommitMessage  string                     `json:"commit_message,omitempty"`
 	PRTitle        string                     `json:"pr_title,omitempty"`
 	PRBody         string                     `json:"pr_body,omitempty"`
+	UsePRTemplate  bool                       `json:"use_pr_template,omitempty"`  // If true, fetch and merge PR template from target repo
 	AutoMergePR    bool                       `json:"auto_merge_pr,omitempty"`
 }
 

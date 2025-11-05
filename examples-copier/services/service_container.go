@@ -18,6 +18,7 @@ type ServiceContainer struct {
 	PatternMatcher   PatternMatcher
 	PathTransformer  PathTransformer
 	MessageTemplater MessageTemplater
+	PRTemplateFetcher PRTemplateFetcher
 	AuditLogger      AuditLogger
 	MetricsCollector *MetricsCollector
 	SlackNotifier    SlackNotifier
@@ -36,6 +37,7 @@ func NewServiceContainer(config *configs.Config) (*ServiceContainer, error) {
 	patternMatcher := NewPatternMatcher()
 	pathTransformer := NewPathTransformer()
 	messageTemplater := NewMessageTemplater()
+	prTemplateFetcher := NewPRTemplateFetcher()
 	metricsCollector := NewMetricsCollector()
 
 	// Initialize Slack notifier
@@ -60,16 +62,17 @@ func NewServiceContainer(config *configs.Config) (*ServiceContainer, error) {
 	}
 
 	return &ServiceContainer{
-		Config:           config,
-		FileStateService: fileStateService,
-		ConfigLoader:     configLoader,
-		PatternMatcher:   patternMatcher,
-		PathTransformer:  pathTransformer,
-		MessageTemplater: messageTemplater,
-		AuditLogger:      auditLogger,
-		MetricsCollector: metricsCollector,
-		SlackNotifier:    slackNotifier,
-		StartTime:        time.Now(),
+		Config:            config,
+		FileStateService:  fileStateService,
+		ConfigLoader:      configLoader,
+		PatternMatcher:    patternMatcher,
+		PathTransformer:   pathTransformer,
+		MessageTemplater:  messageTemplater,
+		PRTemplateFetcher: prTemplateFetcher,
+		AuditLogger:       auditLogger,
+		MetricsCollector:  metricsCollector,
+		SlackNotifier:     slackNotifier,
+		StartTime:         time.Now(),
 	}, nil
 }
 

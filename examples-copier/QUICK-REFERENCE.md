@@ -31,7 +31,7 @@
 ./config-validator test-pattern -type regex -pattern "^examples/(?P<lang>[^/]+)/.*$" -file "examples/go/main.go"
 
 # Test transformation
-./config-validator test-transform -template "docs/${lang}/${file}" -file "examples/go/main.go" -pattern "^examples/(?P<lang>[^/]+)/(?P<file>.+)$"
+./config-validator test-transform -source "examples/go/main.go" -template "docs/${lang}/${file}" -vars "lang=go,file=main.go"
 
 # Initialize new config
 ./config-validator init -output copier-config.yaml
@@ -61,6 +61,18 @@ source_pattern:
 source_pattern:
   type: "regex"
   pattern: "^examples/(?P<lang>[^/]+)/(?P<file>.+)$"
+```
+
+### Pattern with Exclusions
+```yaml
+source_pattern:
+  type: "prefix"
+  pattern: "examples/"
+  exclude_patterns:
+    - "\.gitignore$"
+    - "node_modules/"
+    - "\.env$"
+    - "/dist/"
 ```
 
 ## Path Transformations
@@ -102,7 +114,71 @@ commit_strategy:
   commit_message: "Update examples"
   pr_title: "Update code examples"
   pr_body: "Automated update"
+  use_pr_template: true  # Fetch PR template from target repo
   auto_merge: true
+```
+
+### Batch PRs by Repository
+```yaml
+batch_by_repo: true
+
+batch_pr_config:
+  pr_title: "Update from ${source_repo}"
+  pr_body: |
+    🤖 Automated update
+    Files: ${file_count}
+  use_pr_template: true
+  commit_message: "Update from ${source_repo} PR #${pr_number}"
+```
+
+## Advanced Features
+
+### Exclude Patterns
+Exclude unwanted files from being copied:
+
+```yaml
+source_pattern:
+  type: "prefix"
+  pattern: "examples/"
+  exclude_patterns:
+    - "\.gitignore$"      # Exclude .gitignore
+    - "node_modules/"     # Exclude dependencies
+    - "\.env$"            # Exclude .env files
+    - "\.env\\..*$"       # Exclude .env.local, .env.production, etc.
+    - "/dist/"            # Exclude build output
+    - "/build/"           # Exclude build artifacts
+    - "\.test\.(js|ts)$"  # Exclude test files
+```
+
+### PR Template Integration
+Fetch and merge PR templates from target repos:
+
+```yaml
+commit_strategy:
+  type: "pull_request"
+  pr_body: |
+    🤖 Automated update
+    Files: ${file_count}
+  use_pr_template: true  # Fetches .github/pull_request_template.md
+```
+
+**Result:** PR description shows:
+1. Target repo's PR template (checklists, guidelines)
+2. Separator (`---`)
+3. Your configured content (automation info)
+
+### Batch Configuration
+When `batch_by_repo: true`, use `batch_pr_config` for accurate file counts:
+
+```yaml
+batch_by_repo: true
+
+batch_pr_config:
+  pr_title: "Update from ${source_repo}"
+  pr_body: |
+    Files: ${file_count}  # Accurate count across all rules
+    Source: ${source_repo} PR #${pr_number}
+  use_pr_template: true
 ```
 
 ## Message Templates

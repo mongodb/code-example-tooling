@@ -44,7 +44,31 @@ func GetFilesChangedInPr(pr_number int) ([]ChangedFile, error) {
 			Status:    string(edge.Node.ChangeType),
 		})
 	}
+
 	LogInfo(fmt.Sprintf("PR has %d changed files.", len(changedFiles)))
+
+	// Log all files for debugging (especially to see if server files are included)
+	LogInfo("=== ALL FILES FROM GRAPHQL API ===")
+	for i, file := range changedFiles {
+		LogInfo(fmt.Sprintf("  [%d] %s (status: %s)", i, file.Path, file.Status))
+	}
+	LogInfo("=== END FILE LIST ===")
+
+	// Count files by directory for debugging
+	clientCount := 0
+	serverCount := 0
+	otherCount := 0
+	for _, file := range changedFiles {
+		if len(file.Path) >= 13 && file.Path[:13] == "mflix/client/" {
+			clientCount++
+		} else if len(file.Path) >= 13 && file.Path[:13] == "mflix/server/" {
+			serverCount++
+		} else {
+			otherCount++
+		}
+	}
+	LogInfo(fmt.Sprintf("File breakdown: client=%d, server=%d, other=%d", clientCount, serverCount, otherCount))
+
 	return changedFiles, nil
 }
 

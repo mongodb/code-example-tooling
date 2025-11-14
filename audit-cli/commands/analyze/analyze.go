@@ -4,6 +4,7 @@
 // Currently supports:
 //   - includes: Analyze include directive relationships in RST files
 //   - file-references: Find all files that reference a target file
+//   - orphaned-files: Find files with no incoming references
 //
 // Future subcommands could include analyzing cross-references, broken links, or content metrics.
 package analyze
@@ -11,6 +12,7 @@ package analyze
 import (
 	"github.com/mongodb/code-example-tooling/audit-cli/commands/analyze/includes"
 	filereferences "github.com/mongodb/code-example-tooling/audit-cli/commands/analyze/file-references"
+	orphanedfiles "github.com/mongodb/code-example-tooling/audit-cli/commands/analyze/orphaned-files"
 	"github.com/spf13/cobra"
 )
 
@@ -27,6 +29,7 @@ func NewAnalyzeCommand() *cobra.Command {
 Currently supports:
   - includes: Analyze include directive relationships (forward dependencies)
   - file-references: Find all files that reference a target file (reverse dependencies)
+  - orphaned-files: Find files with no incoming references
 
 Future subcommands may support analyzing cross-references, broken links, or content metrics.`,
 	}
@@ -34,6 +37,7 @@ Future subcommands may support analyzing cross-references, broken links, or cont
 	// Add subcommands
 	cmd.AddCommand(includes.NewIncludesCommand())
 	cmd.AddCommand(filereferences.NewFileReferencesCommand())
+	cmd.AddCommand(orphanedfiles.NewOrphanedFilesCommand())
 
 	return cmd
 }

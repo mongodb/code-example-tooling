@@ -59,7 +59,8 @@ audit-cli
 │   └── find-string
 ├── analyze          # Analyze RST file structures
 │   ├── includes
-│   └── file-references
+│   ├── file-references
+│   └── orphaned-files
 └── compare          # Compare files across versions
     └── file-contents
 ```
@@ -513,6 +514,114 @@ include             : 3 files, 4 references
 # Exclude archived or deprecated files from search
 ./audit-cli analyze file-references ~/docs/source/includes/fact.rst --exclude "*/archive/*"
 ./audit-cli analyze file-references ~/docs/source/includes/fact.rst --exclude "*/deprecated/*"
+```
+
+#### `analyze orphaned-files`
+
+Find files that have no incoming references from other files. This command scans all RST and YAML files in a source directory to identify files that are not referenced by any include, literalinclude, io-code-block, or toctree directive.
+
+**Use Cases:**
+
+This command helps writers:
+- Find unused include files that can be removed
+- Identify documentation pages not linked in the navigation
+- Discover legacy content that needs cleanup
+- Maintain documentation hygiene by removing dead files
+- Identify entry points (like index.rst) that are referenced externally
+
+**Basic Usage:**
+
+```bash
+# Find orphaned files in a source directory
+./audit-cli analyze orphaned-files ~/docs/source
+
+# Include toctree references (consider navigation links)
+./audit-cli analyze orphaned-files ~/docs/source --include-toctree
+
+# Get JSON output for automation
+./audit-cli analyze orphaned-files ~/docs/source --format json
+
+# Show detailed scanning progress
+./audit-cli analyze orphaned-files ~/docs/source --verbose
+
+# Quick check: just show the count
+./audit-cli analyze orphaned-files ~/docs/source --count-only
+
+# Get list of files for piping to other commands
+./audit-cli analyze orphaned-files ~/docs/source --paths-only
+
+# Exclude certain paths from analysis
+./audit-cli analyze orphaned-files ~/docs/source --exclude "*/archive/*"
+```
+
+**Flags:**
+
+- `--format <format>` - Output format: `text` (default) or `json`
+- `-v, --verbose` - Show detailed information during scanning
+- `-c, --count-only` - Only show the count of orphaned files
+- `--paths-only` - Only show the file paths, one per line (useful for piping to other commands)
+- `--include-toctree` - Include toctree references when determining orphaned status
+- `--exclude <pattern>` - Exclude paths matching this glob pattern (e.g., `*/archive/*` or `*/deprecated/*`)
+
+**Output:**
+
+Text format shows:
+- Source directory path
+- Total files scanned
+- Number of orphaned files
+- List of orphaned files (relative paths)
+- Helpful suggestions for what to do with orphaned files
+
+JSON format provides:
+```json
+{
+  "source_dir": "/path/to/source",
+  "total_files": 150,
+  "total_orphaned": 12,
+  "orphaned_files": [
+    "unused-include.rst",
+    "legacy-page.rst",
+    "includes/old-fact.rst"
+  ],
+  "included_toctree": false
+}
+```
+
+**Exit Codes:**
+
+- `0` - Success (whether orphaned files found or not)
+- `1` - Error (invalid arguments, directory not found, etc.)
+
+**Note:** By default, only content inclusion directives (include, literalinclude, io-code-block) are considered. Use `--include-toctree` to also consider toctree entries (navigation links) when determining orphaned status. Entry point files like `index.rst` will typically appear as orphaned since they're referenced externally by the build system.
+
+**Examples:**
+
+```bash
+# Find orphaned files (content inclusion only)
+./audit-cli analyze orphaned-files ~/docs/source
+
+# Find orphaned files (including navigation links)
+./audit-cli analyze orphaned-files ~/docs/source --include-toctree
+
+# Get machine-readable output for scripting
+./audit-cli analyze orphaned-files ~/docs/source --format json | jq '.total_orphaned'
+
+# See detailed progress for large repositories
+./audit-cli analyze orphaned-files ~/docs/source --verbose
+
+# Quick check: just show the count
+./audit-cli analyze orphaned-files ~/docs/source --count-only
+# Output: 12
+
+# Get list of files for piping to other commands
+./audit-cli analyze orphaned-files ~/docs/source --paths-only
+# Output:
+# unused-include.rst
+# legacy-page.rst
+# includes/old-fact.rst
+
+# Exclude archived files from analysis
+./audit-cli analyze orphaned-files ~/docs/source --exclude "*/archive/*"
 ```
 
 ### Compare Commands

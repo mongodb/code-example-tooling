@@ -33,7 +33,10 @@ import (
 //   - -v, --verbose: Show detailed information including line numbers
 //   - -c, --count-only: Only show the count of references
 //   - --paths-only: Only show the file paths
+//   - --summary: Only show summary statistics (total files and references by type)
 //   - -t, --directive-type: Filter by directive type (include, literalinclude, io-code-block, toctree)
+//   - --include-toctree: Include toctree entries (navigation links) in addition to content inclusion directives
+//   - --exclude: Exclude paths matching this glob pattern (e.g., '*/archive/*')
 func NewFileReferencesCommand() *cobra.Command {
 	var (
 		format         string

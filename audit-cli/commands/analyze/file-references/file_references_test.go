@@ -51,8 +51,8 @@ func TestAnalyzeReferences(t *testing.T) {
 				t.Fatalf("failed to get absolute path: %v", err)
 			}
 
-			// Run analysis (without toctree by default)
-			analysis, err := AnalyzeReferences(absTargetPath, false)
+			// Run analysis (without toctree by default, not verbose, no exclude pattern)
+			analysis, err := AnalyzeReferences(absTargetPath, false, false, "")
 			if err != nil {
 				t.Fatalf("AnalyzeReferences failed: %v", err)
 			}

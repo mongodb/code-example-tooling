@@ -25,11 +25,18 @@ import (
 // Parameters:
 //   - targetFile: Absolute path to the file to analyze
 //   - includeToctree: If true, include toctree entries in the search
+//   - verbose: If true, show progress information
+//   - excludePattern: Glob pattern for paths to exclude (empty string means no exclusion)
 //
 // Returns:
 //   - *ReferenceAnalysis: The analysis results
 //   - error: Any error encountered during analysis
-func AnalyzeReferences(targetFile string, includeToctree bool) (*ReferenceAnalysis, error) {
+func AnalyzeReferences(targetFile string, includeToctree bool, verbose bool, excludePattern string) (*ReferenceAnalysis, error) {
+	// Check if target file exists
+	if _, err := os.Stat(targetFile); os.IsNotExist(err) {
+		return nil, fmt.Errorf("target file does not exist: %s\n\nPlease check:\n  - The file path is correct\n  - The file hasn't been moved or deleted\n  - You have permission to access the file", targetFile)
+	}
+
 	// Get absolute path
 	absTargetFile, err := filepath.Abs(targetFile)
 	if err != nil {
@@ -39,7 +46,7 @@ func AnalyzeReferences(targetFile string, includeToctree bool) (*ReferenceAnalys
 	// Find the source directory
 	sourceDir, err := pathresolver.FindSourceDirectory(absTargetFile)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find source directory: %w", err)
+		return nil, fmt.Errorf("failed to find source directory: %w\n\nThe source directory is detected by looking for a 'source' directory in the file's path.\nMake sure the target file is within a documentation repository with a 'source' directory.", err)
 	}
 
 	// Initialize analysis result
@@ -47,6 +54,15 @@ func AnalyzeReferences(targetFile string, includeToctree bool) (*ReferenceAnalys
 		TargetFile:       absTargetFile,
 		SourceDir:        sourceDir,
 		ReferencingFiles: []FileReference{},
+	}
+
+	// Track if we found any RST/YAML files
+	foundAnyFiles := false
+	filesProcessed := 0
+
+	// Show progress message if verbose
+	if verbose {
+		fmt.Fprintf(os.Stderr, "Scanning for references in %s...\n", sourceDir)
 	}
 
 	// Walk through all RST and YAML files in the source directory
@@ -67,6 +83,26 @@ func AnalyzeReferences(targetFile string, includeToctree bool) (*ReferenceAnalys
 			return nil
 		}
 
+		// Check if path should be excluded
+		if excludePattern != "" {
+			matched, err := filepath.Match(excludePattern, path)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: invalid exclude pattern: %v\n", err)
+			} else if matched {
+				// Skip this file
+				return nil
+			}
+		}
+
+		// Mark that we found at least one file
+		foundAnyFiles = true
+		filesProcessed++
+
+		// Show progress every 100 files if verbose
+		if verbose && filesProcessed%100 == 0 {
+			fmt.Fprintf(os.Stderr, "Processed %d files...\n", filesProcessed)
+		}
+
 		// Search for references in this file
 		refs, err := findReferencesInFile(path, absTargetFile, sourceDir, includeToctree)
 		if err != nil {
@@ -83,6 +119,16 @@ func AnalyzeReferences(targetFile string, includeToctree bool) (*ReferenceAnalys
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to walk source directory: %w", err)
+	}
+
+	// Check if we found any RST/YAML files
+	if !foundAnyFiles {
+		return nil, fmt.Errorf("no RST or YAML files found in source directory: %s\n\nThis might not be a documentation repository.\nExpected to find files with extensions: .rst, .txt, .yaml, .yml", sourceDir)
+	}
+
+	// Show completion message if verbose
+	if verbose {
+		fmt.Fprintf(os.Stderr, "Scan complete. Processed %d files.\n", filesProcessed)
 	}
 
 	// Update total counts

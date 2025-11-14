@@ -30,17 +30,17 @@ type ReferenceAnalysis struct {
 // This structure captures details about how and where the reference occurs.
 type FileReference struct {
 	// FilePath is the absolute path to the file that references the target
-	FilePath string
+	FilePath string `json:"file_path"`
 
 	// DirectiveType is the type of directive used to reference the file
 	// Possible values: "include", "literalinclude", "io-code-block", "toctree"
-	DirectiveType string
+	DirectiveType string `json:"directive_type"`
 
 	// ReferencePath is the path used in the directive (as written in the file)
-	ReferencePath string
+	ReferencePath string `json:"reference_path"`
 
 	// LineNumber is the line number where the reference occurs
-	LineNumber int
+	LineNumber int `json:"line_number"`
 }
 
 // ReferenceNode represents a node in the reference tree.

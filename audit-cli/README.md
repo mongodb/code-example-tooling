@@ -308,7 +308,6 @@ This command helps writers:
 - Understand the impact of changes to a file (what pages will be affected)
 - Find all usages of an include file across the documentation
 - Track where code examples are referenced
-- Identify orphaned files (files with no references from content inclusion directives)
 - Plan refactoring by understanding file dependencies
 
 **Basic Usage:**
@@ -336,8 +335,10 @@ This command helps writers:
 - `-v, --verbose` - Show detailed information including line numbers and reference paths
 - `-c, --count-only` - Only show the count of references (useful for quick checks and scripting)
 - `--paths-only` - Only show the file paths, one per line (useful for piping to other commands)
+- `--summary` - Only show summary statistics (total files and references by type, without file list)
 - `-t, --directive-type <type>` - Filter by directive type: `include`, `literalinclude`, `io-code-block`, or `toctree`
 - `--include-toctree` - Include toctree entries (navigation links) in addition to content inclusion directives
+- `--exclude <pattern>` - Exclude paths matching this glob pattern (e.g., `*/archive/*` or `*/deprecated/*`)
 
 **Understanding the Counts:**
 
@@ -388,7 +389,8 @@ With `--include-toctree`, also tracks:
       getting-started
    ```
 
-**Note:** Only file-based references are tracked. Inline content (e.g., `.. input::` with `:language:` but no file path) aly
+**Note:** Only file-based references are tracked. Inline content (e.g., `.. input::` with `:language:` but no file path) is not tracked since it doesn't reference external files.
+
 **Output Formats:**
 
 **Text** (default):
@@ -440,22 +442,22 @@ include             : 3 files, 4 references
   "total_references": 4,
   "referencing_files": [
     {
-      "FilePath": "/path/to/duplicate-include-test.rst",
-      "DirectiveType": "include",
-      "ReferencePath": "/includes/intro.rst",
-      "LineNumber": 6
+      "file_path": "/path/to/duplicate-include-test.rst",
+      "directive_type": "include",
+      "reference_path": "/includes/intro.rst",
+      "line_number": 6
     },
     {
-      "FilePath": "/path/to/duplicate-include-test.rst",
-      "DirectiveType": "include",
-      "ReferencePath": "/includes/intro.rst",
-      "LineNumber": 13
+      "file_path": "/path/to/duplicate-include-test.rst",
+      "directive_type": "include",
+      "reference_path": "/includes/intro.rst",
+      "line_number": 13
     },
     {
-      "FilePath": "/path/to/include-test.rst",
-      "DirectiveType": "include",
-      "ReferencePath": "/includes/intro.rst",
-      "LineNumber": 6
+      "file_path": "/path/to/include-test.rst",
+      "directive_type": "include",
+      "reference_path": "/includes/intro.rst",
+      "line_number": 6
     }
   ]
 }
@@ -480,6 +482,15 @@ include             : 3 files, 4 references
 ./audit-cli analyze file-references ~/docs/source/includes/fact.rst --count-only
 # Output: 5
 
+# Show summary statistics only
+./audit-cli analyze file-references ~/docs/source/includes/fact.rst --summary
+# Output:
+# Total Files: 3
+# Total References: 5
+#
+# By Type:
+#   include             : 3 files, 5 references
+
 # Get list of files for piping to other commands
 ./audit-cli analyze file-references ~/docs/source/includes/fact.rst --paths-only
 # Output:
@@ -498,6 +509,10 @@ include             : 3 files, 4 references
 
 # Combine filters: list files that use this as an io-code-block
 ./audit-cli analyze file-references ~/docs/source/code-examples/query.js -t io-code-block --paths-only
+
+# Exclude archived or deprecated files from search
+./audit-cli analyze file-references ~/docs/source/includes/fact.rst --exclude "*/archive/*"
+./audit-cli analyze file-references ~/docs/source/includes/fact.rst --exclude "*/deprecated/*"
 ```
 
 ### Compare Commands

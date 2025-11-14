@@ -51,6 +51,14 @@ func printText(analysis *ReferenceAnalysis, verbose bool) {
 	if analysis.TotalReferences == 0 {
 		fmt.Println("No files reference this file.")
 		fmt.Println()
+		fmt.Println("This could mean:")
+		fmt.Println("  - The file is not included in any documentation pages")
+		fmt.Println("  - The file might be orphaned (not used)")
+		fmt.Println("  - The file is referenced using a different path")
+		fmt.Println()
+		fmt.Println("Note: By default, only content inclusion directives are searched.")
+		fmt.Println("Use --include-toctree to also search for toctree navigation links.")
+		fmt.Println()
 		return
 	}
 
@@ -58,7 +66,8 @@ func printText(analysis *ReferenceAnalysis, verbose bool) {
 	byDirectiveType := groupByDirectiveType(analysis.ReferencingFiles)
 
 	// Print breakdown by directive type with file and reference counts
-	for _, directiveType := range []string{"include", "literalinclude", "io-code-block"} {
+	directiveTypes := []string{"include", "literalinclude", "io-code-block", "toctree"}
+	for _, directiveType := range directiveTypes {
 		if refs, ok := byDirectiveType[directiveType]; ok {
 			uniqueFiles := countUniqueFiles(refs)
 			totalRefs := len(refs)
@@ -208,6 +217,38 @@ func PrintPathsOnly(analysis *ReferenceAnalysis) error {
 	// Print each path
 	for _, path := range paths {
 		fmt.Println(path)
+	}
+
+	return nil
+}
+
+// PrintSummary prints only summary statistics without the file list.
+//
+// This is useful for getting a quick overview of reference counts.
+//
+// Parameters:
+//   - analysis: The analysis results
+//
+// Returns:
+//   - error: Any error encountered during printing
+func PrintSummary(analysis *ReferenceAnalysis) error {
+	fmt.Printf("Total Files: %d\n", analysis.TotalFiles)
+	fmt.Printf("Total References: %d\n", analysis.TotalReferences)
+
+	if analysis.TotalReferences > 0 {
+		// Group by directive type
+		byDirectiveType := groupByDirectiveType(analysis.ReferencingFiles)
+
+		// Print breakdown by type
+		fmt.Println("\nBy Type:")
+		directiveTypes := []string{"include", "literalinclude", "io-code-block", "toctree"}
+		for _, directiveType := range directiveTypes {
+			if refs, ok := byDirectiveType[directiveType]; ok {
+				uniqueFiles := countUniqueFiles(refs)
+				totalRefs := len(refs)
+				fmt.Printf("  %-20s: %d files, %d references\n", directiveType, uniqueFiles, totalRefs)
+			}
+		}
 	}
 
 	return nil

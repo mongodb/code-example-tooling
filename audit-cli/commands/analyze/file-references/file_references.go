@@ -11,7 +11,6 @@
 //   - Understanding the impact of changes to a file
 //   - Finding all usages of an include file
 //   - Tracking code example references
-//   - Identifying orphaned files (files with no references, including toctree entries)
 package filereferences
 
 import (
@@ -41,8 +40,10 @@ func NewFileReferencesCommand() *cobra.Command {
 		verbose        bool
 		countOnly      bool
 		pathsOnly      bool
+		summaryOnly    bool
 		directiveType  string
 		includeToctree bool
+		excludePattern string
 	)
 
 	cmd := &cobra.Command{
@@ -69,7 +70,6 @@ This is useful for:
   - Understanding the impact of changes to a file
   - Finding all usages of an include file
   - Tracking code example references
-  - Identifying orphaned files (files with no references from content inclusion directives)
 
 Examples:
   # Find what references an include file
@@ -93,11 +93,17 @@ Examples:
   # Just show the file paths
   analyze file-references /path/to/file.rst --paths-only
 
+  # Show summary statistics only
+  analyze file-references /path/to/file.rst --summary
+
+  # Exclude certain paths from search
+  analyze file-references /path/to/file.rst --exclude "*/archive/*"
+
   # Filter by directive type
   analyze file-references /path/to/file.rst --directive-type include`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runReferences(args[0], format, verbose, countOnly, pathsOnly, directiveType, includeToctree)
+			return runReferences(args[0], format, verbose, countOnly, pathsOnly, summaryOnly, directiveType, includeToctree, excludePattern)
 		},
 	}
 
@@ -105,8 +111,10 @@ Examples:
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Show detailed information including line numbers")
 	cmd.Flags().BoolVarP(&countOnly, "count-only", "c", false, "Only show the count of references")
 	cmd.Flags().BoolVar(&pathsOnly, "paths-only", false, "Only show the file paths (one per line)")
+	cmd.Flags().BoolVar(&summaryOnly, "summary", false, "Only show summary statistics (total files and references by type)")
 	cmd.Flags().StringVarP(&directiveType, "directive-type", "t", "", "Filter by directive type (include, literalinclude, io-code-block, toctree)")
 	cmd.Flags().BoolVar(&includeToctree, "include-toctree", false, "Include toctree entries (navigation links) in addition to content inclusion directives")
+	cmd.Flags().StringVar(&excludePattern, "exclude", "", "Exclude paths matching this glob pattern (e.g., '*/archive/*' or '*/deprecated/*')")
 
 	return cmd
 }
@@ -121,12 +129,14 @@ Examples:
 //   - verbose: If true, show detailed information
 //   - countOnly: If true, only show the count
 //   - pathsOnly: If true, only show the file paths
+//   - summaryOnly: If true, only show summary statistics
 //   - directiveType: Filter by directive type (empty string means all types)
 //   - includeToctree: If true, include toctree entries in the search
+//   - excludePattern: Glob pattern for paths to exclude (empty string means no exclusion)
 //
 // Returns:
 //   - error: Any error encountered during analysis
-func runReferences(targetFile, format string, verbose, countOnly, pathsOnly bool, directiveType string, includeToctree bool) error {
+func runReferences(targetFile, format string, verbose, countOnly, pathsOnly, summaryOnly bool, directiveType string, includeToctree bool, excludePattern string) error {
 	// Validate directive type if specified
 	if directiveType != "" {
 		validTypes := map[string]bool{
@@ -147,15 +157,25 @@ func runReferences(targetFile, format string, verbose, countOnly, pathsOnly bool
 	}
 
 	// Validate flag combinations
-	if countOnly && pathsOnly {
-		return fmt.Errorf("cannot use --count-only and --paths-only together")
+	exclusiveFlags := 0
+	if countOnly {
+		exclusiveFlags++
 	}
-	if (countOnly || pathsOnly) && outputFormat == FormatJSON {
-		return fmt.Errorf("--count-only and --paths-only are not compatible with --format json")
+	if pathsOnly {
+		exclusiveFlags++
+	}
+	if summaryOnly {
+		exclusiveFlags++
+	}
+	if exclusiveFlags > 1 {
+		return fmt.Errorf("cannot use --count-only, --paths-only, and --summary together")
+	}
+	if (countOnly || pathsOnly || summaryOnly) && outputFormat == FormatJSON {
+		return fmt.Errorf("--count-only, --paths-only, and --summary are not compatible with --format json")
 	}
 
 	// Perform analysis
-	analysis, err := AnalyzeReferences(targetFile, includeToctree)
+	analysis, err := AnalyzeReferences(targetFile, includeToctree, verbose, excludePattern)
 	if err != nil {
 		return fmt.Errorf("failed to analyze references: %w", err)
 	}
@@ -174,6 +194,11 @@ func runReferences(targetFile, format string, verbose, countOnly, pathsOnly bool
 	// Handle paths-only output
 	if pathsOnly {
 		return PrintPathsOnly(analysis)
+	}
+
+	// Handle summary-only output
+	if summaryOnly {
+		return PrintSummary(analysis)
 	}
 
 	// Print full results

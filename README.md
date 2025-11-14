@@ -21,6 +21,3 @@ corpus.
 - `query-docs-feedback`: a Go project with type definitions that queries the MongoDB
 Docs Feedback received for any feedback related to code examples, and outputs the result
 to a report as `.csv`.
-- `snooty-to-md-converter`: a Node.js project that ingests a single docs
-  project (via Snooty Data API or locally) and converts it to
-  Markdown. Created to convert the deprecated `docs-realm` project.

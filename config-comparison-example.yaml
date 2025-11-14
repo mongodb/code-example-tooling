@@ -1,0 +1,254 @@
+# ============================================================================
+# CURRENT FORMAT: 12 rules, 300+ lines
+# ============================================================================
+
+source_repo: "mongodb/docs-sample-apps"
+source_branch: "main"
+
+copy_rules:
+  # Java Target (4 rules)
+  - name: "mflix-client-to-java"
+    source_pattern:
+      type: "prefix"
+      pattern: "mflix/client/"
+      exclude_patterns:
+        - "\\.gitignore$"
+        - "README.md$"
+        - "\\.env$"
+    targets:
+      - repo: "mongodb/sample-app-java-mflix"
+        branch: "main"
+        path_transform: "client/${relative_path}"
+        commit_strategy:
+          type: "pull_request"
+          pr_title: "Update MFlix client"
+          auto_merge: false
+        deprecation_check:
+          enabled: true
+
+  - name: "java-server"
+    source_pattern:
+      type: "regex"
+      pattern: "^mflix/server/java-spring/(?P<file>.+)$"
+      exclude_patterns:
+        - "\\.gitignore$"
+        - "README.md$"
+        - "\\.env$"
+    targets:
+      - repo: "mongodb/sample-app-java-mflix"
+        branch: "main"
+        path_transform: "server/${file}"
+        commit_strategy:
+          type: "pull_request"
+          pr_title: "Update MFlix Java server"
+          auto_merge: false
+        deprecation_check:
+          enabled: true
+
+  - name: "mflix-java-readme"
+    source_pattern:
+      type: "glob"
+      pattern: "mflix/README-JAVA-SPRING.md"
+    targets:
+      - repo: "mongodb/sample-app-java-mflix"
+        branch: "main"
+        path_transform: "README.md"
+        commit_strategy:
+          type: "pull_request"
+          pr_title: "Update README"
+          auto_merge: false
+        deprecation_check:
+          enabled: true
+
+  - name: "mflix-java-gitignore"
+    source_pattern:
+      type: "glob"
+      pattern: "mflix/.gitignore-java"
+    targets:
+      - repo: "mongodb/sample-app-java-mflix"
+        branch: "main"
+        path_transform: ".gitignore"
+        commit_strategy:
+          type: "pull_request"
+          pr_title: "Update .gitignore"
+          auto_merge: false
+        deprecation_check:
+          enabled: true
+
+  # Node.js Target (4 rules) - SAME STRUCTURE REPEATED
+  - name: "mflix-client-to-js"
+    source_pattern:
+      type: "prefix"
+      pattern: "mflix/client/"
+      exclude_patterns:
+        - "\\.gitignore$"
+        - "README.md$"
+        - "\\.env$"
+    targets:
+      - repo: "mongodb/sample-app-nodejs-mflix"
+        branch: "main"
+        path_transform: "client/${relative_path}"
+        commit_strategy:
+          type: "pull_request"
+          pr_title: "Update MFlix client"
+          auto_merge: false
+        deprecation_check:
+          enabled: true
+
+  # ... 6 more rules with same structure ...
+
+# ============================================================================
+# PROPOSED FORMAT: 3 workflows, 90 lines (70% reduction!)
+# ============================================================================
+
+source_repo: "mongodb/docs-sample-apps"
+source_branch: "main"
+
+# Global defaults - apply to all workflows
+defaults:
+  commit_strategy:
+    type: "pull_request"
+    auto_merge: false
+  deprecation_check:
+    enabled: true
+  exclude:
+    - "**/.env"
+    - "**/.gitignore"  # Handled by specific copy rules
+    - "**/README.md"   # Handled by specific copy rules
+
+# One workflow per target repo
+workflows:
+  # Java MFlix
+  - name: "mflix-java"
+    destination:
+      repo: "mongodb/sample-app-java-mflix"
+      branch: "main"
+    
+    transformations:
+      # Move entire directories
+      - move:
+          from: "mflix/client"
+          to: "client"
+      
+      - move:
+          from: "mflix/server/java-spring"
+          to: "server"
+      
+      # Copy specific files with rename
+      - copy:
+          from: "mflix/README-JAVA-SPRING.md"
+          to: "README.md"
+      
+      - copy:
+          from: "mflix/.gitignore-java"
+          to: ".gitignore"
+
+  # Node.js MFlix
+  - name: "mflix-nodejs"
+    destination:
+      repo: "mongodb/sample-app-nodejs-mflix"
+      branch: "main"
+    
+    transformations:
+      - move: { from: "mflix/client", to: "client" }
+      - move: { from: "mflix/server/js-express", to: "server" }
+      - copy: { from: "mflix/README-JAVASCRIPT-EXPRESS.md", to: "README.md" }
+      - copy: { from: "mflix/.gitignore-js", to: ".gitignore" }
+
+  # Python MFlix
+  - name: "mflix-python"
+    destination:
+      repo: "mongodb/sample-app-python-mflix"
+      branch: "main"
+    
+    transformations:
+      - move: { from: "mflix/client", to: "client" }
+      - move: { from: "mflix/server/python-fastapi", to: "server" }
+      - copy: { from: "mflix/README-PYTHON-FASTAPI.md", to: "README.md" }
+      - copy: { from: "mflix/.gitignore-python", to: ".gitignore" }
+
+# ============================================================================
+# ADDING A NEW APP
+# ============================================================================
+
+# CURRENT FORMAT: Add 4 new rules (~80 lines)
+# copy_rules:
+#   - name: "mflix-client-to-rust"
+#     source_pattern: {...}
+#     targets: [{...}]
+#   - name: "rust-server"
+#     source_pattern: {...}
+#     targets: [{...}]
+#   - name: "mflix-rust-readme"
+#     source_pattern: {...}
+#     targets: [{...}]
+#   - name: "mflix-rust-gitignore"
+#     source_pattern: {...}
+#     targets: [{...}]
+
+# PROPOSED FORMAT: Add 1 workflow (~10 lines)
+# workflows:
+#   - name: "mflix-rust"
+#     destination:
+#       repo: "mongodb/sample-app-rust-mflix"
+#     transformations:
+#       - move: { from: "mflix/client", to: "client" }
+#       - move: { from: "mflix/server/rust-actix", to: "server" }
+#       - copy: { from: "mflix/README-RUST-ACTIX.md", to: "README.md" }
+#       - copy: { from: "mflix/.gitignore-rust", to: ".gitignore" }
+
+# ============================================================================
+# BENEFITS
+# ============================================================================
+#
+# 1. CONCISE: 70% fewer lines
+# 2. CLEAR: Easy to see what goes where
+# 3. DRY: No repetition of commit_strategy, deprecation_check
+# 4. SIMPLE: No need to understand prefix/regex/glob patterns
+# 5. SCALABLE: Adding apps is trivial
+# 6. MAINTAINABLE: One workflow per target repo
+# 7. LESS ERROR-PRONE: Fewer places to make mistakes
+#
+# ============================================================================
+# ADVANCED FEATURES (when needed)
+# ============================================================================
+
+# Example: Complex transformation with regex
+workflows:
+  - name: "advanced-example"
+    destination:
+      repo: "mongodb/docs"
+      branch: "main"
+    
+    transformations:
+      # Simple moves
+      - move: { from: "examples/go", to: "code/go" }
+      
+      # Regex for complex path transformations
+      - regex:
+          pattern: "^examples/(?P<lang>[^/]+)/(?P<category>[^/]+)/(?P<file>.+)$"
+          to: "docs/${lang}/${category}/${file}"
+      
+      # Glob for specific file types
+      - glob:
+          pattern: "examples/**/*.md"
+          to: "documentation/${relative_path}"
+      
+      # Copy with conditions (future feature)
+      - copy:
+          from: "README.md"
+          to: "docs/README.md"
+          if: "file_exists('docs/')"
+
+# ============================================================================
+# MIGRATION STRATEGY
+# ============================================================================
+#
+# Phase 1: Implement workflow support (backward compatible)
+# Phase 2: Convert existing config
+# Phase 3: Deprecate old format (6 months later)
+#
+# Both formats work during transition period!
+#
+# ============================================================================
+

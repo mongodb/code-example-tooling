@@ -229,18 +229,52 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 		return
 	}
 
-	// Set source repo in config if not set
-	if yamlConfig.SourceRepo == "" {
-		yamlConfig.SourceRepo = fmt.Sprintf("%s/%s", config.RepoOwner, config.RepoName)
-	}
-
-	// Validate webhook is from expected source repository
+	// Determine if using legacy format or workflow format
 	webhookRepo := fmt.Sprintf("%s/%s", repoOwner, repoName)
-	if webhookRepo != yamlConfig.SourceRepo {
-		LogWarningCtx(ctx, "webhook from unexpected repository", map[string]interface{}{
-			"webhook_repo":  webhookRepo,
-			"expected_repo": yamlConfig.SourceRepo,
+	usingWorkflows := len(yamlConfig.Workflows) > 0
+	usingLegacy := len(yamlConfig.CopyRules) > 0
+
+	if usingLegacy {
+		// Legacy format: validate against single source repo
+		if yamlConfig.SourceRepo == "" {
+			yamlConfig.SourceRepo = webhookRepo
+		}
+
+		if webhookRepo != yamlConfig.SourceRepo {
+			LogWarningCtx(ctx, "webhook from unexpected repository (legacy format)", map[string]interface{}{
+				"webhook_repo":  webhookRepo,
+				"expected_repo": yamlConfig.SourceRepo,
+			})
+			container.MetricsCollector.RecordWebhookFailed()
+			return
+		}
+	} else if usingWorkflows {
+		// Workflow format: find workflows matching this source repo
+		matchingWorkflows := []types.Workflow{}
+		for _, workflow := range yamlConfig.Workflows {
+			if workflow.Source.Repo == webhookRepo {
+				matchingWorkflows = append(matchingWorkflows, workflow)
+			}
+		}
+
+		if len(matchingWorkflows) == 0 {
+			LogWarningCtx(ctx, "no workflows configured for source repository", map[string]interface{}{
+				"webhook_repo":    webhookRepo,
+				"workflow_count":  len(yamlConfig.Workflows),
+			})
+			container.MetricsCollector.RecordWebhookFailed()
+			return
+		}
+
+		LogInfoCtx(ctx, "found matching workflows", map[string]interface{}{
+			"webhook_repo":     webhookRepo,
+			"matching_count":   len(matchingWorkflows),
 		})
+
+		// Store matching workflows for processing
+		yamlConfig.Workflows = matchingWorkflows
+	} else {
+		LogWarningCtx(ctx, "no copy rules or workflows configured", nil)
 		container.MetricsCollector.RecordWebhookFailed()
 		return
 	}
@@ -270,8 +304,14 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 	filesUploadedBefore := container.MetricsCollector.GetFilesUploaded()
 	filesFailedBefore := container.MetricsCollector.GetFilesUploadFailed()
 
-	// Process files with new pattern matching
-	processFilesWithPatternMatching(ctx, prNumber, sourceCommitSHA, changedFiles, yamlConfig, config, container)
+	// Process files based on format
+	if usingWorkflows {
+		// Use workflow processor
+		processFilesWithWorkflows(ctx, prNumber, sourceCommitSHA, changedFiles, yamlConfig, container)
+	} else {
+		// Use legacy pattern matching
+		processFilesWithPatternMatching(ctx, prNumber, sourceCommitSHA, changedFiles, yamlConfig, config, container)
+	}
 
 	// Finalize PR metadata for batched PRs with accurate file counts
 	if yamlConfig.BatchByRepo {
@@ -280,7 +320,7 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 
 	// Upload queued files
 	FilesToUpload = container.FileStateService.GetFilesToUpload()
-	AddFilesToTargetRepoBranchWithFetcher(container.PRTemplateFetcher)
+	AddFilesToTargetRepoBranchWithFetcher(container.PRTemplateFetcher, container.MetricsCollector)
 	container.FileStateService.ClearFilesToUpload()
 
 	// Update deprecation file - copy from FileStateService to global map for legacy function
@@ -338,11 +378,19 @@ func processFilesWithPatternMatching(ctx context.Context, prNumber int, sourceCo
 		}
 	}
 
+	// Track statistics
+	filesMatched := 0
+	filesSkipped := 0
+	var skippedFiles []string
+
 	for _, file := range changedFiles {
 		if err := ctx.Err(); err != nil {
 			LogWebhookOperation(ctx, "file_iteration", "file iteration cancelled", err)
 			return
 		}
+
+		// Track if file matches any rule
+		fileMatched := false
 
 		// Try to match file against each rule
 		for _, rule := range yamlConfig.CopyRules {
@@ -356,6 +404,9 @@ func processFilesWithPatternMatching(ctx context.Context, prNumber int, sourceCo
 			if !matchResult.Matched {
 				continue
 			}
+
+			// Mark that file matched at least one rule
+			fileMatched = true
 
 			// Record matched file
 			container.MetricsCollector.RecordFileMatched()
@@ -372,7 +423,67 @@ func processFilesWithPatternMatching(ctx context.Context, prNumber int, sourceCo
 				processFileForTarget(ctx, prNumber, sourceCommitSHA, file, rule, target, matchResult.Variables, yamlConfig, config, container)
 			}
 		}
+
+		// Log if file didn't match any rule
+		if !fileMatched {
+			filesSkipped++
+			skippedFiles = append(skippedFiles, file.Path)
+			LogWarningCtx(ctx, "file skipped - no matching rules", map[string]interface{}{
+				"file":       file.Path,
+				"status":     file.Status,
+				"rule_count": len(yamlConfig.CopyRules),
+			})
+		} else {
+			filesMatched++
+		}
 	}
+
+	// Log summary
+	LogInfoCtx(ctx, "pattern matching complete", map[string]interface{}{
+		"total_files":    len(changedFiles),
+		"files_matched":  filesMatched,
+		"files_skipped":  filesSkipped,
+		"skipped_files":  skippedFiles,
+	})
+}
+
+// processFilesWithWorkflows processes changed files using the workflow system
+func processFilesWithWorkflows(ctx context.Context, prNumber int, sourceCommitSHA string,
+	changedFiles []types.ChangedFile, yamlConfig *types.YAMLConfig, container *ServiceContainer) {
+
+	LogInfoCtx(ctx, "processing files with workflows", map[string]interface{}{
+		"file_count":     len(changedFiles),
+		"workflow_count": len(yamlConfig.Workflows),
+	})
+
+	// Create workflow processor
+	workflowProcessor := NewWorkflowProcessor(
+		container.PatternMatcher,
+		container.PathTransformer,
+		container.FileStateService,
+		container.MetricsCollector,
+	)
+
+	// Process each workflow
+	for _, workflow := range yamlConfig.Workflows {
+		if err := ctx.Err(); err != nil {
+			LogWebhookOperation(ctx, "workflow_processing", "workflow processing cancelled", err)
+			return
+		}
+
+		err := workflowProcessor.ProcessWorkflow(ctx, workflow, changedFiles, prNumber, sourceCommitSHA)
+		if err != nil {
+			LogErrorCtx(ctx, "failed to process workflow", err, map[string]interface{}{
+				"workflow_name": workflow.Name,
+			})
+			// Continue processing other workflows
+			continue
+		}
+	}
+
+	LogInfoCtx(ctx, "workflow processing complete", map[string]interface{}{
+		"workflow_count": len(yamlConfig.Workflows),
+	})
 }
 
 // processFileForTarget processes a single file for a specific target

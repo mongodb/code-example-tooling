@@ -1,0 +1,236 @@
+# MFlix Workflow Configuration
+# This is the NEW workflow-based format with multi-org support
+# Replaces the legacy copy_rules format
+
+# Global defaults (apply to all workflows unless overridden)
+defaults:
+  commit_strategy:
+    type: "pull_request"
+    auto_merge: false
+  deprecation_check:
+    enabled: true
+    file: "deprecated_examples.json"
+  exclude:
+    - "**/.env"
+    - "**/.env.*"
+
+# ============================================================================
+# WORKFLOWS
+# ============================================================================
+# Each workflow defines a complete source → destination mapping
+# ============================================================================
+
+workflows:
+  # ==========================================================================
+  # Java MFlix: mongodb/docs-sample-apps → mongodb/sample-app-java-mflix
+  # ==========================================================================
+  
+  - name: "mflix-java"
+    source:
+      repo: "mongodb/docs-sample-apps"
+      branch: "main"
+    destination:
+      repo: "mongodb/sample-app-java-mflix"
+      branch: "main"
+    transformations:
+      # Copy client directory
+      - move:
+          from: "mflix/client"
+          to: "client"
+      
+      # Copy Java server (removing java-spring subdirectory)
+      - move:
+          from: "mflix/server/java-spring"
+          to: "server"
+      
+      # Copy README (renaming)
+      - copy:
+          from: "mflix/README-JAVA-SPRING.md"
+          to: "README.md"
+      
+      # Copy .gitignore (renaming)
+      - copy:
+          from: "mflix/.gitignore-java"
+          to: ".gitignore"
+    
+    commit_strategy:
+      type: "pull_request"
+      pr_title: "Update MFlix application from docs-sample-apps"
+      pr_body: |
+        Automated update of MFlix Java application
+        
+        **Source Information:**
+        - Repository: mongodb/docs-sample-apps
+        - Branch: main
+        
+        **Changes:**
+        - Client files (Next.js)
+        - Server files (Java/Spring Boot)
+        - README and .gitignore
+        
+        This PR includes all synchronized files from the source repository.
+      auto_merge: false
+
+  # ==========================================================================
+  # Node.js MFlix: mongodb/docs-sample-apps → mongodb/sample-app-nodejs-mflix
+  # ==========================================================================
+  
+  - name: "mflix-nodejs"
+    source:
+      repo: "mongodb/docs-sample-apps"
+      branch: "main"
+    destination:
+      repo: "mongodb/sample-app-nodejs-mflix"
+      branch: "main"
+    transformations:
+      # Copy client directory
+      - move:
+          from: "mflix/client"
+          to: "client"
+      
+      # Copy Node.js server (removing js-express subdirectory)
+      - move:
+          from: "mflix/server/js-express"
+          to: "server"
+      
+      # Copy README (renaming)
+      - copy:
+          from: "mflix/README-JAVASCRIPT-EXPRESS.md"
+          to: "README.md"
+      
+      # Copy .gitignore (renaming)
+      - copy:
+          from: "mflix/.gitignore-js"
+          to: ".gitignore"
+    
+    commit_strategy:
+      type: "pull_request"
+      pr_title: "Update MFlix application from docs-sample-apps"
+      pr_body: |
+        Automated update of MFlix Node.js application
+        
+        **Source Information:**
+        - Repository: mongodb/docs-sample-apps
+        - Branch: main
+        
+        **Changes:**
+        - Client files (Next.js)
+        - Server files (Node.js/Express)
+        - README and .gitignore
+        
+        This PR includes all synchronized files from the source repository.
+      auto_merge: false
+
+  # ==========================================================================
+  # Python MFlix: mongodb/docs-sample-apps → mongodb/sample-app-python-mflix
+  # ==========================================================================
+  
+  - name: "mflix-python"
+    source:
+      repo: "mongodb/docs-sample-apps"
+      branch: "main"
+    destination:
+      repo: "mongodb/sample-app-python-mflix"
+      branch: "main"
+    transformations:
+      # Copy client directory
+      - move:
+          from: "mflix/client"
+          to: "client"
+      
+      # Copy Python server (removing python-fastapi subdirectory)
+      - move:
+          from: "mflix/server/python-fastapi"
+          to: "server"
+      
+      # Copy README (renaming)
+      - copy:
+          from: "mflix/README-PYTHON-FASTAPI.md"
+          to: "README.md"
+      
+      # Copy .gitignore (renaming)
+      - copy:
+          from: "mflix/.gitignore-python"
+          to: ".gitignore"
+    
+    commit_strategy:
+      type: "pull_request"
+      pr_title: "Update MFlix application from docs-sample-apps"
+      pr_body: |
+        Automated update of MFlix Python application
+        
+        **Source Information:**
+        - Repository: mongodb/docs-sample-apps
+        - Branch: main
+        
+        **Changes:**
+        - Client files (Next.js)
+        - Server files (Python/FastAPI)
+        - README and .gitignore
+        
+        This PR includes all synchronized files from the source repository.
+      auto_merge: false
+
+# ============================================================================
+# BENEFITS OF THIS FORMAT
+# ============================================================================
+#
+# 1. SIMPLER: 3 workflows instead of 12 rules (70% reduction)
+# 2. CLEARER: Each workflow shows complete source → destination mapping
+# 3. MULTI-ORG READY: Each workflow can have different source repo
+# 4. EASIER TO MAINTAIN: Add new apps by adding one workflow
+# 5. BETTER DEFAULTS: Global defaults reduce repetition
+#
+# ============================================================================
+# ADDING A NEW APP
+# ============================================================================
+#
+# Just add a new workflow:
+#
+# - name: "new-app-java"
+#   source:
+#     repo: "mongodb/docs-sample-apps"
+#     branch: "main"
+#   destination:
+#     repo: "mongodb/sample-app-java-newapp"
+#     branch: "main"
+#   transformations:
+#     - move: { from: "newapp/client", to: "client" }
+#     - move: { from: "newapp/server/java", to: "server" }
+#     - copy: { from: "newapp/README-JAVA.md", to: "README.md" }
+#
+# ============================================================================
+# MULTI-ORG EXAMPLE
+# ============================================================================
+#
+# To copy from a different org, just change the source repo:
+#
+# - name: "university-course"
+#   source:
+#     repo: "10gen/university-content"  # Different org!
+#     branch: "main"
+#   destination:
+#     repo: "mongodb-university/python-course"
+#     branch: "main"
+#   transformations:
+#     - move: { from: "courses/python/public", to: "content" }
+#
+# The app will auto-discover the installation ID for each org.
+#
+# ============================================================================
+# MIGRATION FROM LEGACY FORMAT
+# ============================================================================
+#
+# The app supports BOTH formats during transition:
+# - If `workflows` is present, use workflow format
+# - If `copy_rules` is present, use legacy format
+# - You can test workflows without breaking existing config
+#
+# To migrate:
+# 1. Deploy this config as copier-config-workflow.yaml
+# 2. Test with a PR
+# 3. Once verified, rename to copier-config.yaml
+# 4. Remove old copy_rules format
+#
+# ============================================================================
+

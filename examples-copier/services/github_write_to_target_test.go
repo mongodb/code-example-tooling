@@ -250,7 +250,7 @@ func TestAddFilesToTargetRepoBranch_Succeeds(t *testing.T) {
 		},
 	}
 
-	services.AddFilesToTargetRepoBranch()
+	services.AddFilesToTargetRepoBranch(nil)
 
 	info := httpmock.GetCallCountInfo()
 	require.Equal(t, 1, info["GET "+baseRefURL])
@@ -343,7 +343,7 @@ func TestAddFilesToTargetRepoBranch_ViaPR_Succeeds(t *testing.T) {
 		},
 	}
 
-	services.AddFilesToTargetRepoBranch()
+	services.AddFilesToTargetRepoBranch(nil)
 
 	// Assertions
 	require.Equal(t, 1, test.CountByMethodAndURLRegexp("POST",
@@ -425,7 +425,7 @@ func TestAddFiles_DirectConflict_NonFastForward(t *testing.T) {
 	}
 
 	// Run – should not panic; error is handled/logged internally.
-	services.AddFilesToTargetRepoBranch()
+	services.AddFilesToTargetRepoBranch(nil)
 
 	info := httpmock.GetCallCountInfo()
 	require.Equal(t, 1, info["GET "+baseRefURL])
@@ -508,7 +508,7 @@ func TestAddFiles_ViaPR_MergeConflict_Dirty_NotMerged(t *testing.T) {
 		},
 	}
 
-	services.AddFilesToTargetRepoBranch()
+	services.AddFilesToTargetRepoBranch(nil)
 
 	// Assertions
 	info := httpmock.GetCallCountInfo()
@@ -571,7 +571,7 @@ func TestPriority_Strategy_ConfigOverridesEnv_And_MessageFallbacks(t *testing.T)
 		{RepoName: repo, BranchPath: "refs/heads/" + baseBranch, CommitStrategy: cfg.CopierCommitStrategy}: {TargetBranch: baseBranch, Content: files},
 	}
 
-	services.AddFilesToTargetRepoBranch() // No longer takes parameters - uses FilesToUpload map
+	services.AddFilesToTargetRepoBranch(nil) // No longer takes parameters - uses FilesToUpload map
 
 	info := httpmock.GetCallCountInfo()
 	require.Equal(t, 1, info["GET "+baseRefURL])
@@ -650,7 +650,7 @@ func TestPriority_PRTitleDefaultsToCommitMessage_And_NoAutoMergeWhenConfigPresen
 	// cfg := types.Configs{TargetRepo: repo, TargetBranch: baseBranch /* MergeWithoutReview: false (zero value) */}
 	services.FilesToUpload = map[types.UploadKey]types.UploadFileContent{{RepoName: repo, BranchPath: "refs/heads/" + baseBranch, RuleName: "", CommitStrategy: "pr"}: {TargetBranch: baseBranch, Content: files, CommitStrategy: "pr"}}
 
-	services.AddFilesToTargetRepoBranch() // No longer takes parameters - uses FilesToUpload map
+	services.AddFilesToTargetRepoBranch(nil) // No longer takes parameters - uses FilesToUpload map
 
 	// Ensure a PR was created but no merge occurred
 	require.Equal(t, 1, test.CountByMethodAndURLRegexp("POST", regexp.MustCompile(`/pulls$`)))

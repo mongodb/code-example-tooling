@@ -27,11 +27,16 @@ func (p PatternType) String() string {
 
 // YAMLConfig represents the new YAML-based configuration structure
 type YAMLConfig struct {
-	SourceRepo    string         `yaml:"source_repo" json:"source_repo"`
-	SourceBranch  string         `yaml:"source_branch" json:"source_branch"`
+	// Legacy format (for backward compatibility during transition)
+	SourceRepo    string         `yaml:"source_repo,omitempty" json:"source_repo,omitempty"`
+	SourceBranch  string         `yaml:"source_branch,omitempty" json:"source_branch,omitempty"`
 	BatchByRepo   bool           `yaml:"batch_by_repo,omitempty" json:"batch_by_repo,omitempty"`       // If true, batch all changes into one PR per target repo
 	BatchPRConfig *BatchPRConfig `yaml:"batch_pr_config,omitempty" json:"batch_pr_config,omitempty"` // PR config used when batch_by_repo is true
-	CopyRules     []CopyRule     `yaml:"copy_rules" json:"copy_rules"`
+	CopyRules     []CopyRule     `yaml:"copy_rules,omitempty" json:"copy_rules,omitempty"`
+
+	// New workflow format
+	Workflows []Workflow `yaml:"workflows,omitempty" json:"workflows,omitempty"`
+	Defaults  *Defaults  `yaml:"defaults,omitempty" json:"defaults,omitempty"`
 }
 
 // BatchPRConfig defines PR metadata for batched PRs
@@ -82,21 +87,120 @@ type DeprecationConfig struct {
 	File    string `yaml:"file,omitempty" json:"file,omitempty"` // defaults to deprecated_examples.json
 }
 
+// ============================================================================
+// Workflow-based configuration types
+// ============================================================================
+
+// Defaults defines default settings for all workflows
+type Defaults struct {
+	CommitStrategy   *CommitStrategyConfig `yaml:"commit_strategy,omitempty" json:"commit_strategy,omitempty"`
+	DeprecationCheck *DeprecationConfig    `yaml:"deprecation_check,omitempty" json:"deprecation_check,omitempty"`
+	Exclude          []string              `yaml:"exclude,omitempty" json:"exclude,omitempty"`
+}
+
+// Workflow defines a complete source → destination mapping with transformations
+type Workflow struct {
+	Name             string                `yaml:"name" json:"name"`
+	Source           Source                `yaml:"source" json:"source"`
+	Destination      Destination           `yaml:"destination" json:"destination"`
+	Transformations  []Transformation      `yaml:"transformations" json:"transformations"`
+	Exclude          []string              `yaml:"exclude,omitempty" json:"exclude,omitempty"`
+	CommitStrategy   *CommitStrategyConfig `yaml:"commit_strategy,omitempty" json:"commit_strategy,omitempty"`
+	DeprecationCheck *DeprecationConfig    `yaml:"deprecation_check,omitempty" json:"deprecation_check,omitempty"`
+}
+
+// Source defines the source repository and branch
+type Source struct {
+	Repo           string `yaml:"repo" json:"repo"`
+	Branch         string `yaml:"branch,omitempty" json:"branch,omitempty"`         // defaults to "main"
+	InstallationID string `yaml:"installation_id,omitempty" json:"installation_id,omitempty"` // optional override
+}
+
+// Destination defines the destination repository and branch
+type Destination struct {
+	Repo           string `yaml:"repo" json:"repo"`
+	Branch         string `yaml:"branch,omitempty" json:"branch,omitempty"`         // defaults to "main"
+	InstallationID string `yaml:"installation_id,omitempty" json:"installation_id,omitempty"` // optional override
+}
+
+// TransformationType defines the type of transformation
+type TransformationType string
+
+const (
+	TransformationTypeMove  TransformationType = "move"
+	TransformationTypeCopy  TransformationType = "copy"
+	TransformationTypeGlob  TransformationType = "glob"
+	TransformationTypeRegex TransformationType = "regex"
+)
+
+// Transformation defines how to transform file paths from source to destination
+type Transformation struct {
+	// Type is inferred from which field is set (move, copy, glob, regex)
+	Move  *MoveTransform  `yaml:"move,omitempty" json:"move,omitempty"`
+	Copy  *CopyTransform  `yaml:"copy,omitempty" json:"copy,omitempty"`
+	Glob  *GlobTransform  `yaml:"glob,omitempty" json:"glob,omitempty"`
+	Regex *RegexTransform `yaml:"regex,omitempty" json:"regex,omitempty"`
+}
+
+// MoveTransform moves files from one directory to another
+type MoveTransform struct {
+	From string `yaml:"from" json:"from"` // Source path (can be directory or file)
+	To   string `yaml:"to" json:"to"`     // Destination path
+}
+
+// CopyTransform copies a single file to a new location
+type CopyTransform struct {
+	From string `yaml:"from" json:"from"` // Source file path
+	To   string `yaml:"to" json:"to"`     // Destination file path
+}
+
+// GlobTransform uses glob patterns with path transformation
+type GlobTransform struct {
+	Pattern   string `yaml:"pattern" json:"pattern"`       // Glob pattern (e.g., "mflix/server/**/*.js")
+	Transform string `yaml:"transform" json:"transform"`   // Path transform template (e.g., "server/${relative_path}")
+}
+
+// RegexTransform uses regex patterns with named capture groups
+type RegexTransform struct {
+	Pattern   string `yaml:"pattern" json:"pattern"`       // Regex pattern with named groups
+	Transform string `yaml:"transform" json:"transform"`   // Path transform template using captured groups
+}
+
 // Validate validates the YAML configuration
 func (c *YAMLConfig) Validate() error {
-	if c.SourceRepo == "" {
-		return fmt.Errorf("source_repo is required")
-	}
-	if c.SourceBranch == "" {
-		c.SourceBranch = "main" // default
-	}
-	if len(c.CopyRules) == 0 {
-		return fmt.Errorf("at least one copy rule is required")
+	// Check if using legacy format or new workflow format
+	hasLegacy := c.SourceRepo != "" || len(c.CopyRules) > 0
+	hasWorkflows := len(c.Workflows) > 0
+
+	if !hasLegacy && !hasWorkflows {
+		return fmt.Errorf("either copy_rules (legacy) or workflows (new format) is required")
 	}
 
-	for i, rule := range c.CopyRules {
-		if err := rule.Validate(); err != nil {
-			return fmt.Errorf("copy_rules[%d]: %w", i, err)
+	// Validate legacy format
+	if hasLegacy {
+		if c.SourceRepo == "" {
+			return fmt.Errorf("source_repo is required when using copy_rules")
+		}
+		if c.SourceBranch == "" {
+			c.SourceBranch = "main" // default
+		}
+		if len(c.CopyRules) == 0 {
+			return fmt.Errorf("at least one copy rule is required when using legacy format")
+		}
+
+		for i, rule := range c.CopyRules {
+			if err := rule.Validate(); err != nil {
+				return fmt.Errorf("copy_rules[%d]: %w", i, err)
+			}
+		}
+	}
+
+	// Validate workflow format
+	if hasWorkflows {
+		for i, workflow := range c.Workflows {
+			if err := workflow.Validate(); err != nil {
+				return fmt.Errorf("workflows[%d]: %w", i, err)
+			}
 		}
 	}
 
@@ -192,7 +296,8 @@ func (c *CommitStrategyConfig) Validate() error {
 
 // SetDefaults sets default values for the configuration
 func (c *YAMLConfig) SetDefaults() {
-	if c.SourceBranch == "" {
+	// Set defaults for legacy format
+	if c.SourceBranch == "" && c.SourceRepo != "" {
 		c.SourceBranch = "main"
 	}
 
@@ -208,6 +313,44 @@ func (c *YAMLConfig) SetDefaults() {
 			if target.DeprecationCheck != nil && target.DeprecationCheck.File == "" {
 				target.DeprecationCheck.File = "deprecated_examples.json"
 			}
+		}
+	}
+
+	// Set defaults for workflow format
+	for i := range c.Workflows {
+		workflow := &c.Workflows[i]
+
+		// Set source defaults
+		if workflow.Source.Branch == "" {
+			workflow.Source.Branch = "main"
+		}
+
+		// Set destination defaults
+		if workflow.Destination.Branch == "" {
+			workflow.Destination.Branch = "main"
+		}
+
+		// Apply global defaults if not overridden
+		if workflow.CommitStrategy == nil && c.Defaults != nil && c.Defaults.CommitStrategy != nil {
+			workflow.CommitStrategy = c.Defaults.CommitStrategy
+		}
+
+		if workflow.DeprecationCheck == nil && c.Defaults != nil && c.Defaults.DeprecationCheck != nil {
+			workflow.DeprecationCheck = c.Defaults.DeprecationCheck
+		}
+
+		if len(workflow.Exclude) == 0 && c.Defaults != nil && len(c.Defaults.Exclude) > 0 {
+			workflow.Exclude = c.Defaults.Exclude
+		}
+
+		// Set commit strategy defaults
+		if workflow.CommitStrategy != nil && workflow.CommitStrategy.Type == "" {
+			workflow.CommitStrategy.Type = "pull_request"
+		}
+
+		// Set deprecation check defaults
+		if workflow.DeprecationCheck != nil && workflow.DeprecationCheck.File == "" {
+			workflow.DeprecationCheck.File = "deprecated_examples.json"
 		}
 	}
 }
@@ -288,5 +431,164 @@ func NewMessageContext() *MessageContext {
 	return &MessageContext{
 		Variables: make(map[string]string),
 	}
+}
+
+// ============================================================================
+// Validation methods for workflow types
+// ============================================================================
+
+// Validate validates a workflow
+func (w *Workflow) Validate() error {
+	if w.Name == "" {
+		return fmt.Errorf("name is required")
+	}
+	if err := w.Source.Validate(); err != nil {
+		return fmt.Errorf("source: %w", err)
+	}
+	if err := w.Destination.Validate(); err != nil {
+		return fmt.Errorf("destination: %w", err)
+	}
+	if len(w.Transformations) == 0 {
+		return fmt.Errorf("at least one transformation is required")
+	}
+
+	for i, transform := range w.Transformations {
+		if err := transform.Validate(); err != nil {
+			return fmt.Errorf("transformations[%d]: %w", i, err)
+		}
+	}
+
+	// Validate commit strategy if provided
+	if w.CommitStrategy != nil {
+		if err := w.CommitStrategy.Validate(); err != nil {
+			return fmt.Errorf("commit_strategy: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// Validate validates a source
+func (s *Source) Validate() error {
+	if s.Repo == "" {
+		return fmt.Errorf("repo is required")
+	}
+	if s.Branch == "" {
+		s.Branch = "main" // default
+	}
+	return nil
+}
+
+// Validate validates a destination
+func (d *Destination) Validate() error {
+	if d.Repo == "" {
+		return fmt.Errorf("repo is required")
+	}
+	if d.Branch == "" {
+		d.Branch = "main" // default
+	}
+	return nil
+}
+
+// Validate validates a transformation
+func (t *Transformation) Validate() error {
+	// Count how many transformation types are set
+	count := 0
+	if t.Move != nil {
+		count++
+	}
+	if t.Copy != nil {
+		count++
+	}
+	if t.Glob != nil {
+		count++
+	}
+	if t.Regex != nil {
+		count++
+	}
+
+	if count == 0 {
+		return fmt.Errorf("one of move, copy, glob, or regex must be specified")
+	}
+	if count > 1 {
+		return fmt.Errorf("only one of move, copy, glob, or regex can be specified")
+	}
+
+	// Validate the specific transformation type
+	if t.Move != nil {
+		return t.Move.Validate()
+	}
+	if t.Copy != nil {
+		return t.Copy.Validate()
+	}
+	if t.Glob != nil {
+		return t.Glob.Validate()
+	}
+	if t.Regex != nil {
+		return t.Regex.Validate()
+	}
+
+	return nil
+}
+
+// Validate validates a move transformation
+func (m *MoveTransform) Validate() error {
+	if m.From == "" {
+		return fmt.Errorf("from is required")
+	}
+	if m.To == "" {
+		return fmt.Errorf("to is required")
+	}
+	return nil
+}
+
+// Validate validates a copy transformation
+func (c *CopyTransform) Validate() error {
+	if c.From == "" {
+		return fmt.Errorf("from is required")
+	}
+	if c.To == "" {
+		return fmt.Errorf("to is required")
+	}
+	return nil
+}
+
+// Validate validates a glob transformation
+func (g *GlobTransform) Validate() error {
+	if g.Pattern == "" {
+		return fmt.Errorf("pattern is required")
+	}
+	if g.Transform == "" {
+		return fmt.Errorf("transform is required")
+	}
+	return nil
+}
+
+// Validate validates a regex transformation
+func (r *RegexTransform) Validate() error {
+	if r.Pattern == "" {
+		return fmt.Errorf("pattern is required")
+	}
+	if r.Transform == "" {
+		return fmt.Errorf("transform is required")
+	}
+	return nil
+}
+
+// GetType returns the type of transformation
+func (t *Transformation) GetType() TransformationType {
+	if t.Move != nil {
+		return TransformationTypeMove
+	}
+	if t.Copy != nil {
+		return TransformationTypeCopy
+	}
+	if t.Glob != nil {
+		return TransformationTypeGlob
+	}
+	if t.Regex != nil {
+		return TransformationTypeRegex
+	}
+	return ""
 }
 

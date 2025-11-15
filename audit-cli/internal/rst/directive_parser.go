@@ -57,20 +57,26 @@ type SubDirective struct {
 }
 
 // Regular expressions for directive parsing
+//
+// Note: literalIncludeRegex is imported from directive_regex.go (LiteralIncludeDirectiveRegex)
+// The other regexes here are specific to the parser and have different matching requirements.
 var (
-	// Matches: .. literalinclude:: /path/to/file.php
-	literalIncludeRegex = regexp.MustCompile(`^\.\.\s+literalinclude::\s+(.+)$`)
+	// Alias for the shared literalinclude regex
+	literalIncludeRegex = LiteralIncludeDirectiveRegex
 
 	// Matches: .. code-block:: python (language is optional)
 	codeBlockRegex = regexp.MustCompile(`^\.\.\s+code-block::\s*(.*)$`)
 
-	// Matches: .. io-code-block::
+	// Matches: .. io-code-block:: (strict - must end after directive)
+	// This is different from IOCodeBlockDirectiveRegex which is more permissive
 	ioCodeBlockRegex = regexp.MustCompile(`^\.\.\s+io-code-block::\s*$`)
 
 	// Matches: .. input:: /path/to/file.cs (filepath is optional)
+	// This is different from InputDirectiveRegex which requires an argument
 	inputDirectiveRegex = regexp.MustCompile(`^\.\.\s+input::\s*(.*)$`)
 
 	// Matches: .. output:: /path/to/file.txt (filepath is optional)
+	// This is different from OutputDirectiveRegex which requires an argument
 	outputDirectiveRegex = regexp.MustCompile(`^\.\.\s+output::\s*(.*)$`)
 
 	// Matches directive options like:   :language: python

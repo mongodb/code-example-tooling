@@ -103,7 +103,7 @@ func buildIncludeTree(filePath string, visited map[string]bool, verbose bool, de
 	includeFiles, err := rst.FindIncludeDirectives(absPath)
 	if err != nil {
 		// Not a fatal error - file might not have includes
-		return node, nil
+		includeFiles = []string{}
 	}
 
 	if verbose && len(includeFiles) > 0 {
@@ -115,7 +115,7 @@ func buildIncludeTree(filePath string, visited map[string]bool, verbose bool, de
 	for _, includeFile := range includeFiles {
 		childNode, err := buildIncludeTree(includeFile, visited, verbose, depth+1)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to process include %s: %v\n", includeFile, err)
+			fmt.Fprintf(os.Stderr, "Warning: failed to process file %s: %v\n", includeFile, err)
 			continue
 		}
 		node.Children = append(node.Children, childNode)

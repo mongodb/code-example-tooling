@@ -277,8 +277,8 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 		return
 	}
 
-	// Get changed files from PR
-	changedFiles, err := GetFilesChangedInPr(prNumber)
+	// Get changed files from PR (from the source repository that triggered the webhook)
+	changedFiles, err := GetFilesChangedInPr(repoOwner, repoName, prNumber)
 	if err != nil {
 		LogAndReturnError(ctx, "get_files", "failed to get changed files", err)
 		container.MetricsCollector.RecordWebhookFailed()
@@ -460,6 +460,7 @@ func processFilesWithWorkflows(ctx context.Context, prNumber int, sourceCommitSH
 		container.PathTransformer,
 		container.FileStateService,
 		container.MetricsCollector,
+		container.MessageTemplater,
 	)
 
 	// Process each workflow

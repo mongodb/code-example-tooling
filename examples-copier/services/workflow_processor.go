@@ -23,6 +23,7 @@ type workflowProcessor struct {
 	pathTransformer  PathTransformer
 	fileStateService FileStateService
 	metricsCollector *MetricsCollector
+	messageTemplater MessageTemplater
 }
 
 // NewWorkflowProcessor creates a new workflow processor
@@ -31,12 +32,14 @@ func NewWorkflowProcessor(
 	pathTransformer PathTransformer,
 	fileStateService FileStateService,
 	metricsCollector *MetricsCollector,
+	messageTemplater MessageTemplater,
 ) WorkflowProcessor {
 	return &workflowProcessor{
 		patternMatcher:   patternMatcher,
 		pathTransformer:  pathTransformer,
 		fileStateService: fileStateService,
 		metricsCollector: metricsCollector,
+		messageTemplater: messageTemplater,
 	}
 }
 
@@ -129,7 +132,10 @@ func (wp *workflowProcessor) processFileForWorkflow(
 			wp.addToDeprecationMap(workflow, targetPath)
 		} else {
 			// Add to upload queue
-			wp.addToUploadQueue(workflow, file, targetPath, prNumber, sourceCommitSHA)
+			err := wp.addToUploadQueue(ctx, workflow, file, targetPath, prNumber, sourceCommitSHA)
+			if err != nil {
+				return false, fmt.Errorf("failed to queue file for upload: %w", err)
+			}
 		}
 
 		return true, nil
@@ -306,43 +312,89 @@ func (wp *workflowProcessor) addToDeprecationMap(workflow Workflow, targetPath s
 
 // addToUploadQueue adds a file to the upload queue
 func (wp *workflowProcessor) addToUploadQueue(
+	ctx context.Context,
 	workflow Workflow,
 	file ChangedFile,
 	targetPath string,
 	prNumber int,
 	sourceCommitSHA string,
-) {
+) error {
+	// Parse source repo owner/name
+	parts := strings.Split(workflow.Source.Repo, "/")
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid source repo format: expected owner/repo, got: %s", workflow.Source.Repo)
+	}
+	sourceRepoOwner := parts[0]
+	sourceRepoName := parts[1]
+
+	// Fetch file content from source repository
+	fileContent, err := RetrieveFileContentsWithConfigAndBranch(ctx, file.Path, sourceCommitSHA, sourceRepoOwner, sourceRepoName)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve file content: %w", err)
+	}
+
+	// Update file name to target path
+	fileContent.Name = github.String(targetPath)
+
 	// Create upload key
 	key := UploadKey{
 		RepoName:   workflow.Destination.Repo,
 		BranchPath: workflow.Destination.Branch,
 	}
 
-	// Get or create upload content
-	content, exists := FilesToUpload[key]
+	// Get existing entries from FileStateService
+	filesToUpload := wp.fileStateService.GetFilesToUpload()
+	content, exists := filesToUpload[key]
 	if !exists {
 		content = UploadFileContent{
 			Content:        []github.RepositoryContent{},
 			CommitStrategy: CommitStrategy(getCommitStrategyType(workflow)),
-			CommitMessage:  getCommitMessage(workflow),
-			PRTitle:        getPRTitle(workflow),
+			UsePRTemplate:  getUsePRTemplate(workflow),
 			AutoMergePR:    getAutoMerge(workflow),
 		}
 	}
 
-	// Add file to content (using github.RepositoryContent)
-	// Note: The actual file content will be fetched later by the upload process
-	content.Content = append(content.Content, github.RepositoryContent{
-		Path: github.String(targetPath),
-		// Additional fields will be populated during upload
-	})
+	// Add file to content
+	content.Content = append(content.Content, *fileContent)
 
-	FilesToUpload[key] = content
+	// Render templates with message context
+	msgCtx := NewMessageContext()
+	msgCtx.SourceRepo = workflow.Source.Repo
+	msgCtx.SourceBranch = workflow.Source.Branch
+	msgCtx.TargetRepo = workflow.Destination.Repo
+	msgCtx.TargetBranch = workflow.Destination.Branch
+	msgCtx.PRNumber = prNumber
+	msgCtx.CommitSHA = sourceCommitSHA
+	msgCtx.FileCount = len(content.Content)
+
+	// Render commit message
+	if workflow.CommitStrategy != nil && workflow.CommitStrategy.CommitMessage != "" {
+		content.CommitMessage = wp.messageTemplater.RenderCommitMessage(workflow.CommitStrategy.CommitMessage, msgCtx)
+	} else {
+		content.CommitMessage = fmt.Sprintf("Update from workflow: %s", workflow.Name)
+	}
+
+	// Render PR title
+	if workflow.CommitStrategy != nil && workflow.CommitStrategy.PRTitle != "" {
+		content.PRTitle = wp.messageTemplater.RenderPRTitle(workflow.CommitStrategy.PRTitle, msgCtx)
+	} else {
+		content.PRTitle = content.CommitMessage
+	}
+
+	// Render PR body
+	if workflow.CommitStrategy != nil && workflow.CommitStrategy.PRBody != "" {
+		content.PRBody = wp.messageTemplater.RenderPRBody(workflow.CommitStrategy.PRBody, msgCtx)
+	}
+
+	// Add back to FileStateService
+	wp.fileStateService.AddFileToUpload(key, content)
 
 	// Record metric (with zero duration since we're just queuing)
 	if wp.metricsCollector != nil {
 		wp.metricsCollector.RecordFileUploaded(0 * time.Second)
 	}
+
+	return nil
 }
 
 // Helper functions to extract config values
@@ -368,10 +420,23 @@ func getPRTitle(workflow Workflow) string {
 	return getCommitMessage(workflow)
 }
 
+func getPRBody(workflow Workflow) string {
+	if workflow.CommitStrategy != nil && workflow.CommitStrategy.PRBody != "" {
+		return workflow.CommitStrategy.PRBody
+	}
+	return ""
+}
+
+func getUsePRTemplate(workflow Workflow) bool {
+	if workflow.CommitStrategy != nil {
+		return workflow.CommitStrategy.UsePRTemplate
+	}
+	return false
+}
+
 func getAutoMerge(workflow Workflow) bool {
 	if workflow.CommitStrategy != nil {
 		return workflow.CommitStrategy.AutoMerge
 	}
 	return false
 }
-

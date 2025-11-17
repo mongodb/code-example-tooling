@@ -75,8 +75,11 @@ func (cl *DefaultConfigLoader) LoadConfigFromContent(content string, filename st
 
 // retrieveConfigFileContent fetches the config file content from the repository
 func retrieveConfigFileContent(ctx context.Context, filePath string, config *configs.Config) (string, error) {
-	// Get GitHub client
-	client := GetRestClient()
+	// Get GitHub client for the config repo's org (auto-discovers installation ID)
+	client, err := GetRestClientForOrg(config.ConfigRepoOwner)
+	if err != nil {
+		return "", fmt.Errorf("failed to get GitHub client for org %s: %w", config.ConfigRepoOwner, err)
+	}
 
 	// Fetch file content
 	fileContent, _, _, err := client.Repositories.GetContents(

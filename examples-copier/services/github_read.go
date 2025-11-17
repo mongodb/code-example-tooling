@@ -14,35 +14,54 @@ import (
 
 // GetFilesChangedInPr retrieves the list of files changed in a specified pull request.
 // It returns a slice of ChangedFile structures containing details about each changed file.
-func GetFilesChangedInPr(pr_number int) ([]ChangedFile, error) {
+// Parameters:
+//   - owner: The repository owner (e.g., "cbullinger")
+//   - repo: The repository name (e.g., "aggregation-tasks")
+//   - pr_number: The pull request number
+func GetFilesChangedInPr(owner string, repo string, pr_number int) ([]ChangedFile, error) {
 	if InstallationAccessToken == "" {
 		log.Println("No installation token provided")
 		ConfigurePermissions()
 	}
 
-	var prQuery PullRequestQuery
-	variables := map[string]interface{}{
-		"owner":  githubv4.String(os.Getenv(configs.ConfigRepoOwner)),
-		"name":   githubv4.String(os.Getenv(configs.ConfigRepoName)),
-		"number": githubv4.Int(pr_number),
-	}
-
 	client := GetGraphQLClient()
 	ctx := context.Background()
-	err := client.Query(ctx, &prQuery, variables)
-	if err != nil {
-		LogCritical(fmt.Sprintf("Failed to execute query GetFilesChanged: %v", err))
-		return nil, err
-	}
 
 	var changedFiles []ChangedFile
-	for _, edge := range prQuery.Repository.PullRequest.Files.Edges {
-		changedFiles = append(changedFiles, ChangedFile{
-			Path:      string(edge.Node.Path),
-			Additions: int(edge.Node.Additions),
-			Deletions: int(edge.Node.Deletions),
-			Status:    string(edge.Node.ChangeType),
-		})
+	var cursor *githubv4.String = nil
+	hasNextPage := true
+
+	// Paginate through all files
+	for hasNextPage {
+		var prQuery PullRequestQuery
+		variables := map[string]interface{}{
+			"owner":  githubv4.String(owner),
+			"name":   githubv4.String(repo),
+			"number": githubv4.Int(pr_number),
+			"cursor": cursor,
+		}
+
+		err := client.Query(ctx, &prQuery, variables)
+		if err != nil {
+			LogCritical(fmt.Sprintf("Failed to execute query GetFilesChanged: %v", err))
+			return nil, err
+		}
+
+		// Append files from this page
+		for _, edge := range prQuery.Repository.PullRequest.Files.Edges {
+			changedFiles = append(changedFiles, ChangedFile{
+				Path:      string(edge.Node.Path),
+				Additions: int(edge.Node.Additions),
+				Deletions: int(edge.Node.Deletions),
+				Status:    string(edge.Node.ChangeType),
+			})
+		}
+
+		// Check if there are more pages
+		hasNextPage = prQuery.Repository.PullRequest.Files.PageInfo.HasNextPage
+		if hasNextPage {
+			cursor = &prQuery.Repository.PullRequest.Files.PageInfo.EndCursor
+		}
 	}
 
 	LogInfo(fmt.Sprintf("PR has %d changed files.", len(changedFiles)))

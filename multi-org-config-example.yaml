@@ -72,9 +72,45 @@ workflows:
       - copy: { from: "mflix/.gitignore-python", to: ".gitignore" }
 
   # ==========================================================================
+  # MongoDB Org: Atlas SDK Go examples → Architecture Center
+  # ==========================================================================
+
+  - name: "atlas-sdk-go-project-examples"
+    source:
+      repo: "mongodb/docs-mongodb-internal"
+      branch: "main"
+    destination:
+      repo: "mongodb/atlas-architecture-go-sdk"
+      branch: "main"
+    transformations:
+      - glob:
+          pattern: "content/code-examples/tested/go/atlas-sdk/project-copy/**/*"
+          strip_prefix: "content/code-examples/tested/go/atlas-sdk/project-copy/"
+    pr_config:
+      title: "Update Atlas SDK Go examples from ${source_repo} PR ${pr_number}"
+      # Option 1: Use inline body
+      body: |
+        Automated update of Atlas SDK Go project examples
+
+        **Source Details:**
+        - Repository: ${source_repo}
+        - Branch: ${source_branch}
+        - Source PR: #${pr_number}
+        - Commit: ${commit_sha}
+
+        **Changes:**
+        - Files updated: ${file_count}
+      # Option 2: Reference a PR template from the target repo (uncomment to use)
+      # pr_template: ".github/pull_request_template.md"
+      auto_merge: false
+    deprecation_check:
+      enabled: true
+      file: "deprecated_examples.json"
+
+  # ==========================================================================
   # 10gen Org: internal university content → public university repos
   # ==========================================================================
-  
+
   - name: "university-python-course"
     source:
       repo: "10gen/university-content"

@@ -81,11 +81,11 @@ func retrieveConfigFileContent(ctx context.Context, filePath string, config *con
 	// Fetch file content
 	fileContent, _, _, err := client.Repositories.GetContents(
 		ctx,
-		config.RepoOwner,
-		config.RepoName,
+		config.ConfigRepoOwner,
+		config.ConfigRepoName,
 		filePath,
 		&github.RepositoryContentGetOptions{
-			Ref: config.SrcBranch,
+			Ref: config.ConfigRepoBranch,
 		},
 	)
 	if err != nil {

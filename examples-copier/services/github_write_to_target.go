@@ -24,8 +24,8 @@ var FilesToDeprecate map[string]Configs
 
 
 
-// repoOwner returns the repository owner from environment variables.
-func repoOwner() string { return os.Getenv(configs.RepoOwner) }
+// repoOwner returns the config repository owner from environment variables.
+func repoOwner() string { return os.Getenv(configs.ConfigRepoOwner) }
 
 // parseRepoPath parses a repository path in the format "owner/repo" and returns owner and repo separately.
 // If the path doesn't contain a slash, it returns the source repo owner from env and the path as repo name.

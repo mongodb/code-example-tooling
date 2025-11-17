@@ -12,8 +12,8 @@ import (
 type Config struct {
 	EnvFile              string
 	Port                 string
-	RepoName             string
-	RepoOwner            string
+	ConfigRepoName       string // Repository where config file is stored
+	ConfigRepoOwner      string // Owner of repository where config file is stored
 	AppId                string
 	AppClientId          string
 	InstallationId       string
@@ -22,7 +22,7 @@ type Config struct {
 	ConfigFile           string
 	DeprecationFile      string
 	WebserverPath        string
-	SrcBranch            string
+	ConfigRepoBranch     string // Branch to fetch config file from
 	PEMKeyName           string
 	WebhookSecretName    string
 	WebhookSecret        string
@@ -60,8 +60,8 @@ type Config struct {
 const (
 	EnvFile              = "ENV"
 	Port                 = "PORT"
-	RepoName             = "REPO_NAME"
-	RepoOwner            = "REPO_OWNER"
+	ConfigRepoName       = "CONFIG_REPO_NAME"
+	ConfigRepoOwner      = "CONFIG_REPO_OWNER"
 	AppId                = "GITHUB_APP_ID"
 	AppClientId          = "GITHUB_APP_CLIENT_ID"
 	InstallationId       = "INSTALLATION_ID"
@@ -70,7 +70,7 @@ const (
 	ConfigFile           = "CONFIG_FILE"
 	DeprecationFile      = "DEPRECATION_FILE"
 	WebserverPath        = "WEBSERVER_PATH"
-	SrcBranch            = "SRC_BRANCH"
+	ConfigRepoBranch     = "CONFIG_REPO_BRANCH"
 	PEMKeyName           = "PEM_NAME"
 	WebhookSecretName    = "WEBHOOK_SECRET_NAME"
 	WebhookSecret        = "WEBHOOK_SECRET"
@@ -106,7 +106,7 @@ func NewConfig() *Config {
 		ConfigFile:           "copier-config.yaml",
 		DeprecationFile:      "deprecated_examples.json",
 		WebserverPath:        "/webhook",
-		SrcBranch:            "main",                                                           // Default branch to copy from (NOTE: we are purposefully only allowing copying from `main` branch right now)
+		ConfigRepoBranch:     "main",                                                           // Default branch to fetch config file from
 		PEMKeyName:           "projects/1054147886816/secrets/CODE_COPIER_PEM/versions/latest", // default secret name for GCP Secret Manager
 		WebhookSecretName:    "projects/1054147886816/secrets/webhook-secret/versions/latest",  // default webhook secret name for GCP Secret Manager
 		CopierLogName:        "copy-copier-log",                                                // default log name for logging to GCP
@@ -152,8 +152,8 @@ func LoadEnvironment(envFile string) (*Config, error) {
 
 	// Populate config from environment variables, with defaults where applicable
 	config.Port = getEnvWithDefault(Port, config.Port)
-	config.RepoName = os.Getenv(RepoName)
-	config.RepoOwner = os.Getenv(RepoOwner)
+	config.ConfigRepoName = os.Getenv(ConfigRepoName)
+	config.ConfigRepoOwner = os.Getenv(ConfigRepoOwner)
 	config.AppId = os.Getenv(AppId)
 	config.AppClientId = os.Getenv(AppClientId)
 	config.InstallationId = os.Getenv(InstallationId)
@@ -162,7 +162,7 @@ func LoadEnvironment(envFile string) (*Config, error) {
 	config.ConfigFile = getEnvWithDefault(ConfigFile, config.ConfigFile)
 	config.DeprecationFile = getEnvWithDefault(DeprecationFile, config.DeprecationFile)
 	config.WebserverPath = getEnvWithDefault(WebserverPath, config.WebserverPath)
-	config.SrcBranch = getEnvWithDefault(SrcBranch, config.SrcBranch)
+	config.ConfigRepoBranch = getEnvWithDefault(ConfigRepoBranch, config.ConfigRepoBranch)
 	config.PEMKeyName = getEnvWithDefault(PEMKeyName, config.PEMKeyName)
 	config.WebhookSecretName = getEnvWithDefault(WebhookSecretName, config.WebhookSecretName)
 	config.WebhookSecret = os.Getenv(WebhookSecret)
@@ -199,8 +199,8 @@ func LoadEnvironment(envFile string) (*Config, error) {
 
 	// Export resolved values back into environment so downstream os.Getenv sees defaults
 	_ = os.Setenv(Port, config.Port)
-	_ = os.Setenv(RepoName, config.RepoName)
-	_ = os.Setenv(RepoOwner, config.RepoOwner)
+	_ = os.Setenv(ConfigRepoName, config.ConfigRepoName)
+	_ = os.Setenv(ConfigRepoOwner, config.ConfigRepoOwner)
 	_ = os.Setenv(AppId, config.AppId)
 	_ = os.Setenv(AppClientId, config.AppClientId)
 	_ = os.Setenv(InstallationId, config.InstallationId)
@@ -209,7 +209,7 @@ func LoadEnvironment(envFile string) (*Config, error) {
 	_ = os.Setenv(ConfigFile, config.ConfigFile)
 	_ = os.Setenv(DeprecationFile, config.DeprecationFile)
 	_ = os.Setenv(WebserverPath, config.WebserverPath)
-	_ = os.Setenv(SrcBranch, config.SrcBranch)
+	_ = os.Setenv(ConfigRepoBranch, config.ConfigRepoBranch)
 	_ = os.Setenv(PEMKeyName, config.PEMKeyName)
 	_ = os.Setenv(CopierLogName, config.CopierLogName)
 	_ = os.Setenv(GoogleCloudProjectId, config.GoogleCloudProjectId)
@@ -260,10 +260,10 @@ func validateConfig(config *Config) error {
 	var missingVars []string
 
 	requiredVars := map[string]string{
-		RepoName:       config.RepoName,
-		RepoOwner:      config.RepoOwner,
-		AppId:          config.AppId,
-		InstallationId: config.InstallationId,
+		ConfigRepoName:  config.ConfigRepoName,
+		ConfigRepoOwner: config.ConfigRepoOwner,
+		AppId:           config.AppId,
+		InstallationId:  config.InstallationId,
 	}
 
 	for name, value := range requiredVars {

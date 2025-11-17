@@ -44,13 +44,13 @@ func simpleVerifySignature(sigHeader string, body, secret []byte) bool {
 }
 
 // RetrieveFileContentsWithConfigAndBranch fetches file contents from a specific branch
-func RetrieveFileContentsWithConfigAndBranch(ctx context.Context, filePath string, branch string, config *configs.Config) (*github.RepositoryContent, error) {
+func RetrieveFileContentsWithConfigAndBranch(ctx context.Context, filePath string, branch string, repoOwner string, repoName string) (*github.RepositoryContent, error) {
 	client := GetRestClient()
 
 	fileContent, _, _, err := client.Repositories.GetContents(
 		ctx,
-		config.RepoOwner,
-		config.RepoName,
+		repoOwner,
+		repoName,
 		filePath,
 		&github.RepositoryContentGetOptions{
 			Ref: branch,
@@ -209,11 +209,9 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 		ConfigurePermissions()
 	}
 
-	// Update config with actual repository from webhook
-	config.RepoOwner = repoOwner
-	config.RepoName = repoName
-
 	// Load configuration using new loader
+	// Note: config.ConfigRepoOwner and config.ConfigRepoName are already set from env.yaml
+	// The webhook repoOwner/repoName are used for matching workflows, not for loading config
 	yamlConfig, err := container.ConfigLoader.LoadConfig(ctx, config)
 	if err != nil {
 		LogAndReturnError(ctx, "config_load", "failed to load config", err)
@@ -509,7 +507,7 @@ func processFileForTarget(ctx context.Context, prNumber int, sourceCommitSHA str
 			"status": file.Status,
 			"target": targetPath,
 		})
-		handleFileDeprecation(ctx, prNumber, sourceCommitSHA, file, rule, target, targetPath, yamlConfig.SourceBranch, config, container)
+		handleFileDeprecation(ctx, prNumber, sourceCommitSHA, file, rule, target, targetPath, yamlConfig.SourceBranch, yamlConfig.SourceRepo, config, container)
 		return
 	}
 
@@ -528,11 +526,20 @@ func handleFileCopyWithAudit(ctx context.Context, prNumber int, sourceCommitSHA 
 	config *configs.Config, container *ServiceContainer) {
 
 	startTime := time.Now()
-	sourceRepo := fmt.Sprintf("%s/%s", config.RepoOwner, config.RepoName)
+	sourceRepo := yamlConfig.SourceRepo
+
+	// Parse source repo owner/name
+	parts := strings.Split(sourceRepo, "/")
+	if len(parts) != 2 {
+		LogErrorCtx(ctx, "invalid source repo format", fmt.Errorf("expected owner/repo, got: %s", sourceRepo), nil)
+		return
+	}
+	sourceRepoOwner := parts[0]
+	sourceRepoName := parts[1]
 
 	// Retrieve file content from the source commit SHA (the merge commit)
 	// This ensures we fetch the exact version of the file that was merged
-	fc, err := RetrieveFileContentsWithConfigAndBranch(ctx, file.Path, sourceCommitSHA, config)
+	fc, err := RetrieveFileContentsWithConfigAndBranch(ctx, file.Path, sourceCommitSHA, sourceRepoOwner, sourceRepoName)
 	if err != nil {
 		// Log error event
 		container.AuditLogger.LogErrorEvent(ctx, &AuditEvent{
@@ -591,9 +598,7 @@ func handleFileCopyWithAudit(ctx context.Context, prNumber int, sourceCommitSHA 
 
 // handleFileDeprecation handles file deprecation with audit logging
 func handleFileDeprecation(ctx context.Context, prNumber int, sourceCommitSHA string, file types.ChangedFile,
-	rule types.CopyRule, target types.TargetConfig, targetPath string, sourceBranch string, config *configs.Config, container *ServiceContainer) {
-
-	sourceRepo := fmt.Sprintf("%s/%s", config.RepoOwner, config.RepoName)
+	rule types.CopyRule, target types.TargetConfig, targetPath string, sourceBranch string, sourceRepo string, config *configs.Config, container *ServiceContainer) {
 
 	// Check if deprecation is enabled for this target
 	if target.DeprecationCheck == nil || !target.DeprecationCheck.Enabled {
@@ -668,7 +673,7 @@ func queueFileForUploadWithStrategy(target types.TargetConfig, file github.Repos
 	// Render commit message, PR title, and PR body using templates
 	msgCtx := types.NewMessageContext()
 	msgCtx.RuleName = rule.Name
-	msgCtx.SourceRepo = fmt.Sprintf("%s/%s", config.RepoOwner, config.RepoName)
+	msgCtx.SourceRepo = yamlConfig.SourceRepo
 	msgCtx.SourceBranch = yamlConfig.SourceBranch
 	msgCtx.TargetRepo = target.Repo
 	msgCtx.TargetBranch = target.Branch
@@ -724,7 +729,7 @@ func finalizeBatchPRMetadata(yamlConfig *types.YAMLConfig, config *configs.Confi
 	for key, entry := range filesToUpload {
 		// Create message context with accurate file count
 		msgCtx := types.NewMessageContext()
-		msgCtx.SourceRepo = fmt.Sprintf("%s/%s", config.RepoOwner, config.RepoName)
+		msgCtx.SourceRepo = yamlConfig.SourceRepo
 		msgCtx.SourceBranch = yamlConfig.SourceBranch
 		msgCtx.TargetRepo = key.RepoName
 		msgCtx.TargetBranch = entry.TargetBranch

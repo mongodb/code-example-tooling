@@ -27,13 +27,13 @@ import (
 
 func TestMain(m *testing.M) {
 	// Minimal env so init() and any env readers are happy.
-	os.Setenv(configs.RepoOwner, "my-org")
-	os.Setenv(configs.RepoName, "target-repo")
+	os.Setenv(configs.ConfigRepoOwner, "my-org")
+	os.Setenv(configs.ConfigRepoName, "config-repo")
 	os.Setenv(configs.InstallationId, "12345")
 	os.Setenv(configs.AppId, "1166559")
 	os.Setenv(configs.AppClientId, "IvTestClientId")
 	os.Setenv("SKIP_SECRET_MANAGER", "true")
-	os.Setenv("SRC_BRANCH", "main")
+	os.Setenv(configs.ConfigRepoBranch, "main")
 
 	// Provide an RSA private key (both raw and b64) so ConfigurePermissions can parse.
 	key, _ := rsa.GenerateKey(rand.Reader, 1024)
@@ -45,8 +45,8 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	// Cleanup
-	os.Unsetenv(configs.RepoOwner)
-	os.Unsetenv(configs.RepoName)
+	os.Unsetenv(configs.ConfigRepoOwner)
+	os.Unsetenv(configs.ConfigRepoName)
 	os.Unsetenv(configs.InstallationId)
 	os.Unsetenv(configs.AppId)
 	os.Unsetenv(configs.AppClientId)

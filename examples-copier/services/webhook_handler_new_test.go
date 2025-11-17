@@ -85,8 +85,8 @@ func TestSimpleVerifySignature(t *testing.T) {
 
 func TestHandleWebhookWithContainer_MissingEventType(t *testing.T) {
 	config := &configs.Config{
-		RepoOwner:      "test-owner",
-		RepoName:       "test-repo",
+		ConfigRepoOwner: "test-owner",
+		ConfigRepoName:  "test-repo",
 		
 		AuditEnabled:   false,
 	}
@@ -115,8 +115,8 @@ func TestHandleWebhookWithContainer_MissingEventType(t *testing.T) {
 
 func TestHandleWebhookWithContainer_InvalidSignature(t *testing.T) {
 	config := &configs.Config{
-		RepoOwner:      "test-owner",
-		RepoName:       "test-repo",
+		ConfigRepoOwner: "test-owner",
+		ConfigRepoName:  "test-repo",
 		
 		WebhookSecret:  "test-secret",
 		AuditEnabled:   false,
@@ -144,8 +144,8 @@ func TestHandleWebhookWithContainer_InvalidSignature(t *testing.T) {
 func TestHandleWebhookWithContainer_ValidSignature(t *testing.T) {
 	secret := "test-secret"
 	config := &configs.Config{
-		RepoOwner:      "test-owner",
-		RepoName:       "test-repo",
+		ConfigRepoOwner: "test-owner",
+		ConfigRepoName:  "test-repo",
 		
 		WebhookSecret:  secret,
 		AuditEnabled:   false,
@@ -188,8 +188,8 @@ func TestHandleWebhookWithContainer_ValidSignature(t *testing.T) {
 
 func TestHandleWebhookWithContainer_NonPREvent(t *testing.T) {
 	config := &configs.Config{
-		RepoOwner:      "test-owner",
-		RepoName:       "test-repo",
+		ConfigRepoOwner: "test-owner",
+		ConfigRepoName:  "test-repo",
 		
 		AuditEnabled:   false,
 	}
@@ -220,8 +220,8 @@ func TestHandleWebhookWithContainer_NonPREvent(t *testing.T) {
 
 func TestHandleWebhookWithContainer_NonMergedPR(t *testing.T) {
 	config := &configs.Config{
-		RepoOwner:      "test-owner",
-		RepoName:       "test-repo",
+		ConfigRepoOwner: "test-owner",
+		ConfigRepoName:  "test-repo",
 		
 		AuditEnabled:   false,
 	}
@@ -267,8 +267,8 @@ func TestHandleWebhookWithContainer_MergedPR(t *testing.T) {
 	// 3. These are test values that won't affect other tests
 	os.Setenv(configs.AppId, "123456")
 	os.Setenv(configs.InstallationId, "789012")
-	os.Setenv(configs.RepoOwner, "test-owner")
-	os.Setenv(configs.RepoName, "test-repo")
+	os.Setenv(configs.ConfigRepoOwner, "test-owner")
+	os.Setenv(configs.ConfigRepoName, "test-repo")
 	os.Setenv("SKIP_SECRET_MANAGER", "true")
 
 	// Generate a valid RSA private key for testing
@@ -283,10 +283,10 @@ func TestHandleWebhookWithContainer_MergedPR(t *testing.T) {
 	InstallationAccessToken = "test-token"
 
 	config := &configs.Config{
-		RepoOwner:      "test-owner",
-		RepoName:       "test-repo",
-		ConfigFile:     "nonexistent-config.yaml", // Use nonexistent file to prevent actual config loading
-		AuditEnabled:   false,
+		ConfigRepoOwner: "test-owner",
+		ConfigRepoName:  "test-repo",
+		ConfigFile:      "nonexistent-config.yaml", // Use nonexistent file to prevent actual config loading
+		AuditEnabled:    false,
 	}
 
 	container, err := NewServiceContainer(config)

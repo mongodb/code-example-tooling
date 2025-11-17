@@ -22,8 +22,8 @@ func GetFilesChangedInPr(pr_number int) ([]ChangedFile, error) {
 
 	var prQuery PullRequestQuery
 	variables := map[string]interface{}{
-		"owner":  githubv4.String(os.Getenv(configs.RepoOwner)),
-		"name":   githubv4.String(os.Getenv(configs.RepoName)),
+		"owner":  githubv4.String(os.Getenv(configs.ConfigRepoOwner)),
+		"name":   githubv4.String(os.Getenv(configs.ConfigRepoName)),
 		"number": githubv4.Int(pr_number),
 	}
 
@@ -72,18 +72,18 @@ func GetFilesChangedInPr(pr_number int) ([]ChangedFile, error) {
 	return changedFiles, nil
 }
 
-// RetrieveFileContents fetches the contents of a file from the repository at the specified path.
+// RetrieveFileContents fetches the contents of a file from the config repository at the specified path.
 // It returns a github.RepositoryContent object containing the file details.
 func RetrieveFileContents(filePath string) (github.RepositoryContent, error) {
-	owner := os.Getenv(configs.RepoOwner)
-	repo := os.Getenv(configs.RepoName)
+	owner := os.Getenv(configs.ConfigRepoOwner)
+	repo := os.Getenv(configs.ConfigRepoName)
 	client := GetRestClient()
 	ctx := context.Background()
 
 	fileContent, _, _, err :=
 		client.Repositories.GetContents(ctx, owner, repo,
 			filePath, &github.RepositoryContentGetOptions{
-				Ref: os.Getenv(configs.SrcBranch),
+				Ref: os.Getenv(configs.ConfigRepoBranch),
 			})
 
 	if err != nil {

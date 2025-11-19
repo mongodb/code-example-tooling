@@ -1,0 +1,68 @@
+# Main Configuration File for the Dev Docs Copier App
+# This is the central config file that references individual workflow configs
+# Specified in app's env.yaml as MAIN_CONFIG_FILE
+
+# ============================================================================
+# GLOBAL DEFAULTS
+# ============================================================================
+# These defaults apply to all workflows across all workflow config files
+# unless overridden at the workflow config level or individual workflow level
+
+defaults:
+  commit_strategy:
+    type: "pull_request"
+    auto_merge: false
+  deprecation_check:
+    enabled: true
+    file: "deprecated_examples.json"
+  exclude:
+    - "**/.env"
+    - "**/.env.*"
+    - "**/node_modules/**"
+    - "**/.DS_Store"
+    - "**/coverage/**"
+    - "**/__pycache__/**"
+    - "**/*.pyc"
+
+# ============================================================================
+# WORKFLOW CONFIG REFERENCES
+# ============================================================================
+# App will auto-discover installation ID for source repo, then fetch the workflow config
+  
+workflow_configs:
+
+  # --------------------------------------------------------------------------
+  # SAMPLE APPS
+  # --------------------------------------------------------------------------
+  - source: "repo"
+    repo: "mongodb/docs-sample-apps"
+    branch: "main"  # optional, defaults to main
+    path: ".copier/workflows.yaml"
+    enabled: true
+
+  # --------------------------------------------------------------------------
+  # MONOREPO
+  # --------------------------------------------------------------------------
+  - source: "repo"
+    repo: "10gen/docs-mongodb-internal"
+    branch: "main"
+    path: ".copier/workflows.yaml"
+    enabled: true
+
+  # --------------------------------------------------------------------------
+  # DOCS CODE EXAMPLES (DISABLED)
+  # --------------------------------------------------------------------------
+  - source: "repo"
+    repo: "mongodb/docs-code-examples"
+    branch: "main"
+    path: ".copier/workflows.yaml"
+    enabled: false
+
+  # --------------------------------------------------------------------------
+  # ** TESTING **
+  # --------------------------------------------------------------------------
+  - source: "repo"
+    repo: "cbullinger/aggregation-tasks"
+    branch: "main"
+    path: "copier-config.yaml"
+    enabled: true

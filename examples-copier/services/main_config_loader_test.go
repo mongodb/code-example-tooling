@@ -674,3 +674,70 @@ workflow_configs:
 	assert.Equal(t, "mongodb/enabled-repo", yamlConfig.Workflows[0].Source.Repo)
 }
 
+func TestMainConfigLoader_LoadMainConfigFromContent_SourceContextInference(t *testing.T) {
+	_ = test.WithHTTPMock(t)
+	loader := services.NewMainConfigLoader().(*services.DefaultMainConfigLoader)
+	ctx := context.Background()
+	test.SetupOrgToken("mongodb", "test-token")
+
+	// Mock the workflow config file where workflows omit source.repo and source.branch
+	test.MockContentsEndpoint("mongodb", "docs-sample-apps", ".copier/workflows.yaml", b64MainConfig(`
+workflows:
+  - name: "mflix-java"
+    # source.repo and source.branch omitted - should be inferred from workflow config reference
+    destination:
+      repo: "mongodb/sample-app-java-mflix"
+      branch: "main"
+    transformations:
+      - move:
+          from: "mflix/client"
+          to: "client"
+
+  - name: "mflix-nodejs"
+    # Partial source - only specify what's different
+    source:
+      branch: "develop"  # Override branch, but repo should be inferred
+    destination:
+      repo: "mongodb/sample-app-nodejs-mflix"
+      branch: "main"
+    transformations:
+      - move:
+          from: "mflix/client"
+          to: "client"
+`))
+
+	mainConfigYAML := `
+workflow_configs:
+  - source: "repo"
+    repo: "mongodb/docs-sample-apps"
+    branch: "main"
+    path: ".copier/workflows.yaml"
+`
+
+	config := &configs.Config{
+		ConfigRepoOwner:  "mongodb",
+		ConfigRepoName:   "config-repo",
+		ConfigRepoBranch: "main",
+		MainConfigFile:   "main-config.yaml",
+	}
+
+	yamlConfig, err := loader.LoadMainConfigFromContent(ctx, mainConfigYAML, config)
+	require.NoError(t, err)
+	require.NotNil(t, yamlConfig)
+
+	// Verify workflows were loaded
+	assert.Len(t, yamlConfig.Workflows, 2)
+
+	// First workflow - source.repo and source.branch should be inferred
+	assert.Equal(t, "mflix-java", yamlConfig.Workflows[0].Name)
+	assert.Equal(t, "mongodb/docs-sample-apps", yamlConfig.Workflows[0].Source.Repo)
+	assert.Equal(t, "main", yamlConfig.Workflows[0].Source.Branch)
+	assert.Equal(t, "mongodb/sample-app-java-mflix", yamlConfig.Workflows[0].Destination.Repo)
+
+	// Second workflow - source.repo inferred, source.branch explicitly set
+	assert.Equal(t, "mflix-nodejs", yamlConfig.Workflows[1].Name)
+	assert.Equal(t, "mongodb/docs-sample-apps", yamlConfig.Workflows[1].Source.Repo)
+	assert.Equal(t, "develop", yamlConfig.Workflows[1].Source.Branch)
+	assert.Equal(t, "mongodb/sample-app-nodejs-mflix", yamlConfig.Workflows[1].Destination.Repo)
+}
+

@@ -31,13 +31,17 @@ workflows:
   # MFlix Java Application
   # --------------------------------------------------------------------------
   - name: "mflix-java"
-    source:
-      repo: "mongodb/docs-sample-apps"
-      branch: "main"
+    # NOTE: source.repo and source.branch are automatically inferred from the
+    # workflow config reference in the main config. No need to specify them!
+    # The main config references this file with:
+    #   source: "repo"
+    #   repo: "mongodb/docs-sample-apps"
+    #   branch: "main"
+    # So all workflows in this file inherit those values by default.
     destination:
       repo: "mongodb/sample-app-java-mflix"
       branch: "main"
-    
+
     # Transformations define how files are copied/moved
     transformations:
       - move:
@@ -76,13 +80,11 @@ workflows:
   # MFlix Node.js Application
   # --------------------------------------------------------------------------
   - name: "mflix-nodejs"
-    source:
-      repo: "mongodb/docs-sample-apps"
-      branch: "main"
+    # source.repo and source.branch inherited from workflow config reference
     destination:
       repo: "mongodb/sample-app-nodejs-mflix"
       branch: "main"
-    
+
     transformations:
       - move:
           from: "mflix/client"
@@ -117,13 +119,11 @@ workflows:
   # MFlix Python Application
   # --------------------------------------------------------------------------
   - name: "mflix-python"
-    source:
-      repo: "mongodb/docs-sample-apps"
-      branch: "main"
+    # source.repo and source.branch inherited from workflow config reference
     destination:
       repo: "mongodb/sample-app-python-mflix"
       branch: "main"
-    
+
     transformations:
       - move:
           from: "mflix/client"
@@ -178,6 +178,46 @@ workflows:
 #    - No central bottleneck
 #    - Easy to add new workflows
 #
+# 5. AUTOMATIC CONTEXT INFERENCE
+#    - No need to specify source.repo and source.branch in workflows
+#    - Automatically inherited from the workflow config reference
+#    - Less redundancy, cleaner configuration
+#    - Can still override if needed (e.g., different branch)
+#
+# ============================================================================
+# SOURCE CONTEXT INFERENCE
+# ============================================================================
+#
+# When a workflow config is referenced from a source repo, workflows can omit
+# source.repo and source.branch - they're automatically inferred!
+#
+# EXAMPLE 1: Fully inferred (most common)
+#   - name: "my-workflow"
+#     # source.repo and source.branch inherited from workflow config reference
+#     destination:
+#       repo: "mongodb/dest-repo"
+#     transformations:
+#       - move: { from: "src", to: "dest" }
+#
+# EXAMPLE 2: Override branch only
+#   - name: "my-workflow-develop"
+#     source:
+#       branch: "develop"  # Override branch, repo still inferred
+#     destination:
+#       repo: "mongodb/dest-repo"
+#     transformations:
+#       - move: { from: "src", to: "dest" }
+#
+# EXAMPLE 3: Explicit source (if needed)
+#   - name: "cross-repo-workflow"
+#     source:
+#       repo: "mongodb/other-repo"  # Explicitly specify different repo
+#       branch: "main"
+#     destination:
+#       repo: "mongodb/dest-repo"
+#     transformations:
+#       - move: { from: "src", to: "dest" }
+#
 # ============================================================================
 # USING REFERENCES FOR REUSABILITY
 # ============================================================================
@@ -199,9 +239,7 @@ workflows:
 #
 # workflows:
 #   - name: "mflix-java"
-#     source:
-#       repo: "mongodb/docs-sample-apps"
-#       branch: "main"
+#     # source.repo and source.branch inherited from workflow config reference
 #     destination:
 #       repo: "mongodb/sample-app-java-mflix"
 #       branch: "main"
@@ -217,17 +255,15 @@ workflows:
 # To add a new workflow to this source repo:
 #
 # 1. Add a new workflow entry to this file
-# 2. Define source, destination, and transformations
+# 2. Define destination and transformations
 # 3. Optionally override commit strategy
 # 4. Commit and push to source repo
 # 5. No changes needed to main config!
 #
-# Example:
+# Example (with source context inference):
 #
 # - name: "new-app-java"
-#   source:
-#     repo: "mongodb/docs-sample-apps"
-#     branch: "main"
+#   # source.repo and source.branch inherited automatically
 #   destination:
 #     repo: "mongodb/sample-app-java-newapp"
 #     branch: "main"

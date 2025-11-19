@@ -141,6 +141,9 @@ func (mcl *DefaultMainConfigLoader) resolveWorkflowReferences(ctx context.Contex
 			return nil, fmt.Errorf("failed to load workflow config [%d]: %w", i, err)
 		}
 
+		// Apply source context (allows workflows to omit source.repo/branch)
+		workflowConfig.ApplySourceContext()
+
 		// Apply global defaults to workflow config
 		workflowConfig.ApplyGlobalDefaults(mainConfig.Defaults)
 
@@ -274,7 +277,16 @@ func (mcl *DefaultMainConfigLoader) loadRemoteWorkflowConfig(ctx context.Context
 		"path":   ref.Path,
 	})
 
-	return mcl.parseWorkflowConfig(content, ref.Path)
+	workflowConfig, err := mcl.parseWorkflowConfig(content, ref.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set source context so workflows can omit source.repo and source.branch
+	workflowConfig.SourceRepo = ref.Repo
+	workflowConfig.SourceBranch = ref.Branch
+
+	return workflowConfig, nil
 }
 
 // parseWorkflowConfig parses a workflow config from content

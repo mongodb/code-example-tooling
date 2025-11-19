@@ -87,6 +87,10 @@ type WorkflowConfigRef struct {
 type WorkflowConfig struct {
 	Defaults  *Defaults  `yaml:"defaults,omitempty" json:"defaults,omitempty"`
 	Workflows []Workflow `yaml:"workflows" json:"workflows"`
+
+	// Context information (not from YAML, set by loader)
+	SourceRepo   string `yaml:"-" json:"-"` // Source repo this config came from (for context inference)
+	SourceBranch string `yaml:"-" json:"-"` // Source branch this config came from (for context inference)
 }
 
 // ============================================================================
@@ -394,6 +398,28 @@ func (w *WorkflowConfig) SetDefaults() {
 		// Set deprecation check defaults
 		if workflow.DeprecationCheck != nil && workflow.DeprecationCheck.File == "" {
 			workflow.DeprecationCheck.File = "deprecated_examples.json"
+		}
+	}
+}
+
+// ApplySourceContext applies source repo/branch context to workflows that don't specify them
+// This allows workflows in source repos to omit the source.repo and source.branch fields
+func (w *WorkflowConfig) ApplySourceContext() {
+	if w.SourceRepo == "" {
+		return // No context to apply
+	}
+
+	for i := range w.Workflows {
+		workflow := &w.Workflows[i]
+
+		// Apply source repo if not specified
+		if workflow.Source.Repo == "" {
+			workflow.Source.Repo = w.SourceRepo
+		}
+
+		// Apply source branch if not specified
+		if workflow.Source.Branch == "" && w.SourceBranch != "" {
+			workflow.Source.Branch = w.SourceBranch
 		}
 	}
 }

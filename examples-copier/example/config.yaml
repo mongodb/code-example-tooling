@@ -1,0 +1,182 @@
+# Workflow Configuration File
+# This file lives in the source repository (e.g., mongodb/docs-sample-apps/.copier/workflows.yaml)
+# Referenced from main config file
+
+# ============================================================================
+# LOCAL DEFAULTS
+# ============================================================================
+# These defaults apply to all workflows in this file
+# They override main config defaults but can be overridden by individual workflows
+
+defaults:
+  commit_strategy:
+    type: "pull_request"
+    auto_merge: false
+  deprecation_check:
+    enabled: true
+    file: "deprecated_examples.json"
+  exclude:
+    - "**/.env"
+    - "**/.env.*"
+    - "**/node_modules/**"
+    - "**/.DS_Store"
+    - "\\.gitignore$"
+    - "README.md$"
+
+# ============================================================================
+# WORKFLOWS
+# ============================================================================
+# Each workflow defines a complete source → destination mapping
+
+workflows:
+  # --------------------------------------------------------------------------
+  # MFlix Java Application
+  # --------------------------------------------------------------------------
+  - name: "mflix-java"
+    # NOTE: source.repo and source.branch are automatically inferred from the
+    # workflow config reference in the main config. No need to specify them!
+    # The main config references this file with:
+    #   source: "repo"
+    #   repo: "mongodb/docs-sample-apps"
+    #   branch: "main"
+    # So all workflows in this file inherit those values by default.
+    destination:
+      repo: "mongodb/sample-app-java-mflix"
+      branch: "main"
+    transformations:
+      - move: { from: "mflix/client", to: "client" }
+      - move: { from: "mflix/server/java-spring", to: "server" }
+      - copy: { from: "mflix/README-JAVA-SPRING.md", to: "README.md" }
+      - copy: { from: "mflix/.gitignore-java", to: ".gitignore" }
+    commit_strategy:
+      type: "pull_request"
+      pr_title: "Update MFlix client and Java server from docs-sample-apps"
+      use_pr_template: true
+      pr_body: |
+        Automated update of MFlix Next.js client and Java Spring Boot server
+
+        Source: ${source_repo}
+        PR: #${pr_number}
+        Commit: ${commit_sha}
+      auto_merge: false
+
+  # --------------------------------------------------------------------------
+  # MFlix Node.js Application
+  # --------------------------------------------------------------------------
+  - name: "mflix-nodejs"
+    # source.repo and source.branch inherited from workflow config reference
+    destination:
+      repo: "mongodb/sample-app-nodejs-mflix"
+      branch: "main"
+    transformations:
+      - move: { from: "mflix/client", to: "client" }
+      - move: { from: "mflix/server/js-express", to: "server" }
+      - copy: { from: "mflix/README-JAVASCRIPT-EXPRESS.md", to: "README.md" }
+      - copy: { from: "mflix/.gitignore-js", to: ".gitignore" }
+    commit_strategy:
+      type: "pull_request"
+      pr_title: "Update MFlix client and Express server from docs-sample-apps"
+      use_pr_template: true
+      pr_body: |
+        Automated update of MFlix Next.js client and Express.js server
+
+        Source: ${source_repo}
+        PR: #${pr_number}
+        Commit: ${commit_sha}
+      auto_merge: false
+
+  # --------------------------------------------------------------------------
+  # MFlix Python Application
+  # --------------------------------------------------------------------------
+  - name: "mflix-python"
+    # source.repo and source.branch inherited from workflow config reference
+    destination:
+      repo: "mongodb/sample-app-python-mflix"
+      branch: "main"
+    transformations:
+      - move: { from: "mflix/client", to: "client" }
+      - move: { from: "mflix/server/python-fastapi", to: "server" }
+      - copy: { from: "mflix/README-PYTHON-FASTAPI.md", to: "README.md" }
+      - copy: { from: "mflix/.gitignore-python", to: ".gitignore" }
+    commit_strategy:
+      type: "pull_request"
+      pr_title: "Update MFlix client and Python server from docs-sample-apps"
+      use_pr_template: true
+      pr_body: |
+        Automated update of MFlix Next.js client and Python FastAPI server
+
+        Source: ${source_repo}
+        PR: #${pr_number}
+        Commit: ${commit_sha}
+      auto_merge: false
+#
+# ============================================================================
+# USING REFERENCES FOR REUSABILITY (FUTURE ENHANCEMENT)
+# ============================================================================
+#
+# NOTE: $ref support is planned but not yet fully implemented.
+# The infrastructure exists but needs additional work to be production-ready.
+#
+# For even better organization, you will be able to extract common parts into
+# separate files:
+#
+# .copier/
+#   workflows.yaml                    # This file (references others)
+#   transformations/
+#     mflix-java.yaml                 # Java transformations
+#     mflix-nodejs.yaml               # Node.js transformations
+#     mflix-python.yaml               # Python transformations
+#   strategies/
+#     mflix-pr-strategy.yaml          # Common PR strategy
+#   common/
+#     mflix-excludes.yaml             # Common exclude patterns
+#
+# Then use $ref to reference them:
+#
+# workflows:
+#   - name: "mflix-java"
+#     # source.repo and source.branch inherited from workflow config reference
+#     destination:
+#       repo: "mongodb/sample-app-java-mflix"
+#       branch: "main"
+#     transformations:
+#       $ref: "transformations/mflix-java.yaml"
+#     commit_strategy:
+#       $ref: "strategies/mflix-pr-strategy.yaml"
+#
+# ============================================================================
+# ADDING A NEW WORKFLOW
+# ============================================================================
+#
+# To add a new workflow to this source repo:
+#
+# 1. Add a new workflow entry to this file
+# 2. Define destination and transformations
+# 3. Optionally override commit strategy
+# 4. Commit and push to source repo
+# 5. No changes needed to main config!
+#
+# Example (with source context inference):
+#
+# - name: "new-app-java"
+#   # source.repo and source.branch inherited automatically
+#   destination:
+#     repo: "mongodb/sample-app-java-newapp"
+#     branch: "main"
+#   transformations:
+#     - move: { from: "newapp/client", to: "client" }
+#     - move: { from: "newapp/server/java", to: "server" }
+#
+# ============================================================================
+# TESTING WORKFLOW CONFIGS
+# ============================================================================
+#
+# You can test workflow configs locally before deploying:
+#
+# 1. Create a test config file
+# 2. Use DRY_RUN=true to test without making changes
+# 3. Validate transformations work as expected
+# 4. Check PR titles and bodies
+#
+# ============================================================================
+

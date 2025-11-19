@@ -1,0 +1,22 @@
+# Reusable Commit Strategy File
+# This file contains a commit strategy definition that can be referenced from workflow configs
+# Location: .copier/strategies/mflix-pr-strategy.yaml (in source repo)
+
+# ============================================================================
+# MFLIX PR STRATEGY
+# ============================================================================
+# This strategy is used for all MFlix application workflows
+# It creates a PR with a standard title and body
+
+type: "pull_request"
+pr_title: "Update MFlix application from docs-sample-apps"
+use_pr_template: true
+pr_body: |
+  Automated update of MFlix application files from the source repository
+
+  Source: ${source_repo}
+  PR: #${pr_number}
+  Commit: ${commit_sha}
+  ---
+  *This PR was automatically created by the DevDocs Copier App.*
+auto_merge: false

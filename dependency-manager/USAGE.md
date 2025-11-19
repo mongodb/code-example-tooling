@@ -129,6 +129,8 @@ Updates dependency files AND installs/syncs the new dependencies.
 |------|-------|---------|-------------|
 | `--path` | `-p` | `.` (current directory) | Starting filepath or directory to scan |
 | `--help` | `-h` | - | Show help information |
+| `--direct-only` | - | `false` | Only check direct dependencies (excludes indirect/dev dependencies - only supported for npm and Go) |
+| `--ignore` | - | - | Additional directory names to ignore during scanning (can be specified multiple times) |
 
 ### Examples
 
@@ -179,7 +181,7 @@ git commit -m "chore: update dependencies"
 
 ```bash
 # In your CI pipeline, check for outdated dependencies
-./depman check --path . || echo "Some dependencies are outdated"
+./depman check --path . --quiet || echo "Some dependencies are outdated"
 
 # Optionally fail the build if there are major updates
 # (requires custom scripting to parse output)

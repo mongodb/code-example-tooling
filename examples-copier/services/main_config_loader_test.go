@@ -902,3 +902,84 @@ workflow_configs:
 	assert.Empty(t, workflow2.Exclude)
 }
 
+func TestMainConfigLoader_LoadMainConfigFromContent_ResilientToMissingConfigs(t *testing.T) {
+	_ = test.WithHTTPMock(t)
+	loader := services.NewMainConfigLoader().(*services.DefaultMainConfigLoader)
+	ctx := context.Background()
+
+	// Setup org token to bypass GitHub App authentication
+	test.SetupOrgToken("mongodb", "test-token")
+
+	// Mock successful response for working repo
+	workingRepoConfig := `
+workflows:
+  - name: "working-workflow"
+    source:
+      repo: "mongodb/working-repo"
+      branch: "main"
+    destination:
+      repo: "mongodb/dest-repo"
+      branch: "main"
+    transformations:
+      - move:
+          from: "src"
+          to: "dest"
+`
+	test.MockContentsEndpoint("mongodb", "working-repo", ".copier/workflows.yaml", b64MainConfig(workingRepoConfig))
+
+	// Don't mock missing repos - they will return 404
+	// mongodb/missing-repo-1 and mongodb/missing-repo-2 will return 404
+
+	mainConfigYAML := `
+defaults:
+  commit_strategy:
+    type: "pull_request"
+    auto_merge: false
+
+workflow_configs:
+  # This one will fail - file doesn't exist
+  - source: "repo"
+    repo: "mongodb/missing-repo-1"
+    branch: "main"
+    path: ".copier/workflows.yaml"
+    enabled: true
+
+  # This one will succeed
+  - source: "repo"
+    repo: "mongodb/working-repo"
+    branch: "main"
+    path: ".copier/workflows.yaml"
+    enabled: true
+
+  # This one will also fail - file doesn't exist
+  - source: "repo"
+    repo: "mongodb/missing-repo-2"
+    branch: "main"
+    path: ".copier/workflows.yaml"
+    enabled: true
+`
+
+	config := &configs.Config{
+		ConfigFile:       ".copier/workflows/main.yaml",
+		ConfigRepoOwner:  "mongodb",
+		ConfigRepoName:   "code-example-tooling",
+		ConfigRepoBranch: "main",
+	}
+
+	yamlConfig, err := loader.LoadMainConfigFromContent(ctx, mainConfigYAML, config)
+
+	// Should NOT fail completely - should continue processing
+	require.NoError(t, err)
+	require.NotNil(t, yamlConfig)
+
+	// Should have loaded only the working workflow (1 workflow)
+	// The two missing configs should have been skipped with warnings
+	require.Len(t, yamlConfig.Workflows, 1)
+
+	// Verify the working workflow was loaded correctly
+	workflow := yamlConfig.Workflows[0]
+	assert.Equal(t, "working-workflow", workflow.Name)
+	assert.Equal(t, "mongodb/working-repo", workflow.Source.Repo)
+	assert.Equal(t, "mongodb/dest-repo", workflow.Destination.Repo)
+}
+

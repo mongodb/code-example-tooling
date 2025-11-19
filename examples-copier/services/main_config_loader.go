@@ -138,7 +138,16 @@ func (mcl *DefaultMainConfigLoader) resolveWorkflowReferences(ctx context.Contex
 
 		workflowConfig, err := mcl.loadWorkflowConfig(ctx, &ref, config)
 		if err != nil {
-			return nil, fmt.Errorf("failed to load workflow config [%d]: %w", i, err)
+			// Log warning and continue instead of failing completely
+			// This allows the app to process other workflow configs even if one is missing
+			LogWarningCtx(ctx, "failed to load workflow config, skipping", map[string]interface{}{
+				"index":  i,
+				"source": ref.Source,
+				"path":   ref.Path,
+				"repo":   ref.Repo,
+				"error":  err.Error(),
+			})
+			continue
 		}
 
 		// Apply source context (allows workflows to omit source.repo/branch)
@@ -152,7 +161,12 @@ func (mcl *DefaultMainConfigLoader) resolveWorkflowReferences(ctx context.Contex
 
 		// Validate workflow config
 		if err := workflowConfig.Validate(); err != nil {
-			return nil, fmt.Errorf("workflow config [%d] validation failed: %w", i, err)
+			// Log warning and continue instead of failing completely
+			LogWarningCtx(ctx, "workflow config validation failed, skipping", map[string]interface{}{
+				"index": i,
+				"error": err.Error(),
+			})
+			continue
 		}
 
 		// Merge workflows into the main config

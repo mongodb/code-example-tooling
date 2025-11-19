@@ -1,24 +1,26 @@
 # GitHub Docs Code Example Copier
 
-A GitHub app that automatically copies code examples and files from a source repository to one or more target 
-repositories when pull requests are merged. Features advanced pattern matching, path transformations, audit logging, 
-and comprehensive monitoring.
+A GitHub app that automatically copies code examples and files from source repositories to target repositories when pull requests are merged. Features centralized configuration with distributed workflow management, $ref support for reusable components, advanced pattern matching, and comprehensive monitoring.
 
 ## Features
 
 ### Core Functionality
+- **Main Config System** - Centralized configuration with distributed workflow management
+- **Source Context Inference** - Workflows automatically inherit source repo/branch
+- **$ref Support** - Reusable components for transformations, strategies, and excludes
+- **Resilient Loading** - Continues processing when individual configs fail (logs warnings)
 - **Automated File Copying** - Copies files from source to target repos on PR merge
 - **Advanced Pattern Matching** - Prefix, glob, and regex patterns with variable extraction
 - **Path Transformations** - Template-based path transformations with variable substitution
-- **Multiple Targets** - Copy files to multiple repositories and branches
 - **Flexible Commit Strategies** - Direct commits or pull requests with auto-merge
 - **Deprecation Tracking** - Automatic tracking of deleted files
 
 ### Enhanced Features
-- **YAML Configuration** - Modern workflow-based YAML configuration
+- **Workflow References** - Local, remote (repo), or inline workflow configs
+- **Default Precedence** - Workflow > Workflow config > Main config > System defaults
 - **Message Templating** - Template-ized commit messages and PR titles
 - **PR Template Integration** - Fetch and merge PR templates from target repos
-- **File Exclusion** - Exclude patterns to filter out unwanted files (`.gitignore`, `node_modules`, etc.)
+- **File Exclusion** - Exclude patterns to filter out unwanted files
 - **Audit Logging** - MongoDB-based event tracking for all operations
 - **Health & Metrics** - `/health` and `/metrics` endpoints for monitoring
 - **Development Tools** - Dry-run mode, CLI validation, enhanced logging
@@ -55,74 +57,80 @@ go build -o config-validator ./cmd/config-validator
 1. **Copy environment example file**
 
 ```bash
-# For local development
-cp configs/.env.local.example configs/.env
-
-# Or for YAML-based configuration
-cp configs/env.yaml.example env.yaml
+cp env.yaml.example env.yaml
 ```
 
 2. **Set required environment variables**
 
-```bash
+```yaml
 # GitHub Configuration
-REPO_OWNER=your-org
-REPO_NAME=your-repo
-SRC_BRANCH=main
-GITHUB_APP_ID=123456
-GITHUB_INSTALLATION_ID=789012
+GITHUB_APP_ID: "123456"
+INSTALLATION_ID: "789012"  # Optional fallback
 
-# Google Cloud
-GCP_PROJECT_ID=your-project
-PEM_KEY_NAME=projects/123/secrets/<name>/versions/latest
-WEBHOOK_SECRET_NAME=projects/123/secrets/webhook-secret
+# Config Repository (where main config lives)
+CONFIG_REPO_OWNER: "your-org"
+CONFIG_REPO_NAME: "config-repo"
+CONFIG_REPO_BRANCH: "main"
+
+# Main Config
+MAIN_CONFIG_FILE: ".copier/workflows/main.yaml"
+USE_MAIN_CONFIG: "true"
+
+# Secret Manager References
+GITHUB_APP_PRIVATE_KEY_SECRET_NAME: "projects/.../secrets/PEM/versions/latest"
+WEBHOOK_SECRET_NAME: "projects/.../secrets/webhook-secret/versions/latest"
 
 # Application Settings
-PORT=8080
-CONFIG_FILE=copier-config.yaml
-DEPRECATION_FILE=deprecated_examples.json
+WEBSERVER_PATH: "/events"
+DEPRECATION_FILE: "deprecated_examples.json"
+COMMITTER_NAME: "GitHub Copier App"
+COMMITTER_EMAIL: "bot@mongodb.com"
 
-# Optional: MongoDB Audit Logging
-AUDIT_ENABLED=true
-MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net
-AUDIT_DATABASE=code_copier
-AUDIT_COLLECTION=audit_events
-
-# Optional: Development Features
-DRY_RUN=false
-METRICS_ENABLED=true
+# Feature Flags
+AUDIT_ENABLED: "false"
+METRICS_ENABLED: "true"
 ```
 
-3. **Create configuration file**
+3. **Create main configuration file**
 
-Create `copier-config.yaml` in your source repository:
+Create `.copier/workflows/main.yaml` in your config repository:
+
+```yaml
+# Main config with global defaults and workflow references
+defaults:
+  commit_strategy:
+    type: "pull_request"
+    auto_merge: false
+  exclude:
+    - "**/.env"
+    - "**/node_modules/**"
+
+workflow_configs:
+  # Reference workflows in source repo
+  - source: "repo"
+    repo: "your-org/source-repo"
+    branch: "main"
+    path: ".copier/workflows/config.yaml"
+    enabled: true
+```
+
+4. **Create workflow config in source repository**
+
+Create `.copier/workflows/config.yaml` in your source repository:
 
 ```yaml
 workflows:
-  - name: "Copy code examples"
-    source:
-      repo: "your-org/source-repo"
-      branch: "main"
+  - name: "copy-examples"
+    # source.repo and source.branch inherited from workflow config reference
     destination:
       repo: "your-org/target-repo"
       branch: "main"
     transformations:
-      - move:
-          from: "examples"
-          to: "docs/examples"
-    exclude:
-      - "**/.gitignore"
-      - "**/node_modules/**"
-      - "**/.env"
+      - move: { from: "examples", to: "docs/examples" }
     commit_strategy:
       type: "pull_request"
       pr_title: "Update code examples"
-      pr_body: "Automated update of code examples"
       use_pr_template: true
-      auto_merge: false
-    deprecation_check:
-      enabled: true
-      file: "deprecated_examples.json"
 ```
 
 ### Running the Application
@@ -142,6 +150,16 @@ workflows:
 ```
 
 ## Configuration
+
+See [MAIN-CONFIG-README.md](configs/copier-config-examples/MAIN-CONFIG-README.md) for complete configuration documentation.
+
+### Main Config Structure
+
+The application uses a three-tier configuration system:
+
+1. **Main Config** - Centralized defaults and workflow references
+2. **Workflow Configs** - Collections of workflows (local, remote, or inline)
+3. **Individual Workflows** - Specific source → destination mappings
 
 ### Transformation Types
 
@@ -233,6 +251,41 @@ commit_strategy:
 
 ### Advanced Features
 
+#### $ref Support for Reusable Components
+
+Extract common configurations into separate files:
+
+```yaml
+# Workflow config
+workflows:
+  - name: "mflix-java"
+    destination:
+      repo: "mongodb/sample-app-java-mflix"
+      branch: "main"
+    transformations:
+      $ref: "../transformations/mflix-java.yaml"
+    commit_strategy:
+      $ref: "../strategies/mflix-pr-strategy.yaml"
+    exclude:
+      $ref: "../common/mflix-excludes.yaml"
+```
+
+#### Source Context Inference
+
+Workflows automatically inherit source repo/branch from workflow config reference:
+
+```yaml
+# No need to specify source.repo and source.branch!
+workflows:
+  - name: "my-workflow"
+    # source.repo and source.branch inherited automatically
+    destination:
+      repo: "mongodb/dest-repo"
+      branch: "main"
+    transformations:
+      - move: { from: "src", to: "dest" }
+```
+
 #### PR Template Integration
 
 Automatically fetch and merge PR templates from target repositories:
@@ -240,43 +293,21 @@ Automatically fetch and merge PR templates from target repositories:
 ```yaml
 commit_strategy:
   type: "pull_request"
-  pr_body: |
-    🤖 Automated update
-    Files: ${file_count}
+  pr_body: "🤖 Automated update"
   use_pr_template: true  # Fetches .github/pull_request_template.md
 ```
 
-**Result:** PR description shows the target repo's template first (with checklists and guidelines), followed by your configured content.
-
 #### File Exclusion
 
-Exclude unwanted files from being copied at the workflow level:
+Exclude unwanted files at the workflow or workflow config level:
 
 ```yaml
-workflows:
-  - name: "Copy examples"
-    source:
-      repo: "owner/source-repo"
-      branch: "main"
-    destination:
-      repo: "owner/target-repo"
-      branch: "main"
-    transformations:
-      - move:
-          from: "examples"
-          to: "code"
-    exclude:
-      - "**/.gitignore"      # Exclude .gitignore files
-      - "**/node_modules/**" # Exclude dependencies
-      - "**/.env"            # Exclude environment files
-      - "**/dist/**"         # Exclude build artifacts
-      - "**/*.test.js"       # Exclude test files
+exclude:
+  - "**/.gitignore"
+  - "**/node_modules/**"
+  - "**/.env"
+  - "**/dist/**"
 ```
-
-**Use cases:**
-- Filter out configuration files
-- Exclude build artifacts and dependencies
-- Skip test files or documentation
 
 ### Message Templates
 
@@ -504,19 +535,20 @@ container := NewServiceContainer(config)
 
 ## Deployment
 
-See [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for complete deployment guide for step-by-step checklist.
+See [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for complete deployment guide.
 
-### Google Cloud App Engine
+### Google Cloud Run
 
 ```bash
-gcloud app deploy
+cd examples-copier
+./scripts/deploy-cloudrun.sh
 ```
 
 ### Docker
 
 ```bash
 docker build -t examples-copier .
-docker run -p 8080:8080 --env-file .env examples-copier
+docker run -p 8080:8080 --env-file env.yaml examples-copier
 ```
 
 ## Security
@@ -530,7 +562,8 @@ docker run -p 8080:8080 --env-file .env examples-copier
 
 ### Getting Started
 
-- **[Configuration Guide](docs/CONFIGURATION-GUIDE.md)** - Complete configuration reference
+- **[Main Config README](configs/copier-config-examples/MAIN-CONFIG-README.md)** - Complete main config documentation
+- **[Quick Start Guide](configs/copier-config-examples/QUICK-START-MAIN-CONFIG.md)** - Get started in 5 minutes
 - **[Pattern Matching Guide](docs/PATTERN-MATCHING-GUIDE.md)** - Pattern matching with examples
 - **[Local Testing](docs/LOCAL-TESTING.md)** - Test locally before deploying
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Deploy to production
@@ -540,7 +573,6 @@ docker run -p 8080:8080 --env-file .env examples-copier
 - **[Architecture](docs/ARCHITECTURE.md)** - System design and components
 - **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[FAQ](docs/FAQ.md)** - Frequently asked questions
-- **[Debug Logging](docs/DEBUG-LOGGING.md)** - Debug logging configuration
 - **[Deprecation Tracking](docs/DEPRECATION-TRACKING-EXPLAINED.md)** - How deprecation tracking works
 
 ### Features
@@ -550,6 +582,4 @@ docker run -p 8080:8080 --env-file .env examples-copier
 
 ### Tools
 
-- **[config-validator](cmd/config-validator/README.md)** - Validate and test configurations
-- **[test-webhook](cmd/test-webhook/README.md)** - Test webhook processing
-- **[Scripts](scripts/README.md)** - Helper scripts
+- **[Scripts](scripts/README.md)** - Helper scripts for deployment and testing

@@ -54,6 +54,14 @@ workflow_configs:
   # --------------------------------------------------------------------------
   # Reference workflow configs in source repositories
   # This allows each source repo to manage its own workflow configurations
+  #
+  # IMPORTANT: Workflows in repo-sourced configs automatically inherit the
+  # repo and branch from this reference! They don't need to specify
+  # source.repo or source.branch unless overriding.
+  #
+  # Example: If you reference mongodb/docs-sample-apps, workflows in that
+  # config file can omit source.repo and source.branch - they'll be
+  # automatically inferred from this reference.
 
   - source: "repo"
     repo: "mongodb/docs-sample-apps"
@@ -62,6 +70,7 @@ workflow_configs:
     enabled: true  # Optional: explicitly enable (default: true)
     # This fetches the workflow config from the source repo itself
     # The source repo maintains its own workflow definitions
+    # Workflows in .copier/workflows.yaml inherit repo/branch automatically
 
   - source: "repo"
     repo: "10gen/university-content"

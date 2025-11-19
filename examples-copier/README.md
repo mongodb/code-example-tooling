@@ -15,9 +15,8 @@ and comprehensive monitoring.
 - **Deprecation Tracking** - Automatic tracking of deleted files
 
 ### Enhanced Features
-- **YAML Configuration** - Modern YAML config with JSON backward compatibility
+- **YAML Configuration** - Modern workflow-based YAML configuration
 - **Message Templating** - Template-ized commit messages and PR titles
-- **Batch PR Support** - Combine multiple rules into one PR per target repo
 - **PR Template Integration** - Fetch and merge PR templates from target repos
 - **File Exclusion** - Exclude patterns to filter out unwanted files (`.gitignore`, `node_modules`, etc.)
 - **Audit Logging** - MongoDB-based event tracking for all operations
@@ -99,44 +98,31 @@ METRICS_ENABLED=true
 Create `copier-config.yaml` in your source repository:
 
 ```yaml
-source_repo: "your-org/source-repo"
-source_branch: "main"
-batch_by_repo: true  # Optional: batch all changes into one PR per target repo
-
-# Optional: Customize batched PR metadata
-batch_pr_config:
-  pr_title: "Update code examples from ${source_repo}"
-  pr_body: |
-    🤖 Automated update of code examples
-
-    **Source:** ${source_repo} PR #${pr_number}
-    **Files:** ${file_count}
-  use_pr_template: true  # Fetch PR template from target repos
-  commit_message: "Update examples from ${source_repo} PR #${pr_number}"
-
-copy_rules:
-  - name: "Copy Go examples"
-    source_pattern:
-      type: "regex"
-      pattern: "^examples/(?P<lang>[^/]+)/(?P<category>[^/]+)/(?P<file>.+)$"
-      exclude_patterns:  # Optional: exclude unwanted files
-        - "\.gitignore$"
-        - "node_modules/"
-        - "\.env$"
-    targets:
-      - repo: "your-org/target-repo"
-        branch: "main"
-        path_transform: "docs/examples/${lang}/${category}/${file}"
-        commit_strategy:
-          type: "pull_request"
-          commit_message: "Update ${category} examples from ${lang}"
-          pr_title: "Update ${category} examples"
-          pr_body: "Automated update of ${lang} examples"
-          use_pr_template: true  # Merge with target repo's PR template
-          auto_merge: false
-        deprecation_check:
-          enabled: true
-          file: "deprecated_examples.json"
+workflows:
+  - name: "Copy code examples"
+    source:
+      repo: "your-org/source-repo"
+      branch: "main"
+    destination:
+      repo: "your-org/target-repo"
+      branch: "main"
+    transformations:
+      - move:
+          from: "examples"
+          to: "docs/examples"
+    exclude:
+      - "**/.gitignore"
+      - "**/node_modules/**"
+      - "**/.env"
+    commit_strategy:
+      type: "pull_request"
+      pr_title: "Update code examples"
+      pr_body: "Automated update of code examples"
+      use_pr_template: true
+      auto_merge: false
+    deprecation_check:
+      enabled: true
+      file: "deprecated_examples.json"
 ```
 
 ### Running the Application
@@ -157,40 +143,55 @@ copy_rules:
 
 ## Configuration
 
-### Pattern Types
+### Transformation Types
 
-#### Prefix Pattern
-Simple string prefix matching:
-
-```yaml
-source_pattern:
-  type: "prefix"
-  pattern: "examples/go/"
-```
-
-Matches: `examples/go/main.go`, `examples/go/database/connect.go`
-
-#### Glob Pattern
-Wildcard matching with `*` and `?`:
+#### Move Transformation
+Move files from one directory to another:
 
 ```yaml
-source_pattern:
-  type: "glob"
-  pattern: "examples/*/main.go"
+transformations:
+  - move:
+      from: "examples/go"
+      to: "code/go"
 ```
 
-Matches: `examples/go/main.go`, `examples/python/main.go`
+Moves: `examples/go/main.go` → `code/go/main.go`
 
-#### Regex Pattern
+#### Copy Transformation
+Copy a single file to a new location:
+
+```yaml
+transformations:
+  - copy:
+      from: "README.md"
+      to: "docs/README.md"
+```
+
+Copies: `README.md` → `docs/README.md`
+
+#### Glob Transformation
+Wildcard matching with path transformation:
+
+```yaml
+transformations:
+  - glob:
+      pattern: "examples/*/main.go"
+      transform: "code/${relative_path}"
+```
+
+Matches: `examples/go/main.go` → `code/examples/go/main.go`
+
+#### Regex Transformation
 Full regex with named capture groups:
 
 ```yaml
-source_pattern:
-  type: "regex"
-  pattern: "^examples/(?P<lang>[^/]+)/(?P<file>.+)$"
+transformations:
+  - regex:
+      pattern: "^examples/(?P<lang>[^/]+)/(?P<file>.+)$"
+      transform: "code/${lang}/${file}"
 ```
 
-Matches: `examples/go/main.go` (extracts `lang=go`, `file=main.go`)
+Matches: `examples/go/main.go` → `code/go/main.go` (extracts `lang=go`, `file=main.go`)
 
 ### Path Transformations
 
@@ -232,29 +233,6 @@ commit_strategy:
 
 ### Advanced Features
 
-#### Batch PRs by Repository
-
-Combine all changes from a single source PR into one PR per target repository:
-
-```yaml
-batch_by_repo: true
-
-batch_pr_config:
-  pr_title: "Update code examples from ${source_repo}"
-  pr_body: |
-    🤖 Automated update
-
-    Files: ${file_count}
-    Source: ${source_repo} PR #${pr_number}
-  use_pr_template: true
-  commit_message: "Update from ${source_repo} PR #${pr_number}"
-```
-
-**Benefits:**
-- Single PR per target repo instead of multiple PRs
-- Accurate `${file_count}` across all matched rules
-- Easier review process for related changes
-
 #### PR Template Integration
 
 Automatically fetch and merge PR templates from target repositories:
@@ -270,20 +248,29 @@ commit_strategy:
 
 **Result:** PR description shows the target repo's template first (with checklists and guidelines), followed by your configured content.
 
-#### File Exclusion Patterns
+#### File Exclusion
 
-Exclude unwanted files from being copied:
+Exclude unwanted files from being copied at the workflow level:
 
 ```yaml
-source_pattern:
-  type: "prefix"
-  pattern: "examples/"
-  exclude_patterns:
-    - "\.gitignore$"      # Exclude .gitignore files
-    - "node_modules/"     # Exclude dependencies
-    - "\.env$"            # Exclude environment files
-    - "/dist/"            # Exclude build artifacts
-    - "\.test\.(js|ts)$"  # Exclude test files
+workflows:
+  - name: "Copy examples"
+    source:
+      repo: "owner/source-repo"
+      branch: "main"
+    destination:
+      repo: "owner/target-repo"
+      branch: "main"
+    transformations:
+      - move:
+          from: "examples"
+          to: "code"
+    exclude:
+      - "**/.gitignore"      # Exclude .gitignore files
+      - "**/node_modules/**" # Exclude dependencies
+      - "**/.env"            # Exclude environment files
+      - "**/dist/**"         # Exclude build artifacts
+      - "**/*.test.js"       # Exclude test files
 ```
 
 **Use cases:**

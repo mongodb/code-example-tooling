@@ -306,18 +306,18 @@ Before deploying a new configuration:
 ```bash
 # 1. Create config
 cat > copier-config.yaml << EOF
-source_repo: "myorg/source-repo"
-source_branch: "main"
-
-copy_rules:
+workflows:
   - name: "Copy Go examples"
-    source_pattern:
-      type: "regex"
-      pattern: "^examples/(?P<lang>[^/]+)/(?P<file>.+)$"
-    targets:
-      - repo: "myorg/target-repo"
-        branch: "main"
-        path_transform: "docs/code-examples/\${lang}/\${file}"
+    source:
+      repo: "myorg/source-repo"
+      branch: "main"
+    destination:
+      repo: "myorg/target-repo"
+      branch: "main"
+    transformations:
+      - regex:
+          pattern: "^examples/(?P<lang>[^/]+)/(?P<file>.+)$"
+          transform: "docs/code-examples/\${lang}/\${file}"
 EOF
 
 # 2. Validate

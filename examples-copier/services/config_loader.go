@@ -176,69 +176,24 @@ type ConfigTemplate struct {
 func GetConfigTemplates() []ConfigTemplate {
 	return []ConfigTemplate{
 		{
-			Name:        "basic",
-			Description: "Basic configuration with prefix pattern matching",
-			Content: `source_repo: "owner/source-repo"
-source_branch: "main"
-
-copy_rules:
-  - name: "example-rule"
-    source_pattern:
-      type: "prefix"
-      pattern: "examples/"
-    targets:
-      - repo: "owner/target-repo"
-        branch: "main"
-        path_transform: "code-examples/${relative_path}"
-        commit_strategy:
-          type: "direct"
-          commit_message: "Update code examples"
-`,
-		},
-		{
-			Name:        "glob",
-			Description: "Configuration with glob pattern matching",
-			Content: `source_repo: "owner/source-repo"
-source_branch: "main"
-
-copy_rules:
-  - name: "go-examples"
-    source_pattern:
-      type: "glob"
-      pattern: "examples/**/*.go"
-    targets:
-      - repo: "owner/target-repo"
-        branch: "main"
-        path_transform: "go-examples/${filename}"
-        commit_strategy:
-          type: "pull_request"
-          pr_title: "Update Go examples"
-          pr_body: "Automated update from source repository"
-          auto_merge: false
-`,
-		},
-		{
-			Name:        "regex",
-			Description: "Advanced configuration with regex pattern matching",
-			Content: `source_repo: "owner/source-repo"
-source_branch: "main"
-
-copy_rules:
-  - name: "language-examples"
-    source_pattern:
-      type: "regex"
-      pattern: "^examples/(?P<lang>[^/]+)/(?P<category>[^/]+)/(?P<file>.+)$"
-    targets:
-      - repo: "owner/docs-repo"
-        branch: "main"
-        path_transform: "source/code-examples/${lang}/${category}/${file}"
-        commit_strategy:
-          type: "pull_request"
-          pr_title: "Update ${lang} examples"
-          pr_body: "Automated update of ${lang} examples from source repository"
-        deprecation_check:
-          enabled: true
-          file: "deprecated_examples.json"
+			Name:        "basic-workflow",
+			Description: "Basic workflow configuration",
+			Content: `workflows:
+  - name: "Copy examples"
+    source:
+      repo: "owner/source-repo"
+      branch: "main"
+    destination:
+      repo: "owner/target-repo"
+      branch: "main"
+    transformations:
+      - move:
+          from: "examples"
+          to: "code-examples"
+    commit_strategy:
+      type: "pull_request"
+      pr_title: "Update code examples"
+      pr_body: "Automated update from source repository"
 `,
 		},
 	}

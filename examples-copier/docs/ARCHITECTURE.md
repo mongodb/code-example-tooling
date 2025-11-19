@@ -153,31 +153,29 @@ targets:
 
 **Capabilities:**
 - Native YAML support with `gopkg.in/yaml.v3`
-- Backward compatible JSON support
-- Automatic legacy config conversion
 - Comprehensive validation
 - Default value handling
 
 **Configuration Structure:**
 ```yaml
-source_repo: "mongodb/docs-code-examples"
-source_branch: "main"
-
-copy_rules:
-  - name: "go-examples"
-    source_pattern:
-      type: "glob"
-      pattern: "examples/**/*.go"
-    targets:
-      - repo: "mongodb/docs"
-        branch: "main"
-        path_transform: "code/${filename}"
-        commit_strategy:
-          type: "pull_request"  # or "direct"
-          pr_title: "Update Go examples"
-          pr_body: "Automated update"
-          auto_merge: false
-        deprecation_check:
+workflows:
+  - name: "Copy Go examples"
+    source:
+      repo: "mongodb/docs-code-examples"
+      branch: "main"
+    destination:
+      repo: "mongodb/docs"
+      branch: "main"
+    transformations:
+      - move:
+          from: "examples"
+          to: "code"
+    commit_strategy:
+      type: "pull_request"
+      pr_title: "Update Go examples"
+      pr_body: "Automated update"
+      auto_merge: false
+    deprecation_check:
           enabled: true
           file: "deprecated_examples.json"
 ```
@@ -419,77 +417,84 @@ if file.Status == "DELETED" {
 
 ## Configuration Examples
 
-### Basic YAML Config
+### Basic Workflow Config
 ```yaml
-source_repo: "mongodb/docs-code-examples"
-source_branch: "main"
-
-copy_rules:
-  - name: "go-examples"
-    source_pattern:
-      type: "prefix"
-      pattern: "examples/go"
-    targets:
-      - repo: "mongodb/docs"
-        branch: "main"
-        path_transform: "code/go/${relative_path}"
-        commit_strategy:
-          type: "direct"
-          commit_message: "Update Go examples from ${source_repo}"
+workflows:
+  - name: "Copy Go examples"
+    source:
+      repo: "mongodb/docs-code-examples"
+      branch: "main"
+    destination:
+      repo: "mongodb/docs"
+      branch: "main"
+    transformations:
+      - move:
+          from: "examples/go"
+          to: "code/go"
+    commit_strategy:
+      type: "direct"
+      commit_message: "Update Go examples"
 ```
 
-### Advanced Regex Config with Deprecation
+### Advanced Workflow with Deprecation
 ```yaml
-source_repo: "mongodb/docs-code-examples"
-source_branch: "main"
-
-copy_rules:
-  - name: "language-examples"
-    source_pattern:
-      type: "regex"
-      pattern: "^examples/(?P<lang>[^/]+)/(?P<file>.+)$"
-    targets:
-      - repo: "mongodb/docs"
-        branch: "main"
-        path_transform: "code/${lang}/${file}"
-        commit_strategy:
-          type: "pull_request"
-          pr_title: "Update ${lang} examples"
-          pr_body: "Updated ${file_count} ${lang} files from ${source_repo}"
-          auto_merge: false
-        deprecation_check:
-          enabled: true
-          file: "deprecated_examples.json"
+workflows:
+  - name: "Copy language examples"
+    source:
+      repo: "mongodb/docs-code-examples"
+      branch: "main"
+    destination:
+      repo: "mongodb/docs"
+      branch: "main"
+    transformations:
+      - move:
+          from: "examples"
+          to: "code"
+    commit_strategy:
+      type: "pull_request"
+      pr_title: "Update code examples"
+      pr_body: "Automated update of code examples"
+      auto_merge: false
+    deprecation_check:
+      enabled: true
+      file: "deprecated_examples.json"
 ```
 
-### Multi-Target Config
+### Multi-Workflow Config
 ```yaml
-source_repo: "mongodb/aggregation-examples"
-source_branch: "main"
-
-copy_rules:
+workflows:
   # Java examples
-  - name: "java-examples"
-    source_pattern:
-      type: "regex"
-      pattern: "^java/(?P<file>.+\\.java)$"
-    targets:
-      - repo: "mongodb/docs"
-        branch: "main"
-        path_transform: "java/${file}"
-        commit_strategy:
-          type: "pull_request"
-          pr_title: "Update Java examples"
-          auto_merge: false
-        deprecation_check:
-          enabled: true
-          file: "deprecated_examples.json"
+  - name: "Copy Java examples"
+    source:
+      repo: "mongodb/aggregation-examples"
+      branch: "main"
+    destination:
+      repo: "mongodb/docs"
+      branch: "main"
+    transformations:
+      - copy:
+          from: "java"
+          to: "java"
+    commit_strategy:
+      type: "pull_request"
+      pr_title: "Update Java examples"
+      auto_merge: false
+    deprecation_check:
+      enabled: true
+      file: "deprecated_examples.json"
 
   # Node.js examples
-  - name: "nodejs-examples"
-    source_pattern:
-      type: "regex"
-      pattern: "^nodejs/(?P<file>.+\\.(js|ts))$"
+  - name: "Copy Node.js examples"
+    source:
+      repo: "mongodb/aggregation-examples"
+      branch: "main"
+    destination:
+      repo: "mongodb/docs"
+      branch: "main"
+    transformations:
+      - copy:
+          from: "nodejs"
+          to: "nodejs"
     targets:
       - repo: "mongodb/docs"
         branch: "main"
@@ -582,7 +587,7 @@ CONFIG_FILE="copier-config.yaml"
 
 ## Breaking Changes
 
-None - the refactoring maintains backward compatibility with existing JSON configs through automatic conversion.
+None - the application uses a modern workflow-based configuration system.
 
 ## Future Enhancements
 

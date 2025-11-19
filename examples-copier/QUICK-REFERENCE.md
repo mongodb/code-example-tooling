@@ -42,37 +42,43 @@
 
 ## Configuration Patterns
 
-### Prefix Pattern
+### Move Transformation
 ```yaml
-source_pattern:
-  type: "prefix"
-  pattern: "examples/go/"
+transformations:
+  - move:
+      from: "examples/go"
+      to: "code/go"
 ```
 
-### Glob Pattern
+### Glob Transformation
 ```yaml
-source_pattern:
-  type: "glob"
-  pattern: "examples/*/main.go"
+transformations:
+  - glob:
+      pattern: "examples/*/main.go"
+      transform: "code/${relative_path}"
 ```
 
-### Regex Pattern
+### Regex Transformation
 ```yaml
-source_pattern:
-  type: "regex"
-  pattern: "^examples/(?P<lang>[^/]+)/(?P<file>.+)$"
+transformations:
+  - regex:
+      pattern: "^examples/(?P<lang>[^/]+)/(?P<file>.+)$"
+      transform: "code/${lang}/${file}"
 ```
 
-### Pattern with Exclusions
+### Workflow with Exclusions
 ```yaml
-source_pattern:
-  type: "prefix"
-  pattern: "examples/"
-  exclude_patterns:
-    - "\.gitignore$"
-    - "node_modules/"
-    - "\.env$"
-    - "/dist/"
+workflows:
+  - name: "Copy examples"
+    transformations:
+      - move:
+          from: "examples"
+          to: "code"
+    exclude:
+      - "**/.gitignore"
+      - "**/node_modules/**"
+      - "**/.env"
+      - "**/dist/**"
 ```
 
 ## Path Transformations
@@ -118,36 +124,22 @@ commit_strategy:
   auto_merge: true
 ```
 
-### Batch PRs by Repository
-```yaml
-batch_by_repo: true
-
-batch_pr_config:
-  pr_title: "Update from ${source_repo}"
-  pr_body: |
-    🤖 Automated update
-    Files: ${file_count}
-  use_pr_template: true
-  commit_message: "Update from ${source_repo} PR #${pr_number}"
-```
-
 ## Advanced Features
 
 ### Exclude Patterns
-Exclude unwanted files from being copied:
+Exclude unwanted files from being copied at the workflow level:
 
 ```yaml
-source_pattern:
-  type: "prefix"
-  pattern: "examples/"
-  exclude_patterns:
-    - "\.gitignore$"      # Exclude .gitignore
-    - "node_modules/"     # Exclude dependencies
-    - "\.env$"            # Exclude .env files
-    - "\.env\\..*$"       # Exclude .env.local, .env.production, etc.
-    - "/dist/"            # Exclude build output
-    - "/build/"           # Exclude build artifacts
-    - "\.test\.(js|ts)$"  # Exclude test files
+workflows:
+  - name: "Copy examples"
+    exclude:
+      - "**/.gitignore"      # Exclude .gitignore
+      - "**/node_modules/**" # Exclude dependencies
+      - "**/.env"            # Exclude .env files
+      - "**/.env.*"          # Exclude .env.local, .env.production, etc.
+      - "**/dist/**"         # Exclude build output
+      - "**/build/**"        # Exclude build artifacts
+      - "**/*.test.js"       # Exclude test files
 ```
 
 ### PR Template Integration
@@ -166,20 +158,6 @@ commit_strategy:
 1. Target repo's PR template (checklists, guidelines)
 2. Separator (`---`)
 3. Your configured content (automation info)
-
-### Batch Configuration
-When `batch_by_repo: true`, use `batch_pr_config` for accurate file counts:
-
-```yaml
-batch_by_repo: true
-
-batch_pr_config:
-  pr_title: "Update from ${source_repo}"
-  pr_body: |
-    Files: ${file_count}  # Accurate count across all rules
-    Source: ${source_repo} PR #${pr_number}
-  use_pr_template: true
-```
 
 ## Message Templates
 
@@ -385,44 +363,60 @@ go build -o test-webhook ./cmd/test-webhook
 
 ### Copy All Go Files
 ```yaml
-source_pattern:
-  type: "regex"
-  pattern: "^examples/.*\\.go$"
-targets:
-  - repo: "org/docs"
-    path_transform: "code/${path}"
+workflows:
+  - name: "Copy Go files"
+    source:
+      repo: "org/source"
+      branch: "main"
+    destination:
+      repo: "org/docs"
+      branch: "main"
+    transformations:
+      - regex:
+          pattern: "^examples/.*\\.go$"
+          transform: "code/${path}"
 ```
 
 ### Organize by Language
 ```yaml
-source_pattern:
-  type: "regex"
-  pattern: "^examples/(?P<lang>[^/]+)/(?P<rest>.+)$"
-targets:
-  - repo: "org/docs"
-    path_transform: "languages/${lang}/${rest}"
+workflows:
+  - name: "Organize by language"
+    transformations:
+      - regex:
+          pattern: "^examples/(?P<lang>[^/]+)/(?P<rest>.+)$"
+          transform: "languages/${lang}/${rest}"
 ```
 
-### Multiple Targets with Different Transforms
+### Multiple Workflows for Different Destinations
 ```yaml
-source_pattern:
-  type: "prefix"
-  pattern: "examples/"
-targets:
-  - repo: "org/docs-v1"
-    path_transform: "examples/${path}"
-  - repo: "org/docs-v2"
-    path_transform: "code-samples/${path}"
+workflows:
+  - name: "Copy to docs-v1"
+    destination:
+      repo: "org/docs-v1"
+      branch: "main"
+    transformations:
+      - move:
+          from: "examples"
+          to: "examples"
+
+  - name: "Copy to docs-v2"
+    destination:
+      repo: "org/docs-v2"
+      branch: "main"
+    transformations:
+      - move:
+          from: "examples"
+          to: "code-samples"
 ```
 
 ### Conditional Copying (by file type)
 ```yaml
-source_pattern:
-  type: "regex"
-  pattern: "^examples/.*\\.(?P<ext>go|py|js)$"
-targets:
-  - repo: "org/docs"
-    path_transform: "code/${ext}/${filename}"
+workflows:
+  - name: "Copy by file type"
+    transformations:
+      - regex:
+          pattern: "^examples/.*\\.(?P<ext>go|py|js)$"
+          transform: "code/${ext}/${filename}"
 ```
 
 ## Troubleshooting

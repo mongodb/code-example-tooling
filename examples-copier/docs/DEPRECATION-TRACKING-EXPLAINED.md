@@ -54,13 +54,8 @@ Check deprecation queue
 
 ### ✅ YES - Protected Against Blank Commits
 
-**Both implementations now have built-in protection** against blank commits! ✅
+The implementation has built-in protection against blank commits:
 
-### ✅ Legacy Implementation - FIXED
-
-The legacy implementation (`UpdateDeprecationFile()`) has been **updated with blank commit protection**:
-
-<augment_code_snippet path="examples-copier/services/github_write_to_source.go" mode="EXCERPT">
 ````go
 func UpdateDeprecationFile() {
     // ✅ Early return if there are no files to deprecate - prevents blank commits
@@ -70,55 +65,8 @@ func UpdateDeprecationFile() {
     }
 
     // ... rest of update logic ...
-
-    for key, value := range FilesToDeprecate {
-        newDeprecatedFileEntry := DeprecatedFileEntry{
-            FileName:  key,
-            Repo:      value.TargetRepo,
-            Branch:    value.TargetBranch,
-            DeletedOn: time.Now().Format(time.RFC3339),
-        }
-        deprecationFile = append(deprecationFile, newDeprecatedFileEntry)
-    }
-
-    // Only reached if FilesToDeprecate has entries
-    uploadDeprecationFileChanges(message, string(updatedJSON))
-
-    LogInfo(fmt.Sprintf("Successfully updated %s with %d entries",
-        os.Getenv(configs.DeprecationFile), len(FilesToDeprecate)))
 }
 ````
-</augment_code_snippet>
-
-**Protection:**
-- ✅ Checks if `FilesToDeprecate` is empty
-- ✅ Returns early if nothing to deprecate
-- ✅ **No commit is made** if queue is empty
-- ✅ Logs skip message for visibility
-- ✅ Logs success message with entry count
-
-**Fix Applied:** 2025-10-08 (see [BLANK-COMMIT-FIX.md](../BLANK-COMMIT-FIX.md))
-
-### ✅ New Implementation - Already Protected
-
-The newer implementation has always had proper protection:
-
-````go
-func UpdateDeprecationFileWithContextAndConfig(...) {
-    filesToDeprecate := fileStateService.GetFilesToDeprecate()
-
-    // ✅ PROTECTION: Early return if nothing to deprecate
-    if len(filesToDeprecate) == 0 {
-        LogConfigOperation(ctx, "skip_update", config.DeprecationFile,
-            "No deprecated files to record; skipping deprecation file update", nil)
-        return  // ← NO COMMIT MADE
-    }
-
-    // Only continues if there are files to deprecate
-    // ... rest of update logic ...
-}
-````
-
 
 **Protection:**
 - ✅ Checks if deprecation queue is empty
@@ -156,21 +104,24 @@ The deprecation file is a JSON array stored in the **source repository**:
 
 ## Configuration
 
-Enable deprecation tracking in your config:
+Enable deprecation tracking in your workflow config:
 
 ```yaml
-copy_rules:
-  - name: "Go examples"
-    source_pattern:
-      type: "prefix"
-      pattern: "examples/go"
-    targets:
-      - repo: "mongodb/docs"
-        branch: "main"
-        path_transform: "code/${relative_path}"
-        deprecation_check:
-          enabled: true                      # ← Enable tracking
-          file: "deprecated_examples.json"   # ← Optional: custom filename
+workflows:
+  - name: "Copy Go examples"
+    source:
+      repo: "mongodb/source-repo"
+      branch: "main"
+    destination:
+      repo: "mongodb/docs"
+      branch: "main"
+    transformations:
+      - move:
+          from: "examples/go"
+          to: "code"
+    deprecation_check:
+      enabled: true                      # ← Enable tracking
+      file: "deprecated_examples.json"   # ← Optional: custom filename
 ```
 
 **Options:**

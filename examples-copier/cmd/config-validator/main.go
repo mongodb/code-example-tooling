@@ -122,25 +122,20 @@ func validateConfig(configFile string, verbose bool) {
 	}
 
 	fmt.Println("✅ Configuration is valid!")
-	
+
 	if verbose {
 		fmt.Println()
-		fmt.Printf("Source Repository: %s\n", config.SourceRepo)
-		fmt.Printf("Source Branch: %s\n", config.SourceBranch)
-		fmt.Printf("Number of Rules: %d\n", len(config.CopyRules))
+		fmt.Printf("Number of Workflows: %d\n", len(config.Workflows))
 		fmt.Println()
-		
-		for i, rule := range config.CopyRules {
-			fmt.Printf("Rule %d: %s\n", i+1, rule.Name)
-			fmt.Printf("  Pattern Type: %s\n", rule.SourcePattern.Type)
-			fmt.Printf("  Pattern: %s\n", rule.SourcePattern.Pattern)
-			fmt.Printf("  Targets: %d\n", len(rule.Targets))
-			for j, target := range rule.Targets {
-				fmt.Printf("    Target %d:\n", j+1)
-				fmt.Printf("      Repo: %s\n", target.Repo)
-				fmt.Printf("      Branch: %s\n", target.Branch)
-				fmt.Printf("      Transform: %s\n", target.PathTransform)
-				fmt.Printf("      Strategy: %s\n", target.CommitStrategy.Type)
+
+		for i, workflow := range config.Workflows {
+			fmt.Printf("Workflow %d: %s\n", i+1, workflow.Name)
+			fmt.Printf("  Source: %s @ %s\n", workflow.Source.Repo, workflow.Source.Branch)
+			fmt.Printf("  Destination: %s @ %s\n", workflow.Destination.Repo, workflow.Destination.Branch)
+			fmt.Printf("  Transformations: %d\n", len(workflow.Transformations))
+			fmt.Printf("  Commit Strategy: %s\n", workflow.CommitStrategy.Type)
+			if workflow.DeprecationCheck != nil && workflow.DeprecationCheck.Enabled {
+				fmt.Printf("  Deprecation Tracking: enabled (%s)\n", workflow.DeprecationCheck.File)
 			}
 			fmt.Println()
 		}

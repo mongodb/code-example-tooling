@@ -37,28 +37,40 @@ Examples-copier is a GitHub app that automatically copies code examples and file
 
 No. The app supports both YAML and legacy JSON configurations. YAML is recommended for new deployments because it supports advanced features like pattern matching and path transformations.
 
-### Can I use multiple patterns?
+### Can I use multiple transformations?
 
-Yes! You can define multiple copy rules, each with its own pattern and targets:
+Yes! You can define multiple workflows, each with its own transformations:
 
 ```yaml
-copy_rules:
+workflows:
   - name: "Go examples"
-    source_pattern:
-      type: "regex"
-      pattern: "^examples/go/(?P<file>.+)$"
-    targets: [...]
-  
+    source:
+      repo: "owner/source"
+      branch: "main"
+    destination:
+      repo: "owner/target"
+      branch: "main"
+    transformations:
+      - regex:
+          pattern: "^examples/go/(?P<file>.+)$"
+          transform: "code/go/${file}"
+
   - name: "Python examples"
-    source_pattern:
-      type: "regex"
-      pattern: "^examples/python/(?P<file>.+)$"
-    targets: [...]
+    source:
+      repo: "owner/source"
+      branch: "main"
+    destination:
+      repo: "owner/target"
+      branch: "main"
+    transformations:
+      - regex:
+          pattern: "^examples/python/(?P<file>.+)$"
+          transform: "code/python/${file}"
 ```
 
-### Can one file match multiple rules?
+### Can one file match multiple workflows?
 
-Yes. A file can match multiple rules and be copied to multiple targets. This is useful for copying the same file to different repositories or branches.
+Yes. A file can match multiple workflows and be copied to multiple targets. This is useful for copying the same file to different repositories or branches.
 
 ### Where should I store the config file?
 
@@ -336,27 +348,6 @@ commit_strategy:
 - `${pr_number}` - PR number
 - `${commit_sha}` - Commit SHA
 - Plus any variables extracted from pattern matching
-
-### How do I batch multiple rules into one PR?
-
-Use `batch_by_repo: true` to combine all changes into one PR per target repository:
-
-```yaml
-batch_by_repo: true
-
-batch_pr_config:
-  pr_title: "Update from ${source_repo}"
-  pr_body: |
-    🤖 Automated update
-    Files: ${file_count}  # Accurate count across all rules
-  use_pr_template: true
-  commit_message: "Update from ${source_repo} PR #${pr_number}"
-```
-
-**Benefits:**
-- Single PR per target repo instead of multiple PRs
-- Accurate `${file_count}` across all matched rules
-- Easier review for related changes
 
 ### How do I use PR templates from target repos?
 

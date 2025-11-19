@@ -227,55 +227,31 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 		return
 	}
 
-	// Determine if using legacy format or workflow format
+	// Find workflows matching this source repo
 	webhookRepo := fmt.Sprintf("%s/%s", repoOwner, repoName)
-	usingWorkflows := len(yamlConfig.Workflows) > 0
-	usingLegacy := len(yamlConfig.CopyRules) > 0
-
-	if usingLegacy {
-		// Legacy format: validate against single source repo
-		if yamlConfig.SourceRepo == "" {
-			yamlConfig.SourceRepo = webhookRepo
+	matchingWorkflows := []types.Workflow{}
+	for _, workflow := range yamlConfig.Workflows {
+		if workflow.Source.Repo == webhookRepo {
+			matchingWorkflows = append(matchingWorkflows, workflow)
 		}
+	}
 
-		if webhookRepo != yamlConfig.SourceRepo {
-			LogWarningCtx(ctx, "webhook from unexpected repository (legacy format)", map[string]interface{}{
-				"webhook_repo":  webhookRepo,
-				"expected_repo": yamlConfig.SourceRepo,
-			})
-			container.MetricsCollector.RecordWebhookFailed()
-			return
-		}
-	} else if usingWorkflows {
-		// Workflow format: find workflows matching this source repo
-		matchingWorkflows := []types.Workflow{}
-		for _, workflow := range yamlConfig.Workflows {
-			if workflow.Source.Repo == webhookRepo {
-				matchingWorkflows = append(matchingWorkflows, workflow)
-			}
-		}
-
-		if len(matchingWorkflows) == 0 {
-			LogWarningCtx(ctx, "no workflows configured for source repository", map[string]interface{}{
-				"webhook_repo":    webhookRepo,
-				"workflow_count":  len(yamlConfig.Workflows),
-			})
-			container.MetricsCollector.RecordWebhookFailed()
-			return
-		}
-
-		LogInfoCtx(ctx, "found matching workflows", map[string]interface{}{
-			"webhook_repo":     webhookRepo,
-			"matching_count":   len(matchingWorkflows),
+	if len(matchingWorkflows) == 0 {
+		LogWarningCtx(ctx, "no workflows configured for source repository", map[string]interface{}{
+			"webhook_repo":   webhookRepo,
+			"workflow_count": len(yamlConfig.Workflows),
 		})
-
-		// Store matching workflows for processing
-		yamlConfig.Workflows = matchingWorkflows
-	} else {
-		LogWarningCtx(ctx, "no copy rules or workflows configured", nil)
 		container.MetricsCollector.RecordWebhookFailed()
 		return
 	}
+
+	LogInfoCtx(ctx, "found matching workflows", map[string]interface{}{
+		"webhook_repo":   webhookRepo,
+		"matching_count": len(matchingWorkflows),
+	})
+
+	// Store matching workflows for processing
+	yamlConfig.Workflows = matchingWorkflows
 
 	// Get changed files from PR (from the source repository that triggered the webhook)
 	changedFiles, err := GetFilesChangedInPr(repoOwner, repoName, prNumber)
@@ -288,7 +264,7 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 			Operation:  "get_files",
 			Error:      err,
 			PRNumber:   prNumber,
-			SourceRepo: yamlConfig.SourceRepo,
+			SourceRepo: webhookRepo,
 		})
 		return
 	}
@@ -302,19 +278,8 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 	filesUploadedBefore := container.MetricsCollector.GetFilesUploaded()
 	filesFailedBefore := container.MetricsCollector.GetFilesUploadFailed()
 
-	// Process files based on format
-	if usingWorkflows {
-		// Use workflow processor
-		processFilesWithWorkflows(ctx, prNumber, sourceCommitSHA, changedFiles, yamlConfig, container)
-	} else {
-		// Use legacy pattern matching
-		processFilesWithPatternMatching(ctx, prNumber, sourceCommitSHA, changedFiles, yamlConfig, config, container)
-	}
-
-	// Finalize PR metadata for batched PRs with accurate file counts
-	if yamlConfig.BatchByRepo {
-		finalizeBatchPRMetadata(yamlConfig, config, prNumber, sourceCommitSHA, container)
-	}
+	// Process files with workflow processor
+	processFilesWithWorkflows(ctx, prNumber, sourceCommitSHA, changedFiles, yamlConfig, container)
 
 	// Upload queued files
 	FilesToUpload = container.FileStateService.GetFilesToUpload()
@@ -348,100 +313,12 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 	container.SlackNotifier.NotifyPRProcessed(ctx, &PRProcessedEvent{
 		PRNumber:       prNumber,
 		PRTitle:        fmt.Sprintf("PR #%d", prNumber), // TODO: Get actual PR title from GitHub
-		PRURL:          fmt.Sprintf("https://github.com/%s/pull/%d", yamlConfig.SourceRepo, prNumber),
-		SourceRepo:     yamlConfig.SourceRepo,
+		PRURL:          fmt.Sprintf("https://github.com/%s/pull/%d", webhookRepo, prNumber),
+		SourceRepo:     webhookRepo,
 		FilesMatched:   filesMatched,
 		FilesCopied:    filesUploaded,
 		FilesFailed:    filesFailed,
 		ProcessingTime: processingTime,
-	})
-}
-
-// processFilesWithPatternMatching processes changed files using the new pattern matching system
-func processFilesWithPatternMatching(ctx context.Context, prNumber int, sourceCommitSHA string,
-	changedFiles []types.ChangedFile, yamlConfig *types.YAMLConfig, config *configs.Config, container *ServiceContainer) {
-
-	LogInfoCtx(ctx, "processing files with pattern matching", map[string]interface{}{
-		"file_count": len(changedFiles),
-		"rule_count": len(yamlConfig.CopyRules),
-	})
-
-	// Log first few files for debugging
-	for i, file := range changedFiles {
-		if i < 3 {
-			LogInfoCtx(ctx, "sample file path", map[string]interface{}{
-				"index": i,
-				"path":  file.Path,
-			})
-		}
-	}
-
-	// Track statistics
-	filesMatched := 0
-	filesSkipped := 0
-	var skippedFiles []string
-
-	for _, file := range changedFiles {
-		if err := ctx.Err(); err != nil {
-			LogWebhookOperation(ctx, "file_iteration", "file iteration cancelled", err)
-			return
-		}
-
-		// Track if file matches any rule
-		fileMatched := false
-
-		// Try to match file against each rule
-		for _, rule := range yamlConfig.CopyRules {
-			if err := ctx.Err(); err != nil {
-				LogWebhookOperation(ctx, "file_iteration", "file iteration cancelled", err)
-				return
-			}
-
-			// Match file against pattern
-			matchResult := container.PatternMatcher.Match(file.Path, rule.SourcePattern)
-			if !matchResult.Matched {
-				continue
-			}
-
-			// Mark that file matched at least one rule
-			fileMatched = true
-
-			// Record matched file
-			container.MetricsCollector.RecordFileMatched()
-
-			LogInfoCtx(ctx, "file matched pattern", map[string]interface{}{
-				"file":      file.Path,
-				"rule":      rule.Name,
-				"pattern":   rule.SourcePattern.Pattern,
-				"variables": matchResult.Variables,
-			})
-
-			// Process each target
-			for _, target := range rule.Targets {
-				processFileForTarget(ctx, prNumber, sourceCommitSHA, file, rule, target, matchResult.Variables, yamlConfig, config, container)
-			}
-		}
-
-		// Log if file didn't match any rule
-		if !fileMatched {
-			filesSkipped++
-			skippedFiles = append(skippedFiles, file.Path)
-			LogWarningCtx(ctx, "file skipped - no matching rules", map[string]interface{}{
-				"file":       file.Path,
-				"status":     file.Status,
-				"rule_count": len(yamlConfig.CopyRules),
-			})
-		} else {
-			filesMatched++
-		}
-	}
-
-	// Log summary
-	LogInfoCtx(ctx, "pattern matching complete", map[string]interface{}{
-		"total_files":    len(changedFiles),
-		"files_matched":  filesMatched,
-		"files_skipped":  filesSkipped,
-		"skipped_files":  skippedFiles,
 	})
 }
 
@@ -485,296 +362,4 @@ func processFilesWithWorkflows(ctx context.Context, prNumber int, sourceCommitSH
 	})
 }
 
-// processFileForTarget processes a single file for a specific target
-func processFileForTarget(ctx context.Context, prNumber int, sourceCommitSHA string, file types.ChangedFile,
-	rule types.CopyRule, target types.TargetConfig, variables map[string]string, yamlConfig *types.YAMLConfig, config *configs.Config, container *ServiceContainer) {
 
-	// Transform path
-	targetPath, err := container.PathTransformer.Transform(file.Path, target.PathTransform, variables)
-	if err != nil {
-		LogErrorCtx(ctx, "failed to transform path", err,
-			map[string]interface{}{
-				"operation":   "path_transform",
-				"source_path": file.Path,
-				"template":    target.PathTransform,
-			})
-		return
-	}
-
-	// Handle deleted files
-	if file.Status == statusDeleted {
-		LogInfoCtx(ctx, "file marked as deleted, handling deprecation", map[string]interface{}{
-			"file":   file.Path,
-			"status": file.Status,
-			"target": targetPath,
-		})
-		handleFileDeprecation(ctx, prNumber, sourceCommitSHA, file, rule, target, targetPath, yamlConfig.SourceBranch, yamlConfig.SourceRepo, config, container)
-		return
-	}
-
-	// Handle file copy
-	LogInfoCtx(ctx, "file marked for copy", map[string]interface{}{
-		"file":   file.Path,
-		"status": file.Status,
-		"target": targetPath,
-	})
-	handleFileCopyWithAudit(ctx, prNumber, sourceCommitSHA, file, rule, target, targetPath, variables, yamlConfig, config, container)
-}
-
-// handleFileCopyWithAudit handles file copying with audit logging
-func handleFileCopyWithAudit(ctx context.Context, prNumber int, sourceCommitSHA string, file types.ChangedFile,
-	rule types.CopyRule, target types.TargetConfig, targetPath string, variables map[string]string, yamlConfig *types.YAMLConfig,
-	config *configs.Config, container *ServiceContainer) {
-
-	startTime := time.Now()
-	sourceRepo := yamlConfig.SourceRepo
-
-	// Parse source repo owner/name
-	parts := strings.Split(sourceRepo, "/")
-	if len(parts) != 2 {
-		LogErrorCtx(ctx, "invalid source repo format", fmt.Errorf("expected owner/repo, got: %s", sourceRepo), nil)
-		return
-	}
-	sourceRepoOwner := parts[0]
-	sourceRepoName := parts[1]
-
-	// Retrieve file content from the source commit SHA (the merge commit)
-	// This ensures we fetch the exact version of the file that was merged
-	fc, err := RetrieveFileContentsWithConfigAndBranch(ctx, file.Path, sourceCommitSHA, sourceRepoOwner, sourceRepoName)
-	if err != nil {
-		// Log error event
-		container.AuditLogger.LogErrorEvent(ctx, &AuditEvent{
-			RuleName:     rule.Name,
-			SourceRepo:   sourceRepo,
-			SourcePath:   file.Path,
-			TargetRepo:   target.Repo,
-			TargetPath:   targetPath,
-			CommitSHA:    sourceCommitSHA,
-			PRNumber:     prNumber,
-			Success:      false,
-			ErrorMessage: err.Error(),
-			DurationMs:   time.Since(startTime).Milliseconds(),
-		})
-		container.MetricsCollector.RecordFileUploadFailed()
-		LogFileOperation(ctx, "retrieve", file.Path, target.Repo, "failed to retrieve file", err)
-		return
-	}
-
-	// Update file name to target path
-	fc.Name = github.String(targetPath)
-
-	// Queue file for upload
-	queueFileForUploadWithStrategy(target, *fc, rule, variables, prNumber, sourceCommitSHA, yamlConfig, config, container)
-
-	// Log successful copy event
-	fileSize := int64(0)
-	if fc.Content != nil {
-		fileSize = int64(len(*fc.Content))
-	}
-
-	container.AuditLogger.LogCopyEvent(ctx, &AuditEvent{
-		RuleName:   rule.Name,
-		SourceRepo: sourceRepo,
-		SourcePath: file.Path,
-		TargetRepo: target.Repo,
-		TargetPath: targetPath,
-		CommitSHA:  sourceCommitSHA,
-		PRNumber:   prNumber,
-		Success:    true,
-		DurationMs: time.Since(startTime).Milliseconds(),
-		FileSize:   fileSize,
-		AdditionalData: map[string]any{
-			"variables": variables,
-		},
-	})
-
-	container.MetricsCollector.RecordFileUploaded(time.Since(startTime))
-
-	LogFileOperation(ctx, "queue_copy", file.Path, target.Repo, "file queued for copy", nil,
-		map[string]interface{}{
-			"target_path": targetPath,
-			"rule":        rule.Name,
-		})
-}
-
-// handleFileDeprecation handles file deprecation with audit logging
-func handleFileDeprecation(ctx context.Context, prNumber int, sourceCommitSHA string, file types.ChangedFile,
-	rule types.CopyRule, target types.TargetConfig, targetPath string, sourceBranch string, sourceRepo string, config *configs.Config, container *ServiceContainer) {
-
-	// Check if deprecation is enabled for this target
-	if target.DeprecationCheck == nil || !target.DeprecationCheck.Enabled {
-		return
-	}
-
-	// Add to deprecation queue
-	addToDeprecationMapForTarget(targetPath, target, container.FileStateService)
-
-	// Log deprecation event
-	container.AuditLogger.LogDeprecationEvent(ctx, &AuditEvent{
-		RuleName:   rule.Name,
-		SourceRepo: sourceRepo,
-		SourcePath: file.Path,
-		TargetRepo: target.Repo,
-		TargetPath: targetPath,
-		CommitSHA:  sourceCommitSHA,
-		PRNumber:   prNumber,
-		Success:    true,
-	})
-
-	container.MetricsCollector.RecordFileDeprecated()
-
-	LogFileOperation(ctx, "deprecate", file.Path, target.Repo, "file marked for deprecation", nil,
-		map[string]interface{}{
-			"target_path": targetPath,
-			"rule":        rule.Name,
-		})
-}
-
-// queueFileForUploadWithStrategy queues a file for upload with the appropriate strategy
-func queueFileForUploadWithStrategy(target types.TargetConfig, file github.RepositoryContent,
-	rule types.CopyRule, variables map[string]string, prNumber int, sourceCommitSHA string, yamlConfig *types.YAMLConfig, config *configs.Config, container *ServiceContainer) {
-
-	// Determine commit strategy
-	commitStrategy := string(target.CommitStrategy.Type)
-	if commitStrategy == "" {
-		commitStrategy = "direct" // default
-	}
-
-	// Create upload key
-	// If batch_by_repo is true, exclude rule name to batch all changes into one PR per repo
-	// Otherwise, include rule name to create separate PRs per rule
-	key := types.UploadKey{
-		RepoName:       target.Repo,
-		BranchPath:     "refs/heads/" + target.Branch,
-		CommitStrategy: commitStrategy,
-	}
-
-	if !yamlConfig.BatchByRepo {
-		// Include rule name to create separate PRs per rule (default behavior)
-		key.RuleName = rule.Name
-	}
-
-	// Get existing entry or create new
-	filesToUpload := container.FileStateService.GetFilesToUpload()
-	entry, exists := filesToUpload[key]
-	if !exists {
-		entry = types.UploadFileContent{
-			TargetBranch: target.Branch,
-		}
-	}
-
-	// Set commit strategy
-	entry.CommitStrategy = types.CommitStrategy(target.CommitStrategy.Type)
-	entry.AutoMergePR = target.CommitStrategy.AutoMerge
-	entry.UsePRTemplate = target.CommitStrategy.UsePRTemplate
-
-	// Add file to content first so we can get accurate file count
-	entry.Content = append(entry.Content, file)
-
-	// Render commit message, PR title, and PR body using templates
-	msgCtx := types.NewMessageContext()
-	msgCtx.RuleName = rule.Name
-	msgCtx.SourceRepo = yamlConfig.SourceRepo
-	msgCtx.SourceBranch = yamlConfig.SourceBranch
-	msgCtx.TargetRepo = target.Repo
-	msgCtx.TargetBranch = target.Branch
-	msgCtx.FileCount = len(entry.Content)
-	msgCtx.PRNumber = prNumber
-	msgCtx.CommitSHA = sourceCommitSHA
-	msgCtx.Variables = variables
-
-	// For batched PRs, skip setting PR metadata here - it will be set later with accurate file counts
-	// For non-batched PRs, always update with current rule's messages
-	if yamlConfig.BatchByRepo {
-		// Batching by repo - PR metadata will be set in finalizeBatchPRMetadata()
-		// Only set commit message if not already set
-		if entry.CommitMessage == "" && target.CommitStrategy.CommitMessage != "" {
-			entry.CommitMessage = container.MessageTemplater.RenderCommitMessage(target.CommitStrategy.CommitMessage, msgCtx)
-		}
-		// Leave PRTitle and PRBody empty - will be set with accurate file count later
-	} else {
-		// Not batching - update messages for each rule (last one wins)
-		if target.CommitStrategy.CommitMessage != "" {
-			entry.CommitMessage = container.MessageTemplater.RenderCommitMessage(target.CommitStrategy.CommitMessage, msgCtx)
-		}
-		if target.CommitStrategy.PRTitle != "" {
-			entry.PRTitle = container.MessageTemplater.RenderPRTitle(target.CommitStrategy.PRTitle, msgCtx)
-		}
-		if target.CommitStrategy.PRBody != "" {
-			entry.PRBody = container.MessageTemplater.RenderPRBody(target.CommitStrategy.PRBody, msgCtx)
-		}
-	}
-
-	container.FileStateService.AddFileToUpload(key, entry)
-}
-
-// addToDeprecationMapForTarget adds a file to the deprecation map
-func addToDeprecationMapForTarget(targetPath string, target types.TargetConfig, fileStateService FileStateService) {
-	entry := types.DeprecatedFileEntry{
-		FileName: targetPath,
-		Repo:     target.Repo,
-		Branch:   target.Branch,
-	}
-
-	// Use a composite key to ensure uniqueness: repo + targetPath
-	// This allows multiple files to be deprecated to the same deprecation file
-	key := target.Repo + ":" + targetPath
-	fileStateService.AddFileToDeprecate(key, entry)
-}
-
-// finalizeBatchPRMetadata sets PR metadata for batched PRs with accurate file counts
-// This is called after all files have been collected
-func finalizeBatchPRMetadata(yamlConfig *types.YAMLConfig, config *configs.Config, prNumber int, sourceCommitSHA string, container *ServiceContainer) {
-	filesToUpload := container.FileStateService.GetFilesToUpload()
-
-	for key, entry := range filesToUpload {
-		// Create message context with accurate file count
-		msgCtx := types.NewMessageContext()
-		msgCtx.SourceRepo = yamlConfig.SourceRepo
-		msgCtx.SourceBranch = yamlConfig.SourceBranch
-		msgCtx.TargetRepo = key.RepoName
-		msgCtx.TargetBranch = entry.TargetBranch
-		msgCtx.FileCount = len(entry.Content) // Accurate file count!
-		msgCtx.PRNumber = prNumber
-		msgCtx.CommitSHA = sourceCommitSHA
-
-		// Use batch_pr_config if available, otherwise use defaults
-		if yamlConfig.BatchPRConfig != nil {
-			// Use dedicated batch PR config
-			if yamlConfig.BatchPRConfig.PRTitle != "" {
-				entry.PRTitle = container.MessageTemplater.RenderPRTitle(yamlConfig.BatchPRConfig.PRTitle, msgCtx)
-			} else {
-				// Default title
-				entry.PRTitle = fmt.Sprintf("Update files from %s PR #%d", msgCtx.SourceRepo, prNumber)
-			}
-
-			if yamlConfig.BatchPRConfig.PRBody != "" {
-				entry.PRBody = container.MessageTemplater.RenderPRBody(yamlConfig.BatchPRConfig.PRBody, msgCtx)
-			} else {
-				// Default body
-				entry.PRBody = fmt.Sprintf("Automated update from %s\n\nSource PR: #%d\nCommit: %s\nFiles: %d",
-					msgCtx.SourceRepo, prNumber, sourceCommitSHA[:7], len(entry.Content))
-			}
-
-			// Override commit message if specified in batch config
-			if yamlConfig.BatchPRConfig.CommitMessage != "" && entry.CommitMessage == "" {
-				entry.CommitMessage = container.MessageTemplater.RenderCommitMessage(yamlConfig.BatchPRConfig.CommitMessage, msgCtx)
-			}
-
-			// Set UsePRTemplate from batch config
-			entry.UsePRTemplate = yamlConfig.BatchPRConfig.UsePRTemplate
-		} else {
-			// No batch_pr_config - use generic defaults
-			if entry.PRTitle == "" {
-				entry.PRTitle = fmt.Sprintf("Update files from %s PR #%d", msgCtx.SourceRepo, prNumber)
-			}
-			if entry.PRBody == "" {
-				entry.PRBody = fmt.Sprintf("Automated update from %s\n\nSource PR: #%d\nCommit: %s\nFiles: %d",
-					msgCtx.SourceRepo, prNumber, sourceCommitSHA[:7], len(entry.Content))
-			}
-		}
-
-		// Update the entry in the map
-		container.FileStateService.AddFileToUpload(key, entry)
-	}
-}

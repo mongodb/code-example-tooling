@@ -216,21 +216,3 @@ workflows:
 #     - move: { from: "courses/python/public", to: "content" }
 #
 # The app will auto-discover the installation ID for each org.
-#
-# ============================================================================
-# MIGRATION FROM LEGACY FORMAT
-# ============================================================================
-#
-# The app supports BOTH formats during transition:
-# - If `workflows` is present, use workflow format
-# - If `copy_rules` is present, use legacy format
-# - You can test workflows without breaking existing config
-#
-# To migrate:
-# 1. Deploy this config as copier-config-workflow.yaml
-# 2. Test with a PR
-# 3. Once verified, rename to copier-config.yaml
-# 4. Remove old copy_rules format
-#
-# ============================================================================
-

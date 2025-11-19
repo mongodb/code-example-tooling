@@ -285,7 +285,11 @@ See the example files in this directory:
       # ... workflow definition ...
 ```
 
-### Component References (Future Enhancement)
+### Component References
+
+✅ **Now Fully Supported!**
+
+You can use `$ref` to reference external files for transformations, commit_strategy, and exclude patterns:
 
 ```yaml
 # Reference transformations
@@ -300,6 +304,15 @@ commit_strategy:
 exclude:
   $ref: "common/mflix-excludes.yaml"
 ```
+
+**Benefits:**
+- Share common configurations across multiple workflows
+- Keep workflow configs clean and focused
+- Organize related files in a logical directory structure
+
+**Path Resolution:**
+- Relative paths are resolved relative to the workflow config file
+- Example: If your workflow config is at `.copier/workflows.yaml`, then `transformations/mflix-java.yaml` resolves to `.copier/transformations/mflix-java.yaml`
 
 ## Troubleshooting
 
@@ -336,7 +349,7 @@ For questions or issues:
 
 Planned features:
 
-- Full `$ref` support for all component types
+- ✅ ~~Full `$ref` support for all component types~~ **IMPLEMENTED!**
 - Config validation CLI tool
 - Config migration tool
 - Visual config editor

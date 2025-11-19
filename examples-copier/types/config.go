@@ -119,6 +119,132 @@ func (r *RefOrValue[T]) GetValue() *T {
 	return r.Value
 }
 
+// TransformationsOrRef can be either inline transformations or a $ref
+type TransformationsOrRef struct {
+	Ref              string           `yaml:"-" json:"-"`
+	Transformations  []Transformation `yaml:"-" json:"-"`
+	isRef            bool
+}
+
+// UnmarshalYAML implements custom YAML unmarshaling for transformations
+func (t *TransformationsOrRef) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	// Try to unmarshal as a reference first
+	var refMap map[string]string
+	if err := unmarshal(&refMap); err == nil {
+		if ref, ok := refMap["$ref"]; ok {
+			t.Ref = ref
+			t.isRef = true
+			return nil
+		}
+	}
+
+	// Not a reference, unmarshal as array of transformations
+	var transformations []Transformation
+	if err := unmarshal(&transformations); err != nil {
+		return err
+	}
+	t.Transformations = transformations
+	t.isRef = false
+	return nil
+}
+
+// MarshalYAML implements custom YAML marshaling for transformations
+func (t TransformationsOrRef) MarshalYAML() (interface{}, error) {
+	if t.isRef {
+		return map[string]string{"$ref": t.Ref}, nil
+	}
+	return t.Transformations, nil
+}
+
+// IsRef returns true if this is a reference
+func (t *TransformationsOrRef) IsRef() bool {
+	return t.isRef
+}
+
+// CommitStrategyOrRef can be either inline commit strategy or a $ref
+type CommitStrategyOrRef struct {
+	Ref            string                `yaml:"-" json:"-"`
+	CommitStrategy *CommitStrategyConfig `yaml:"-" json:"-"`
+	isRef          bool
+}
+
+// UnmarshalYAML implements custom YAML unmarshaling for commit strategy
+func (c *CommitStrategyOrRef) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	// Try to unmarshal as a reference first
+	var refMap map[string]string
+	if err := unmarshal(&refMap); err == nil {
+		if ref, ok := refMap["$ref"]; ok {
+			c.Ref = ref
+			c.isRef = true
+			return nil
+		}
+	}
+
+	// Not a reference, unmarshal as commit strategy
+	var strategy CommitStrategyConfig
+	if err := unmarshal(&strategy); err != nil {
+		return err
+	}
+	c.CommitStrategy = &strategy
+	c.isRef = false
+	return nil
+}
+
+// MarshalYAML implements custom YAML marshaling for commit strategy
+func (c CommitStrategyOrRef) MarshalYAML() (interface{}, error) {
+	if c.isRef {
+		return map[string]string{"$ref": c.Ref}, nil
+	}
+	return c.CommitStrategy, nil
+}
+
+// IsRef returns true if this is a reference
+func (c *CommitStrategyOrRef) IsRef() bool {
+	return c.isRef
+}
+
+// ExcludeOrRef can be either inline exclude patterns or a $ref
+type ExcludeOrRef struct {
+	Ref     string   `yaml:"-" json:"-"`
+	Exclude []string `yaml:"-" json:"-"`
+	isRef   bool
+}
+
+// UnmarshalYAML implements custom YAML unmarshaling for exclude patterns
+func (e *ExcludeOrRef) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	// Try to unmarshal as a reference first
+	var refMap map[string]string
+	if err := unmarshal(&refMap); err == nil {
+		if ref, ok := refMap["$ref"]; ok {
+			e.Ref = ref
+			e.isRef = true
+			return nil
+		}
+	}
+
+	// Not a reference, unmarshal as array of strings
+	var exclude []string
+	if err := unmarshal(&exclude); err != nil {
+		return err
+	}
+	e.Exclude = exclude
+	e.isRef = false
+	return nil
+}
+
+// MarshalYAML implements custom YAML marshaling for exclude patterns
+func (e ExcludeOrRef) MarshalYAML() (interface{}, error) {
+	if e.isRef {
+		return map[string]string{"$ref": e.Ref}, nil
+	}
+	return e.Exclude, nil
+}
+
+// IsRef returns true if this is a reference
+func (e *ExcludeOrRef) IsRef() bool {
+	return e.isRef
+}
+
 // CommitStrategyConfig defines commit strategy settings
 type CommitStrategyConfig struct {
 	Type          string `yaml:"type" json:"type"` // "direct" or "pull_request"
@@ -163,6 +289,11 @@ type Workflow struct {
 	Exclude          []string              `yaml:"exclude,omitempty" json:"exclude,omitempty"`
 	CommitStrategy   *CommitStrategyConfig `yaml:"commit_strategy,omitempty" json:"commit_strategy,omitempty"`
 	DeprecationCheck *DeprecationConfig    `yaml:"deprecation_check,omitempty" json:"deprecation_check,omitempty"`
+
+	// Internal fields for $ref support (not serialized)
+	TransformationsRef string `yaml:"-" json:"-"`
+	ExcludeRef         string `yaml:"-" json:"-"`
+	CommitStrategyRef  string `yaml:"-" json:"-"`
 }
 
 // Source defines the source repository and branch
@@ -520,6 +651,58 @@ func NewMessageContext() *MessageContext {
 	return &MessageContext{
 		Variables: make(map[string]string),
 	}
+}
+
+// ============================================================================
+// Custom YAML unmarshaling for Workflow (to support $ref)
+// ============================================================================
+
+// UnmarshalYAML implements custom YAML unmarshaling for Workflow to support $ref
+func (w *Workflow) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	// Create a temporary struct with the same fields but using OrRef types
+	type workflowAlias struct {
+		Name             string                `yaml:"name"`
+		Source           Source                `yaml:"source"`
+		Destination      Destination           `yaml:"destination"`
+		Transformations  TransformationsOrRef  `yaml:"transformations"`
+		Exclude          ExcludeOrRef          `yaml:"exclude,omitempty"`
+		CommitStrategy   CommitStrategyOrRef   `yaml:"commit_strategy,omitempty"`
+		DeprecationCheck *DeprecationConfig    `yaml:"deprecation_check,omitempty"`
+	}
+
+	var alias workflowAlias
+	if err := unmarshal(&alias); err != nil {
+		return err
+	}
+
+	// Copy simple fields
+	w.Name = alias.Name
+	w.Source = alias.Source
+	w.Destination = alias.Destination
+	w.DeprecationCheck = alias.DeprecationCheck
+
+	// Handle transformations (inline or $ref)
+	if alias.Transformations.IsRef() {
+		w.TransformationsRef = alias.Transformations.Ref
+	} else {
+		w.Transformations = alias.Transformations.Transformations
+	}
+
+	// Handle exclude (inline or $ref)
+	if alias.Exclude.IsRef() {
+		w.ExcludeRef = alias.Exclude.Ref
+	} else {
+		w.Exclude = alias.Exclude.Exclude
+	}
+
+	// Handle commit strategy (inline or $ref)
+	if alias.CommitStrategy.IsRef() {
+		w.CommitStrategyRef = alias.CommitStrategy.Ref
+	} else {
+		w.CommitStrategy = alias.CommitStrategy.CommitStrategy
+	}
+
+	return nil
 }
 
 // ============================================================================

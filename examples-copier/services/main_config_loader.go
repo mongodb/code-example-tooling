@@ -206,7 +206,18 @@ func (mcl *DefaultMainConfigLoader) loadLocalWorkflowConfig(ctx context.Context,
 		LogInfoCtx(ctx, "loaded workflow config from local file", map[string]interface{}{
 			"path": ref.Path,
 		})
-		return mcl.parseWorkflowConfig(content, ref.Path)
+		workflowConfig, err := mcl.parseWorkflowConfig(content, ref.Path)
+		if err != nil {
+			return nil, err
+		}
+
+		// Resolve $ref references
+		baseRepo := fmt.Sprintf("%s/%s", config.ConfigRepoOwner, config.ConfigRepoName)
+		if err := mcl.resolveWorkflowFieldReferences(ctx, workflowConfig, baseRepo, config.ConfigRepoBranch, ref.Path); err != nil {
+			return nil, err
+		}
+
+		return workflowConfig, nil
 	}
 
 	// Fall back to fetching from config repo
@@ -233,7 +244,18 @@ func (mcl *DefaultMainConfigLoader) loadLocalWorkflowConfig(ctx context.Context,
 		return nil, fmt.Errorf("failed to decode workflow config file: %w", err)
 	}
 
-	return mcl.parseWorkflowConfig(content, ref.Path)
+	workflowConfig, err := mcl.parseWorkflowConfig(content, ref.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	// Resolve $ref references
+	baseRepo := fmt.Sprintf("%s/%s", config.ConfigRepoOwner, config.ConfigRepoName)
+	if err := mcl.resolveWorkflowFieldReferences(ctx, workflowConfig, baseRepo, config.ConfigRepoBranch, ref.Path); err != nil {
+		return nil, err
+	}
+
+	return workflowConfig, nil
 }
 
 // loadRemoteWorkflowConfig loads a workflow config from a different repo
@@ -286,6 +308,11 @@ func (mcl *DefaultMainConfigLoader) loadRemoteWorkflowConfig(ctx context.Context
 	workflowConfig.SourceRepo = ref.Repo
 	workflowConfig.SourceBranch = ref.Branch
 
+	// Resolve $ref references
+	if err := mcl.resolveWorkflowFieldReferences(ctx, workflowConfig, ref.Repo, ref.Branch, ref.Path); err != nil {
+		return nil, err
+	}
+
 	return workflowConfig, nil
 }
 
@@ -302,6 +329,75 @@ func (mcl *DefaultMainConfigLoader) parseWorkflowConfig(content string, filename
 	}
 
 	return &workflowConfig, nil
+}
+
+// resolveWorkflowFieldReferences resolves all $ref references in workflow fields (transformations, exclude, commit_strategy)
+func (mcl *DefaultMainConfigLoader) resolveWorkflowFieldReferences(ctx context.Context, workflowConfig *types.WorkflowConfig, baseRepo string, baseBranch string, basePath string) error {
+	for i := range workflowConfig.Workflows {
+		workflow := &workflowConfig.Workflows[i]
+
+		// Resolve transformations $ref
+		if workflow.TransformationsRef != "" {
+			LogInfoCtx(ctx, "resolving transformations $ref", map[string]interface{}{
+				"workflow": workflow.Name,
+				"ref":      workflow.TransformationsRef,
+			})
+
+			content, err := mcl.resolveReference(ctx, workflow.TransformationsRef, baseRepo, baseBranch, basePath)
+			if err != nil {
+				return fmt.Errorf("failed to resolve transformations $ref for workflow %s: %w", workflow.Name, err)
+			}
+
+			var transformations []types.Transformation
+			if err := yaml.Unmarshal([]byte(content), &transformations); err != nil {
+				return fmt.Errorf("failed to parse transformations from $ref for workflow %s: %w", workflow.Name, err)
+			}
+			workflow.Transformations = transformations
+			workflow.TransformationsRef = "" // Clear the ref after resolution
+		}
+
+		// Resolve exclude $ref
+		if workflow.ExcludeRef != "" {
+			LogInfoCtx(ctx, "resolving exclude $ref", map[string]interface{}{
+				"workflow": workflow.Name,
+				"ref":      workflow.ExcludeRef,
+			})
+
+			content, err := mcl.resolveReference(ctx, workflow.ExcludeRef, baseRepo, baseBranch, basePath)
+			if err != nil {
+				return fmt.Errorf("failed to resolve exclude $ref for workflow %s: %w", workflow.Name, err)
+			}
+
+			var exclude []string
+			if err := yaml.Unmarshal([]byte(content), &exclude); err != nil {
+				return fmt.Errorf("failed to parse exclude from $ref for workflow %s: %w", workflow.Name, err)
+			}
+			workflow.Exclude = exclude
+			workflow.ExcludeRef = "" // Clear the ref after resolution
+		}
+
+		// Resolve commit_strategy $ref
+		if workflow.CommitStrategyRef != "" {
+			LogInfoCtx(ctx, "resolving commit_strategy $ref", map[string]interface{}{
+				"workflow": workflow.Name,
+				"ref":      workflow.CommitStrategyRef,
+			})
+
+			content, err := mcl.resolveReference(ctx, workflow.CommitStrategyRef, baseRepo, baseBranch, basePath)
+			if err != nil {
+				return fmt.Errorf("failed to resolve commit_strategy $ref for workflow %s: %w", workflow.Name, err)
+			}
+
+			var strategy types.CommitStrategyConfig
+			if err := yaml.Unmarshal([]byte(content), &strategy); err != nil {
+				return fmt.Errorf("failed to parse commit_strategy from $ref for workflow %s: %w", workflow.Name, err)
+			}
+			workflow.CommitStrategy = &strategy
+			workflow.CommitStrategyRef = "" // Clear the ref after resolution
+		}
+	}
+
+	return nil
 }
 
 // resolveReference resolves a $ref reference to actual content

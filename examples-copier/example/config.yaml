@@ -111,14 +111,18 @@ workflows:
       auto_merge: false
 #
 # ============================================================================
-# USING REFERENCES FOR REUSABILITY (FUTURE ENHANCEMENT)
+# USING REFERENCES FOR REUSABILITY
 # ============================================================================
 #
-# NOTE: $ref support is planned but not yet fully implemented.
-# The infrastructure exists but needs additional work to be production-ready.
+# ✅ $ref support is now fully implemented!
 #
-# For even better organization, you will be able to extract common parts into
-# separate files:
+# You can use $ref to reference external files for transformations, commit_strategy,
+# and exclude patterns. This allows you to:
+# - Share common configurations across multiple workflows
+# - Keep workflow configs clean and focused
+# - Organize related files in a logical directory structure
+#
+# For better organization, extract common parts into separate files:
 #
 # .copier/
 #   workflows.yaml                    # This file (references others)

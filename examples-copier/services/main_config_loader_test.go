@@ -741,3 +741,164 @@ workflow_configs:
 	assert.Equal(t, "mongodb/sample-app-nodejs-mflix", yamlConfig.Workflows[1].Destination.Repo)
 }
 
+func TestMainConfigLoader_LoadMainConfigFromContent_RefSupport(t *testing.T) {
+	_ = test.WithHTTPMock(t)
+	loader := services.NewMainConfigLoader().(*services.DefaultMainConfigLoader)
+	ctx := context.Background()
+
+	// Setup org token to bypass GitHub App authentication
+	test.SetupOrgToken("mongodb", "test-token")
+
+	// Mock the referenced files
+	// Note: Paths are resolved relative to the workflow config file (.copier/workflows.yaml)
+	// So "transformations/mflix-java.yaml" becomes ".copier/transformations/mflix-java.yaml"
+
+	// 1. Transformations file
+	transformationsYAML := `
+- move:
+    from: "mflix/client"
+    to: "client"
+- move:
+    from: "mflix/server/java-spring"
+    to: "server"
+- copy:
+    from: "README.md"
+    to: "README.md"
+`
+	test.MockContentsEndpoint("mongodb", "docs-sample-apps", ".copier/transformations/mflix-java.yaml", b64MainConfig(transformationsYAML))
+
+	// 2. Commit strategy file
+	strategyYAML := `
+type: "pull_request"
+pr_title: "Update MFlix application from docs-sample-apps"
+pr_body: |
+  Automated update of MFlix application files from the source repository
+
+  Source: ${source_repo}
+  PR: #${pr_number}
+  Commit: ${commit_sha}
+use_pr_template: true
+auto_merge: false
+`
+	test.MockContentsEndpoint("mongodb", "docs-sample-apps", ".copier/strategies/mflix-pr-strategy.yaml", b64MainConfig(strategyYAML))
+
+	// 3. Exclude patterns file
+	excludeYAML := `
+- "**/.env"
+- "**/node_modules/**"
+- "**/.git/**"
+- "**/build/**"
+`
+	test.MockContentsEndpoint("mongodb", "docs-sample-apps", ".copier/common/mflix-excludes.yaml", b64MainConfig(excludeYAML))
+
+	// 4. Workflow config with $ref references
+	workflowConfigYAML := `
+workflows:
+  - name: "mflix-java"
+    destination:
+      repo: "mongodb/sample-app-java-mflix"
+      branch: "main"
+    transformations:
+      $ref: "transformations/mflix-java.yaml"
+    commit_strategy:
+      $ref: "strategies/mflix-pr-strategy.yaml"
+    exclude:
+      $ref: "common/mflix-excludes.yaml"
+
+  - name: "mflix-nodejs"
+    destination:
+      repo: "mongodb/sample-app-nodejs-mflix"
+      branch: "main"
+    transformations:
+      - move:
+          from: "mflix/client"
+          to: "client"
+    commit_strategy:
+      $ref: "strategies/mflix-pr-strategy.yaml"
+`
+	test.MockContentsEndpoint("mongodb", "docs-sample-apps", ".copier/workflows.yaml", b64MainConfig(workflowConfigYAML))
+
+	// Main config
+	mainConfigYAML := `
+defaults:
+  commit_strategy:
+    type: "direct"
+
+workflow_configs:
+  - source: "repo"
+    repo: "mongodb/docs-sample-apps"
+    branch: "main"
+    path: ".copier/workflows.yaml"
+`
+
+	config := &configs.Config{
+		ConfigRepoOwner:  "mongodb",
+		ConfigRepoName:   "config-repo",
+		ConfigRepoBranch: "main",
+		MainConfigFile:   "main-config.yaml",
+	}
+
+	yamlConfig, err := loader.LoadMainConfigFromContent(ctx, mainConfigYAML, config)
+	require.NoError(t, err)
+	require.NotNil(t, yamlConfig)
+
+	// Verify we have 2 workflows
+	assert.Len(t, yamlConfig.Workflows, 2)
+
+	// Verify first workflow (mflix-java) - all fields from $ref
+	workflow1 := yamlConfig.Workflows[0]
+	assert.Equal(t, "mflix-java", workflow1.Name)
+
+	// Source should be inferred from context
+	assert.Equal(t, "mongodb/docs-sample-apps", workflow1.Source.Repo)
+	assert.Equal(t, "main", workflow1.Source.Branch)
+
+	// Destination
+	assert.Equal(t, "mongodb/sample-app-java-mflix", workflow1.Destination.Repo)
+	assert.Equal(t, "main", workflow1.Destination.Branch)
+
+	// Transformations should be resolved from $ref
+	require.Len(t, workflow1.Transformations, 3)
+	assert.NotNil(t, workflow1.Transformations[0].Move)
+	assert.Equal(t, "mflix/client", workflow1.Transformations[0].Move.From)
+	assert.Equal(t, "client", workflow1.Transformations[0].Move.To)
+	assert.NotNil(t, workflow1.Transformations[1].Move)
+	assert.Equal(t, "mflix/server/java-spring", workflow1.Transformations[1].Move.From)
+	assert.Equal(t, "server", workflow1.Transformations[1].Move.To)
+	assert.NotNil(t, workflow1.Transformations[2].Copy)
+	assert.Equal(t, "README.md", workflow1.Transformations[2].Copy.From)
+	assert.Equal(t, "README.md", workflow1.Transformations[2].Copy.To)
+
+	// Commit strategy should be resolved from $ref
+	require.NotNil(t, workflow1.CommitStrategy)
+	assert.Equal(t, "pull_request", workflow1.CommitStrategy.Type)
+	assert.Equal(t, "Update MFlix application from docs-sample-apps", workflow1.CommitStrategy.PRTitle)
+	assert.True(t, workflow1.CommitStrategy.UsePRTemplate)
+	assert.False(t, workflow1.CommitStrategy.AutoMerge)
+
+	// Exclude should be resolved from $ref
+	require.Len(t, workflow1.Exclude, 4)
+	assert.Equal(t, "**/.env", workflow1.Exclude[0])
+	assert.Equal(t, "**/node_modules/**", workflow1.Exclude[1])
+	assert.Equal(t, "**/.git/**", workflow1.Exclude[2])
+	assert.Equal(t, "**/build/**", workflow1.Exclude[3])
+
+	// Verify second workflow (mflix-nodejs) - mixed inline and $ref
+	workflow2 := yamlConfig.Workflows[1]
+	assert.Equal(t, "mflix-nodejs", workflow2.Name)
+
+	// Transformations are inline
+	require.Len(t, workflow2.Transformations, 1)
+	assert.NotNil(t, workflow2.Transformations[0].Move)
+	assert.Equal(t, "mflix/client", workflow2.Transformations[0].Move.From)
+	assert.Equal(t, "client", workflow2.Transformations[0].Move.To)
+
+	// Commit strategy is from $ref
+	require.NotNil(t, workflow2.CommitStrategy)
+	assert.Equal(t, "pull_request", workflow2.CommitStrategy.Type)
+	assert.Equal(t, "Update MFlix application from docs-sample-apps", workflow2.CommitStrategy.PRTitle)
+
+	// Exclude is not specified (should be empty or nil)
+	assert.Empty(t, workflow2.Exclude)
+}
+

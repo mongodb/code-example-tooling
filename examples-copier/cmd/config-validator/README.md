@@ -1,11 +1,13 @@
 # config-validator
 
-Command-line tool for validating and testing examples-copier configurations.
+Command-line tool for validating and testing examples-copier workflow configurations.
+
+> **Note:** This tool validates individual workflow config files. It does not validate main config files. Main config validation is built into the application itself.
 
 ## Overview
 
 The `config-validator` tool helps you:
-- Validate configuration files
+- Validate workflow configuration files
 - Test pattern matching
 - Test path transformations
 - Convert legacy JSON configs to YAML
@@ -36,13 +38,13 @@ Validate a configuration file.
 **Examples:**
 
 ```bash
-# Validate YAML config
-./config-validator validate -config copier-config.yaml
+# Validate workflow config
+./config-validator validate -config .copier/workflows/config.yaml
 
 # Validate with verbose output
-./config-validator validate -config copier-config.yaml -v
+./config-validator validate -config .copier/workflows/config.yaml -v
 
-# Validate JSON config
+# Validate legacy JSON config
 ./config-validator validate -config config.json
 ```
 
@@ -192,7 +194,7 @@ Convert legacy JSON configuration to YAML format.
 **Example:**
 
 ```bash
-./config-validator convert -input config.json -output copier-config.yaml
+./config-validator convert -input config.json -output workflow-config.yaml
 ```
 
 **Output:**
@@ -200,12 +202,12 @@ Convert legacy JSON configuration to YAML format.
 ✅ Conversion successful!
 
 Converted 2 legacy rules to YAML format.
-Output written to: copier-config.yaml
+Output written to: workflow-config.yaml
 
 Next steps:
-1. Review the generated copier-config.yaml
+1. Review the generated workflow-config.yaml
 2. Enhance with new features (regex patterns, path transforms)
-3. Validate: ./config-validator validate -config copier-config.yaml
+3. Validate: ./config-validator validate -config workflow-config.yaml
 ```
 
 ## Common Use Cases
@@ -250,8 +252,8 @@ When files are copied to wrong locations:
 Before deploying a new configuration:
 
 ```bash
-# Validate the config
-./config-validator validate -config copier-config.yaml -v
+# Validate the workflow config
+./config-validator validate -config .copier/workflows/config.yaml -v
 
 # Test with sample file paths
 ./config-validator test-pattern \
@@ -270,10 +272,10 @@ Before deploying a new configuration:
 
 ```bash
 # Convert
-./config-validator convert -input config.json -output copier-config.yaml
+./config-validator convert -input config.json -output workflow-config.yaml
 
 # Validate
-./config-validator validate -config copier-config.yaml -v
+./config-validator validate -config workflow-config.yaml -v
 
 # Test patterns
 ./config-validator test-pattern \
@@ -304,8 +306,8 @@ Before deploying a new configuration:
 ### Complete Workflow
 
 ```bash
-# 1. Create config
-cat > copier-config.yaml << EOF
+# 1. Create workflow config
+cat > workflow-config.yaml << EOF
 workflows:
   - name: "Copy Go examples"
     source:
@@ -321,7 +323,7 @@ workflows:
 EOF
 
 # 2. Validate
-./config-validator validate -config copier-config.yaml -v
+./config-validator validate -config workflow-config.yaml -v
 
 # 3. Test pattern
 ./config-validator test-pattern \
@@ -338,8 +340,7 @@ EOF
 
 ## See Also
 
-- [Configuration Guide](../../docs/CONFIGURATION-GUIDE.md) - Complete configuration reference
+- [Main Config README](../../configs/copier-config-examples/MAIN-CONFIG-README.md) - Main config documentation
 - [Pattern Matching Guide](../../docs/PATTERN-MATCHING-GUIDE.md) - Pattern matching help
-- [FAQ](../../docs/FAQ.md) - Frequently asked questions (includes JSON to YAML conversion)
-- [Quick Reference](../../QUICK-REFERENCE.md) - All commands
+- [FAQ](../../docs/FAQ.md) - Frequently asked questions
 

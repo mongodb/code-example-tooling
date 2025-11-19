@@ -1,6 +1,11 @@
 # Workflow Configuration File
-# This file lives in the source repository (e.g., mongodb/docs-sample-apps/.copier/workflows.yaml)
-# Referenced from main config file
+# This file should be placed at: .copier/workflows/config.yaml (in source repo)
+# Referenced from main config file with:
+#   workflow_configs:
+#     - source: "repo"
+#       repo: "mongodb/docs-sample-apps"
+#       branch: "main"
+#       path: ".copier/workflows/config.yaml"
 
 # ============================================================================
 # LOCAL DEFAULTS
@@ -33,13 +38,6 @@ workflows:
   # MFlix Java Application
   # --------------------------------------------------------------------------
   - name: "mflix-java"
-    # NOTE: source.repo and source.branch are automatically inferred from the
-    # workflow config reference in the main config. No need to specify them!
-    # The main config references this file with:
-    #   source: "repo"
-    #   repo: "mongodb/docs-sample-apps"
-    #   branch: "main"
-    # So all workflows in this file inherit those values by default.
     destination:
       repo: "mongodb/sample-app-java-mflix"
       branch: "main"
@@ -49,16 +47,7 @@ workflows:
       - copy: { from: "mflix/README-JAVA-SPRING.md", to: "README.md" }
       - copy: { from: "mflix/.gitignore-java", to: ".gitignore" }
     commit_strategy:
-      type: "pull_request"
-      pr_title: "Update MFlix client and Java server from docs-sample-apps"
-      use_pr_template: true
-      pr_body: |
-        Automated update of MFlix Next.js client and Java Spring Boot server
-
-        Source: ${source_repo}
-        PR: #${pr_number}
-        Commit: ${commit_sha}
-      auto_merge: false
+      $ref: "../strategies/mflix-pr-strategy.yaml"
 
   # --------------------------------------------------------------------------
   # MFlix Node.js Application
@@ -74,16 +63,7 @@ workflows:
       - copy: { from: "mflix/README-JAVASCRIPT-EXPRESS.md", to: "README.md" }
       - copy: { from: "mflix/.gitignore-js", to: ".gitignore" }
     commit_strategy:
-      type: "pull_request"
-      pr_title: "Update MFlix client and Express server from docs-sample-apps"
-      use_pr_template: true
-      pr_body: |
-        Automated update of MFlix Next.js client and Express.js server
-
-        Source: ${source_repo}
-        PR: #${pr_number}
-        Commit: ${commit_sha}
-      auto_merge: false
+      $ref: "../strategies/mflix-pr-strategy.yaml"
 
   # --------------------------------------------------------------------------
   # MFlix Python Application
@@ -99,16 +79,71 @@ workflows:
       - copy: { from: "mflix/README-PYTHON-FASTAPI.md", to: "README.md" }
       - copy: { from: "mflix/.gitignore-python", to: ".gitignore" }
     commit_strategy:
-      type: "pull_request"
-      pr_title: "Update MFlix client and Python server from docs-sample-apps"
-      use_pr_template: true
-      pr_body: |
-        Automated update of MFlix Next.js client and Python FastAPI server
+      $ref: "../strategies/mflix-pr-strategy.yaml"
 
-        Source: ${source_repo}
-        PR: #${pr_number}
-        Commit: ${commit_sha}
-      auto_merge: false
+# ============================================================================
+# BENEFITS OF THIS STRUCTURE
+# ============================================================================
+#
+# 1. CO-LOCATION
+#    - Workflow config lives with source code
+#    - Easy to find and update
+#    - Version controlled with source
+#
+# 2. OWNERSHIP
+#    - Source repo team owns the workflow config
+#    - Can update without touching central config
+#    - Clear responsibility
+#
+# 3. TESTING
+#    - Can test workflow config changes in source repo
+#    - PR reviews include workflow changes
+#    - Easy to validate before merging
+#
+# 4. SCALABILITY
+#    - Each source repo has its own config
+#    - No central bottleneck
+#    - Easy to add new workflows
+#
+# 5. AUTOMATIC CONTEXT INFERENCE
+#    - No need to specify source.repo and source.branch in workflows
+#    - Automatically inherited from the workflow config reference
+#    - Less redundancy, cleaner configuration
+#    - Can still override if needed (e.g., different branch)
+#
+# ============================================================================
+# SOURCE CONTEXT INFERENCE
+# ============================================================================
+#
+# When a workflow config is referenced from a source repo, workflows can omit
+# source.repo and source.branch - they're automatically inferred!
+#
+# EXAMPLE 1: Fully inferred (most common)
+#   - name: "my-workflow"
+#     # source.repo and source.branch inherited from workflow config reference
+#     destination:
+#       repo: "mongodb/dest-repo"
+#     transformations:
+#       - move: { from: "src", to: "dest" }
+#
+# EXAMPLE 2: Override branch only
+#   - name: "my-workflow-develop"
+#     source:
+#       branch: "develop"  # Override branch, repo still inferred
+#     destination:
+#       repo: "mongodb/dest-repo"
+#     transformations:
+#       - move: { from: "src", to: "dest" }
+#
+# EXAMPLE 3: Explicit source (if needed)
+#   - name: "cross-repo-workflow"
+#     source:
+#       repo: "mongodb/other-repo"  # Explicitly specify different repo
+#       branch: "main"
+#     destination:
+#       repo: "mongodb/dest-repo"
+#     transformations:
+#       - move: { from: "src", to: "dest" }
 #
 # ============================================================================
 # USING REFERENCES FOR REUSABILITY
@@ -116,16 +151,11 @@ workflows:
 #
 # ✅ $ref support is now fully implemented!
 #
-# You can use $ref to reference external files for transformations, commit_strategy,
-# and exclude patterns. This allows you to:
-# - Share common configurations across multiple workflows
-# - Keep workflow configs clean and focused
-# - Organize related files in a logical directory structure
-#
-# For better organization, extract common parts into separate files:
+# For better organization, you can extract common parts into separate files:
 #
 # .copier/
-#   workflows.yaml                    # This file (references others)
+#   workflows/
+#     config.yaml                     # This file (references others)
 #   transformations/
 #     mflix-java.yaml                 # Java transformations
 #     mflix-nodejs.yaml               # Node.js transformations
@@ -135,7 +165,7 @@ workflows:
 #   common/
 #     mflix-excludes.yaml             # Common exclude patterns
 #
-# Then use $ref to reference them:
+# Then use $ref to reference them (paths are relative to this file):
 #
 # workflows:
 #   - name: "mflix-java"
@@ -144,9 +174,11 @@ workflows:
 #       repo: "mongodb/sample-app-java-mflix"
 #       branch: "main"
 #     transformations:
-#       $ref: "transformations/mflix-java.yaml"
+#       $ref: "../transformations/mflix-java.yaml"    # ../ goes up to .copier/
 #     commit_strategy:
-#       $ref: "strategies/mflix-pr-strategy.yaml"
+#       $ref: "../strategies/mflix-pr-strategy.yaml"  # ../ goes up to .copier/
+#     exclude:
+#       $ref: "../common/mflix-excludes.yaml"         # ../ goes up to .copier/
 #
 # ============================================================================
 # ADDING A NEW WORKFLOW

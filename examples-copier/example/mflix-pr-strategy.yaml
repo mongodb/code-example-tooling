@@ -1,6 +1,6 @@
 # Reusable Commit Strategy File
-# This file contains a commit strategy definition that can be referenced from workflow configs
-# Location: .copier/strategies/mflix-pr-strategy.yaml (in source repo)
+# This file should be placed at: .copier/strategies/mflix-pr-strategy.yaml (in source repo)
+# Referenced from workflow config at: .copier/workflows/config.yaml
 
 # ============================================================================
 # MFLIX PR STRATEGY
@@ -12,7 +12,7 @@ type: "pull_request"
 pr_title: "Update MFlix application from docs-sample-apps"
 use_pr_template: true
 pr_body: |
-  Automated update of MFlix application files from the source repository
+  Automated update of MFlix application files from the source repository.
 
   Source: ${source_repo}
   PR: #${pr_number}
@@ -20,3 +20,26 @@ pr_body: |
   ---
   *This PR was automatically created by the DevDocs Copier App.*
 auto_merge: false
+
+# ============================================================================
+# USAGE IN WORKFLOW CONFIG
+# ============================================================================
+#
+# In your workflow config file (.copier/workflows/config.yaml):
+#
+# workflows:
+#   - name: "mflix-java"
+#     destination:
+#       repo: "mongodb/sample-app-java-mflix"
+#       branch: "main"
+#     transformations:
+#       # ... transformations ...
+#     commit_strategy:
+#       $ref: "../strategies/mflix-pr-strategy.yaml"
+#
+# The path is resolved relative to the workflow config file.
+# Since config.yaml is at .copier/workflows/config.yaml,
+# the path "../strategies/mflix-pr-strategy.yaml" resolves to:
+# .copier/strategies/mflix-pr-strategy.yaml
+#
+# ============================================================================

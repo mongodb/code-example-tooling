@@ -76,8 +76,9 @@ depman install --path /path/to/project
 ### Flags
 
 - `-p, --path`: Starting filepath or directory to scan (default: current directory)
-- `--direct-only`: Only check direct dependencies (excludes indirect/dev dependencies)
+- `--direct-only`: Only check direct dependencies (excludes indirect/dev dependencies - only supported for npm and Go)
 - `--ignore`: Additional directory names to ignore during scanning (can be specified multiple times)
+- `--quiet`: Minimal output (only show updates/errors)
 
 ### Default Ignored Directories
 

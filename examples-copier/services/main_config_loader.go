@@ -75,22 +75,16 @@ func (mcl *DefaultMainConfigLoader) LoadMainConfigFromContent(ctx context.Contex
 		return nil, fmt.Errorf("main config file is empty")
 	}
 
-	// Try to parse as MainConfig first
+	// Parse as MainConfig
 	var mainConfig types.MainConfig
 	err := yaml.Unmarshal([]byte(content), &mainConfig)
 	if err != nil {
-		// If it fails, try parsing as legacy YAMLConfig
-		LogInfoCtx(ctx, "failed to parse as MainConfig, trying legacy YAMLConfig format", map[string]interface{}{
-			"error": err.Error(),
-		})
-		return mcl.configLoader.LoadConfigFromContent(content, config.ConfigFile)
+		return nil, fmt.Errorf("failed to parse main config: %w", err)
 	}
 
-	// Check if this is actually a MainConfig (has workflow_configs)
+	// Validate that workflow_configs is present
 	if len(mainConfig.WorkflowConfigs) == 0 {
-		// This is a legacy YAMLConfig format
-		LogInfoCtx(ctx, "detected legacy YAMLConfig format (no workflow_configs)", nil)
-		return mcl.configLoader.LoadConfigFromContent(content, config.ConfigFile)
+		return nil, fmt.Errorf("main config must have at least one workflow_config entry")
 	}
 
 	// Set defaults for main config

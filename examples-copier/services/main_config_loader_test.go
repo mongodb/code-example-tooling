@@ -347,10 +347,10 @@ func TestMainConfigLoader_LoadMainConfigFromContent_NoWorkflowConfigs(t *testing
 	loader := services.NewMainConfigLoader().(*services.DefaultMainConfigLoader)
 	ctx := context.Background()
 
-	// This should be treated as legacy format
-	legacyYAML := `
+	// Config without workflow_configs should fail
+	invalidYAML := `
 workflows:
-  - name: "legacy-workflow"
+  - name: "test-workflow"
     source:
       repo: "mongodb/source-repo"
       branch: "main"
@@ -367,16 +367,12 @@ workflows:
 		ConfigRepoOwner:  "mongodb",
 		ConfigRepoName:   "config-repo",
 		ConfigRepoBranch: "main",
-		ConfigFile:       "copier-config.yaml",
+		ConfigFile:       "main-config.yaml",
 	}
 
-	yamlConfig, err := loader.LoadMainConfigFromContent(ctx, legacyYAML, config)
-	require.NoError(t, err)
-	require.NotNil(t, yamlConfig)
-
-	// Should fall back to legacy format
-	assert.Len(t, yamlConfig.Workflows, 1)
-	assert.Equal(t, "legacy-workflow", yamlConfig.Workflows[0].Name)
+	_, err := loader.LoadMainConfigFromContent(ctx, invalidYAML, config)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "must have at least one workflow_config")
 }
 
 func TestMainConfigLoader_LoadMainConfigFromContent_InvalidWorkflowConfigRef(t *testing.T) {

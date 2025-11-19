@@ -162,43 +162,6 @@ workflows:
 2. Trigger a webhook event (merge a PR in source repo)
 3. Verify workflows execute correctly
 
-## Migration Guide
-
-### From Legacy Format
-
-If you have an existing `copier-config.yaml`:
-
-#### Option 1: Keep Legacy Format (No Changes)
-
-Don't set `MAIN_CONFIG_FILE` - the app will continue using the legacy format.
-
-#### Option 2: Migrate to Main Config
-
-1. **Create main config file**:
-   ```yaml
-   defaults:
-     # Copy defaults from legacy config
-   
-   workflow_configs:
-     - source: "inline"
-       workflows:
-         # Copy workflows from legacy config
-   ```
-
-2. **Update env.yaml**:
-   ```yaml
-   MAIN_CONFIG_FILE: "main-config.yaml"
-   USE_MAIN_CONFIG: "true"
-   ```
-
-3. **Test thoroughly** before deploying
-
-#### Option 3: Gradual Migration
-
-1. Start with inline workflows in main config
-2. Gradually move workflows to separate files
-3. Eventually move to distributed workflow configs
-
 ## Best Practices
 
 ### 1. Organization

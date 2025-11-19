@@ -242,25 +242,6 @@ workflows:
 4. **Add more workflows**: Expand your configuration
 5. **Use reusable components**: Extract common configs
 
-## Migration from Legacy Format
-
-Already using `copier-config.yaml`? You have options:
-
-### Option 1: Keep Legacy Format
-Don't change anything - legacy format still works!
-
-### Option 2: Migrate Gradually
-1. Set `MAIN_CONFIG_FILE` to new file
-2. Use inline workflows initially
-3. Gradually move to separate files
-
-### Option 3: Full Migration
-1. Create main config with workflow references
-2. Move workflows to source repos
-3. Update env.yaml
-4. Test thoroughly
-5. Deploy
-
 ## Support
 
 - **Documentation**: `MAIN-CONFIG-README.md`

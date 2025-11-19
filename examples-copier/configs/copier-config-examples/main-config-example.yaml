@@ -166,29 +166,6 @@ workflow_configs:
 #    - Clear separation between global and local settings
 #
 # ============================================================================
-# MIGRATION FROM LEGACY FORMAT
-# ============================================================================
-#
-# If you have an existing copier-config.yaml with workflows directly defined:
-#
-# OPTION 1: Keep using legacy format
-# - Don't set MAIN_CONFIG_FILE in env.yaml
-# - App will use legacy config loader
-# - No changes needed
-#
-# OPTION 2: Migrate to main config format
-# - Create this main config file
-# - Move workflows to separate workflow config files
-# - Set MAIN_CONFIG_FILE in env.yaml
-# - Set USE_MAIN_CONFIG=true in env.yaml
-#
-# OPTION 3: Hybrid approach
-# - Use inline workflows in main config
-# - Gradually migrate to separate workflow configs
-# - Start with simple workflows inline
-# - Move complex workflows to separate files
-#
-# ============================================================================
 # ENVIRONMENT VARIABLES
 # ============================================================================
 #

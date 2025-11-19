@@ -74,19 +74,11 @@ Yes. A file can match multiple workflows and be copied to multiple targets. This
 
 ### Where should I store the config file?
 
-**For production:** Store `copier-config.yaml` in your source repository (the repo being monitored for PRs).
+**Main config:** Store in a central config repository and set `MAIN_CONFIG_FILE` in env.yaml.
 
-**For local testing:** Store `copier-config.yaml` in the examples-copier directory and set `CONFIG_FILE=copier-config.yaml`.
+**Workflow configs:** Store in `.copier/workflows/config.yaml` in source repositories, or reference them from the main config.
 
-### How do I migrate from JSON to YAML?
-
-Use the config-validator tool:
-
-```bash
-./config-validator convert -input config.json -output copier-config.yaml
-```
-
-The tool will automatically convert your legacy JSON configuration to the new YAML format while preserving all settings.
+**For local testing:** Store config files in the examples-copier directory and set appropriate environment variables.
 
 ## Pattern Matching
 

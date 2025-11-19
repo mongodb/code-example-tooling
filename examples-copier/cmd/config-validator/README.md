@@ -10,7 +10,6 @@ The `config-validator` tool helps you:
 - Validate workflow configuration files
 - Test pattern matching
 - Test path transformations
-- Convert legacy JSON configs to YAML
 - Debug configuration issues
 
 ## Installation
@@ -178,38 +177,6 @@ Variables used:
   name = main
 ```
 
-### convert
-
-Convert legacy JSON configuration to YAML format.
-
-**Usage:**
-```bash
-./config-validator convert -input <file> -output <file>
-```
-
-**Options:**
-- `-input` - Input JSON file (required)
-- `-output` - Output YAML file (required)
-
-**Example:**
-
-```bash
-./config-validator convert -input config.json -output workflow-config.yaml
-```
-
-**Output:**
-```
-✅ Conversion successful!
-
-Converted 2 legacy rules to YAML format.
-Output written to: workflow-config.yaml
-
-Next steps:
-1. Review the generated workflow-config.yaml
-2. Enhance with new features (regex patterns, path transforms)
-3. Validate: ./config-validator validate -config workflow-config.yaml
-```
-
 ## Common Use Cases
 
 ### Debugging Pattern Matching
@@ -271,9 +238,6 @@ Before deploying a new configuration:
 ### Migrating from JSON to YAML
 
 ```bash
-# Convert
-./config-validator convert -input config.json -output workflow-config.yaml
-
 # Validate
 ./config-validator validate -config workflow-config.yaml -v
 

@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -145,58 +144,6 @@ func (cv *ConfigValidator) TestPattern(patternType types.PatternType, pattern st
 func (cv *ConfigValidator) TestTransform(sourcePath string, template string, variables map[string]string) (string, error) {
 	transformer := NewPathTransformer()
 	return transformer.Transform(sourcePath, template, variables)
-}
-
-// ExportConfigAsYAML exports a config as YAML string
-func ExportConfigAsYAML(config *types.YAMLConfig) (string, error) {
-	data, err := yaml.Marshal(config)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal config to YAML: %w", err)
-	}
-	return string(data), nil
-}
-
-// ExportConfigAsJSON exports a config as JSON string
-func ExportConfigAsJSON(config *types.YAMLConfig) (string, error) {
-	data, err := json.MarshalIndent(config, "", "  ")
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal config to JSON: %w", err)
-	}
-	return string(data), nil
-}
-
-// ConfigTemplate represents a configuration template
-type ConfigTemplate struct {
-	Name        string
-	Description string
-	Content     string
-}
-
-// GetConfigTemplates returns available configuration templates
-func GetConfigTemplates() []ConfigTemplate {
-	return []ConfigTemplate{
-		{
-			Name:        "basic-workflow",
-			Description: "Basic workflow configuration",
-			Content: `workflows:
-  - name: "Copy examples"
-    source:
-      repo: "owner/source-repo"
-      branch: "main"
-    destination:
-      repo: "owner/target-repo"
-      branch: "main"
-    transformations:
-      - move:
-          from: "examples"
-          to: "code-examples"
-    commit_strategy:
-      type: "pull_request"
-      pr_title: "Update code examples"
-      pr_body: "Automated update from source repository"
-`,
-		},
-	}
 }
 
 // loadLocalConfigFile attempts to load config from a local file

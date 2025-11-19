@@ -243,7 +243,7 @@ targets:
 
 **Files:**
 - `types/config.go` - Configuration types with $ref support
-- `services/config_loader.go` - Configuration loader with YAML/JSON support
+- `services/config_loader.go` - Configuration loader
 - `services/main_config_loader.go` - Main config loader with reference resolution
 
 **Capabilities:**
@@ -412,10 +412,7 @@ config-validator test-transform \
   -template "code/${filename}"
 
 # Initialize new config from template
-config-validator init -template basic -output my-copier-config.yaml
-
-# Convert between formats
-config-validator convert -input config.json -output copier-config.yaml
+config-validator init -template basic -output my-workflow-config.yaml
 ```
 
 ### 11. Development/Testing Features

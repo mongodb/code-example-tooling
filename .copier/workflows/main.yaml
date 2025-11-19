@@ -15,16 +15,6 @@ defaults:
   deprecation_check:
     enabled: true
     file: "deprecated_examples.json"
-  exclude:
-    - "**/dist/**"
-    - "**/build/**"
-    - "**/.env"
-    - "**/.env.*"
-    - "**/node_modules/**"
-    - "**/.DS_Store"
-    - "**/coverage/**"
-    - "**/__pycache__/**"
-    - "**/*.pyc"
 
 # ============================================================================
 # WORKFLOW CONFIG REFERENCES

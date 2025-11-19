@@ -15,8 +15,8 @@ import (
 // GetFilesChangedInPr retrieves the list of files changed in a specified pull request.
 // It returns a slice of ChangedFile structures containing details about each changed file.
 // Parameters:
-//   - owner: The repository owner (e.g., "cbullinger")
-//   - repo: The repository name (e.g., "aggregation-tasks")
+//   - owner: The repository owner (e.g., "mongodb")
+//   - repo: The repository name (e.g., "docs-sample-apps")
 //   - pr_number: The pull request number
 func GetFilesChangedInPr(owner string, repo string, pr_number int) ([]ChangedFile, error) {
 	if InstallationAccessToken == "" {

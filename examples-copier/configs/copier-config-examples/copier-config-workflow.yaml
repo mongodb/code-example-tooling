@@ -172,16 +172,6 @@ workflows:
       auto_merge: false
 
 # ============================================================================
-# BENEFITS OF THIS FORMAT
-# ============================================================================
-#
-# 1. SIMPLER: 3 workflows instead of 12 rules (70% reduction)
-# 2. CLEARER: Each workflow shows complete source → destination mapping
-# 3. MULTI-ORG READY: Each workflow can have different source repo
-# 4. EASIER TO MAINTAIN: Add new apps by adding one workflow
-# 5. BETTER DEFAULTS: Global defaults reduce repetition
-#
-# ============================================================================
 # ADDING A NEW APP
 # ============================================================================
 #

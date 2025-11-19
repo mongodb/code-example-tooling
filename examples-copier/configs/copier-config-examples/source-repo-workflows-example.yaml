@@ -155,36 +155,6 @@ workflows:
       auto_merge: false
 
 # ============================================================================
-# BENEFITS OF THIS STRUCTURE
-# ============================================================================
-#
-# 1. CO-LOCATION
-#    - Workflow config lives with source code
-#    - Easy to find and update
-#    - Version controlled with source
-#
-# 2. OWNERSHIP
-#    - Source repo team owns the workflow config
-#    - Can update without touching central config
-#    - Clear responsibility
-#
-# 3. TESTING
-#    - Can test workflow config changes in source repo
-#    - PR reviews include workflow changes
-#    - Easy to validate before merging
-#
-# 4. SCALABILITY
-#    - Each source repo has its own config
-#    - No central bottleneck
-#    - Easy to add new workflows
-#
-# 5. AUTOMATIC CONTEXT INFERENCE
-#    - No need to specify source.repo and source.branch in workflows
-#    - Automatically inherited from the workflow config reference
-#    - Less redundancy, cleaner configuration
-#    - Can still override if needed (e.g., different branch)
-#
-# ============================================================================
 # SOURCE CONTEXT INFERENCE
 # ============================================================================
 #

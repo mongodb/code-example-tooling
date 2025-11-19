@@ -137,35 +137,6 @@ workflow_configs:
 #    - Handles authentication automatically
 #
 # ============================================================================
-# BENEFITS OF THIS APPROACH
-# ============================================================================
-#
-# 1. SEPARATION OF CONCERNS
-#    - Each source repo manages its own workflows
-#    - Central config provides global defaults and references
-#    - Clear ownership and responsibility
-#
-# 2. SCALABILITY
-#    - Works well for monorepos with many workflows
-#    - Each workflow config can be split into multiple files
-#    - Easy to add new source repos
-#
-# 3. FLEXIBILITY
-#    - Supports both centralized and distributed configurations
-#    - Can mix local, repo, and inline references
-#    - Easy to migrate from legacy format
-#
-# 4. DISCOVERABILITY
-#    - Workflow configs live near the source code
-#    - Easy to find and understand
-#    - Version controlled with source code
-#
-# 5. MAINTAINABILITY
-#    - Update workflows without touching main config
-#    - Test workflow configs independently
-#    - Clear separation between global and local settings
-#
-# ============================================================================
 # ENVIRONMENT VARIABLES
 # ============================================================================
 #

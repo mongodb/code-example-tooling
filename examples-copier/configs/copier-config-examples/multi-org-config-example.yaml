@@ -298,16 +298,4 @@ workflows:
 #     - move: { from: "src", to: "dest" }
 #
 # ============================================================================
-# BENEFITS
-# ============================================================================
-#
-# ✅ Multiple source repos (unlimited orgs)
-# ✅ Multiple destination repos (unlimited orgs)
-# ✅ Cross-org copying (10gen → mongodb)
-# ✅ Auto-discovery of installation IDs
-# ✅ Centralized config (single source of truth)
-# ✅ Simple workflow syntax (70% less config)
-# ✅ Easy to add new orgs (just add workflows)
-#
-# ============================================================================
 

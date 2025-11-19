@@ -32,8 +32,16 @@ func NewServiceContainer(config *configs.Config) (*ServiceContainer, error) {
 	// Initialize file state service
 	fileStateService := NewFileStateService()
 
-	// Initialize new services
-	configLoader := NewConfigLoader()
+	// Initialize config loader based on configuration
+	var configLoader ConfigLoader
+	if config.UseMainConfig && config.MainConfigFile != "" {
+		// Use main config loader for new format with workflow references
+		configLoader = NewMainConfigLoader()
+	} else {
+		// Use legacy config loader for backward compatibility
+		configLoader = NewConfigLoader()
+	}
+
 	patternMatcher := NewPatternMatcher()
 	pathTransformer := NewPathTransformer()
 	messageTemplater := NewMessageTemplater()

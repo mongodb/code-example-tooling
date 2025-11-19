@@ -1,0 +1,250 @@
+# Workflow Configuration File
+# This file lives in the source repository (e.g., mongodb/docs-sample-apps/.copier/workflows.yaml)
+# Referenced from main config file
+
+# ============================================================================
+# LOCAL DEFAULTS
+# ============================================================================
+# These defaults apply to all workflows in this file
+# They override main config defaults but can be overridden by individual workflows
+
+defaults:
+  commit_strategy:
+    type: "pull_request"
+    auto_merge: false
+  deprecation_check:
+    enabled: true
+    file: "deprecated_examples.json"
+  exclude:
+    - "**/.env"
+    - "**/.env.*"
+    - "**/node_modules/**"
+    - "**/.DS_Store"
+
+# ============================================================================
+# WORKFLOWS
+# ============================================================================
+# Each workflow defines a complete source → destination mapping
+
+workflows:
+  # --------------------------------------------------------------------------
+  # MFlix Java Application
+  # --------------------------------------------------------------------------
+  - name: "mflix-java"
+    source:
+      repo: "mongodb/docs-sample-apps"
+      branch: "main"
+    destination:
+      repo: "mongodb/sample-app-java-mflix"
+      branch: "main"
+    
+    # Transformations define how files are copied/moved
+    transformations:
+      - move:
+          from: "mflix/client"
+          to: "client"
+      - move:
+          from: "mflix/server/java-spring"
+          to: "server"
+      - copy:
+          from: "mflix/README-JAVA-SPRING.md"
+          to: "README.md"
+      - copy:
+          from: "mflix/.gitignore-java"
+          to: ".gitignore"
+    
+    # Override commit strategy for this workflow
+    commit_strategy:
+      type: "pull_request"
+      pr_title: "Update MFlix Java application from docs-sample-apps"
+      pr_body: |
+        Automated update of MFlix Java application
+        
+        **Source Information:**
+        - Repository: mongodb/docs-sample-apps
+        - Branch: main
+        
+        **Changes:**
+        - Client files (Next.js)
+        - Server files (Java/Spring Boot)
+        - README and .gitignore
+        
+        This PR includes all synchronized files from the source repository.
+      auto_merge: false
+
+  # --------------------------------------------------------------------------
+  # MFlix Node.js Application
+  # --------------------------------------------------------------------------
+  - name: "mflix-nodejs"
+    source:
+      repo: "mongodb/docs-sample-apps"
+      branch: "main"
+    destination:
+      repo: "mongodb/sample-app-nodejs-mflix"
+      branch: "main"
+    
+    transformations:
+      - move:
+          from: "mflix/client"
+          to: "client"
+      - move:
+          from: "mflix/server/js-express"
+          to: "server"
+      - copy:
+          from: "mflix/README-JAVASCRIPT-EXPRESS.md"
+          to: "README.md"
+      - copy:
+          from: "mflix/.gitignore-js"
+          to: ".gitignore"
+    
+    commit_strategy:
+      type: "pull_request"
+      pr_title: "Update MFlix Node.js application from docs-sample-apps"
+      pr_body: |
+        Automated update of MFlix Node.js application
+        
+        **Source Information:**
+        - Repository: mongodb/docs-sample-apps
+        - Branch: main
+        
+        **Changes:**
+        - Client files (Next.js)
+        - Server files (Node.js/Express)
+        - README and .gitignore
+      auto_merge: false
+
+  # --------------------------------------------------------------------------
+  # MFlix Python Application
+  # --------------------------------------------------------------------------
+  - name: "mflix-python"
+    source:
+      repo: "mongodb/docs-sample-apps"
+      branch: "main"
+    destination:
+      repo: "mongodb/sample-app-python-mflix"
+      branch: "main"
+    
+    transformations:
+      - move:
+          from: "mflix/client"
+          to: "client"
+      - move:
+          from: "mflix/server/python-fastapi"
+          to: "server"
+      - copy:
+          from: "mflix/README-PYTHON-FASTAPI.md"
+          to: "README.md"
+      - copy:
+          from: "mflix/.gitignore-python"
+          to: ".gitignore"
+    
+    commit_strategy:
+      type: "pull_request"
+      pr_title: "Update MFlix Python application from docs-sample-apps"
+      pr_body: |
+        Automated update of MFlix Python application
+        
+        **Source Information:**
+        - Repository: mongodb/docs-sample-apps
+        - Branch: main
+        
+        **Changes:**
+        - Client files (Next.js)
+        - Server files (Python/FastAPI)
+        - README and .gitignore
+      auto_merge: false
+
+# ============================================================================
+# BENEFITS OF THIS STRUCTURE
+# ============================================================================
+#
+# 1. CO-LOCATION
+#    - Workflow config lives with source code
+#    - Easy to find and update
+#    - Version controlled with source
+#
+# 2. OWNERSHIP
+#    - Source repo team owns the workflow config
+#    - Can update without touching central config
+#    - Clear responsibility
+#
+# 3. TESTING
+#    - Can test workflow config changes in source repo
+#    - PR reviews include workflow changes
+#    - Easy to validate before merging
+#
+# 4. SCALABILITY
+#    - Each source repo has its own config
+#    - No central bottleneck
+#    - Easy to add new workflows
+#
+# ============================================================================
+# USING REFERENCES FOR REUSABILITY
+# ============================================================================
+#
+# For even better organization, you can extract common parts into separate files:
+#
+# .copier/
+#   workflows.yaml                    # This file (references others)
+#   transformations/
+#     mflix-java.yaml                 # Java transformations
+#     mflix-nodejs.yaml               # Node.js transformations
+#     mflix-python.yaml               # Python transformations
+#   strategies/
+#     mflix-pr-strategy.yaml          # Common PR strategy
+#   common/
+#     mflix-excludes.yaml             # Common exclude patterns
+#
+# Then use $ref to reference them:
+#
+# workflows:
+#   - name: "mflix-java"
+#     source:
+#       repo: "mongodb/docs-sample-apps"
+#       branch: "main"
+#     destination:
+#       repo: "mongodb/sample-app-java-mflix"
+#       branch: "main"
+#     transformations:
+#       $ref: "transformations/mflix-java.yaml"
+#     commit_strategy:
+#       $ref: "strategies/mflix-pr-strategy.yaml"
+#
+# ============================================================================
+# ADDING A NEW WORKFLOW
+# ============================================================================
+#
+# To add a new workflow to this source repo:
+#
+# 1. Add a new workflow entry to this file
+# 2. Define source, destination, and transformations
+# 3. Optionally override commit strategy
+# 4. Commit and push to source repo
+# 5. No changes needed to main config!
+#
+# Example:
+#
+# - name: "new-app-java"
+#   source:
+#     repo: "mongodb/docs-sample-apps"
+#     branch: "main"
+#   destination:
+#     repo: "mongodb/sample-app-java-newapp"
+#     branch: "main"
+#   transformations:
+#     - move: { from: "newapp/client", to: "client" }
+#     - move: { from: "newapp/server/java", to: "server" }
+#
+# ============================================================================
+# TESTING WORKFLOW CONFIGS
+# ============================================================================
+#
+# You can test workflow configs locally before deploying:
+#
+# 1. Create a test config file
+# 2. Use DRY_RUN=true to test without making changes
+# 3. Validate transformations work as expected
+# 4. Check PR titles and bodies
+#
+# ============================================================================
+

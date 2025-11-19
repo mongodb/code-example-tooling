@@ -20,6 +20,8 @@ type Config struct {
 	CommitterName        string
 	CommitterEmail       string
 	ConfigFile           string
+	MainConfigFile       string // Main config file with workflow references (optional)
+	UseMainConfig        bool   // Whether to use main config format
 	DeprecationFile      string
 	WebserverPath        string
 	ConfigRepoBranch     string // Branch to fetch config file from
@@ -68,6 +70,8 @@ const (
 	CommitterName        = "COMMITTER_NAME"
 	CommitterEmail       = "COMMITTER_EMAIL"
 	ConfigFile           = "CONFIG_FILE"
+	MainConfigFile       = "MAIN_CONFIG_FILE"
+	UseMainConfig        = "USE_MAIN_CONFIG"
 	DeprecationFile      = "DEPRECATION_FILE"
 	WebserverPath        = "WEBSERVER_PATH"
 	ConfigRepoBranch     = "CONFIG_REPO_BRANCH"
@@ -160,6 +164,8 @@ func LoadEnvironment(envFile string) (*Config, error) {
 	config.CommitterName = getEnvWithDefault(CommitterName, config.CommitterName)
 	config.CommitterEmail = getEnvWithDefault(CommitterEmail, config.CommitterEmail)
 	config.ConfigFile = getEnvWithDefault(ConfigFile, config.ConfigFile)
+	config.MainConfigFile = os.Getenv(MainConfigFile)
+	config.UseMainConfig = getBoolEnvWithDefault(UseMainConfig, config.MainConfigFile != "")
 	config.DeprecationFile = getEnvWithDefault(DeprecationFile, config.DeprecationFile)
 	config.WebserverPath = getEnvWithDefault(WebserverPath, config.WebserverPath)
 	config.ConfigRepoBranch = getEnvWithDefault(ConfigRepoBranch, config.ConfigRepoBranch)
@@ -207,6 +213,8 @@ func LoadEnvironment(envFile string) (*Config, error) {
 	_ = os.Setenv(CommitterName, config.CommitterName)
 	_ = os.Setenv(CommitterEmail, config.CommitterEmail)
 	_ = os.Setenv(ConfigFile, config.ConfigFile)
+	_ = os.Setenv(MainConfigFile, config.MainConfigFile)
+	_ = os.Setenv(UseMainConfig, fmt.Sprintf("%t", config.UseMainConfig))
 	_ = os.Setenv(DeprecationFile, config.DeprecationFile)
 	_ = os.Setenv(WebserverPath, config.WebserverPath)
 	_ = os.Setenv(ConfigRepoBranch, config.ConfigRepoBranch)

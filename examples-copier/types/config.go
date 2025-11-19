@@ -63,6 +63,58 @@ type YAMLConfig struct {
 	Defaults  *Defaults  `yaml:"defaults,omitempty" json:"defaults,omitempty"`
 }
 
+// ============================================================================
+// Main Config types (central configuration with workflow references)
+// ============================================================================
+
+// MainConfig represents the central configuration file that references workflow configs
+type MainConfig struct {
+	Defaults        *Defaults         `yaml:"defaults,omitempty" json:"defaults,omitempty"`
+	WorkflowConfigs []WorkflowConfigRef `yaml:"workflow_configs" json:"workflow_configs"`
+}
+
+// WorkflowConfigRef references a workflow configuration file
+type WorkflowConfigRef struct {
+	Source    string     `yaml:"source" json:"source"` // "local", "repo", or "inline"
+	Path      string     `yaml:"path,omitempty" json:"path,omitempty"` // Path to config file
+	Repo      string     `yaml:"repo,omitempty" json:"repo,omitempty"` // Repository (for source="repo")
+	Branch    string     `yaml:"branch,omitempty" json:"branch,omitempty"` // Branch (for source="repo")
+	Enabled   *bool      `yaml:"enabled,omitempty" json:"enabled,omitempty"` // Whether this workflow config is enabled (default: true)
+	Workflows []Workflow `yaml:"workflows,omitempty" json:"workflows,omitempty"` // Inline workflows (for source="inline")
+}
+
+// WorkflowConfig represents a workflow configuration file (can be in source repos)
+type WorkflowConfig struct {
+	Defaults  *Defaults  `yaml:"defaults,omitempty" json:"defaults,omitempty"`
+	Workflows []Workflow `yaml:"workflows" json:"workflows"`
+}
+
+// ============================================================================
+// Reference types (for $ref support)
+// ============================================================================
+
+// Ref represents a reference to another file
+type Ref struct {
+	Ref string `yaml:"$ref,omitempty" json:"$ref,omitempty"`
+}
+
+// RefOrValue is a generic type that can be either a reference or an inline value
+// This is used for fields that support $ref
+type RefOrValue[T any] struct {
+	Ref   string `yaml:"$ref,omitempty" json:"$ref,omitempty"`
+	Value *T     `yaml:",inline" json:",inline"`
+}
+
+// IsRef returns true if this is a reference
+func (r *RefOrValue[T]) IsRef() bool {
+	return r.Ref != ""
+}
+
+// GetValue returns the inline value (nil if this is a reference)
+func (r *RefOrValue[T]) GetValue() *T {
+	return r.Value
+}
+
 // CommitStrategyConfig defines commit strategy settings
 type CommitStrategyConfig struct {
 	Type          string `yaml:"type" json:"type"` // "direct" or "pull_request"
@@ -181,6 +233,78 @@ func (c *YAMLConfig) Validate() error {
 	return nil
 }
 
+// Validate validates the main configuration
+func (m *MainConfig) Validate() error {
+	if len(m.WorkflowConfigs) == 0 {
+		return fmt.Errorf("at least one workflow config reference is required")
+	}
+
+	for i, ref := range m.WorkflowConfigs {
+		if err := ref.Validate(); err != nil {
+			return fmt.Errorf("workflow_configs[%d]: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
+// Validate validates a workflow config reference
+func (w *WorkflowConfigRef) Validate() error {
+	// Skip validation for disabled workflow configs
+	if w.Enabled != nil && !*w.Enabled {
+		return nil
+	}
+
+	if w.Source == "" {
+		return fmt.Errorf("source is required (must be 'local', 'repo', or 'inline')")
+	}
+
+	switch w.Source {
+	case "local":
+		if w.Path == "" {
+			return fmt.Errorf("path is required for source='local'")
+		}
+	case "repo":
+		if w.Repo == "" {
+			return fmt.Errorf("repo is required for source='repo'")
+		}
+		if w.Path == "" {
+			return fmt.Errorf("path is required for source='repo'")
+		}
+		if w.Branch == "" {
+			w.Branch = "main" // default
+		}
+	case "inline":
+		if len(w.Workflows) == 0 {
+			return fmt.Errorf("workflows are required for source='inline'")
+		}
+		for i, workflow := range w.Workflows {
+			if err := workflow.Validate(); err != nil {
+				return fmt.Errorf("workflows[%d]: %w", i, err)
+			}
+		}
+	default:
+		return fmt.Errorf("invalid source: %s (must be 'local', 'repo', or 'inline')", w.Source)
+	}
+
+	return nil
+}
+
+// Validate validates a workflow config
+func (w *WorkflowConfig) Validate() error {
+	if len(w.Workflows) == 0 {
+		return fmt.Errorf("at least one workflow is required")
+	}
+
+	for i, workflow := range w.Workflows {
+		if err := workflow.Validate(); err != nil {
+			return fmt.Errorf("workflows[%d]: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
 // SetDefaults sets default values for the configuration
 func (c *YAMLConfig) SetDefaults() {
 	// Set defaults for workflow format
@@ -219,6 +343,78 @@ func (c *YAMLConfig) SetDefaults() {
 		if workflow.DeprecationCheck != nil && workflow.DeprecationCheck.File == "" {
 			workflow.DeprecationCheck.File = "deprecated_examples.json"
 		}
+	}
+}
+
+// SetDefaults sets default values for the main configuration
+func (m *MainConfig) SetDefaults() {
+	// Set defaults for workflow config references
+	for i := range m.WorkflowConfigs {
+		ref := &m.WorkflowConfigs[i]
+		if ref.Source == "repo" && ref.Branch == "" {
+			ref.Branch = "main"
+		}
+	}
+}
+
+// SetDefaults sets default values for a workflow config
+func (w *WorkflowConfig) SetDefaults() {
+	// Set defaults for each workflow
+	for i := range w.Workflows {
+		workflow := &w.Workflows[i]
+
+		// Set source defaults
+		if workflow.Source.Branch == "" {
+			workflow.Source.Branch = "main"
+		}
+
+		// Set destination defaults
+		if workflow.Destination.Branch == "" {
+			workflow.Destination.Branch = "main"
+		}
+
+		// Apply local defaults if not overridden
+		if workflow.CommitStrategy == nil && w.Defaults != nil && w.Defaults.CommitStrategy != nil {
+			workflow.CommitStrategy = w.Defaults.CommitStrategy
+		}
+
+		if workflow.DeprecationCheck == nil && w.Defaults != nil && w.Defaults.DeprecationCheck != nil {
+			workflow.DeprecationCheck = w.Defaults.DeprecationCheck
+		}
+
+		if len(workflow.Exclude) == 0 && w.Defaults != nil && len(w.Defaults.Exclude) > 0 {
+			workflow.Exclude = w.Defaults.Exclude
+		}
+
+		// Set commit strategy defaults
+		if workflow.CommitStrategy != nil && workflow.CommitStrategy.Type == "" {
+			workflow.CommitStrategy.Type = "pull_request"
+		}
+
+		// Set deprecation check defaults
+		if workflow.DeprecationCheck != nil && workflow.DeprecationCheck.File == "" {
+			workflow.DeprecationCheck.File = "deprecated_examples.json"
+		}
+	}
+}
+
+// ApplyGlobalDefaults applies global defaults from main config to workflow config
+func (w *WorkflowConfig) ApplyGlobalDefaults(globalDefaults *Defaults) {
+	// Apply global defaults to local defaults if not set
+	if w.Defaults == nil {
+		w.Defaults = &Defaults{}
+	}
+
+	if w.Defaults.CommitStrategy == nil && globalDefaults != nil && globalDefaults.CommitStrategy != nil {
+		w.Defaults.CommitStrategy = globalDefaults.CommitStrategy
+	}
+
+	if w.Defaults.DeprecationCheck == nil && globalDefaults != nil && globalDefaults.DeprecationCheck != nil {
+		w.Defaults.DeprecationCheck = globalDefaults.DeprecationCheck
+	}
+
+	if len(w.Defaults.Exclude) == 0 && globalDefaults != nil && len(globalDefaults.Exclude) > 0 {
+		w.Defaults.Exclude = globalDefaults.Exclude
 	}
 }
 

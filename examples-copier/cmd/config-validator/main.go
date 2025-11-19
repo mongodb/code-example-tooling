@@ -187,31 +187,35 @@ func testTransform(source, template, varsStr string) {
 }
 
 func initConfig(templateName, output string) {
-	templates := services.GetConfigTemplates()
-	var selectedTemplate *services.ConfigTemplate
-	
-	for _, tmpl := range templates {
-		if tmpl.Name == templateName {
-			selectedTemplate = &tmpl
-			break
-		}
-	}
+	// Simple workflow config template
+	template := `# Workflow Configuration
+# This file defines workflows for copying code examples between repositories
 
-	if selectedTemplate == nil {
-		fmt.Printf("❌ Unknown template: %s\n", templateName)
-		fmt.Println("\nAvailable templates:")
-		for _, tmpl := range templates {
-			fmt.Printf("  %s - %s\n", tmpl.Name, tmpl.Description)
-		}
-		os.Exit(1)
-	}
+workflows:
+  - name: "example-workflow"
+    source:
+      repo: "mongodb/source-repo"
+      branch: "main"
+      path: "examples"
+    destination:
+      repo: "mongodb/dest-repo"
+      branch: "main"
+    transformations:
+      - move:
+          from: "examples"
+          to: "code-examples"
+    commit_strategy:
+      type: "pr"
+      pr_title: "Update code examples"
+      pr_body: "Automated update from source repository"
+`
 
-	err := os.WriteFile(output, []byte(selectedTemplate.Content), 0644)
+	err := os.WriteFile(output, []byte(template), 0644)
 	if err != nil {
 		fmt.Printf("❌ Error writing config file: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("✅ Created config file: %s\n", output)
-	fmt.Printf("Template: %s\n", selectedTemplate.Description)
+	fmt.Printf("✅ Created workflow config file: %s\n", output)
+	fmt.Println("Edit this file to configure your workflows")
 }

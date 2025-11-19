@@ -16,6 +16,8 @@ defaults:
     enabled: true
     file: "deprecated_examples.json"
   exclude:
+      - "**/dist/**"
+      - "**/build/**"
     - "**/.env"
     - "**/.env.*"
     - "**/node_modules/**"

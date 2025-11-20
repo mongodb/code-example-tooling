@@ -19,13 +19,13 @@ import (
 // Environment helpers
 //
 
-// EnvOwnerRepo returns owner/repo from env and fails the test if either is missing.
+// EnvOwnerRepo returns config repo owner/name from env and fails the test if either is missing.
 func EnvOwnerRepo(t testing.TB) (string, string) {
 	t.Helper()
-	owner := os.Getenv(configs.RepoOwner)
-	repo := os.Getenv(configs.RepoName)
+	owner := os.Getenv(configs.ConfigRepoOwner)
+	repo := os.Getenv(configs.ConfigRepoName)
 	if owner == "" || repo == "" {
-		t.Fatalf("REPO_OWNER/REPO_NAME not set")
+		t.Fatalf("CONFIG_REPO_OWNER/CONFIG_REPO_NAME not set")
 	}
 	return owner, repo
 }

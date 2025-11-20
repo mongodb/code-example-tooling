@@ -217,8 +217,8 @@ The `env-cloudrun.yaml` file contains environment variables for Cloud Run deploy
 ```bash
 cd examples-copier
 
-# Copy from production template (if available) or create new
-cp configs/env.yaml.production env-cloudrun.yaml
+# Copy from example or create new
+cp env.yaml env-cloudrun.yaml
 
 # Edit with your values
 nano env-cloudrun.yaml  # or vim, code, etc.
@@ -257,7 +257,8 @@ MONGO_URI_SECRET_NAME: "projects/PROJECT_NUMBER/secrets/mongo-uri/versions/lates
 # =============================================================================
 # PORT: "8080"                                   # DO NOT SET - Cloud Run sets this automatically
 WEBSERVER_PATH: "/events"
-CONFIG_FILE: "copier-config.yaml"
+MAIN_CONFIG_FILE: ".copier/workflows/main.yaml"
+USE_MAIN_CONFIG: "true"
 DEPRECATION_FILE: "deprecated_examples.json"
 
 # =============================================================================
@@ -539,7 +540,7 @@ db.audit_events.aggregate([
 
 # Deployment Checklist
 
-Quick reference checklist for deploying the GitHub Code Example Copier to Google Cloud App Engine.
+Quick reference checklist for deploying the GitHub Code Example Copier to Google Cloud Run.
 
 ## 📋 Pre-Deployment
 
@@ -694,13 +695,13 @@ env: flex
 
 ## 🚀 Deployment
 
-### ☐ 8. Deploy to App Engine
+### ☐ 8. Deploy to Cloud Run
 
 ```bash
 cd examples-copier
 
-# Deploy (env.yaml is included via 'includes' directive in app.yaml)
-gcloud app deploy app.yaml
+# Deploy using the deployment script
+./scripts/deploy-cloudrun.sh
 ```
 
 **Expected output:**
@@ -949,12 +950,13 @@ gcloud app deploy app.yaml
 
 ### Error: "Config file not found"
 
-**Cause:** `copier-config.yaml` missing from source repository
+**Cause:** Main config file missing from config repository
 
 **Fix:**
 ```bash
-# Add copier-config.yaml to your source repository
-# See documentation for config file format
+# Add main config file to your config repository
+# Default location: .copier/workflows/main.yaml
+# See MAIN-CONFIG-README.md for format
 ```
 
 ---
@@ -964,7 +966,7 @@ gcloud app deploy app.yaml
 All items should be ✅:
 
 - ✅ Deployment completes without errors
-- ✅ App Engine is running
+- ✅ Cloud Run service is running
 - ✅ Health endpoint returns 200 OK
 - ✅ Logs show no secret loading errors
 - ✅ Webhook receives PR events
@@ -1033,7 +1035,7 @@ gcloud app services set-traffic default --splits=PREVIOUS_VERSION=1
 | "failed to load webhook secret" | Secret Manager access denied | Run `./grant-secret-access.sh` |
 | "webhook signature verification failed" | Secret mismatch | Verify secret matches GitHub webhook |
 | "MONGO_URI is required" | Audit enabled but no URI | Set `MONGO_URI_SECRET_NAME` or disable audit |
-| "Config file not found" | Missing copier-config.yaml | Add config file to source repo |
+| "Config file not found" | Missing main config | Add main config to config repo |
 
 ### Quick Fixes
 

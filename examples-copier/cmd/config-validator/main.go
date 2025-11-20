@@ -28,11 +28,7 @@ func main() {
 
 	initCmd := flag.NewFlagSet("init", flag.ExitOnError)
 	initTemplate := initCmd.String("template", "basic", "Template to use: basic, glob, or regex")
-	initOutput := initCmd.String("output", "copier-config.yaml", "Output file path")
-
-	convertCmd := flag.NewFlagSet("convert", flag.ExitOnError)
-	convertInput := convertCmd.String("input", "", "Input config file (required)")
-	convertOutput := convertCmd.String("output", "", "Output config file (required)")
+	initOutput := initCmd.String("output", "workflow-config.yaml", "Output file path")
 
 	if len(os.Args) < 2 {
 		printUsage()
@@ -71,15 +67,6 @@ func main() {
 		initCmd.Parse(os.Args[2:])
 		initConfig(*initTemplate, *initOutput)
 
-	case "convert":
-		convertCmd.Parse(os.Args[2:])
-		if *convertInput == "" || *convertOutput == "" {
-			fmt.Println("Error: -input and -output are required")
-			convertCmd.Usage()
-			os.Exit(1)
-		}
-		convertConfig(*convertInput, *convertOutput)
-
 	default:
 		printUsage()
 		os.Exit(1)
@@ -87,24 +74,22 @@ func main() {
 }
 
 func printUsage() {
-	fmt.Println("Config Validator - Validate and test copier configurations")
+	fmt.Println("Config Validator - Validate and test copier workflow configurations")
 	fmt.Println()
 	fmt.Println("Usage:")
 	fmt.Println("  config-validator <command> [options]")
 	fmt.Println()
 	fmt.Println("Commands:")
-	fmt.Println("  validate       Validate a configuration file")
+	fmt.Println("  validate       Validate a workflow configuration file")
 	fmt.Println("  test-pattern   Test a pattern against a file path")
 	fmt.Println("  test-transform Test a path transformation")
-	fmt.Println("  init           Initialize a new config file from template")
-	fmt.Println("  convert        Convert between JSON and YAML formats")
+	fmt.Println("  init           Initialize a new workflow config file from template")
 	fmt.Println()
 	fmt.Println("Examples:")
-	fmt.Println("  config-validator validate -config copier-config.yaml -v")
+	fmt.Println("  config-validator validate -config .copier/workflows/config.yaml -v")
 	fmt.Println("  config-validator test-pattern -type glob -pattern 'examples/**/*.go' -file 'examples/go/main.go'")
 	fmt.Println("  config-validator test-transform -source 'examples/go/main.go' -template 'code/${filename}'")
-	fmt.Println("  config-validator init -template basic -output my-config.yaml")
-	fmt.Println("  config-validator convert -input config.json -output config.yaml")
+	fmt.Println("  config-validator init -template basic -output workflow-config.yaml")
 }
 
 func validateConfig(configFile string, verbose bool) {
@@ -122,25 +107,20 @@ func validateConfig(configFile string, verbose bool) {
 	}
 
 	fmt.Println("✅ Configuration is valid!")
-	
+
 	if verbose {
 		fmt.Println()
-		fmt.Printf("Source Repository: %s\n", config.SourceRepo)
-		fmt.Printf("Source Branch: %s\n", config.SourceBranch)
-		fmt.Printf("Number of Rules: %d\n", len(config.CopyRules))
+		fmt.Printf("Number of Workflows: %d\n", len(config.Workflows))
 		fmt.Println()
-		
-		for i, rule := range config.CopyRules {
-			fmt.Printf("Rule %d: %s\n", i+1, rule.Name)
-			fmt.Printf("  Pattern Type: %s\n", rule.SourcePattern.Type)
-			fmt.Printf("  Pattern: %s\n", rule.SourcePattern.Pattern)
-			fmt.Printf("  Targets: %d\n", len(rule.Targets))
-			for j, target := range rule.Targets {
-				fmt.Printf("    Target %d:\n", j+1)
-				fmt.Printf("      Repo: %s\n", target.Repo)
-				fmt.Printf("      Branch: %s\n", target.Branch)
-				fmt.Printf("      Transform: %s\n", target.PathTransform)
-				fmt.Printf("      Strategy: %s\n", target.CommitStrategy.Type)
+
+		for i, workflow := range config.Workflows {
+			fmt.Printf("Workflow %d: %s\n", i+1, workflow.Name)
+			fmt.Printf("  Source: %s @ %s\n", workflow.Source.Repo, workflow.Source.Branch)
+			fmt.Printf("  Destination: %s @ %s\n", workflow.Destination.Repo, workflow.Destination.Branch)
+			fmt.Printf("  Transformations: %d\n", len(workflow.Transformations))
+			fmt.Printf("  Commit Strategy: %s\n", workflow.CommitStrategy.Type)
+			if workflow.DeprecationCheck != nil && workflow.DeprecationCheck.Enabled {
+				fmt.Printf("  Deprecation Tracking: enabled (%s)\n", workflow.DeprecationCheck.File)
 			}
 			fmt.Println()
 		}
@@ -207,70 +187,35 @@ func testTransform(source, template, varsStr string) {
 }
 
 func initConfig(templateName, output string) {
-	templates := services.GetConfigTemplates()
-	var selectedTemplate *services.ConfigTemplate
-	
-	for _, tmpl := range templates {
-		if tmpl.Name == templateName {
-			selectedTemplate = &tmpl
-			break
-		}
-	}
+	// Simple workflow config template
+	template := `# Workflow Configuration
+# This file defines workflows for copying code examples between repositories
 
-	if selectedTemplate == nil {
-		fmt.Printf("❌ Unknown template: %s\n", templateName)
-		fmt.Println("\nAvailable templates:")
-		for _, tmpl := range templates {
-			fmt.Printf("  %s - %s\n", tmpl.Name, tmpl.Description)
-		}
-		os.Exit(1)
-	}
+workflows:
+  - name: "example-workflow"
+    source:
+      repo: "mongodb/source-repo"
+      branch: "main"
+      path: "examples"
+    destination:
+      repo: "mongodb/dest-repo"
+      branch: "main"
+    transformations:
+      - move:
+          from: "examples"
+          to: "code-examples"
+    commit_strategy:
+      type: "pr"
+      pr_title: "Update code examples"
+      pr_body: "Automated update from source repository"
+`
 
-	err := os.WriteFile(output, []byte(selectedTemplate.Content), 0644)
+	err := os.WriteFile(output, []byte(template), 0644)
 	if err != nil {
 		fmt.Printf("❌ Error writing config file: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("✅ Created config file: %s\n", output)
-	fmt.Printf("Template: %s\n", selectedTemplate.Description)
+	fmt.Printf("✅ Created workflow config file: %s\n", output)
+	fmt.Println("Edit this file to configure your workflows")
 }
-
-func convertConfig(input, output string) {
-	content, err := os.ReadFile(input)
-	if err != nil {
-		fmt.Printf("❌ Error reading input file: %v\n", err)
-		os.Exit(1)
-	}
-
-	loader := services.NewConfigLoader()
-	config, err := loader.LoadConfigFromContent(string(content), input)
-	if err != nil {
-		fmt.Printf("❌ Error parsing input file: %v\n", err)
-		os.Exit(1)
-	}
-
-	var outputContent string
-	if strings.HasSuffix(output, ".yaml") || strings.HasSuffix(output, ".yml") {
-		outputContent, err = services.ExportConfigAsYAML(config)
-	} else if strings.HasSuffix(output, ".json") {
-		outputContent, err = services.ExportConfigAsJSON(config)
-	} else {
-		fmt.Println("❌ Output file must have .yaml, .yml, or .json extension")
-		os.Exit(1)
-	}
-
-	if err != nil {
-		fmt.Printf("❌ Error converting config: %v\n", err)
-		os.Exit(1)
-	}
-
-	err = os.WriteFile(output, []byte(outputContent), 0644)
-	if err != nil {
-		fmt.Printf("❌ Error writing output file: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Printf("✅ Converted %s to %s\n", input, output)
-}
-

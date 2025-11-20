@@ -25,11 +25,11 @@ func UpdateDeprecationFile() {
 
 	fileContent, _, _, err := client.Repositories.GetContents(
 		ctx,
-		os.Getenv(configs.RepoOwner),
-		os.Getenv(configs.RepoName),
+		os.Getenv(configs.ConfigRepoOwner),
+		os.Getenv(configs.ConfigRepoName),
 		os.Getenv(configs.DeprecationFile),
 		&github.RepositoryContentGetOptions{
-			Ref: os.Getenv(configs.SrcBranch),
+			Ref: os.Getenv(configs.ConfigRepoBranch),
 		},
 	)
 	if err != nil {
@@ -75,8 +75,8 @@ func uploadDeprecationFileChanges(message string, newDeprecationFileContents str
 	client := GetRestClient()
 	ctx := context.Background()
 
-	targetFileContent, _, _, err := client.Repositories.GetContents(ctx, os.Getenv(configs.RepoOwner), os.Getenv(configs.RepoName),
-		os.Getenv(configs.DeprecationFile), &github.RepositoryContentGetOptions{Ref: os.Getenv(configs.SrcBranch)})
+	targetFileContent, _, _, err := client.Repositories.GetContents(ctx, os.Getenv(configs.ConfigRepoOwner), os.Getenv(configs.ConfigRepoName),
+		os.Getenv(configs.DeprecationFile), &github.RepositoryContentGetOptions{Ref: os.Getenv(configs.ConfigRepoBranch)})
 
 	if err != nil {
 		LogError(fmt.Sprintf("Error getting deprecation file contents: %v", err))
@@ -85,13 +85,13 @@ func uploadDeprecationFileChanges(message string, newDeprecationFileContents str
 	options := &github.RepositoryContentFileOptions{
 		Message: github.String(message),
 		Content: []byte(newDeprecationFileContents),
-		Branch:  github.String(os.Getenv(configs.SrcBranch)),
+		Branch:  github.String(os.Getenv(configs.ConfigRepoBranch)),
 		Committer: &github.CommitAuthor{Name: github.String(os.Getenv(configs.CommitterName)),
 			Email: github.String(os.Getenv(configs.CommitterEmail))},
 	}
 
 	options.SHA = targetFileContent.SHA
-	_, _, err = client.Repositories.UpdateFile(ctx, os.Getenv(configs.RepoOwner), os.Getenv(configs.RepoName), os.Getenv(configs.DeprecationFile), options)
+	_, _, err = client.Repositories.UpdateFile(ctx, os.Getenv(configs.ConfigRepoOwner), os.Getenv(configs.ConfigRepoName), os.Getenv(configs.DeprecationFile), options)
 	if err != nil {
 		LogError(fmt.Sprintf("Cannot update deprecation file: %v", err))
 	}

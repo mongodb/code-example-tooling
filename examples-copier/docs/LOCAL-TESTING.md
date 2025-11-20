@@ -48,7 +48,8 @@ For basic local testing, you only need:
 # configs/.env
 COPIER_DISABLE_CLOUD_LOGGING=true
 DRY_RUN=true
-CONFIG_FILE=config.json
+MAIN_CONFIG_FILE=.copier/workflows/main.yaml
+USE_MAIN_CONFIG=true
 ```
 
 ### 3. For Testing with Real PRs
@@ -144,8 +145,8 @@ export WEBHOOK_SECRET=$(gcloud secrets versions access latest --secret=webhook-s
 ### Scenario 1: Test Configuration Changes
 
 ```bash
-# 1. Edit your config file
-nano config.json  # or copier-config.yaml
+# 1. Edit your main config file
+nano .copier/workflows/main.yaml
 
 # 2. Validate it
 ./config-validator validate -config config.json -v
@@ -278,7 +279,8 @@ DRY_RUN=true                       # Don't make actual commits
 LOG_LEVEL=debug                    # Detailed logging
 COPIER_DEBUG=true                  # Extra debug info
 METRICS_ENABLED=true               # Enable /metrics endpoint
-CONFIG_FILE=config.json            # Your config file
+MAIN_CONFIG_FILE=.copier/workflows/main.yaml  # Your main config file
+USE_MAIN_CONFIG=true               # Enable main config system
 ```
 
 ### Optional (for Real PR Testing)
@@ -449,7 +451,7 @@ curl http://localhost:8080/metrics | jq
 # Check health
 curl http://localhost:8080/health | jq
 
-# Validate config
-./config-validator validate -config copier-config.yaml -v
+# Validate config (if using legacy config validator)
+# Note: Main config validation is built into the app
 ```
 

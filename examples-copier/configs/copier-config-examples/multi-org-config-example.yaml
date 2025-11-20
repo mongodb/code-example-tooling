@@ -1,0 +1,301 @@
+# ============================================================================
+# MULTI-ORG WORKFLOW CONFIG EXAMPLE
+# ============================================================================
+# This config demonstrates how to use workflows with multiple GitHub orgs
+# Store this in a centralized config repo (e.g., mongodb/code-copier-config)
+# ============================================================================
+
+# Global defaults (apply to all workflows unless overridden)
+defaults:
+  commit_strategy:
+    type: "pull_request"
+    auto_merge: false
+  deprecation_check:
+    enabled: true
+  exclude:
+    - "**/.env"
+    - "**/.env.*"
+    - "**/node_modules/**"
+    - "**/__pycache__/**"
+
+# ============================================================================
+# WORKFLOWS
+# ============================================================================
+# Each workflow defines:
+# - source: where files come from (repo + branch)
+# - destination: where files go to (repo + branch)
+# - transformations: how to copy/move files
+# ============================================================================
+
+workflows:
+  # ==========================================================================
+  # MongoDB Org: docs-sample-apps → sample app repos
+  # ==========================================================================
+  
+  - name: "mflix-java"
+    source:
+      repo: "mongodb/docs-sample-apps"
+      branch: "main"
+    destination:
+      repo: "mongodb/sample-app-java-mflix"
+      branch: "main"
+    transformations:
+      - move: { from: "mflix/client", to: "client" }
+      - move: { from: "mflix/server/java-spring", to: "server" }
+      - copy: { from: "mflix/README-JAVA-SPRING.md", to: "README.md" }
+      - copy: { from: "mflix/.gitignore-java", to: ".gitignore" }
+  
+  - name: "mflix-nodejs"
+    source:
+      repo: "mongodb/docs-sample-apps"
+      branch: "main"
+    destination:
+      repo: "mongodb/sample-app-nodejs-mflix"
+      branch: "main"
+    transformations:
+      - move: { from: "mflix/client", to: "client" }
+      - move: { from: "mflix/server/js-express", to: "server" }
+      - copy: { from: "mflix/README-JAVASCRIPT-EXPRESS.md", to: "README.md" }
+      - copy: { from: "mflix/.gitignore-js", to: ".gitignore" }
+  
+  - name: "mflix-python"
+    source:
+      repo: "mongodb/docs-sample-apps"
+      branch: "main"
+    destination:
+      repo: "mongodb/sample-app-python-mflix"
+      branch: "main"
+    transformations:
+      - move: { from: "mflix/client", to: "client" }
+      - move: { from: "mflix/server/python-fastapi", to: "server" }
+      - copy: { from: "mflix/README-PYTHON-FASTAPI.md", to: "README.md" }
+      - copy: { from: "mflix/.gitignore-python", to: ".gitignore" }
+
+  # ==========================================================================
+  # MongoDB Org: Atlas SDK Go examples → Architecture Center
+  # ==========================================================================
+
+  - name: "atlas-sdk-go-project-examples"
+    source:
+      repo: "mongodb/docs-mongodb-internal"
+      branch: "main"
+    destination:
+      repo: "mongodb/atlas-architecture-go-sdk"
+      branch: "main"
+    transformations:
+      - glob:
+          pattern: "content/code-examples/tested/go/atlas-sdk/project-copy/**/*"
+          strip_prefix: "content/code-examples/tested/go/atlas-sdk/project-copy/"
+    pr_config:
+      title: "Update Atlas SDK Go examples from ${source_repo} PR ${pr_number}"
+      # Option 1: Use inline body
+      body: |
+        Automated update of Atlas SDK Go project examples
+
+        **Source Details:**
+        - Repository: ${source_repo}
+        - Branch: ${source_branch}
+        - Source PR: #${pr_number}
+        - Commit: ${commit_sha}
+
+        **Changes:**
+        - Files updated: ${file_count}
+      # Option 2: Reference a PR template from the target repo (uncomment to use)
+      # pr_template: ".github/pull_request_template.md"
+      auto_merge: false
+    deprecation_check:
+      enabled: true
+      file: "deprecated_examples.json"
+
+  # ==========================================================================
+  # 10gen Org: internal university content → public university repos
+  # ==========================================================================
+
+  - name: "university-python-course"
+    source:
+      repo: "10gen/university-content"
+      branch: "main"
+    destination:
+      repo: "mongodb-university/python-course"
+      branch: "main"
+    transformations:
+      - move: { from: "courses/python/public", to: "content" }
+      - move: { from: "courses/python/exercises", to: "exercises" }
+      - copy: { from: "courses/python/README.md", to: "README.md" }
+    exclude:
+      - "**/internal/**"
+      - "**/solutions/**"
+      - "**/.env"
+    commit_strategy:
+      type: "pull_request"
+      pr_title: "Update Python course content"
+      auto_merge: false
+  
+  - name: "university-java-course"
+    source:
+      repo: "10gen/university-content"
+      branch: "main"
+    destination:
+      repo: "mongodb-university/java-course"
+      branch: "main"
+    transformations:
+      - move: { from: "courses/java/public", to: "content" }
+      - move: { from: "courses/java/exercises", to: "exercises" }
+      - copy: { from: "courses/java/README.md", to: "README.md" }
+    exclude:
+      - "**/internal/**"
+      - "**/solutions/**"
+  
+  - name: "university-nodejs-course"
+    source:
+      repo: "10gen/university-content"
+      branch: "main"
+    destination:
+      repo: "mongodb-university/nodejs-course"
+      branch: "main"
+    transformations:
+      - move: { from: "courses/nodejs/public", to: "content" }
+      - copy: { from: "courses/nodejs/README.md", to: "README.md" }
+
+  # ==========================================================================
+  # MongoDB University Org: course source → course public
+  # ==========================================================================
+  
+  - name: "course-materials-sync"
+    source:
+      repo: "mongodb-university/course-source"
+      branch: "main"
+    destination:
+      repo: "mongodb-university/course-public"
+      branch: "main"
+    transformations:
+      - move: { from: "materials/public", to: "content" }
+      - move: { from: "materials/assets", to: "assets" }
+      - copy: { from: "materials/README.md", to: "README.md" }
+    commit_strategy:
+      type: "direct"  # Override default - commit directly
+      commit_message: "Sync course materials"
+
+  # ==========================================================================
+  # Cross-Org Example: 10gen → mongodb
+  # ==========================================================================
+  
+  - name: "internal-docs-to-public"
+    source:
+      repo: "10gen/internal-docs"
+      branch: "main"
+    destination:
+      repo: "mongodb/docs"
+      branch: "main"
+    transformations:
+      - move: { from: "public-docs", to: "source" }
+    exclude:
+      - "**/internal/**"
+      - "**/confidential/**"
+    commit_strategy:
+      type: "pull_request"
+      pr_title: "Update public docs from internal source"
+      pr_body: |
+        Automated sync from internal docs repository.
+        
+        **Review checklist:**
+        - [ ] No confidential information included
+        - [ ] All links work correctly
+        - [ ] Images are properly copied
+      auto_merge: false
+
+# ============================================================================
+# HOW IT WORKS
+# ============================================================================
+#
+# 1. WEBHOOK ROUTING
+#    - PR merged in mongodb/docs-sample-apps
+#    - App finds workflows with source.repo = "mongodb/docs-sample-apps"
+#    - Processes: mflix-java, mflix-nodejs, mflix-python
+#
+# 2. AUTHENTICATION
+#    - App auto-discovers installation ID for "mongodb" org
+#    - Gets installation token for mongodb org
+#    - Reads files from mongodb/docs-sample-apps
+#    - Writes files to mongodb/sample-app-* repos
+#
+# 3. MULTI-ORG EXAMPLE
+#    - PR merged in 10gen/university-content
+#    - App finds workflows with source.repo = "10gen/university-content"
+#    - Processes: university-python-course, university-java-course, university-nodejs-course
+#    - Authenticates to 10gen org (source) and mongodb-university org (destination)
+#
+# 4. CROSS-ORG EXAMPLE
+#    - PR merged in 10gen/internal-docs
+#    - App authenticates to 10gen org (read) and mongodb org (write)
+#    - Copies files between orgs
+#
+# ============================================================================
+# INSTALLATION REQUIREMENTS
+# ============================================================================
+#
+# The GitHub App must be installed in ALL organizations used:
+# 1. mongodb - for docs-sample-apps and sample-app-* repos
+# 2. 10gen - for university-content and internal-docs repos
+# 3. mongodb-university - for course repos
+#
+# The app will auto-discover installation IDs for each org.
+#
+# ============================================================================
+# OPTIONAL: EXPLICIT INSTALLATION IDS
+# ============================================================================
+#
+# If auto-discovery doesn't work, you can specify installation IDs explicitly:
+#
+# - name: "example-with-explicit-ids"
+#   source:
+#     repo: "mongodb/docs-sample-apps"
+#     branch: "main"
+#     installation_id: "12345678"  # Optional override
+#   destination:
+#     repo: "mongodb/sample-app-java"
+#     branch: "main"
+#     installation_id: "12345678"  # Optional override
+#   transformations: [...]
+#
+# ============================================================================
+# CONFIG LOCATION
+# ============================================================================
+#
+# OPTION 1: Centralized Config Repo (Recommended for multi-org)
+# - Store this file in: mongodb/code-copier-config/config.yaml
+# - App reads config from this repo on startup
+# - Single source of truth for all workflows
+# - Easy to see all copy operations across orgs
+#
+# OPTION 2: Per-Source Config (Alternative)
+# - Store config in each source repo
+# - mongodb/docs-sample-apps/copier-config.yaml
+# - 10gen/university-content/copier-config.yaml
+# - Each source repo has its own workflows
+#
+# For multi-org, OPTION 1 is strongly recommended.
+#
+# ============================================================================
+# ADDING A NEW ORG
+# ============================================================================
+#
+# 1. Install GitHub App in the new org
+# 2. Add workflows with source.repo in the new org
+# 3. Deploy updated config
+# 4. Test with a PR in the new org's source repo
+#
+# Example:
+#
+# - name: "new-org-workflow"
+#   source:
+#     repo: "new-org/source-repo"
+#     branch: "main"
+#   destination:
+#     repo: "mongodb/target-repo"
+#     branch: "main"
+#   transformations:
+#     - move: { from: "src", to: "dest" }
+#
+# ============================================================================
+

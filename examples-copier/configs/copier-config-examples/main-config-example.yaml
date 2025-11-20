@@ -1,0 +1,181 @@
+# Main Configuration File Example
+# This is the central config file that references individual workflow configs
+# Specified in env.yaml as MAIN_CONFIG_FILE
+
+# ============================================================================
+# GLOBAL DEFAULTS
+# ============================================================================
+# These defaults apply to all workflows across all workflow config files
+# unless overridden at the workflow config level or individual workflow level
+
+defaults:
+  commit_strategy:
+    type: "pull_request"
+    auto_merge: false
+  deprecation_check:
+    enabled: true
+    file: "deprecated_examples.json"
+  exclude:
+    - "**/.env"
+    - "**/.env.*"
+    - "**/node_modules/**"
+    - "**/.DS_Store"
+    - "**/coverage/**"
+    - "**/__pycache__/**"
+    - "**/*.pyc"
+
+# ============================================================================
+# WORKFLOW CONFIG REFERENCES
+# ============================================================================
+# Each reference points to a workflow config file that contains workflows
+# Supports three source types: local, repo, and inline
+#
+# Optional 'enabled' field (default: true) allows you to disable workflow
+# configs without removing them from the main config.
+
+workflow_configs:
+  # --------------------------------------------------------------------------
+  # LOCAL REFERENCES
+  # --------------------------------------------------------------------------
+  # Reference workflow configs in the same repo as this main config
+
+  - source: "local"
+    path: "workflows/mflix-workflows.yaml"
+    enabled: true  # Optional: explicitly enable (default: true)
+    # This file would be in the same repo at: workflows/mflix-workflows.yaml
+
+  - source: "local"
+    path: "workflows/university-workflows.yaml"
+    enabled: false  # Temporarily disable this workflow config
+    # This file would be in the same repo at: workflows/university-workflows.yaml
+
+  # --------------------------------------------------------------------------
+  # REPO REFERENCES
+  # --------------------------------------------------------------------------
+  # Reference workflow configs in source repositories
+  # This allows each source repo to manage its own workflow configurations
+  #
+  # IMPORTANT: Workflows in repo-sourced configs automatically inherit the
+  # repo and branch from this reference! They don't need to specify
+  # source.repo or source.branch unless overriding.
+  #
+  # Example: If you reference mongodb/docs-sample-apps, workflows in that
+  # config file can omit source.repo and source.branch - they'll be
+  # automatically inferred from this reference.
+
+  - source: "repo"
+    repo: "mongodb/docs-sample-apps"
+    branch: "main"  # optional, defaults to main
+    path: ".copier/workflows.yaml"
+    enabled: true  # Optional: explicitly enable (default: true)
+    # This fetches the workflow config from the source repo itself
+    # The source repo maintains its own workflow definitions
+    # Workflows in .copier/workflows.yaml inherit repo/branch automatically
+
+  - source: "repo"
+    repo: "10gen/university-content"
+    branch: "main"
+    path: ".copier/workflows.yaml"
+    enabled: false  # Temporarily disable this entire repo's workflows
+    # Different org - app will auto-discover installation ID
+
+  - source: "repo"
+    repo: "mongodb/docs"
+    branch: "main"
+    path: ".github/copier-workflows.yaml"
+    # enabled defaults to true when not specified
+    # Can be anywhere in the repo
+
+  # --------------------------------------------------------------------------
+  # INLINE WORKFLOWS
+  # --------------------------------------------------------------------------
+  # For simple cases, you can define workflows directly in the main config
+  
+  - source: "inline"
+    workflows:
+      - name: "simple-docs-copy"
+        source:
+          repo: "mongodb/docs-internal"
+          branch: "main"
+        destination:
+          repo: "mongodb/docs-public"
+          branch: "main"
+        transformations:
+          - move:
+              from: "public-examples"
+              to: "examples"
+        commit_strategy:
+          type: "pull_request"
+          pr_title: "Update public examples"
+          pr_body: "Automated sync from internal docs"
+          auto_merge: false
+
+# ============================================================================
+# HOW IT WORKS
+# ============================================================================
+#
+# 1. CONFIGURATION LOADING
+#    - App loads this main config file on startup
+#    - Resolves all workflow_configs references
+#    - Merges all workflows into a single configuration
+#    - Applies default precedence (workflow > workflow config > main config)
+#
+# 2. DEFAULT PRECEDENCE (most specific wins)
+#    - Individual workflow settings (highest priority)
+#    - Workflow config file defaults
+#    - Main config defaults
+#    - System defaults (lowest priority)
+#
+# 3. WEBHOOK PROCESSING
+#    - PR merged in mongodb/docs-sample-apps
+#    - App finds workflows with source.repo = "mongodb/docs-sample-apps"
+#    - Processes all matching workflows
+#
+# 4. MULTI-ORG SUPPORT
+#    - Each repo reference can be in a different org
+#    - App auto-discovers installation ID for each org
+#    - Handles authentication automatically
+#
+# ============================================================================
+# ENVIRONMENT VARIABLES
+# ============================================================================
+#
+# Required in env.yaml:
+#   MAIN_CONFIG_FILE: "main-config.yaml"
+#   USE_MAIN_CONFIG: "true" # if "false", use optional CONFIG_FILE instead
+#   CONFIG_REPO_OWNER: "mongodb"
+#   CONFIG_REPO_NAME: "code-copier-config"
+#   CONFIG_REPO_BRANCH: "main"
+#
+# Optional:
+#   CONFIG_FILE: "copier-config.yaml"  # if USE_MAIN_CONFIG: "false"
+#
+# ============================================================================
+# EXAMPLE DIRECTORY STRUCTURE
+# ============================================================================
+#
+# Config Repo (mongodb/code-copier-config):
+#   main-config.yaml                    # This file
+#   workflows/
+#     mflix-workflows.yaml              # MFlix workflows
+#     university-workflows.yaml         # University workflows
+#   strategies/
+#     standard-pr.yaml                  # Reusable PR strategy
+#     auto-merge-pr.yaml                # Auto-merge PR strategy
+#   common/
+#     standard-excludes.yaml            # Common exclude patterns
+#
+# Source Repo (mongodb/docs-sample-apps):
+#   .copier/
+#     workflows.yaml                    # Workflows for this repo
+#     transformations/
+#       mflix-java.yaml                 # Java transformations
+#       mflix-nodejs.yaml               # Node.js transformations
+#       mflix-python.yaml               # Python transformations
+#     strategies/
+#       mflix-pr-strategy.yaml          # MFlix PR strategy
+#     common/
+#       mflix-excludes.yaml             # MFlix exclude patterns
+#
+# ============================================================================
+

@@ -1,0 +1,99 @@
+# Reusable Transformations File
+# This file contains transformation definitions that can be referenced from workflow configs
+# Location: .copier/transformations/mflix-java.yaml (in source repo)
+
+# ============================================================================
+# MFLIX JAVA TRANSFORMATIONS
+# ============================================================================
+# These transformations are specific to the MFlix Java application
+# They define how files are copied from the monorepo to the standalone app repo
+
+# Copy client directory (shared across all MFlix apps)
+- move:
+    from: "mflix/client"
+    to: "client"
+
+# Copy Java server (removing java-spring subdirectory)
+- move:
+    from: "mflix/server/java-spring"
+    to: "server"
+
+# Copy Java-specific README
+- copy:
+    from: "mflix/README-JAVA-SPRING.md"
+    to: "README.md"
+
+# Copy Java-specific .gitignore
+- copy:
+    from: "mflix/.gitignore-java"
+    to: ".gitignore"
+
+# Copy shared configuration files
+- copy:
+    from: "mflix/docker-compose.yml"
+    to: "docker-compose.yml"
+
+# Copy environment template
+- copy:
+    from: "mflix/.env.example"
+    to: ".env.example"
+
+# ============================================================================
+# USAGE IN WORKFLOW CONFIG
+# ============================================================================
+#
+# In your workflow config file (.copier/workflows.yaml):
+#
+# workflows:
+#   - name: "mflix-java"
+#     source:
+#       repo: "mongodb/docs-sample-apps"
+#       branch: "main"
+#     destination:
+#       repo: "mongodb/sample-app-java-mflix"
+#       branch: "main"
+#     transformations:
+#       $ref: "transformations/mflix-java.yaml"
+#
+# ============================================================================
+# BENEFITS
+# ============================================================================
+#
+# 1. REUSABILITY
+#    - Define transformations once
+#    - Reference from multiple workflows if needed
+#    - Easy to update in one place
+#
+# 2. CLARITY
+#    - Transformations are clearly documented
+#    - Easy to understand what's being copied
+#    - Self-documenting configuration
+#
+# 3. MAINTAINABILITY
+#    - Update transformations without touching workflow config
+#    - Test transformations independently
+#    - Version control with source code
+#
+# 4. ORGANIZATION
+#    - Keep workflow config clean and focused
+#    - Separate concerns (what vs how)
+#    - Easy to find and update
+#
+# ============================================================================
+# ADVANCED TRANSFORMATIONS
+# ============================================================================
+#
+# You can also use glob and regex transformations for more complex scenarios:
+#
+# # Glob transformation (copy all .js files)
+# - glob:
+#     pattern: "mflix/server/**/*.js"
+#     transform: "server/${relative_path}"
+#
+# # Regex transformation (rename files)
+# - regex:
+#     pattern: "mflix/server/(?P<path>.*)\\.ts$"
+#     transform: "server/${path}.js"
+#
+# ============================================================================
+

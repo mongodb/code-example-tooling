@@ -274,23 +274,3 @@ func (pm *DefaultPatternMatcher) shouldExclude(filePath string, excludePatterns 
 	return false
 }
 
-// MatchAndTransform is a helper that combines pattern matching and path transformation
-func MatchAndTransform(filePath string, rule types.CopyRule, target types.TargetConfig) (string, map[string]string, bool) {
-	matcher := NewPatternMatcher()
-	transformer := NewPathTransformer()
-
-	// Match the file against the pattern
-	matchResult := matcher.Match(filePath, rule.SourcePattern)
-	if !matchResult.Matched {
-		return "", nil, false
-	}
-
-	// Transform the path
-	targetPath, err := transformer.Transform(filePath, target.PathTransform, matchResult.Variables)
-	if err != nil {
-		return "", nil, false
-	}
-
-	return targetPath, matchResult.Variables, true
-}
-

@@ -108,7 +108,7 @@ Test your configuration locally before deploying:
 
 ```bash
 # 1. Start app in dry-run mode
-DRY_RUN=true CONFIG_FILE=copier-config.yaml make run-local-quick
+DRY_RUN=true make run-local-quick
 
 # 2. In another terminal, send test webhook
 ./test-webhook -payload test-payloads/example-pr-merged.json
@@ -122,8 +122,8 @@ tail -f logs/app.log
 Test if your patterns match real PR files:
 
 ```bash
-# 1. Start app with your config
-CONFIG_FILE=copier-config.yaml make run-local-quick
+# 1. Start app
+make run-local-quick
 
 # 2. Send webhook with real PR data
 export GITHUB_TOKEN=ghp_...
@@ -139,7 +139,7 @@ Verify files are copied to correct locations:
 
 ```bash
 # 1. Start app in dry-run mode
-DRY_RUN=true CONFIG_FILE=copier-config.yaml ./examples-copier &
+DRY_RUN=true ./examples-copier &
 
 # 2. Send test webhook
 ./test-webhook -payload test-payloads/example-pr-merged.json
@@ -155,7 +155,7 @@ Test Slack integration:
 ```bash
 # 1. Start app with Slack enabled
 export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."
-CONFIG_FILE=copier-config.yaml ./examples-copier &
+./examples-copier &
 
 # 2. Send test webhook
 ./test-webhook -payload test-payloads/example-pr-merged.json
@@ -170,7 +170,7 @@ Debug webhook processing:
 ```bash
 # 1. Enable debug logging
 export LOG_LEVEL=debug
-CONFIG_FILE=copier-config.yaml ./examples-copier &
+./examples-copier &
 
 # 2. Send test webhook
 ./test-webhook -payload test-payloads/example-pr-merged.json
@@ -233,29 +233,20 @@ vim test-payloads/my-test.json
 ### Complete Testing Workflow
 
 ```bash
-# 1. Validate configuration
-./config-validator validate -config copier-config.yaml -v
+# 1. Start app in dry-run mode
+DRY_RUN=true ./examples-copier &
 
-# 2. Test pattern matching
-./config-validator test-pattern \
-  -type regex \
-  -pattern "^examples/(?P<lang>[^/]+)/(?P<file>.+)$" \
-  -file "examples/go/main.go"
-
-# 3. Start app in dry-run mode
-DRY_RUN=true CONFIG_FILE=copier-config.yaml ./examples-copier &
-
-# 4. Test with example payload
+# 2. Test with example payload
 ./test-webhook -payload test-payloads/example-pr-merged.json
 
-# 5. Check metrics
+# 3. Check metrics
 curl http://localhost:8080/metrics | jq
 
-# 6. Test with real PR
+# 4. Test with real PR
 export GITHUB_TOKEN=ghp_...
 ./test-webhook -pr 42 -owner myorg -repo myrepo
 
-# 7. Review logs
+# 5. Review logs
 grep "matched" logs/app.log
 ```
 
@@ -353,7 +344,7 @@ cat > run-tests.sh << 'EOF'
 set -e
 
 echo "Starting app..."
-DRY_RUN=true CONFIG_FILE=copier-config.yaml ./examples-copier &
+DRY_RUN=true ./examples-copier &
 APP_PID=$!
 sleep 2
 
@@ -399,7 +390,7 @@ jobs:
       
       - name: Test
         run: |
-          DRY_RUN=true CONFIG_FILE=copier-config.yaml ./examples-copier &
+          DRY_RUN=true ./examples-copier &
           sleep 2
           ./test-webhook -payload test-payloads/example-pr-merged.json
 ```

@@ -14,17 +14,17 @@ type ServiceContainer struct {
 	FileStateService FileStateService
 
 	// New services
-	ConfigLoader     ConfigLoader
-	PatternMatcher   PatternMatcher
-	PathTransformer  PathTransformer
-	MessageTemplater MessageTemplater
+	ConfigLoader      ConfigLoader
+	PatternMatcher    PatternMatcher
+	PathTransformer   PathTransformer
+	MessageTemplater  MessageTemplater
 	PRTemplateFetcher PRTemplateFetcher
-	AuditLogger      AuditLogger
-	MetricsCollector *MetricsCollector
-	SlackNotifier    SlackNotifier
+	AuditLogger       AuditLogger
+	MetricsCollector  *MetricsCollector
+	SlackNotifier     SlackNotifier
 
 	// Server state
-	StartTime        time.Time
+	StartTime time.Time
 }
 
 // NewServiceContainer creates and initializes all services
@@ -32,8 +32,16 @@ func NewServiceContainer(config *configs.Config) (*ServiceContainer, error) {
 	// Initialize file state service
 	fileStateService := NewFileStateService()
 
-	// Initialize new services
-	configLoader := NewConfigLoader()
+	// Initialize config loader based on configuration
+	var configLoader ConfigLoader
+	if config.UseMainConfig && config.MainConfigFile != "" {
+		// Use main config loader for new format with workflow references (when USE_MAIN_CONFIG=true)
+		configLoader = NewMainConfigLoader()
+	} else {
+		// Use default config loader for singular config file (when USE_MAIN_CONFIG=false)
+		configLoader = NewConfigLoader()
+	}
+
 	patternMatcher := NewPatternMatcher()
 	pathTransformer := NewPathTransformer()
 	messageTemplater := NewMessageTemplater()
@@ -83,4 +91,3 @@ func (sc *ServiceContainer) Close(ctx context.Context) error {
 	}
 	return nil
 }
-

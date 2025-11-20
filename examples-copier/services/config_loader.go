@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -75,17 +74,20 @@ func (cl *DefaultConfigLoader) LoadConfigFromContent(content string, filename st
 
 // retrieveConfigFileContent fetches the config file content from the repository
 func retrieveConfigFileContent(ctx context.Context, filePath string, config *configs.Config) (string, error) {
-	// Get GitHub client
-	client := GetRestClient()
+	// Get GitHub client for the config repo's org (auto-discovers installation ID)
+	client, err := GetRestClientForOrg(config.ConfigRepoOwner)
+	if err != nil {
+		return "", fmt.Errorf("failed to get GitHub client for org %s: %w", config.ConfigRepoOwner, err)
+	}
 
 	// Fetch file content
 	fileContent, _, _, err := client.Repositories.GetContents(
 		ctx,
-		config.RepoOwner,
-		config.RepoName,
+		config.ConfigRepoOwner,
+		config.ConfigRepoName,
 		filePath,
 		&github.RepositoryContentGetOptions{
-			Ref: config.SrcBranch,
+			Ref: config.ConfigRepoBranch,
 		},
 	)
 	if err != nil {
@@ -142,103 +144,6 @@ func (cv *ConfigValidator) TestPattern(patternType types.PatternType, pattern st
 func (cv *ConfigValidator) TestTransform(sourcePath string, template string, variables map[string]string) (string, error) {
 	transformer := NewPathTransformer()
 	return transformer.Transform(sourcePath, template, variables)
-}
-
-// ExportConfigAsYAML exports a config as YAML string
-func ExportConfigAsYAML(config *types.YAMLConfig) (string, error) {
-	data, err := yaml.Marshal(config)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal config to YAML: %w", err)
-	}
-	return string(data), nil
-}
-
-// ExportConfigAsJSON exports a config as JSON string
-func ExportConfigAsJSON(config *types.YAMLConfig) (string, error) {
-	data, err := json.MarshalIndent(config, "", "  ")
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal config to JSON: %w", err)
-	}
-	return string(data), nil
-}
-
-// ConfigTemplate represents a configuration template
-type ConfigTemplate struct {
-	Name        string
-	Description string
-	Content     string
-}
-
-// GetConfigTemplates returns available configuration templates
-func GetConfigTemplates() []ConfigTemplate {
-	return []ConfigTemplate{
-		{
-			Name:        "basic",
-			Description: "Basic configuration with prefix pattern matching",
-			Content: `source_repo: "owner/source-repo"
-source_branch: "main"
-
-copy_rules:
-  - name: "example-rule"
-    source_pattern:
-      type: "prefix"
-      pattern: "examples/"
-    targets:
-      - repo: "owner/target-repo"
-        branch: "main"
-        path_transform: "code-examples/${relative_path}"
-        commit_strategy:
-          type: "direct"
-          commit_message: "Update code examples"
-`,
-		},
-		{
-			Name:        "glob",
-			Description: "Configuration with glob pattern matching",
-			Content: `source_repo: "owner/source-repo"
-source_branch: "main"
-
-copy_rules:
-  - name: "go-examples"
-    source_pattern:
-      type: "glob"
-      pattern: "examples/**/*.go"
-    targets:
-      - repo: "owner/target-repo"
-        branch: "main"
-        path_transform: "go-examples/${filename}"
-        commit_strategy:
-          type: "pull_request"
-          pr_title: "Update Go examples"
-          pr_body: "Automated update from source repository"
-          auto_merge: false
-`,
-		},
-		{
-			Name:        "regex",
-			Description: "Advanced configuration with regex pattern matching",
-			Content: `source_repo: "owner/source-repo"
-source_branch: "main"
-
-copy_rules:
-  - name: "language-examples"
-    source_pattern:
-      type: "regex"
-      pattern: "^examples/(?P<lang>[^/]+)/(?P<category>[^/]+)/(?P<file>.+)$"
-    targets:
-      - repo: "owner/docs-repo"
-        branch: "main"
-        path_transform: "source/code-examples/${lang}/${category}/${file}"
-        commit_strategy:
-          type: "pull_request"
-          pr_title: "Update ${lang} examples"
-          pr_body: "Automated update of ${lang} examples from source repository"
-        deprecation_check:
-          enabled: true
-          file: "deprecated_examples.json"
-`,
-		},
-	}
 }
 
 // loadLocalConfigFile attempts to load config from a local file

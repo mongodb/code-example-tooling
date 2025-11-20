@@ -24,8 +24,8 @@ var FilesToDeprecate map[string]Configs
 
 
 
-// repoOwner returns the repository owner from environment variables.
-func repoOwner() string { return os.Getenv(configs.RepoOwner) }
+// repoOwner returns the config repository owner from environment variables.
+func repoOwner() string { return os.Getenv(configs.ConfigRepoOwner) }
 
 // parseRepoPath parses a repository path in the format "owner/repo" and returns owner and repo separately.
 // If the path doesn't contain a slash, it returns the source repo owner from env and the path as repo name.
@@ -51,13 +51,14 @@ func normalizeRepoName(repoName string) string {
 // AddFilesToTargetRepoBranch uploads files to the target repository branch
 // using the specified commit strategy (direct or via pull request).
 func AddFilesToTargetRepoBranch() {
-	AddFilesToTargetRepoBranchWithFetcher(nil)
+	AddFilesToTargetRepoBranchWithFetcher(nil, nil)
 }
 
 // AddFilesToTargetRepoBranchWithFetcher uploads files to the target repository branch
 // using the specified commit strategy (direct or via pull request).
 // If prTemplateFetcher is provided, it will be used to fetch PR templates when use_pr_template is true.
-func AddFilesToTargetRepoBranchWithFetcher(prTemplateFetcher PRTemplateFetcher) {
+// If metricsCollector is provided, it will be used to record upload failures.
+func AddFilesToTargetRepoBranchWithFetcher(prTemplateFetcher PRTemplateFetcher, metricsCollector *MetricsCollector) {
 	ctx := context.Background()
 
 	for key, value := range FilesToUpload {
@@ -68,6 +69,12 @@ func AddFilesToTargetRepoBranchWithFetcher(prTemplateFetcher PRTemplateFetcher) 
 		client, err := GetRestClientForOrg(owner)
 		if err != nil {
 			LogCritical(fmt.Sprintf("Failed to get GitHub client for org %s: %v", owner, err))
+			// Record failure for each file in this batch
+			if metricsCollector != nil {
+				for range value.Content {
+					metricsCollector.RecordFileUploadFailed()
+				}
+			}
 			continue
 		}
 
@@ -116,11 +123,23 @@ func AddFilesToTargetRepoBranchWithFetcher(prTemplateFetcher PRTemplateFetcher) 
 			LogInfo(fmt.Sprintf("Using direct commit strategy for %s on branch %s", key.RepoName, key.BranchPath))
 			if err := addFilesToBranch(ctx, client, key, value.Content, commitMsg); err != nil {
 				LogCritical(fmt.Sprintf("Failed to add files to target branch: %v\n", err))
+				// Record failure for each file in this batch
+				if metricsCollector != nil {
+					for range value.Content {
+						metricsCollector.RecordFileUploadFailed()
+					}
+				}
 			}
 		default: // "pr" or "pull_request" strategy
 			LogInfo(fmt.Sprintf("Using PR commit strategy for %s on branch %s (auto_merge=%v)", key.RepoName, key.BranchPath, mergeWithoutReview))
 			if err := addFilesViaPR(ctx, client, key, value.Content, commitMsg, prTitle, prBody, mergeWithoutReview); err != nil {
 				LogCritical(fmt.Sprintf("Failed via PR path: %v\n", err))
+				// Record failure for each file in this batch
+				if metricsCollector != nil {
+					for range value.Content {
+						metricsCollector.RecordFileUploadFailed()
+					}
+				}
 			}
 		}
 	}

@@ -1,0 +1,135 @@
+# Reusable Exclude Patterns File
+# This file contains exclude patterns that can be referenced from workflow configs
+# Location: .copier/common/mflix-excludes.yaml (in source repo)
+
+# ============================================================================
+# MFLIX EXCLUDE PATTERNS
+# ============================================================================
+# These patterns define files that should NOT be copied to destination repos
+# Uses glob pattern matching
+
+# Environment files (never copy secrets)
+- "**/.env"
+- "**/.env.*"
+- "!**/.env.example"  # But DO copy .env.example
+
+# Dependency directories
+- "**/node_modules/**"
+- "**/venv/**"
+- "**/.venv/**"
+- "**/target/**"
+- "**/build/**"
+- "**/dist/**"
+
+# IDE and editor files
+- "**/.vscode/**"
+- "**/.idea/**"
+- "**/*.swp"
+- "**/*.swo"
+- "**/*~"
+- "**/.DS_Store"
+
+# Test coverage and reports
+- "**/coverage/**"
+- "**/.nyc_output/**"
+- "**/htmlcov/**"
+- "**/.pytest_cache/**"
+- "**/.coverage"
+
+# Python cache files
+- "**/__pycache__/**"
+- "**/*.pyc"
+- "**/*.pyo"
+- "**/*.pyd"
+
+# Java build files
+- "**/*.class"
+- "**/.gradle/**"
+- "**/.mvn/**"
+
+# Logs
+- "**/*.log"
+- "**/logs/**"
+
+# Temporary files
+- "**/.tmp/**"
+- "**/tmp/**"
+- "**/*.tmp"
+
+# OS files
+- "**/.DS_Store"
+- "**/Thumbs.db"
+- "**/.Spotlight-V100"
+- "**/.Trashes"
+
+# Git files (usually don't want to copy)
+- "**/.git/**"
+- "**/.gitignore"  # Usually replaced by destination-specific .gitignore
+
+# ============================================================================
+# USAGE IN WORKFLOW CONFIG
+# ============================================================================
+#
+# In your workflow config file (.copier/workflows.yaml):
+#
+# defaults:
+#   exclude:
+#     $ref: "common/mflix-excludes.yaml"
+#
+# Or in a specific workflow:
+#
+# workflows:
+#   - name: "mflix-java"
+#     # ... other config ...
+#     exclude:
+#       $ref: "common/mflix-excludes.yaml"
+#
+# ============================================================================
+# COMBINING WITH INLINE PATTERNS
+# ============================================================================
+#
+# You can reference a file and add additional patterns:
+#
+# exclude:
+#   $ref: "common/mflix-excludes.yaml"
+#   - "**/custom-exclude/**"  # Add workflow-specific excludes
+#
+# ============================================================================
+# PATTERN SYNTAX
+# ============================================================================
+#
+# Glob patterns support:
+# - * matches any characters except /
+# - ** matches any characters including /
+# - ? matches a single character
+# - [abc] matches any character in the set
+# - [!abc] matches any character NOT in the set
+# - ! at start negates the pattern (include instead of exclude)
+#
+# Examples:
+# - "*.js" - matches all .js files in root
+# - "**/*.js" - matches all .js files anywhere
+# - "src/**/*.test.js" - matches test files in src
+# - "!important.js" - include this file even if excluded by other patterns
+#
+# ============================================================================
+# COMMON EXCLUDE PATTERN SETS
+# ============================================================================
+#
+# You can create multiple exclude files for different purposes:
+#
+# common/
+#   standard-excludes.yaml      # Basic excludes (env, node_modules, etc.)
+#   security-excludes.yaml      # Security-sensitive files
+#   build-excludes.yaml         # Build artifacts
+#   test-excludes.yaml          # Test files and coverage
+#   ide-excludes.yaml           # IDE and editor files
+#
+# Then combine them in your workflow:
+#
+# exclude:
+#   $ref: "common/standard-excludes.yaml"
+#   $ref: "common/security-excludes.yaml"
+#
+# ============================================================================
+

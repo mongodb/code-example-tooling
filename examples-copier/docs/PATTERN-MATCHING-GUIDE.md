@@ -559,21 +559,23 @@ gh pr view 42 --json files --jq '.files[].path'
   -file "examples/go/database/connect.go"
 ```
 
-### 5. Order Rules from Specific to General
+### 5. Order Workflows from Specific to General
 
 ```yaml
-copy_rules:
-  # More specific rule first
+workflows:
+  # More specific workflow first
   - name: "Copy Go examples"
-    source_pattern:
-      type: "regex"
-      pattern: "^examples/go/(?P<file>.+)$"
-  
-  # General fallback rule last
+    transformations:
+      - regex:
+          pattern: "^examples/go/(?P<file>.+)$"
+          transform: "code/go/${file}"
+
+  # General fallback workflow last
   - name: "Copy all examples"
-    source_pattern:
-      type: "prefix"
-      pattern: "examples/"
+    transformations:
+      - move:
+          from: "examples"
+          to: "code"
 ```
 
 ### 6. Use Descriptive Variable Names
@@ -666,23 +668,25 @@ pattern: "^examples/(?P<a>[^/]+)/(?P<b>[^/]+)/(?P<c>.+)$"
 
 ### Files Matched Multiple Times
 
-**Problem:** Same file matches multiple rules
+**Problem:** Same file matches multiple workflows
 
-**Solution:** This is expected! Files can match multiple rules and be copied to multiple targets. If you want only one rule to match, make patterns mutually exclusive:
+**Solution:** This is expected! Files can match multiple workflows and be copied to multiple targets. If you want only one workflow to match, make transformations mutually exclusive:
 
 ```yaml
-copy_rules:
+workflows:
   # Only Go files
   - name: "Go examples"
-    source_pattern:
-      type: "regex"
-      pattern: "^examples/go/(?P<file>.+)$"
-  
+    transformations:
+      - regex:
+          pattern: "^examples/go/(?P<file>.+)$"
+          transform: "code/go/${file}"
+
   # Only Python files (won't match Go)
   - name: "Python examples"
-    source_pattern:
-      type: "regex"
-      pattern: "^examples/python/(?P<file>.+)$"
+    transformations:
+      - regex:
+          pattern: "^examples/python/(?P<file>.+)$"
+          transform: "code/python/${file}"
 ```
 
 ## Advanced Examples

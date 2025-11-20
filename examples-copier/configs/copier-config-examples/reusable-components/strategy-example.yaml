@@ -1,0 +1,97 @@
+# Reusable Commit Strategy File
+# This file contains a commit strategy definition that can be referenced from workflow configs
+# Location: .copier/strategies/mflix-pr-strategy.yaml (in source repo)
+
+# ============================================================================
+# MFLIX PR STRATEGY
+# ============================================================================
+# This strategy is used for all MFlix application workflows
+# It creates a PR with a standard title and body
+
+type: "pull_request"
+
+pr_title: "Update MFlix application from docs-sample-apps"
+
+pr_body: |
+  Automated update of MFlix application
+  
+  **Source Information:**
+  - Repository: mongodb/docs-sample-apps
+  - Branch: main
+  
+  **What's Changed:**
+  This PR synchronizes the latest changes from the source repository,
+  including:
+  - Client files (Next.js frontend)
+  - Server files (backend implementation)
+  - Configuration files
+  - Documentation updates
+  
+  **Review Checklist:**
+  - [ ] All tests pass
+  - [ ] No breaking changes
+  - [ ] Documentation is up to date
+  - [ ] Environment variables are correct
+  
+  **Deployment:**
+  This PR can be merged once all checks pass and it has been reviewed.
+  
+  ---
+  *This PR was automatically created by the Examples Copier service.*
+
+auto_merge: false
+
+# ============================================================================
+# USAGE IN WORKFLOW CONFIG
+# ============================================================================
+#
+# In your workflow config file (.copier/workflows.yaml):
+#
+# workflows:
+#   - name: "mflix-java"
+#     source:
+#       repo: "mongodb/docs-sample-apps"
+#       branch: "main"
+#     destination:
+#       repo: "mongodb/sample-app-java-mflix"
+#       branch: "main"
+#     transformations:
+#       # ... transformations ...
+#     commit_strategy:
+#       $ref: "strategies/mflix-pr-strategy.yaml"
+#
+# ============================================================================
+# INLINE OVERRIDES
+# ============================================================================
+#
+# You can also reference a strategy and override specific fields:
+#
+# commit_strategy:
+#   $ref: "strategies/mflix-pr-strategy.yaml"
+#   auto_merge: true  # Override just this field
+#
+# ============================================================================
+# OTHER STRATEGY EXAMPLES
+# ============================================================================
+#
+# DIRECT COMMIT STRATEGY:
+# ----------------------
+# type: "direct"
+# commit_message: "Update examples from source repository"
+#
+# AUTO-MERGE PR STRATEGY:
+# ----------------------
+# type: "pull_request"
+# pr_title: "Auto-update examples"
+# pr_body: "Automated update - will auto-merge if tests pass"
+# auto_merge: true
+#
+# PR WITH TEMPLATE:
+# ----------------
+# type: "pull_request"
+# use_pr_template: true  # Fetch and use PR template from target repo
+# pr_title: "Update examples"
+# auto_merge: false
+#
+# ============================================================================
+

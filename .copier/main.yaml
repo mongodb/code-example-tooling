@@ -29,7 +29,7 @@ workflow_configs:
   - source: "repo"
     repo: "mongodb/docs-sample-apps"
     branch: "main"  # optional, defaults to main
-    path: ".copier/workflows.yaml"
+    path: ".copier/config.yaml"
     enabled: true
 
   # --------------------------------------------------------------------------
@@ -38,7 +38,7 @@ workflow_configs:
   - source: "repo"
     repo: "10gen/docs-mongodb-internal"
     branch: "main"
-    path: ".copier/workflows.yaml"
+    path: ".copier/config.yaml"
     enabled: true
 
   # --------------------------------------------------------------------------
@@ -47,7 +47,7 @@ workflow_configs:
   - source: "repo"
     repo: "mongodb/docs-code-examples"
     branch: "main"
-    path: ".copier/workflows.yaml"
+    path: ".copier/config.yaml"
     enabled: false
 
   # --------------------------------------------------------------------------

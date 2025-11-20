@@ -11,6 +11,10 @@ type PullRequestQuery struct {
 	Repository struct {
 		PullRequest struct {
 			Files struct {
+				PageInfo struct {
+					EndCursor   githubv4.String
+					HasNextPage bool
+				}
 				Edges []struct {
 					Node struct {
 						Path       githubv4.String
@@ -19,7 +23,7 @@ type PullRequestQuery struct {
 						ChangeType githubv4.String
 					}
 				}
-			} `graphql:"files(first: 100)"`
+			} `graphql:"files(first: 100, after: $cursor)"`
 		} `graphql:"pullRequest(number: $number)"`
 	} `graphql:"repository(owner: $owner, name: $name)"`
 }

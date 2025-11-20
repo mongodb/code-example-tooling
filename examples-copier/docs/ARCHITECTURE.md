@@ -1,8 +1,50 @@
 # Examples Copier Architecture
 
-This document describes the architecture and design of the examples-copier application, including its core components, pattern matching system, configuration management, deprecation tracking, and operational features.
+This document describes the architecture and design of the examples-copier application, including its core components, main config system, pattern matching, configuration management, deprecation tracking, and operational features.
 
 ## Core Architecture
+
+### Main Config System
+
+The application uses a **centralized main config** with **distributed workflow configs**:
+
+**Files:**
+- `services/main_config_loader.go` - Main config loading and reference resolution
+- `types/config.go` - Configuration types including MainConfig and WorkflowConfigRef
+
+**Key Features:**
+- **Centralized Defaults** - Global defaults in main config file
+- **Distributed Workflows** - Workflow configs in source repositories
+- **Three Reference Types**:
+  - `inline` - Workflows embedded directly in main config
+  - `local` - Workflow configs in same repo as main config
+  - `repo` - Workflow configs in source repositories
+- **Source Context Inference** - Workflows automatically inherit source.repo and source.branch from workflow config reference
+- **$ref Support** - Reference external files for transformations, commit_strategy, and exclude patterns
+- **Resilient Loading** - Continues processing when individual workflow configs fail to load (logs warnings instead of failing)
+
+**Configuration Structure:**
+```yaml
+# Main config (.copier/workflows/main.yaml in config repo)
+defaults:
+  commit_strategy:
+    type: "pull_request"
+    auto_merge: false
+
+workflow_configs:
+  - source: "repo"
+    repo: "mongodb/docs-sample-apps"
+    branch: "main"
+    path: ".copier/workflows/config.yaml"
+    enabled: true
+```
+
+**Benefits:**
+- Separation of concerns - each repo manages its own workflows
+- Scalability - works for monorepos with many workflows
+- Flexibility - mix centralized and distributed configs
+- Discoverability - configs live near source code
+- Maintainability - update workflows without touching main config
 
 ### Service Container Pattern
 
@@ -50,11 +92,64 @@ type UploadKey struct {
 - Ensures uniqueness when multiple files are deprecated to the same deprecation file
 - Prevents map key collisions
 
-## Features
+## Key Features
 
-### 1. Enhanced Pattern Matching
+### 1. Main Config with Workflow References
 
-**Files Created:**
+**Files:**
+- `services/main_config_loader.go` - Main config loading and workflow reference resolution
+- `types/config.go` - MainConfig and WorkflowConfigRef types
+
+**Capabilities:**
+- **Three-tier configuration**: Main config → Workflow configs → Individual workflows
+- **Default precedence**: Workflow > Workflow config > Main config > System defaults
+- **Workflow config references**: Local, remote (repo), or inline workflows
+- **Source context inference**: Workflows inherit source.repo/branch from workflow config reference
+- **Resilient loading**: Logs warnings for missing configs and continues processing
+- **Validation**: Comprehensive validation at each level
+
+**Example:**
+```yaml
+# Main config
+defaults:
+  commit_strategy:
+    type: "pull_request"
+    auto_merge: false
+
+workflow_configs:
+  - source: "repo"
+    repo: "mongodb/docs-sample-apps"
+    path: ".copier/workflows/config.yaml"
+```
+
+### 2. $ref Support for Reusable Components
+
+**Files:**
+- `services/main_config_loader.go` - Reference resolution logic
+- `types/config.go` - RefOrValue types for $ref support
+
+**Capabilities:**
+- **Transformations references**: Extract common file mappings
+- **Strategy references**: Reuse PR strategies across workflows
+- **Exclude references**: Share exclude patterns
+- **Relative paths**: Resolved relative to workflow config file
+- **Repo references**: `repo://owner/repo/path/file.yaml@branch` format
+
+**Example:**
+```yaml
+workflows:
+  - name: "mflix-java"
+    transformations:
+      $ref: "../transformations/mflix-java.yaml"
+    commit_strategy:
+      $ref: "../strategies/mflix-pr-strategy.yaml"
+    exclude:
+      $ref: "../common/mflix-excludes.yaml"
+```
+
+### 3. Enhanced Pattern Matching
+
+**Files:**
 - `services/pattern_matcher.go` - Pattern matching engine
 
 **Capabilities:**
@@ -69,9 +164,9 @@ source_pattern:
   pattern: "^examples/(?P<lang>[^/]+)/(?P<category>[^/]+)/(?P<file>.+)$"
 ```
 
-### 2. Path Transformations
+### 4. Path Transformations
 
-**Files Created:**
+**Files:**
 - `services/pattern_matcher.go` (PathTransformer interface)
 
 **Capabilities:**
@@ -85,7 +180,7 @@ source_pattern:
 path_transform: "source/code-examples/${lang}/${category}/${file}"
 ```
 
-### 3. Deprecation Tracking
+### 5. Deprecation Tracking
 
 **Files:**
 - `services/webhook_handler_new.go` - Deprecation detection and queuing
@@ -144,47 +239,23 @@ targets:
 - Returns early if no files to deprecate
 - Prevents blank commits to source repository
 
-### 4. YAML Configuration Support
+### 6. YAML Configuration Support
 
-**Files Created:**
-- `types/config.go` - New configuration types
-- `services/config_loader.go` - Configuration loader with YAML/JSON support
-- `configs/copier-config.example.yaml` - Example YAML configuration
+**Files:**
+- `types/config.go` - Configuration types with $ref support
+- `services/config_loader.go` - Configuration loader
+- `services/main_config_loader.go` - Main config loader with reference resolution
 
 **Capabilities:**
 - Native YAML support with `gopkg.in/yaml.v3`
-- Backward compatible JSON support
-- Automatic legacy config conversion
+- Custom unmarshaling for $ref support
 - Comprehensive validation
 - Default value handling
+- Reference resolution (relative paths and repo:// format)
 
-**Configuration Structure:**
-```yaml
-source_repo: "mongodb/docs-code-examples"
-source_branch: "main"
+### 7. Template Engine for Messages
 
-copy_rules:
-  - name: "go-examples"
-    source_pattern:
-      type: "glob"
-      pattern: "examples/**/*.go"
-    targets:
-      - repo: "mongodb/docs"
-        branch: "main"
-        path_transform: "code/${filename}"
-        commit_strategy:
-          type: "pull_request"  # or "direct"
-          pr_title: "Update Go examples"
-          pr_body: "Automated update"
-          auto_merge: false
-        deprecation_check:
-          enabled: true
-          file: "deprecated_examples.json"
-```
-
-### 5. Template Engine for Messages
-
-**Files Created:**
+**Files:**
 - `services/pattern_matcher.go` (MessageTemplater interface)
 - `types/config.go` (MessageContext)
 
@@ -202,9 +273,9 @@ commit_strategy:
   pr_body: "Automated update of ${lang} examples (${file_count} files)"
 ```
 
-### 6. MongoDB Audit Logging
+### 8. MongoDB Audit Logging
 
-**Files Created:**
+**Files:**
 - `services/audit_logger.go` - MongoDB audit logger
 
 **Capabilities:**
@@ -247,9 +318,9 @@ AUDIT_COLLECTION="events"
 - Logs errors with full context
 - Thread-safe operation through ServiceContainer
 
-### 7. Health Check and Metrics Endpoints
+### 9. Health Check and Metrics Endpoints
 
-**Files Created:**
+**Files:**
 - `services/health_metrics.go` - Health and metrics implementation
 
 **Endpoints:**
@@ -318,9 +389,9 @@ Returns detailed metrics:
 - GitHub API call tracking
 - Success rates and error rates
 
-### 8. CLI Validation Tool
+### 10. CLI Validation Tool
 
-**Files Created:**
+**Files:**
 - `cmd/config-validator/main.go` - CLI tool for configuration management
 
 **Commands:**
@@ -341,26 +412,25 @@ config-validator test-transform \
   -template "code/${filename}"
 
 # Initialize new config from template
-config-validator init -template basic -output my-copier-config.yaml
-
-# Convert between formats
-config-validator convert -input config.json -output copier-config.yaml
+config-validator init -template basic -output my-workflow-config.yaml
 ```
 
-### 9. Development/Testing Features
+### 11. Development/Testing Features
 
 **Features:**
 - **Dry Run Mode**: `DRY_RUN="true"` - No actual changes made
 - **Non-main Branch Support**: Configure any target branch
-- **Enhanced Logging**: Structured logging with context (JSON format)
+- **Enhanced Logging**: Structured logging with context
 - **Metrics Collection**: Optional metrics tracking
 - **Context-aware Operations**: All operations support context cancellation
+- **Resilient Config Loading**: Continues processing when individual configs fail
 
 **Logging Features:**
-- Structured JSON logs with contextual information
+- Structured logs with contextual information
 - Operation tracking with elapsed time
 - File status logging (ADDED, MODIFIED, DELETED)
 - Deprecation event logging
+- Warning logs for missing configs (non-fatal)
 - Error logging with full context
 
 ## Webhook Processing Flow
@@ -419,116 +489,93 @@ if file.Status == "DELETED" {
 
 ## Configuration Examples
 
-### Basic YAML Config
+### Main Config with Workflow References
 ```yaml
-source_repo: "mongodb/docs-code-examples"
-source_branch: "main"
+# .copier/workflows/main.yaml (in config repo)
+defaults:
+  commit_strategy:
+    type: "pull_request"
+    auto_merge: false
+  exclude:
+    - "**/.env"
+    - "**/node_modules/**"
 
-copy_rules:
-  - name: "go-examples"
-    source_pattern:
-      type: "prefix"
-      pattern: "examples/go"
-    targets:
-      - repo: "mongodb/docs"
-        branch: "main"
-        path_transform: "code/go/${relative_path}"
-        commit_strategy:
-          type: "direct"
-          commit_message: "Update Go examples from ${source_repo}"
+workflow_configs:
+  # Workflows in source repo
+  - source: "repo"
+    repo: "mongodb/docs-sample-apps"
+    branch: "main"
+    path: ".copier/workflows/config.yaml"
+    enabled: true
+
+  # Local workflows in config repo
+  - source: "local"
+    path: "workflows/internal-workflows.yaml"
+    enabled: true
+
+  # Inline workflow for simple cases
+  - source: "inline"
+    workflows:
+      - name: "simple-copy"
+        source:
+          repo: "mongodb/source-repo"
+          branch: "main"
+        destination:
+          repo: "mongodb/dest-repo"
+          branch: "main"
+        transformations:
+          - move: { from: "src", to: "dest" }
 ```
 
-### Advanced Regex Config with Deprecation
+### Workflow Config in Source Repo
 ```yaml
-source_repo: "mongodb/docs-code-examples"
-source_branch: "main"
+# .copier/workflows/config.yaml (in source repo)
+defaults:
+  commit_strategy:
+    type: "pull_request"
+    auto_merge: false
+  deprecation_check:
+    enabled: true
 
-copy_rules:
-  - name: "language-examples"
-    source_pattern:
-      type: "regex"
-      pattern: "^examples/(?P<lang>[^/]+)/(?P<file>.+)$"
-    targets:
-      - repo: "mongodb/docs"
-        branch: "main"
-        path_transform: "code/${lang}/${file}"
-        commit_strategy:
-          type: "pull_request"
-          pr_title: "Update ${lang} examples"
-          pr_body: "Updated ${file_count} ${lang} files from ${source_repo}"
-          auto_merge: false
-        deprecation_check:
-          enabled: true
-          file: "deprecated_examples.json"
+workflows:
+  - name: "mflix-java"
+    # source.repo and source.branch inherited from workflow config reference
+    destination:
+      repo: "mongodb/sample-app-java-mflix"
+      branch: "main"
+    transformations:
+      - move: { from: "mflix/client", to: "client" }
+      - move: { from: "mflix/server/java-spring", to: "server" }
+    commit_strategy:
+      $ref: "../strategies/mflix-pr-strategy.yaml"
 ```
 
-### Multi-Target Config
+### Reusable Strategy File
 ```yaml
-source_repo: "mongodb/aggregation-examples"
-source_branch: "main"
+# .copier/strategies/mflix-pr-strategy.yaml
+type: "pull_request"
+pr_title: "🤖 Automated update from source repo"
+pr_body: |
+  This PR was automatically generated by the code copier app.
 
-copy_rules:
-  # Java examples
-  - name: "java-examples"
-    source_pattern:
-      type: "regex"
-      pattern: "^java/(?P<file>.+\\.java)$"
-    targets:
-      - repo: "mongodb/docs"
-        branch: "main"
-        path_transform: "java/${file}"
-        commit_strategy:
-          type: "pull_request"
-          pr_title: "Update Java examples"
-          auto_merge: false
-        deprecation_check:
-          enabled: true
-          file: "deprecated_examples.json"
-
-  # Node.js examples
-  - name: "nodejs-examples"
-    source_pattern:
-      type: "regex"
-      pattern: "^nodejs/(?P<file>.+\\.(js|ts))$"
-    targets:
-      - repo: "mongodb/docs"
-        branch: "main"
-        path_transform: "node/${file}"
-        commit_strategy:
-          type: "pull_request"
-          pr_title: "Update Node.js examples"
-          auto_merge: true
-        deprecation_check:
-          enabled: true
-          file: "deprecated_examples.json"
-
-  # Python examples
-  - name: "python-examples"
-    source_pattern:
-      type: "regex"
-      pattern: "^python/(?P<file>.+\\.py)$"
-    targets:
-      - repo: "mongodb/docs"
-        branch: "main"
-        path_transform: "python/${file}"
-        commit_strategy:
-          type: "direct"
-          commit_message: "Update Python examples"
-        deprecation_check:
-          enabled: true
-          file: "deprecated_examples.json"
+  **Files updated:** ${file_count}
+  **Source:** ${source_repo}
+use_pr_template: true
+auto_merge: false
 ```
 
 ## Key Benefits
 
-1. **Flexible Pattern Matching**: Regex patterns with variable extraction and multiple pattern types
-2. **Better Developer Experience**: YAML configs are more readable and maintainable
-3. **Observable**: Health checks, metrics, and comprehensive audit logging
-4. **Testable**: CLI tools for validation and testing, dry-run mode
-5. **Production Ready**: Thread-safe operations, proper error handling, monitoring
-6. **Deprecation Tracking**: Automatic detection and tracking of deleted files
-7. **Batch Operations**: Efficient batching of multiple files per target
-8. **Template Engine**: Dynamic message generation with variables
+1. **Centralized Configuration**: Main config with distributed workflow management
+2. **Source Context Inference**: Workflows automatically inherit source repo/branch
+3. **Reusable Components**: $ref support for transformations, strategies, and excludes
+4. **Resilient Loading**: Continues processing when individual configs fail
+5. **Flexible Pattern Matching**: Regex patterns with variable extraction
+6. **Observable**: Health checks, metrics, and comprehensive audit logging
+7. **Testable**: CLI tools for validation and testing, dry-run mode
+8. **Production Ready**: Thread-safe operations, proper error handling, monitoring
+9. **Deprecation Tracking**: Automatic detection and tracking of deleted files
+10. **Template Engine**: Dynamic message generation with variables
 
 ## Thread Safety
 
@@ -557,43 +604,51 @@ The application is designed for concurrent operations:
 
 ## Deployment
 
-**Platform**: Google Cloud App Engine (Flexible Environment)
+**Platform**: Google Cloud Run
 
 **Environment Variables:**
-```bash
-# Required
-REPO_OWNER="mongodb"
-REPO_NAME="docs-code-examples"
-SRC_BRANCH="main"
-GITHUB_TOKEN="ghp_..."
-WEBHOOK_SECRET="..."
+```yaml
+# GitHub Configuration
+GITHUB_APP_ID: "1166559"
+INSTALLATION_ID: "62138132"  # Optional fallback
 
-# Optional
-AUDIT_ENABLED="true"
-MONGO_URI="mongodb+srv://..."
-DRY_RUN="false"
-CONFIG_FILE="copier-config.yaml"
+# Config Repository
+CONFIG_REPO_OWNER: "mongodb"
+CONFIG_REPO_NAME: "code-example-tooling"
+CONFIG_REPO_BRANCH: "main"
+
+# Main Config
+MAIN_CONFIG_FILE: ".copier/workflows/main.yaml"
+USE_MAIN_CONFIG: "true"
+
+# Secret Manager References
+GITHUB_APP_PRIVATE_KEY_SECRET_NAME: "projects/.../secrets/CODE_COPIER_PEM/versions/latest"
+WEBHOOK_SECRET_NAME: "projects/.../secrets/webhook-secret/versions/latest"
+MONGO_URI_SECRET_NAME: "projects/.../secrets/mongo-uri/versions/latest"
+
+# Application Settings
+WEBSERVER_PATH: "/events"
+DEPRECATION_FILE: "deprecated_examples.json"
+COMMITTER_NAME: "GitHub Copier App"
+COMMITTER_EMAIL: "bot@mongodb.com"
+
+# Feature Flags
+AUDIT_ENABLED: "false"
+METRICS_ENABLED: "true"
 ```
 
 **Health Monitoring:**
 - `/health` endpoint for liveness checks
 - `/metrics` endpoint for monitoring
-- Structured JSON logs for analysis
-
-## Breaking Changes
-
-None - the refactoring maintains backward compatibility with existing JSON configs through automatic conversion.
+- Structured logs for analysis
 
 ## Future Enhancements
 
-Potential improvements documented in codebase:
+Potential improvements:
 
 1. **Automatic Cleanup PRs** - Create PRs to remove deprecated files from targets
 2. **Expiration Dates** - Auto-remove deprecation entries after X days
-3. **Cleanup Verification** - Check if deprecated files still exist in targets
-4. **Batch Cleanup Tool** - CLI tool to clean up all deprecated files
-5. **Notifications** - Alert when deprecation file grows large
-6. **Retry Logic** - Automatic retry for failed GitHub API calls
-7. **Rate Limiting** - Respect GitHub API rate limits
-8. **Webhook Queue** - Queue webhooks for processing during high load
+3. **Config Validation CLI** - Enhanced validation tool
+4. **Retry Logic** - Automatic retry for failed GitHub API calls
+5. **Rate Limiting** - Respect GitHub API rate limits
 

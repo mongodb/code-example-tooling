@@ -18,9 +18,9 @@ func TestNewServiceContainer(t *testing.T) {
 		{
 			name: "valid config with audit disabled",
 			config: &configs.Config{
-				RepoOwner:      "test-owner",
-				RepoName:       "test-repo",
-				AuditEnabled:   false,
+				ConfigRepoOwner: "test-owner",
+				ConfigRepoName:  "test-repo",
+				AuditEnabled:    false,
 				SlackWebhookURL: "",
 			},
 			wantErr:       false,
@@ -29,8 +29,8 @@ func TestNewServiceContainer(t *testing.T) {
 		{
 			name: "valid config with Slack enabled",
 			config: &configs.Config{
-				RepoOwner:       "test-owner",
-				RepoName:        "test-repo",
+				ConfigRepoOwner: "test-owner",
+				ConfigRepoName:  "test-repo",
 				AuditEnabled:    false,
 				SlackWebhookURL: "https://hooks.slack.com/services/TEST",
 				SlackChannel:    "#test",
@@ -43,9 +43,9 @@ func TestNewServiceContainer(t *testing.T) {
 		{
 			name: "audit enabled without URI",
 			config: &configs.Config{
-				RepoOwner:      "test-owner",
-				RepoName:       "test-repo",
-				AuditEnabled:   true,
+				ConfigRepoOwner: "test-owner",
+				ConfigRepoName:  "test-repo",
+				AuditEnabled:    true,
 				MongoURI:       "",
 			},
 			wantErr:       true,
@@ -133,9 +133,9 @@ func TestServiceContainer_Close(t *testing.T) {
 		{
 			name: "close with NoOp audit logger",
 			config: &configs.Config{
-				RepoOwner:      "test-owner",
-				RepoName:       "test-repo",
-				AuditEnabled:   false,
+				ConfigRepoOwner: "test-owner",
+				ConfigRepoName:  "test-repo",
+				AuditEnabled:    false,
 			},
 			wantErr: false,
 		},
@@ -166,8 +166,8 @@ func TestServiceContainer_Close(t *testing.T) {
 
 func TestServiceContainer_ConfigPropagation(t *testing.T) {
 	config := &configs.Config{
-		RepoOwner:       "test-owner",
-		RepoName:        "test-repo",
+		ConfigRepoOwner: "test-owner",
+		ConfigRepoName:  "test-repo",
 		AuditEnabled:    false,
 		SlackWebhookURL: "https://hooks.slack.com/services/TEST",
 		SlackChannel:    "#test-channel",
@@ -185,8 +185,8 @@ func TestServiceContainer_ConfigPropagation(t *testing.T) {
 		t.Error("Config not stored correctly in container")
 	}
 
-	if container.Config.RepoOwner != "test-owner" {
-		t.Errorf("RepoOwner = %v, want test-owner", container.Config.RepoOwner)
+	if container.Config.ConfigRepoOwner != "test-owner" {
+		t.Errorf("ConfigRepoOwner = %v, want test-owner", container.Config.ConfigRepoOwner)
 	}
 
 	if container.Config.SlackChannel != "#test-channel" {
@@ -224,8 +224,8 @@ func TestServiceContainer_SlackNotifierConfiguration(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			config := &configs.Config{
-				RepoOwner:       "test-owner",
-				RepoName:        "test-repo",
+				ConfigRepoOwner: "test-owner",
+				ConfigRepoName:  "test-repo",
 				AuditEnabled:    false,
 				SlackWebhookURL: tt.webhookURL,
 				SlackChannel:    tt.channel,
@@ -273,9 +273,9 @@ func TestServiceContainer_AuditLoggerConfiguration(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			config := &configs.Config{
-				RepoOwner:      "test-owner",
-				RepoName:       "test-repo",
-				AuditEnabled:   tt.auditEnabled,
+				ConfigRepoOwner: "test-owner",
+				ConfigRepoName:  "test-repo",
+				AuditEnabled:    tt.auditEnabled,
 				MongoURI:       tt.mongoURI,
 				AuditDatabase:  "test-db",
 				AuditCollection: "test-coll",
@@ -305,9 +305,9 @@ func TestServiceContainer_AuditLoggerConfiguration(t *testing.T) {
 
 func TestServiceContainer_MetricsCollectorInitialization(t *testing.T) {
 	config := &configs.Config{
-		RepoOwner:      "test-owner",
-		RepoName:       "test-repo",
-		AuditEnabled:   false,
+		ConfigRepoOwner: "test-owner",
+		ConfigRepoName:  "test-repo",
+		AuditEnabled:    false,
 	}
 
 	container, err := NewServiceContainer(config)
@@ -336,9 +336,9 @@ func TestServiceContainer_MetricsCollectorInitialization(t *testing.T) {
 
 func TestServiceContainer_StartTimeTracking(t *testing.T) {
 	config := &configs.Config{
-		RepoOwner:      "test-owner",
-		RepoName:       "test-repo",
-		AuditEnabled:   false,
+		ConfigRepoOwner: "test-owner",
+		ConfigRepoName:  "test-repo",
+		AuditEnabled:    false,
 	}
 
 	beforeCreate := time.Now()

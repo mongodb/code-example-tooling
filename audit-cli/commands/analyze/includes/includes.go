@@ -1,11 +1,12 @@
-// Package includes provides functionality for analyzing include directive relationships.
+// Package includes provides functionality for analyzing include relationships.
 //
 // This package implements the "analyze includes" subcommand, which analyzes RST files
 // to understand their include directive relationships. It can display results as:
 //   - A hierarchical tree structure showing include relationships
 //   - A flat list of all files referenced through includes
 //
-// This helps writers understand the impact of changes to files that are widely included.
+// This helps writers understand the impact of changes to files that are widely included
+// across the documentation.
 package includes
 
 import (
@@ -32,7 +33,7 @@ func NewIncludesCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "includes [filepath]",
-		Short: "Analyze include directive relationships in RST files",
+		Short: "Analyze include relationships in RST files",
 		Long: `Analyze include directive relationships to understand file dependencies.
 
 This command recursively follows .. include:: directives and shows all files

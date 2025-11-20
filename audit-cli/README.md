@@ -58,7 +58,8 @@ audit-cli
 ├── search           # Search through extracted content or source files
 │   └── find-string
 ├── analyze          # Analyze RST file structures
-│   └── includes
+│   ├── includes
+│   └── usage
 └── compare          # Compare files across versions
     └── file-contents
 ```
@@ -224,6 +225,8 @@ With `-v` flag, also shows:
 
 Analyze `include` directive relationships in RST files to understand file dependencies.
 
+This command recursively follows `.. include::` directives to show all files that are referenced from a starting file. This helps you understand which content is transcluded into a page.
+
 **Use Cases:**
 
 This command helps writers:
@@ -231,6 +234,7 @@ This command helps writers:
 - Identify circular include dependencies (files included multiple times)
 - Document file relationships for maintenance
 - Plan refactoring of complex include structures
+- See what content is actually pulled into a page
 
 **Basic Usage:**
 
@@ -281,6 +285,235 @@ The total file count represents **unique files** discovered through include dire
 times (e.g., file A includes file C, and file B also includes file C), the file is counted only once in the total.
 However, the tree view will show it in all locations where it appears, with subsequent occurrences marked as circular
 includes in verbose mode.
+
+**Note on Toctree:**
+
+This command does **not** follow `.. toctree::` entries. Toctree entries are navigation links to other pages, not content
+that's transcluded into the page. If you need to find which files reference a target file through toctree entries, use
+the `analyze usage` command with the `--include-toctree` flag.
+
+#### `analyze usage`
+
+Find all files that use a target file through RST directives. This performs reverse dependency analysis, showing which files reference the target file through `include`, `literalinclude`, `io-code-block`, or `toctree` directives.
+
+The command searches all RST files (`.rst` and `.txt` extensions) and YAML files (`.yaml` and `.yml` extensions) in the source directory tree. YAML files are included because extract and release files contain RST directives within their content blocks.
+
+**Use Cases:**
+
+By default, this command searches for content inclusion directives (include, literalinclude,
+io-code-block) that transclude content into pages. Use `--include-toctree` to also search
+for toctree entries, which are navigation links rather than content transclusion.
+
+This command helps writers:
+- Understand the impact of changes to a file (what pages will be affected)
+- Find all usages of an include file across the documentation
+- Track where code examples are referenced
+- Plan refactoring by understanding file dependencies
+
+**Basic Usage:**
+
+```bash
+# Find what uses an include file (content inclusion only)
+./audit-cli analyze usage path/to/includes/fact.rst
+
+# Find what uses a code example
+./audit-cli analyze usage path/to/code-examples/example.js
+
+# Include toctree references (navigation links)
+./audit-cli analyze usage path/to/file.rst --include-toctree
+
+# Get JSON output for automation
+./audit-cli analyze usage path/to/file.rst --format json
+
+# Show detailed information with line numbers
+./audit-cli analyze usage path/to/file.rst --verbose
+```
+
+**Flags:**
+
+- `--format <format>` - Output format: `text` (default) or `json`
+- `-v, --verbose` - Show detailed information including line numbers and reference paths
+- `-c, --count-only` - Only show the count of usages (useful for quick checks and scripting)
+- `--paths-only` - Only show the file paths, one per line (useful for piping to other commands)
+- `--summary` - Only show summary statistics (total files and usages by type, without file list)
+- `-t, --directive-type <type>` - Filter by directive type: `include`, `literalinclude`, `io-code-block`, or `toctree`
+- `--include-toctree` - Include toctree entries (navigation links) in addition to content inclusion directives
+- `--exclude <pattern>` - Exclude paths matching this glob pattern (e.g., `*/archive/*` or `*/deprecated/*`)
+
+**Understanding the Counts:**
+
+The command shows two metrics:
+- **Total Files**: Number of unique files that use the target (deduplicated)
+- **Total Usages**: Total number of directive occurrences (includes duplicates)
+
+When a file includes the target multiple times, it counts as:
+- 1 file (in Total Files)
+- Multiple usages (in Total Usages)
+
+This helps identify both the impact scope (how many files) and duplicate includes (when usages > files).
+
+**Supported Directive Types:**
+
+By default, the command tracks content inclusion directives:
+
+1. **`.. include::`** - RST content includes (transcluded)
+   ```rst
+   .. include:: /includes/intro.rst
+   ```
+
+2. **`.. literalinclude::`** - Code file references (transcluded)
+   ```rst
+   .. literalinclude:: /code-examples/example.py
+      :language: python
+   ```
+
+3. **`.. io-code-block::`** - Input/output examples with file arguments (transcluded)
+   ```rst
+   .. io-code-block::
+
+      .. input:: /code-examples/query.js
+         :language: javascript
+
+      .. output:: /code-examples/result.json
+         :language: json
+   ```
+
+With `--include-toctree`, also tracks:
+
+4. **`.. toctree::`** - Table of contents entries (navigation links, not transcluded)
+   ```rst
+   .. toctree::
+      :maxdepth: 2
+
+      intro
+      getting-started
+   ```
+
+**Note:** Only file-based references are tracked. Inline content (e.g., `.. input::` with `:language:` but no file path) is not tracked since it doesn't reference external files.
+
+**Output Formats:**
+
+**Text** (default):
+```
+============================================================
+USAGE ANALYSIS
+============================================================
+Target File: /path/to/includes/intro.rst
+Total Files: 3
+Total Usages: 4
+============================================================
+
+include             : 3 files, 4 usages
+
+  1. [include] duplicate-include-test.rst (2 usages)
+  2. [include] include-test.rst
+  3. [include] page.rst
+
+```
+
+**Text with --verbose:**
+```
+============================================================
+USAGE ANALYSIS
+============================================================
+Target File: /path/to/includes/intro.rst
+Total Files: 3
+Total Usages: 4
+============================================================
+
+include             : 3 files, 4 usages
+
+  1. [include] duplicate-include-test.rst (2 usages)
+     Line 6: /includes/intro.rst
+     Line 13: /includes/intro.rst
+  2. [include] include-test.rst
+     Line 6: /includes/intro.rst
+  3. [include] page.rst
+     Line 12: /includes/intro.rst
+
+```
+
+**JSON** (--format json):
+```json
+{
+  "target_file": "/path/to/includes/intro.rst",
+  "source_dir": "/path/to/source",
+  "total_files": 3,
+  "total_usages": 4,
+  "using_files": [
+    {
+      "file_path": "/path/to/duplicate-include-test.rst",
+      "directive_type": "include",
+      "usage_path": "/includes/intro.rst",
+      "line_number": 6
+    },
+    {
+      "file_path": "/path/to/duplicate-include-test.rst",
+      "directive_type": "include",
+      "usage_path": "/includes/intro.rst",
+      "line_number": 13
+    },
+    {
+      "file_path": "/path/to/include-test.rst",
+      "directive_type": "include",
+      "usage_path": "/includes/intro.rst",
+      "line_number": 6
+    }
+  ]
+}
+```
+
+**Examples:**
+
+```bash
+# Check if an include file is being used
+./audit-cli analyze usage ~/docs/source/includes/fact-atlas.rst
+
+# Find all pages that use a specific code example
+./audit-cli analyze usage ~/docs/source/code-examples/connect.py
+
+# Get machine-readable output for scripting
+./audit-cli analyze usage ~/docs/source/includes/fact.rst --format json | jq '.total_usages'
+
+# See exactly where a file is referenced (with line numbers)
+./audit-cli analyze usage ~/docs/source/includes/intro.rst --verbose
+
+# Quick check: just show the count
+./audit-cli analyze usage ~/docs/source/includes/fact.rst --count-only
+# Output: 5
+
+# Show summary statistics only
+./audit-cli analyze usage ~/docs/source/includes/fact.rst --summary
+# Output:
+# Total Files: 3
+# Total Usages: 5
+#
+# By Type:
+#   include             : 3 files, 5 usages
+
+# Get list of files for piping to other commands
+./audit-cli analyze usage ~/docs/source/includes/fact.rst --paths-only
+# Output:
+# page1.rst
+# page2.rst
+# page3.rst
+
+# Filter to only show include directives (not literalinclude or io-code-block)
+./audit-cli analyze usage ~/docs/source/includes/fact.rst --directive-type include
+
+# Filter to only show literalinclude usages
+./audit-cli analyze usage ~/docs/source/code-examples/example.py --directive-type literalinclude
+
+# Combine filters: count only literalinclude usages
+./audit-cli analyze usage ~/docs/source/code-examples/example.py -t literalinclude -c
+
+# Combine filters: list files that use this as an io-code-block
+./audit-cli analyze usage ~/docs/source/code-examples/query.js -t io-code-block --paths-only
+
+# Exclude archived or deprecated files from search
+./audit-cli analyze usage ~/docs/source/includes/fact.rst --exclude "*/archive/*"
+./audit-cli analyze usage ~/docs/source/includes/fact.rst --exclude "*/deprecated/*"
+```
 
 ### Compare Commands
 
@@ -469,9 +702,15 @@ audit-cli/
 │   │       └── report.go           # Report generation
 │   ├── analyze/                     # Analyze parent command
 │   │   ├── analyze.go              # Parent command definition
-│   │   └── includes/               # Includes analysis subcommand
-│   │       ├── includes.go         # Command logic
-│   │       ├── analyzer.go         # Include tree building
+│   │   ├── includes/               # Includes analysis subcommand
+│   │   │   ├── includes.go         # Command logic
+│   │   │   ├── analyzer.go         # Include tree building
+│   │   │   ├── output.go           # Output formatting
+│   │   │   └── types.go            # Type definitions
+│   │   └── usage/                  # Usage analysis subcommand
+│   │       ├── usage.go            # Command logic
+│   │       ├── usage_test.go       # Tests
+│   │       ├── analyzer.go         # Reference finding logic
 │   │       ├── output.go           # Output formatting
 │   │       └── types.go            # Type definitions
 │   └── compare/                     # Compare parent command
@@ -485,6 +724,12 @@ audit-cli/
 │           ├── types.go            # Type definitions
 │           └── version_resolver.go # Version path resolution
 ├── internal/                        # Internal packages
+│   ├── pathresolver/               # Path resolution utilities
+│   │   ├── pathresolver.go         # Core path resolution
+│   │   ├── pathresolver_test.go    # Tests
+│   │   ├── source_finder.go        # Source directory detection
+│   │   ├── version_resolver.go     # Version path resolution
+│   │   └── types.go                # Type definitions
 │   └── rst/                        # RST parsing utilities
 │       ├── parser.go               # Generic parsing with includes
 │       ├── include_resolver.go     # Include directive resolution
@@ -1075,6 +1320,23 @@ used as the base for resolving relative include paths.
 
 ## Internal Packages
 
+### `internal/pathresolver`
+
+Provides centralized path resolution utilities for working with MongoDB documentation structure:
+
+- **Source directory detection** - Finds the documentation root by walking up the directory tree
+- **Project info detection** - Identifies product directory, version, and whether a project is versioned
+- **Version path resolution** - Resolves file paths across multiple documentation versions
+- **Relative path resolution** - Resolves paths relative to the source directory
+
+**Key Functions:**
+- `FindSourceDirectory(filePath string)` - Finds the source directory for a given file
+- `DetectProjectInfo(filePath string)` - Detects project structure information
+- `ResolveVersionPaths(referenceFile, productDir string, versions []string)` - Resolves paths across versions
+- `ResolveRelativeToSource(sourceDir, relativePath string)` - Resolves relative paths
+
+See the code in `internal/pathresolver/` for implementation details.
+
 ### `internal/rst`
 
 Provides reusable utilities for parsing and processing RST files:
@@ -1091,44 +1353,44 @@ See the code in `internal/rst/` for implementation details.
 
 The tool normalizes language identifiers to standard file extensions:
 
-| Input | Normalized | Extension |
-|-------|-----------|-----------|
-| `bash` | `bash` | `.sh` |
-| `c` | `c` | `.c` |
-| `c++` | `cpp` | `.cpp` |
-| `c#` | `csharp` | `.cs` |
-| `console` | `console` | `.sh` |
-| `cpp` | `cpp` | `.cpp` |
-| `cs` | `csharp` | `.cs` |
-| `csharp` | `csharp` | `.cs` |
-| `go` | `go` | `.go` |
-| `golang` | `go` | `.go` |
-| `java` | `java` | `.java` |
-| `javascript` | `javascript` | `.js` |
-| `js` | `javascript` | `.js` |
-| `kotlin` | `kotlin` | `.kt` |
-| `kt` | `kotlin` | `.kt` |
-| `php` | `php` | `.php` |
-| `powershell` | `powershell` | `.ps1` |
-| `ps1` | `powershell` | `.ps1` |
-| `ps5` | `ps5` | `.ps1` |
-| `py` | `python` | `.py` |
-| `python` | `python` | `.py` |
-| `rb` | `ruby` | `.rb` |
-| `rs` | `rust` | `.rs` |
-| `ruby` | `ruby` | `.rb` |
-| `rust` | `rust` | `.rs` |
-| `scala` | `scala` | `.scala` |
-| `sh` | `shell` | `.sh` |
-| `shell` | `shell` | `.sh` |
-| `swift` | `swift` | `.swift` |
-| `text` | `text` | `.txt` |
-| `ts` | `typescript` | `.ts` |
-| `txt` | `text` | `.txt` |
-| `typescript` | `typescript` | `.ts` |
-| (empty string) | `undefined` | `.txt` |
-| `none` | `undefined` | `.txt` |
-| (unknown) | (unchanged) | `.txt` |
+| Input          | Normalized   | Extension |
+|----------------|--------------|-----------|
+| `bash`         | `bash`       | `.sh`     |
+| `c`            | `c`          | `.c`      |
+| `c++`          | `cpp`        | `.cpp`    |
+| `c#`           | `csharp`     | `.cs`     |
+| `console`      | `console`    | `.sh`     |
+| `cpp`          | `cpp`        | `.cpp`    |
+| `cs`           | `csharp`     | `.cs`     |
+| `csharp`       | `csharp`     | `.cs`     |
+| `go`           | `go`         | `.go`     |
+| `golang`       | `go`         | `.go`     |
+| `java`         | `java`       | `.java`   |
+| `javascript`   | `javascript` | `.js`     |
+| `js`           | `javascript` | `.js`     |
+| `kotlin`       | `kotlin`     | `.kt`     |
+| `kt`           | `kotlin`     | `.kt`     |
+| `php`          | `php`        | `.php`    |
+| `powershell`   | `powershell` | `.ps1`    |
+| `ps1`          | `powershell` | `.ps1`    |
+| `ps5`          | `ps5`        | `.ps1`    |
+| `py`           | `python`     | `.py`     |
+| `python`       | `python`     | `.py`     |
+| `rb`           | `ruby`       | `.rb`     |
+| `rs`           | `rust`       | `.rs`     |
+| `ruby`         | `ruby`       | `.rb`     |
+| `rust`         | `rust`       | `.rs`     |
+| `scala`        | `scala`      | `.scala`  |
+| `sh`           | `shell`      | `.sh`     |
+| `shell`        | `shell`      | `.sh`     |
+| `swift`        | `swift`      | `.swift`  |
+| `text`         | `text`       | `.txt`    |
+| `ts`           | `typescript` | `.ts`     |
+| `txt`          | `text`       | `.txt`    |
+| `typescript`   | `typescript` | `.ts`     |
+| (empty string) | `undefined`  | `.txt`    |
+| `none`         | `undefined`  | `.txt`    |
+| (unknown)      | (unchanged)  | `.txt`    |
 
 **Notes:**
 - Language identifiers are case-insensitive

@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
-)
 
-// IncludeDirectiveRegex matches .. include:: directives in RST files.
-var IncludeDirectiveRegex = regexp.MustCompile(`^\.\.\s+include::\s+(.+)$`)
+	"github.com/mongodb/code-example-tooling/audit-cli/internal/pathresolver"
+)
 
 // FindIncludeDirectives finds all include directives in a file and resolves their paths.
 //
@@ -59,6 +57,120 @@ func FindIncludeDirectives(filePath string) ([]string, error) {
 	return includePaths, nil
 }
 
+// FindToctreeEntries finds all toctree entries in a file and resolves their paths.
+//
+// This function scans the file for .. toctree:: directives and extracts the document
+// names listed in the toctree content. Document names are converted to file paths
+// by trying common extensions (.rst, .txt).
+//
+// Parameters:
+//   - filePath: Path to the RST file to scan
+//
+// Returns:
+//   - []string: List of resolved absolute paths to toctree documents
+//   - error: Any error encountered during scanning
+func FindToctreeEntries(filePath string) ([]string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var toctreePaths []string
+	scanner := bufio.NewScanner(file)
+	inToctree := false
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		trimmedLine := strings.TrimSpace(line)
+
+		// Check if this line starts a toctree directive
+		if ToctreeDirectiveRegex.MatchString(trimmedLine) {
+			inToctree = true
+			continue
+		}
+
+		// Check if we're exiting toctree (unindented line that's not empty)
+		if inToctree && len(line) > 0 && line[0] != ' ' && line[0] != '\t' {
+			inToctree = false
+		}
+
+		// If we're in a toctree, process document names
+		if inToctree {
+			// Skip empty lines and option lines (starting with :)
+			if trimmedLine == "" || strings.HasPrefix(trimmedLine, ":") {
+				continue
+			}
+
+			// This is a document name in the toctree
+			docName := trimmedLine
+
+			// Resolve the document name to a file path
+			resolvedPath, err := ResolveToctreePath(filePath, docName)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: failed to resolve toctree entry %s: %v\n", docName, err)
+				continue
+			}
+
+			toctreePaths = append(toctreePaths, resolvedPath)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return toctreePaths, nil
+}
+
+// ResolveToctreePath resolves a toctree document name to an absolute file path.
+//
+// Toctree entries are document names without extensions. This function tries to
+// find the actual file by testing common extensions (.rst, .txt).
+//
+// Parameters:
+//   - currentFilePath: Path to the file containing the toctree
+//   - docName: Document name from the toctree (e.g., "intro" or "/includes/intro")
+//
+// Returns:
+//   - string: Resolved absolute path to the document file
+//   - error: Error if the document cannot be found
+func ResolveToctreePath(currentFilePath, docName string) (string, error) {
+	// Find the source directory
+	sourceDir, err := pathresolver.FindSourceDirectory(currentFilePath)
+	if err != nil {
+		return "", err
+	}
+
+	var basePath string
+	if strings.HasPrefix(docName, "/") {
+		// Absolute document name (relative to source directory)
+		basePath = filepath.Join(sourceDir, docName)
+	} else {
+		// Relative document name (relative to current file's directory)
+		currentDir := filepath.Dir(currentFilePath)
+		basePath = filepath.Join(currentDir, docName)
+	}
+
+	// Clean the path
+	basePath = filepath.Clean(basePath)
+
+	// Try common extensions
+	extensions := []string{".rst", ".txt", ""}
+	for _, ext := range extensions {
+		testPath := basePath + ext
+		if _, err := os.Stat(testPath); err == nil {
+			absPath, err := filepath.Abs(testPath)
+			if err != nil {
+				return "", err
+			}
+			return absPath, nil
+		}
+	}
+
+	return "", fmt.Errorf("toctree document not found: %s (tried .rst, .txt, and no extension)", docName)
+}
+
 // ResolveIncludePath resolves an include path relative to the source directory
 // Handles multiple special cases:
 // - Template variables ({{var_name}})
@@ -84,7 +196,7 @@ func ResolveIncludePath(currentFilePath, includePath string) (string, error) {
 	}
 
 	// Find the source directory by walking up from the current file
-	sourceDir, err := FindSourceDirectory(currentFilePath)
+	sourceDir, err := pathresolver.FindSourceDirectory(currentFilePath)
 	if err != nil {
 		return "", err
 	}
@@ -317,44 +429,5 @@ func ResolveTemplateVariable(yamlFilePath, varName string) (string, error) {
 	return "", fmt.Errorf("template variable %s not found in replacement section of %s", varName, yamlFilePath)
 }
 
-// FindSourceDirectory walks up the directory tree to find the "source" directory.
-//
-// MongoDB documentation is typically organized with a "source" directory at the root.
-// This function walks up from the current file to find that directory, which is used
-// as the base for resolving include paths.
-//
-// Parameters:
-//   - filePath: Path to a file within the documentation tree
-//
-// Returns:
-//   - string: Absolute path to the source directory
-//   - error: Error if source directory cannot be found
-func FindSourceDirectory(filePath string) (string, error) {
-	// Get the directory containing the file
-	dir := filepath.Dir(filePath)
 
-	// Walk up the directory tree
-	for {
-		// Check if the current directory is named "source"
-		if filepath.Base(dir) == "source" {
-			return dir, nil
-		}
-
-		// Check if there's a "source" subdirectory
-		sourceSubdir := filepath.Join(dir, "source")
-		if info, err := os.Stat(sourceSubdir); err == nil && info.IsDir() {
-			return sourceSubdir, nil
-		}
-
-		// Move up one directory
-		parent := filepath.Dir(dir)
-
-		// If we've reached the root, stop
-		if parent == dir {
-			return "", fmt.Errorf("could not find source directory for %s", filePath)
-		}
-
-		dir = parent
-	}
-}
 

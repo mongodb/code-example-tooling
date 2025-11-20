@@ -15,11 +15,10 @@ import (
 // FindUsageExamplesForMonth looks for docs pages in Atlas that have had a new usage example added during the target month.
 // We get a count of new usage examples matching this criteria, return the count and the page_id, and
 // track the product and sub-product in the types.NewAppliedUsageExampleCounterByProductSubProduct
-func FindUsageExamplesForMonth(db *mongo.Database, collectionName string, productSubProductCounter types.NewAppliedUsageExampleCounterByProductSubProduct, ctx context.Context) types.NewAppliedUsageExampleCounterByProductSubProduct {
+func FindUsageExamplesForMonth(db *mongo.Database, collectionName string, productSubProductCounter types.NewAppliedUsageExampleCounterByProductSubProduct, monthForReporting time.Month, ctx context.Context) types.NewAppliedUsageExampleCounterByProductSubProduct {
 	// Target a specific month (example for November 2025):
 	targetYear := 2025
-	targetMonth := time.November
-	monthStart := time.Date(targetYear, targetMonth, 1, 0, 0, 0, 0, time.UTC)
+	monthStart := time.Date(targetYear, monthForReporting, 1, 0, 0, 0, 0, time.UTC)
 	monthEnd := monthStart.AddDate(0, 1, 0) // First day of next month
 	// Define the aggregation pipeline
 	pipeline := mongo.Pipeline{

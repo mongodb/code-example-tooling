@@ -5,6 +5,8 @@ import (
 	"dodec/aggregations"
 	"dodec/types"
 	"dodec/utils"
+	"time"
+
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
@@ -36,6 +38,7 @@ func PerformAggregation(db *mongo.Database, ctx context.Context) {
 	}
 	//substringToFindInCodeExamples := "defaultauthdb"
 	//substringToFindInPageURL := "code-examples"
+	monthForReporting := time.November
 
 	for _, collectionName := range collectionNames {
 		//simpleMap = aggregations.GetCategoryCounts(db, collectionName, simpleMap, ctx)
@@ -56,7 +59,8 @@ func PerformAggregation(db *mongo.Database, ctx context.Context) {
 		//pageIdChangesCountMap = aggregations.GetDocsIdsWithRecentActivity(db, collectionName, pageIdChangesCountMap, ctx)
 		//pageIdsWithNodeLangCountMismatch = aggregations.GetPagesWithNodeLangCountMismatch(db, collectionName, pageIdsWithNodeLangCountMismatch, ctx)
 		//pageIdsWithNodeLangCountMismatch = aggregations.FindDocsMissingProduct(db, collectionName, pageIdsWithNodeLangCountMismatch, ctx)
-		productSubProductCounter = aggregations.FindNewAppliedUsageExamples(db, collectionName, productSubProductCounter, ctx)
+		//productSubProductCounter = aggregations.FindNewAppliedUsageExamples(db, collectionName, productSubProductCounter, ctx)
+		productSubProductCounter = aggregations.FindUsageExamplesForMonth(db, collectionName, productSubProductCounter, monthForReporting, ctx)
 		//pageIdsWithNodeLangCountMismatch = aggregations.FindURLContainingString(db, collectionName, pageIdsWithNodeLangCountMismatch, ctx, substringToFindInPageURL)
 	}
 
@@ -79,5 +83,6 @@ func PerformAggregation(db *mongo.Database, ctx context.Context) {
 	//utils.PrintCodeLengthMapToConsole(codeLengthMap)
 	//utils.PrintPageIdChangesCountMap(pageIdChangesCountMap)
 	//utils.PrintPageIdsWithNodeLangCountMismatch(pageIdsWithNodeLangCountMismatch)
-	utils.PrintPageIdNewAppliedUsageExampleCounts(productSubProductCounter)
+	//utils.PrintPageIdNewAppliedUsageExampleCounts(productSubProductCounter)
+	utils.PrintMonthlyUsageExampleCounts(productSubProductCounter, monthForReporting)
 }

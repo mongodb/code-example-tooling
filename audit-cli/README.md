@@ -333,9 +333,9 @@ This command helps writers:
 
 - `--format <format>` - Output format: `text` (default) or `json`
 - `-v, --verbose` - Show detailed information including line numbers and reference paths
-- `-c, --count-only` - Only show the count of references (useful for quick checks and scripting)
+- `-c, --count-only` - Only show the count of usages (useful for quick checks and scripting)
 - `--paths-only` - Only show the file paths, one per line (useful for piping to other commands)
-- `--summary` - Only show summary statistics (total files and references by type, without file list)
+- `--summary` - Only show summary statistics (total files and usages by type, without file list)
 - `-t, --directive-type <type>` - Filter by directive type: `include`, `literalinclude`, `io-code-block`, or `toctree`
 - `--include-toctree` - Include toctree entries (navigation links) in addition to content inclusion directives
 - `--exclude <pattern>` - Exclude paths matching this glob pattern (e.g., `*/archive/*` or `*/deprecated/*`)
@@ -343,14 +343,14 @@ This command helps writers:
 **Understanding the Counts:**
 
 The command shows two metrics:
-- **Total Files**: Number of unique files that reference the target (deduplicated)
-- **Total References**: Total number of directive occurrences (includes duplicates)
+- **Total Files**: Number of unique files that use the target (deduplicated)
+- **Total Usages**: Total number of directive occurrences (includes duplicates)
 
 When a file includes the target multiple times, it counts as:
 - 1 file (in Total Files)
-- Multiple references (in Total References)
+- Multiple usages (in Total Usages)
 
-This helps identify both the impact scope (how many files) and duplicate includes (when references > files).
+This helps identify both the impact scope (how many files) and duplicate includes (when usages > files).
 
 **Supported Directive Types:**
 
@@ -400,7 +400,7 @@ REFERENCE ANALYSIS
 ============================================================
 Target File: /path/to/includes/intro.rst
 Total Files: 3
-Total References: 4
+Total Usages: 4
 ============================================================
 
 include             : 3 files, 4 references
@@ -418,7 +418,7 @@ REFERENCE ANALYSIS
 ============================================================
 Target File: /path/to/includes/intro.rst
 Total Files: 3
-Total References: 4
+Total Usages: 4
 ============================================================
 
 include             : 3 files, 4 references
@@ -486,10 +486,10 @@ include             : 3 files, 4 references
 ./audit-cli analyze usage ~/docs/source/includes/fact.rst --summary
 # Output:
 # Total Files: 3
-# Total References: 5
+# Total Usages: 5
 #
 # By Type:
-#   include             : 3 files, 5 references
+#   include             : 3 files, 5 usages
 
 # Get list of files for piping to other commands
 ./audit-cli analyze usage ~/docs/source/includes/fact.rst --paths-only

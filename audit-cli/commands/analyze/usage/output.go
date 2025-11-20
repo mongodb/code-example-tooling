@@ -40,21 +40,21 @@ func PrintAnalysis(analysis *ReferenceAnalysis, format OutputFormat, verbose boo
 // printText prints the analysis results in human-readable text format.
 func printText(analysis *ReferenceAnalysis, verbose bool) {
 	fmt.Println("============================================================")
-	fmt.Println("REFERENCE ANALYSIS")
+	fmt.Println("USAGE ANALYSIS")
 	fmt.Println("============================================================")
 	fmt.Printf("Target File: %s\n", analysis.TargetFile)
 	fmt.Printf("Total Files: %d\n", analysis.TotalFiles)
-	fmt.Printf("Total References: %d\n", analysis.TotalReferences)
+	fmt.Printf("Total Usages: %d\n", analysis.TotalReferences)
 	fmt.Println("============================================================")
 	fmt.Println()
 
 	if analysis.TotalReferences == 0 {
-		fmt.Println("No files reference this file.")
+		fmt.Println("No files use this file.")
 		fmt.Println()
 		fmt.Println("This could mean:")
 		fmt.Println("  - The file is not included in any documentation pages")
 		fmt.Println("  - The file might be orphaned (not used)")
-		fmt.Println("  - The file is referenced using a different path")
+		fmt.Println("  - The file is used with a different path")
 		fmt.Println()
 		fmt.Println("Note: By default, only content inclusion directives are searched.")
 		fmt.Println("Use --include-toctree to also search for toctree navigation links.")
@@ -77,9 +77,9 @@ func printText(analysis *ReferenceAnalysis, verbose bool) {
 			} else {
 				// Has duplicates - show both counts
 				if uniqueFiles == 1 {
-					fmt.Printf("%-20s: %d file, %d references\n", directiveType, uniqueFiles, totalRefs)
+					fmt.Printf("%-20s: %d file, %d usages\n", directiveType, uniqueFiles, totalRefs)
 				} else {
-					fmt.Printf("%-20s: %d files, %d references\n", directiveType, uniqueFiles, totalRefs)
+					fmt.Printf("%-20s: %d files, %d usages\n", directiveType, uniqueFiles, totalRefs)
 				}
 			}
 		}
@@ -99,10 +99,10 @@ func printText(analysis *ReferenceAnalysis, verbose bool) {
 
 		// Print file path with directive type label
 		if group.Count > 1 {
-			// Multiple references from this file
-			fmt.Printf("%3d. [%s] %s (%d references)\n", i+1, group.DirectiveType, relPath, group.Count)
+			// Multiple usages from this file
+			fmt.Printf("%3d. [%s] %s (%d usages)\n", i+1, group.DirectiveType, relPath, group.Count)
 		} else {
-			// Single reference
+			// Single usage
 			fmt.Printf("%3d. [%s] %s\n", i+1, group.DirectiveType, relPath)
 		}
 
@@ -224,7 +224,7 @@ func PrintPathsOnly(analysis *ReferenceAnalysis) error {
 
 // PrintSummary prints only summary statistics without the file list.
 //
-// This is useful for getting a quick overview of reference counts.
+// This is useful for getting a quick overview of usage counts.
 //
 // Parameters:
 //   - analysis: The analysis results
@@ -233,7 +233,7 @@ func PrintPathsOnly(analysis *ReferenceAnalysis) error {
 //   - error: Any error encountered during printing
 func PrintSummary(analysis *ReferenceAnalysis) error {
 	fmt.Printf("Total Files: %d\n", analysis.TotalFiles)
-	fmt.Printf("Total References: %d\n", analysis.TotalReferences)
+	fmt.Printf("Total Usages: %d\n", analysis.TotalReferences)
 
 	if analysis.TotalReferences > 0 {
 		// Group by directive type
@@ -246,7 +246,7 @@ func PrintSummary(analysis *ReferenceAnalysis) error {
 			if refs, ok := byDirectiveType[directiveType]; ok {
 				uniqueFiles := countUniqueFiles(refs)
 				totalRefs := len(refs)
-				fmt.Printf("  %-20s: %d files, %d references\n", directiveType, uniqueFiles, totalRefs)
+				fmt.Printf("  %-20s: %d files, %d usages\n", directiveType, uniqueFiles, totalRefs)
 			}
 		}
 	}

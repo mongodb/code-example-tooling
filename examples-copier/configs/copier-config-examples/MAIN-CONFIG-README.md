@@ -250,8 +250,6 @@ See the example files in this directory:
 
 ### Component References
 
-✅ **Now Fully Supported!**
-
 You can use `$ref` to reference external files for transformations, commit_strategy, and exclude patterns:
 
 ```yaml
@@ -308,13 +306,4 @@ For questions or issues:
 3. Validate your configuration syntax
 4. Test with `DRY_RUN=true`
 
-## Future Enhancements
-
-Planned features:
-
-- ✅ ~~Full `$ref` support for all component types~~ **IMPLEMENTED!**
-- Config validation CLI tool
-- Config migration tool
-- Visual config editor
-- Config testing framework
 

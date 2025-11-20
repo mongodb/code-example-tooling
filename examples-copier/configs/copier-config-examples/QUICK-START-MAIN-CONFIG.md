@@ -248,14 +248,6 @@ workflows:
 - **Examples**: `main-config-example.yaml`, `source-repo-workflows-example.yaml`
 - **Reusable Components**: `reusable-components/` directory
 
-## Key Benefits
-
-✅ **Separation of Concerns** - Each repo manages its own workflows  
-✅ **Scalability** - Works for monorepos with many workflows  
-✅ **Flexibility** - Mix centralized and distributed configs  
-✅ **Discoverability** - Configs live near source code  
-✅ **Maintainability** - Update workflows without touching main config  
-
 ## Common Use Cases
 
 ### Use Case 1: Monorepo with Many Workflows
@@ -307,6 +299,3 @@ workflow_configs:
 ```
 
 ---
-
-**Ready to get started?** Follow the steps above and you'll be up and running in minutes!
-

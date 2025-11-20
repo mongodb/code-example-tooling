@@ -708,8 +708,8 @@ audit-cli/
 │   │   │   ├── output.go           # Output formatting
 │   │   │   └── types.go            # Type definitions
 │   │   └── usage/                  # Usage analysis subcommand
-│   │       ├── file_references.go  # Command logic
-│   │       ├── file_references_test.go  # Tests
+│   │       ├── usage.go            # Command logic
+│   │       ├── usage_test.go       # Tests
 │   │       ├── analyzer.go         # Reference finding logic
 │   │       ├── output.go           # Output formatting
 │   │       └── types.go            # Type definitions

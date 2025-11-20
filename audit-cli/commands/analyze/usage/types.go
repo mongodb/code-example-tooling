@@ -1,4 +1,4 @@
-package filereferences
+package usage
 
 // ReferenceAnalysis contains the results of analyzing which files reference a target file.
 //

@@ -1,4 +1,4 @@
-package filereferences
+package usage
 
 import (
 	"bufio"

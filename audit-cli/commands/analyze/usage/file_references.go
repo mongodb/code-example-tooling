@@ -1,6 +1,6 @@
-// Package filereferences provides functionality for analyzing which files reference a target file.
+// Package usage provides functionality for analyzing which files reference a target file.
 //
-// This package implements the "analyze file-references" subcommand, which finds all files
+// This package implements the "analyze usage" subcommand, which finds all files
 // that reference a given file through RST directives (include, literalinclude, io-code-block, toctree).
 //
 // The command searches both RST files (.rst, .txt) and YAML files (.yaml, .yml) since
@@ -11,7 +11,7 @@
 //   - Understanding the impact of changes to a file
 //   - Finding all usages of an include file
 //   - Tracking code example references
-package filereferences
+package usage
 
 import (
 	"fmt"
@@ -19,14 +19,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewFileReferencesCommand creates the file-references subcommand.
+// NewUsageCommand creates the usage subcommand.
 //
 // This command analyzes which files reference a given target file through
 // RST directives (include, literalinclude, io-code-block, toctree).
 //
 // Usage:
-//   analyze file-references /path/to/file.rst
-//   analyze file-references /path/to/code-example.js
+//   analyze usage /path/to/file.rst
+//   analyze usage /path/to/code-example.js
 //
 // Flags:
 //   - --format: Output format (text or json)
@@ -37,7 +37,7 @@ import (
 //   - -t, --directive-type: Filter by directive type (include, literalinclude, io-code-block, toctree)
 //   - --include-toctree: Include toctree entries (navigation links) in addition to content inclusion directives
 //   - --exclude: Exclude paths matching this glob pattern (e.g., '*/archive/*')
-func NewFileReferencesCommand() *cobra.Command {
+func NewUsageCommand() *cobra.Command {
 	var (
 		format         string
 		verbose        bool
@@ -50,9 +50,9 @@ func NewFileReferencesCommand() *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "file-references [filepath]",
-		Short: "Find all files that reference a target file",
-		Long: `Find all files that reference a target file through RST directives.
+		Use:   "usage [filepath]",
+		Short: "Find all files that use a target file",
+		Long: `Find all files that use a target file through RST directives.
 
 This command performs reverse dependency analysis, showing which files reference
 the target file through content inclusion directives (include, literalinclude,
@@ -75,35 +75,35 @@ This is useful for:
   - Tracking code example references
 
 Examples:
-  # Find what references an include file
-  analyze file-references /path/to/includes/fact.rst
+  # Find what uses an include file
+  analyze usage /path/to/includes/fact.rst
 
-  # Find what references a code example
-  analyze file-references /path/to/code-examples/example.js
+  # Find what uses a code example
+  analyze usage /path/to/code-examples/example.js
 
   # Include toctree references (navigation links)
-  analyze file-references /path/to/file.rst --include-toctree
+  analyze usage /path/to/file.rst --include-toctree
 
   # Get JSON output
-  analyze file-references /path/to/file.rst --format json
+  analyze usage /path/to/file.rst --format json
 
   # Show detailed information with line numbers
-  analyze file-references /path/to/file.rst --verbose
+  analyze usage /path/to/file.rst --verbose
 
   # Just show the count
-  analyze file-references /path/to/file.rst --count-only
+  analyze usage /path/to/file.rst --count-only
 
   # Just show the file paths
-  analyze file-references /path/to/file.rst --paths-only
+  analyze usage /path/to/file.rst --paths-only
 
   # Show summary statistics only
-  analyze file-references /path/to/file.rst --summary
+  analyze usage /path/to/file.rst --summary
 
   # Exclude certain paths from search
-  analyze file-references /path/to/file.rst --exclude "*/archive/*"
+  analyze usage /path/to/file.rst --exclude "*/archive/*"
 
   # Filter by directive type
-  analyze file-references /path/to/file.rst --directive-type include`,
+  analyze usage /path/to/file.rst --directive-type include`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runReferences(args[0], format, verbose, countOnly, pathsOnly, summaryOnly, directiveType, includeToctree, excludePattern)

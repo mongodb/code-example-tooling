@@ -77,13 +77,11 @@ func GetProjects(client *http.Client) []types.ProjectDetails {
 		"docs-app-services",
 		"datalake",
 		"intellij",
-		"landing",
 		"mongodb-vscode",
 		"mms-docs",
 		"visual-studio-extension",
 		"guides",
 		"atlas-app-services",
-		"drivers",
 		"mongoid-railsmdb",
 		"cluster-sync", // The Snooty Data API currently lists `cluster-sync` and `mongosync` as independent projects. We don't want to process twice, so ignore the `cluster-sync` entry.
 	}

@@ -23,6 +23,11 @@ func GetProductSubProduct(project string, page string) (string, string) {
 				productInfo = common.GetProductInfo(dir)
 			}
 		}
+		// If the project is cloud-docs and we didn't find a sub-product in the page ID, just return the product info
+		// for the project itself.
+		if productInfo.ProductName == "" {
+			productInfo = common.GetProductInfo(project)
+		}
 	} else {
 		// Otherwise, just get the product/sub-product info defined in the common package
 		productInfo = common.GetProductInfo(project)

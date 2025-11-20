@@ -25,6 +25,8 @@ Get counts broken down in the following ways:
   - [By product](src/aggregations/GetProductCategoryCounts.go)
   - [By Atlas sub-product](src/aggregations/GetSubProductCategoryCounts.go)
   - [For one specific category by product](src/aggregations/GetSpecificCategoryByProduct.go)
+  - [For usage examples added in the last month](src/aggregations/FindUsageExamplesForMonth.go)
+  - [For applied usage examples (>300 characters) added in the last week](src/aggregations/FindNewAppliedUsageExamples.go)
 - Complexity counts:
   - [One line usage examples by docs property](src/aggregations/GetOneLineUsageExampleCounts.go)
   - [Minimum, median, maximum character counts for code examples in the collection, and one-liner counts](src/aggregations/GetMinMedianMaxCodeLength.go)

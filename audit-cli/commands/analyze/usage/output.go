@@ -25,7 +25,7 @@ const (
 //   - analysis: The analysis results to print
 //   - format: The output format (text or json)
 //   - verbose: If true, show additional details
-func PrintAnalysis(analysis *ReferenceAnalysis, format OutputFormat, verbose bool) error {
+func PrintAnalysis(analysis *UsageAnalysis, format OutputFormat, verbose bool) error {
 	switch format {
 	case FormatJSON:
 		return printJSON(analysis)
@@ -38,17 +38,17 @@ func PrintAnalysis(analysis *ReferenceAnalysis, format OutputFormat, verbose boo
 }
 
 // printText prints the analysis results in human-readable text format.
-func printText(analysis *ReferenceAnalysis, verbose bool) {
+func printText(analysis *UsageAnalysis, verbose bool) {
 	fmt.Println("============================================================")
 	fmt.Println("USAGE ANALYSIS")
 	fmt.Println("============================================================")
 	fmt.Printf("Target File: %s\n", analysis.TargetFile)
 	fmt.Printf("Total Files: %d\n", analysis.TotalFiles)
-	fmt.Printf("Total Usages: %d\n", analysis.TotalReferences)
+	fmt.Printf("Total Usages: %d\n", analysis.TotalUsages)
 	fmt.Println("============================================================")
 	fmt.Println()
 
-	if analysis.TotalReferences == 0 {
+	if analysis.TotalUsages == 0 {
 		fmt.Println("No files use this file.")
 		fmt.Println()
 		fmt.Println("This could mean:")
@@ -62,8 +62,8 @@ func printText(analysis *ReferenceAnalysis, verbose bool) {
 		return
 	}
 
-	// Group references by directive type
-	byDirectiveType := groupByDirectiveType(analysis.ReferencingFiles)
+	// Group usages by directive type
+	byDirectiveType := groupByDirectiveType(analysis.UsingFiles)
 
 	// Print breakdown by directive type with file and reference counts
 	directiveTypes := []string{"include", "literalinclude", "io-code-block", "toctree"}
@@ -86,10 +86,10 @@ func printText(analysis *ReferenceAnalysis, verbose bool) {
 	}
 	fmt.Println()
 
-	// Group references by file
-	grouped := GroupReferencesByFile(analysis.ReferencingFiles)
+	// Group usages by file
+	grouped := GroupUsagesByFile(analysis.UsingFiles)
 
-	// Print detailed list of referencing files
+	// Print detailed list of files using the target
 	for i, group := range grouped {
 		// Get relative path from source directory for cleaner output
 		relPath, err := filepath.Rel(analysis.SourceDir, group.FilePath)
@@ -108,8 +108,8 @@ func printText(analysis *ReferenceAnalysis, verbose bool) {
 
 		// Print line numbers in verbose mode
 		if verbose {
-			for _, ref := range group.References {
-				fmt.Printf("     Line %d: %s\n", ref.LineNumber, ref.ReferencePath)
+			for _, usage := range group.Usages {
+				fmt.Printf("     Line %d: %s\n", usage.LineNumber, usage.UsagePath)
 			}
 		}
 	}
@@ -118,20 +118,20 @@ func printText(analysis *ReferenceAnalysis, verbose bool) {
 }
 
 // printJSON prints the analysis results in JSON format.
-func printJSON(analysis *ReferenceAnalysis) error {
+func printJSON(analysis *UsageAnalysis) error {
 	// Create a JSON-friendly structure
 	output := struct {
-		TargetFile       string          `json:"target_file"`
-		SourceDir        string          `json:"source_dir"`
-		TotalFiles       int             `json:"total_files"`
-		TotalReferences  int             `json:"total_references"`
-		ReferencingFiles []FileReference `json:"referencing_files"`
+		TargetFile  string      `json:"target_file"`
+		SourceDir   string      `json:"source_dir"`
+		TotalFiles  int         `json:"total_files"`
+		TotalUsages int         `json:"total_usages"`
+		UsingFiles  []FileUsage `json:"using_files"`
 	}{
-		TargetFile:       analysis.TargetFile,
-		SourceDir:        analysis.SourceDir,
-		TotalFiles:       analysis.TotalFiles,
-		TotalReferences:  analysis.TotalReferences,
-		ReferencingFiles: analysis.ReferencingFiles,
+		TargetFile:  analysis.TargetFile,
+		SourceDir:   analysis.SourceDir,
+		TotalFiles:  analysis.TotalFiles,
+		TotalUsages: analysis.TotalUsages,
+		UsingFiles:  analysis.UsingFiles,
 	}
 
 	encoder := json.NewEncoder(os.Stdout)
@@ -139,12 +139,12 @@ func printJSON(analysis *ReferenceAnalysis) error {
 	return encoder.Encode(output)
 }
 
-// groupByDirectiveType groups references by their directive type.
-func groupByDirectiveType(refs []FileReference) map[string][]FileReference {
-	groups := make(map[string][]FileReference)
+// groupByDirectiveType groups usages by their directive type.
+func groupByDirectiveType(usages []FileUsage) map[string][]FileUsage {
+	groups := make(map[string][]FileUsage)
 
-	for _, ref := range refs {
-		groups[ref.DirectiveType] = append(groups[ref.DirectiveType], ref)
+	for _, usage := range usages {
+		groups[usage.DirectiveType] = append(groups[usage.DirectiveType], usage)
 	}
 
 	return groups
@@ -193,16 +193,16 @@ func GetDirectiveTypeLabel(directiveType string) string {
 //
 // Returns:
 //   - error: Any error encountered during printing
-func PrintPathsOnly(analysis *ReferenceAnalysis) error {
+func PrintPathsOnly(analysis *UsageAnalysis) error {
 	// Get unique file paths (in case there are duplicates)
 	seen := make(map[string]bool)
 	var paths []string
 
-	for _, ref := range analysis.ReferencingFiles {
+	for _, usage := range analysis.UsingFiles {
 		// Get relative path from source directory for cleaner output
-		relPath, err := filepath.Rel(analysis.SourceDir, ref.FilePath)
+		relPath, err := filepath.Rel(analysis.SourceDir, usage.FilePath)
 		if err != nil {
-			relPath = ref.FilePath
+			relPath = usage.FilePath
 		}
 
 		if !seen[relPath] {
@@ -231,22 +231,22 @@ func PrintPathsOnly(analysis *ReferenceAnalysis) error {
 //
 // Returns:
 //   - error: Any error encountered during printing
-func PrintSummary(analysis *ReferenceAnalysis) error {
+func PrintSummary(analysis *UsageAnalysis) error {
 	fmt.Printf("Total Files: %d\n", analysis.TotalFiles)
-	fmt.Printf("Total Usages: %d\n", analysis.TotalReferences)
+	fmt.Printf("Total Usages: %d\n", analysis.TotalUsages)
 
-	if analysis.TotalReferences > 0 {
+	if analysis.TotalUsages > 0 {
 		// Group by directive type
-		byDirectiveType := groupByDirectiveType(analysis.ReferencingFiles)
+		byDirectiveType := groupByDirectiveType(analysis.UsingFiles)
 
 		// Print breakdown by type
 		fmt.Println("\nBy Type:")
 		directiveTypes := []string{"include", "literalinclude", "io-code-block", "toctree"}
 		for _, directiveType := range directiveTypes {
-			if refs, ok := byDirectiveType[directiveType]; ok {
-				uniqueFiles := countUniqueFiles(refs)
-				totalRefs := len(refs)
-				fmt.Printf("  %-20s: %d files, %d usages\n", directiveType, uniqueFiles, totalRefs)
+			if usages, ok := byDirectiveType[directiveType]; ok {
+				uniqueFiles := countUniqueFiles(usages)
+				totalUsages := len(usages)
+				fmt.Printf("  %-20s: %d files, %d usages\n", directiveType, uniqueFiles, totalUsages)
 			}
 		}
 	}

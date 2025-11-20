@@ -5,39 +5,39 @@ import (
 	"testing"
 )
 
-// TestAnalyzeReferences tests the AnalyzeReferences function with various scenarios.
-func TestAnalyzeReferences(t *testing.T) {
+// TestAnalyzeUsage tests the AnalyzeUsage function with various scenarios.
+func TestAnalyzeUsage(t *testing.T) {
 	// Get the testdata directory
 	testDataDir := "../../../testdata/input-files/source"
 
 	tests := []struct {
 		name                  string
 		targetFile            string
-		expectedReferences    int
+		expectedUsages        int
 		expectedDirectiveType string
 	}{
 		{
-			name:               "Include file with multiple references",
+			name:               "Include file with multiple usages",
 			targetFile:         "includes/intro.rst",
-			expectedReferences: 5, // 4 RST files + 1 YAML file (no toctree by default)
+			expectedUsages:     5, // 4 RST files + 1 YAML file (no toctree by default)
 			expectedDirectiveType: "include",
 		},
 		{
 			name:               "Code example with literalinclude",
 			targetFile:         "code-examples/example.py",
-			expectedReferences: 2, // 1 RST file + 1 YAML file
+			expectedUsages:     2, // 1 RST file + 1 YAML file
 			expectedDirectiveType: "literalinclude",
 		},
 		{
 			name:               "Code example with multiple directive types",
 			targetFile:         "code-examples/example.js",
-			expectedReferences: 2, // literalinclude + io-code-block
+			expectedUsages:     2, // literalinclude + io-code-block
 			expectedDirectiveType: "", // mixed types
 		},
 		{
-			name:               "File with no references",
+			name:               "File with no usages",
 			targetFile:         "code-block-test.rst",
-			expectedReferences: 0,
+			expectedUsages:     0,
 			expectedDirectiveType: "",
 		},
 	}
@@ -52,26 +52,26 @@ func TestAnalyzeReferences(t *testing.T) {
 			}
 
 			// Run analysis (without toctree by default, not verbose, no exclude pattern)
-			analysis, err := AnalyzeReferences(absTargetPath, false, false, "")
+			analysis, err := AnalyzeUsage(absTargetPath, false, false, "")
 			if err != nil {
-				t.Fatalf("AnalyzeReferences failed: %v", err)
+				t.Fatalf("AnalyzeUsage failed: %v", err)
 			}
 
-			// Check total references
-			if analysis.TotalReferences != tt.expectedReferences {
-				t.Errorf("expected %d references, got %d", tt.expectedReferences, analysis.TotalReferences)
+			// Check total usages
+			if analysis.TotalUsages != tt.expectedUsages {
+				t.Errorf("expected %d usages, got %d", tt.expectedUsages, analysis.TotalUsages)
 			}
 
-			// Check that we got the expected number of referencing files
-			if len(analysis.ReferencingFiles) != tt.expectedReferences {
-				t.Errorf("expected %d referencing files, got %d", tt.expectedReferences, len(analysis.ReferencingFiles))
+			// Check that we got the expected number of files using the target
+			if len(analysis.UsingFiles) != tt.expectedUsages {
+				t.Errorf("expected %d using files, got %d", tt.expectedUsages, len(analysis.UsingFiles))
 			}
 
 			// If we expect a specific directive type, check it
-			if tt.expectedDirectiveType != "" && tt.expectedReferences > 0 {
+			if tt.expectedDirectiveType != "" && tt.expectedUsages > 0 {
 				foundExpectedType := false
-				for _, ref := range analysis.ReferencingFiles {
-					if ref.DirectiveType == tt.expectedDirectiveType {
+				for _, usage := range analysis.UsingFiles {
+					if usage.DirectiveType == tt.expectedDirectiveType {
 						foundExpectedType = true
 						break
 					}
@@ -94,66 +94,66 @@ func TestAnalyzeReferences(t *testing.T) {
 	}
 }
 
-// TestFindReferencesInFile tests the findReferencesInFile function.
-func TestFindReferencesInFile(t *testing.T) {
+// TestFindUsagesInFile tests the findUsagesInFile function.
+func TestFindUsagesInFile(t *testing.T) {
 	testDataDir := "../../../testdata/input-files/source"
 	sourceDir := testDataDir
 
 	tests := []struct {
-		name               string
-		searchFile         string
-		targetFile         string
-		expectedReferences int
-		expectedDirective  string
-		includeToctree     bool
+		name              string
+		searchFile        string
+		targetFile        string
+		expectedUsages    int
+		expectedDirective string
+		includeToctree    bool
 	}{
 		{
-			name:               "Include directive",
-			searchFile:         "include-test.rst",
-			targetFile:         "includes/intro.rst",
-			expectedReferences: 1,
-			expectedDirective:  "include",
-			includeToctree:     false,
+			name:              "Include directive",
+			searchFile:        "include-test.rst",
+			targetFile:        "includes/intro.rst",
+			expectedUsages:    1,
+			expectedDirective: "include",
+			includeToctree:    false,
 		},
 		{
-			name:               "Literalinclude directive",
-			searchFile:         "literalinclude-test.rst",
-			targetFile:         "code-examples/example.py",
-			expectedReferences: 1,
-			expectedDirective:  "literalinclude",
-			includeToctree:     false,
+			name:              "Literalinclude directive",
+			searchFile:        "literalinclude-test.rst",
+			targetFile:        "code-examples/example.py",
+			expectedUsages:    1,
+			expectedDirective: "literalinclude",
+			includeToctree:    false,
 		},
 		{
-			name:               "IO code block directive",
-			searchFile:         "io-code-block-test.rst",
-			targetFile:         "code-examples/example.js",
-			expectedReferences: 1,
-			expectedDirective:  "io-code-block",
-			includeToctree:     false,
+			name:              "IO code block directive",
+			searchFile:        "io-code-block-test.rst",
+			targetFile:        "code-examples/example.js",
+			expectedUsages:    1,
+			expectedDirective: "io-code-block",
+			includeToctree:    false,
 		},
 		{
-			name:               "Duplicate includes",
-			searchFile:         "duplicate-include-test.rst",
-			targetFile:         "includes/intro.rst",
-			expectedReferences: 2, // Same file included twice
-			expectedDirective:  "include",
-			includeToctree:     false,
+			name:              "Duplicate includes",
+			searchFile:        "duplicate-include-test.rst",
+			targetFile:        "includes/intro.rst",
+			expectedUsages:    2, // Same file included twice
+			expectedDirective: "include",
+			includeToctree:    false,
 		},
 		{
-			name:               "Toctree directive",
-			searchFile:         "index.rst",
-			targetFile:         "include-test.rst",
-			expectedReferences: 1,
-			expectedDirective:  "toctree",
-			includeToctree:     true, // Must enable toctree flag
+			name:              "Toctree directive",
+			searchFile:        "index.rst",
+			targetFile:        "include-test.rst",
+			expectedUsages:    1,
+			expectedDirective: "toctree",
+			includeToctree:    true, // Must enable toctree flag
 		},
 		{
-			name:               "No references",
-			searchFile:         "code-block-test.rst",
-			targetFile:         "includes/intro.rst",
-			expectedReferences: 0,
-			expectedDirective:  "",
-			includeToctree:     false,
+			name:              "No usages",
+			searchFile:        "code-block-test.rst",
+			targetFile:        "includes/intro.rst",
+			expectedUsages:    0,
+			expectedDirective: "",
+			includeToctree:    false,
 		},
 	}
 
@@ -176,37 +176,37 @@ func TestFindReferencesInFile(t *testing.T) {
 				t.Fatalf("failed to get absolute source dir: %v", err)
 			}
 
-			refs, err := findReferencesInFile(absSearchPath, absTargetPath, absSourceDir, tt.includeToctree)
+			usages, err := findUsagesInFile(absSearchPath, absTargetPath, absSourceDir, tt.includeToctree)
 			if err != nil {
-				t.Fatalf("findReferencesInFile failed: %v", err)
+				t.Fatalf("findUsagesInFile failed: %v", err)
 			}
 
-			if len(refs) != tt.expectedReferences {
-				t.Errorf("expected %d references, got %d", tt.expectedReferences, len(refs))
+			if len(usages) != tt.expectedUsages {
+				t.Errorf("expected %d usages, got %d", tt.expectedUsages, len(usages))
 			}
 
-			// Check directive type if we expect references
-			if tt.expectedReferences > 0 && tt.expectedDirective != "" {
-				for _, ref := range refs {
-					if ref.DirectiveType != tt.expectedDirective {
-						t.Errorf("expected directive type %s, got %s", tt.expectedDirective, ref.DirectiveType)
+			// Check directive type if we expect usages
+			if tt.expectedUsages > 0 && tt.expectedDirective != "" {
+				for _, usage := range usages {
+					if usage.DirectiveType != tt.expectedDirective {
+						t.Errorf("expected directive type %s, got %s", tt.expectedDirective, usage.DirectiveType)
 					}
 				}
 			}
 
-			// Verify all references have required fields
-			for _, ref := range refs {
-				if ref.FilePath == "" {
-					t.Error("reference should have a file path")
+			// Verify all usages have required fields
+			for _, usage := range usages {
+				if usage.FilePath == "" {
+					t.Error("usage should have a file path")
 				}
-				if ref.DirectiveType == "" {
-					t.Error("reference should have a directive type")
+				if usage.DirectiveType == "" {
+					t.Error("usage should have a directive type")
 				}
-				if ref.ReferencePath == "" {
-					t.Error("reference should have a reference path")
+				if usage.UsagePath == "" {
+					t.Error("usage should have a usage path")
 				}
-				if ref.LineNumber == 0 {
-					t.Error("reference should have a line number")
+				if usage.LineNumber == 0 {
+					t.Error("usage should have a line number")
 				}
 			}
 		})
@@ -272,7 +272,7 @@ func TestReferencesTarget(t *testing.T) {
 
 // TestGroupByDirectiveType tests the groupByDirectiveType function.
 func TestGroupByDirectiveType(t *testing.T) {
-	refs := []FileReference{
+	usages := []FileUsage{
 		{DirectiveType: "include", FilePath: "file1.rst"},
 		{DirectiveType: "include", FilePath: "file2.rst"},
 		{DirectiveType: "literalinclude", FilePath: "file3.rst"},
@@ -280,7 +280,7 @@ func TestGroupByDirectiveType(t *testing.T) {
 		{DirectiveType: "include", FilePath: "file5.rst"},
 	}
 
-	groups := groupByDirectiveType(refs)
+	groups := groupByDirectiveType(usages)
 
 	// Check that we have 3 groups
 	if len(groups) != 3 {
@@ -289,17 +289,17 @@ func TestGroupByDirectiveType(t *testing.T) {
 
 	// Check include group
 	if len(groups["include"]) != 3 {
-		t.Errorf("expected 3 include references, got %d", len(groups["include"]))
+		t.Errorf("expected 3 include usages, got %d", len(groups["include"]))
 	}
 
 	// Check literalinclude group
 	if len(groups["literalinclude"]) != 1 {
-		t.Errorf("expected 1 literalinclude reference, got %d", len(groups["literalinclude"]))
+		t.Errorf("expected 1 literalinclude usage, got %d", len(groups["literalinclude"]))
 	}
 
 	// Check io-code-block group
 	if len(groups["io-code-block"]) != 1 {
-		t.Errorf("expected 1 io-code-block reference, got %d", len(groups["io-code-block"]))
+		t.Errorf("expected 1 io-code-block usage, got %d", len(groups["io-code-block"]))
 	}
 }
 

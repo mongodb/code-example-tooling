@@ -106,15 +106,15 @@ Examples:
   analyze usage /path/to/file.rst --directive-type include`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runReferences(args[0], format, verbose, countOnly, pathsOnly, summaryOnly, directiveType, includeToctree, excludePattern)
+			return runUsage(args[0], format, verbose, countOnly, pathsOnly, summaryOnly, directiveType, includeToctree, excludePattern)
 		},
 	}
 
 	cmd.Flags().StringVar(&format, "format", "text", "Output format (text or json)")
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Show detailed information including line numbers")
-	cmd.Flags().BoolVarP(&countOnly, "count-only", "c", false, "Only show the count of references")
+	cmd.Flags().BoolVarP(&countOnly, "count-only", "c", false, "Only show the count of usages")
 	cmd.Flags().BoolVar(&pathsOnly, "paths-only", false, "Only show the file paths (one per line)")
-	cmd.Flags().BoolVar(&summaryOnly, "summary", false, "Only show summary statistics (total files and references by type)")
+	cmd.Flags().BoolVar(&summaryOnly, "summary", false, "Only show summary statistics (total files and usages by type)")
 	cmd.Flags().StringVarP(&directiveType, "directive-type", "t", "", "Filter by directive type (include, literalinclude, io-code-block, toctree)")
 	cmd.Flags().BoolVar(&includeToctree, "include-toctree", false, "Include toctree entries (navigation links) in addition to content inclusion directives")
 	cmd.Flags().StringVar(&excludePattern, "exclude", "", "Exclude paths matching this glob pattern (e.g., '*/archive/*' or '*/deprecated/*')")
@@ -122,7 +122,7 @@ Examples:
 	return cmd
 }
 
-// runReferences executes the references analysis.
+// runUsage executes the usage analysis.
 //
 // This function performs the analysis and prints the results in the specified format.
 //
@@ -139,7 +139,7 @@ Examples:
 //
 // Returns:
 //   - error: Any error encountered during analysis
-func runReferences(targetFile, format string, verbose, countOnly, pathsOnly, summaryOnly bool, directiveType string, includeToctree bool, excludePattern string) error {
+func runUsage(targetFile, format string, verbose, countOnly, pathsOnly, summaryOnly bool, directiveType string, includeToctree bool, excludePattern string) error {
 	// Validate directive type if specified
 	if directiveType != "" {
 		validTypes := map[string]bool{
@@ -178,9 +178,9 @@ func runReferences(targetFile, format string, verbose, countOnly, pathsOnly, sum
 	}
 
 	// Perform analysis
-	analysis, err := AnalyzeReferences(targetFile, includeToctree, verbose, excludePattern)
+	analysis, err := AnalyzeUsage(targetFile, includeToctree, verbose, excludePattern)
 	if err != nil {
-		return fmt.Errorf("failed to analyze references: %w", err)
+		return fmt.Errorf("failed to analyze usage: %w", err)
 	}
 
 	// Filter by directive type if specified
@@ -190,7 +190,7 @@ func runReferences(targetFile, format string, verbose, countOnly, pathsOnly, sum
 
 	// Handle count-only output
 	if countOnly {
-		fmt.Println(analysis.TotalReferences)
+		fmt.Println(analysis.TotalUsages)
 		return nil
 	}
 

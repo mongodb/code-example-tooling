@@ -12,10 +12,10 @@ import (
 	"github.com/mongodb/code-example-tooling/audit-cli/internal/rst"
 )
 
-// AnalyzeReferences finds all files that reference the target file.
+// AnalyzeUsage finds all files that use the target file.
 //
 // This function searches through all RST files (.rst, .txt) and YAML files (.yaml, .yml)
-// in the source directory to find files that reference the target file using include,
+// in the source directory to find files that use the target file through include,
 // literalinclude, or io-code-block directives. YAML files are included because extract
 // and release files contain RST directives within their content blocks.
 //
@@ -29,9 +29,9 @@ import (
 //   - excludePattern: Glob pattern for paths to exclude (empty string means no exclusion)
 //
 // Returns:
-//   - *ReferenceAnalysis: The analysis results
+//   - *UsageAnalysis: The analysis results
 //   - error: Any error encountered during analysis
-func AnalyzeReferences(targetFile string, includeToctree bool, verbose bool, excludePattern string) (*ReferenceAnalysis, error) {
+func AnalyzeUsage(targetFile string, includeToctree bool, verbose bool, excludePattern string) (*UsageAnalysis, error) {
 	// Check if target file exists
 	if _, err := os.Stat(targetFile); os.IsNotExist(err) {
 		return nil, fmt.Errorf("target file does not exist: %s\n\nPlease check:\n  - The file path is correct\n  - The file hasn't been moved or deleted\n  - You have permission to access the file", targetFile)
@@ -50,10 +50,10 @@ func AnalyzeReferences(targetFile string, includeToctree bool, verbose bool, exc
 	}
 
 	// Initialize analysis result
-	analysis := &ReferenceAnalysis{
-		TargetFile:       absTargetFile,
-		SourceDir:        sourceDir,
-		ReferencingFiles: []FileReference{},
+	analysis := &UsageAnalysis{
+		TargetFile: absTargetFile,
+		SourceDir:  sourceDir,
+		UsingFiles: []FileUsage{},
 	}
 
 	// Track if we found any RST/YAML files
@@ -62,7 +62,7 @@ func AnalyzeReferences(targetFile string, includeToctree bool, verbose bool, exc
 
 	// Show progress message if verbose
 	if verbose {
-		fmt.Fprintf(os.Stderr, "Scanning for references in %s...\n", sourceDir)
+		fmt.Fprintf(os.Stderr, "Scanning for usages in %s...\n", sourceDir)
 	}
 
 	// Walk through all RST and YAML files in the source directory
@@ -103,16 +103,16 @@ func AnalyzeReferences(targetFile string, includeToctree bool, verbose bool, exc
 			fmt.Fprintf(os.Stderr, "Processed %d files...\n", filesProcessed)
 		}
 
-		// Search for references in this file
-		refs, err := findReferencesInFile(path, absTargetFile, sourceDir, includeToctree)
+		// Search for usages in this file
+		usages, err := findUsagesInFile(path, absTargetFile, sourceDir, includeToctree)
 		if err != nil {
 			// Log error but continue processing other files
 			fmt.Fprintf(os.Stderr, "Warning: failed to process %s: %v\n", path, err)
 			return nil
 		}
 
-		// Add any found references
-		analysis.ReferencingFiles = append(analysis.ReferencingFiles, refs...)
+		// Add any found usages
+		analysis.UsingFiles = append(analysis.UsingFiles, usages...)
 
 		return nil
 	})
@@ -132,16 +132,16 @@ func AnalyzeReferences(targetFile string, includeToctree bool, verbose bool, exc
 	}
 
 	// Update total counts
-	analysis.TotalReferences = len(analysis.ReferencingFiles)
-	analysis.TotalFiles = countUniqueFiles(analysis.ReferencingFiles)
+	analysis.TotalUsages = len(analysis.UsingFiles)
+	analysis.TotalFiles = countUniqueFiles(analysis.UsingFiles)
 
 	return analysis, nil
 }
 
-// findReferencesInFile searches a single file for references to the target file.
+// findUsagesInFile searches a single file for usages of the target file.
 //
 // This function scans through the file line by line looking for include,
-// literalinclude, and io-code-block directives that reference the target file.
+// literalinclude, and io-code-block directives that use the target file.
 // If includeToctree is true, also searches for toctree entries.
 //
 // Parameters:
@@ -151,16 +151,16 @@ func AnalyzeReferences(targetFile string, includeToctree bool, verbose bool, exc
 //   - includeToctree: If true, include toctree entries in the search
 //
 // Returns:
-//   - []FileReference: List of references found in this file
+//   - []FileUsage: List of usages found in this file
 //   - error: Any error encountered during processing
-func findReferencesInFile(filePath, targetFile, sourceDir string, includeToctree bool) ([]FileReference, error) {
+func findUsagesInFile(filePath, targetFile, sourceDir string, includeToctree bool) ([]FileUsage, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	var references []FileReference
+	var usages []FileUsage
 	scanner := bufio.NewScanner(file)
 	lineNum := 0
 	inIOCodeBlock := false
@@ -201,10 +201,10 @@ func findReferencesInFile(filePath, targetFile, sourceDir string, includeToctree
 		if matches := rst.IncludeDirectiveRegex.FindStringSubmatch(trimmedLine); matches != nil {
 			refPath := strings.TrimSpace(matches[1])
 			if referencesTarget(refPath, targetFile, sourceDir, filePath) {
-				references = append(references, FileReference{
+				usages = append(usages, FileUsage{
 					FilePath:      filePath,
 					DirectiveType: "include",
-					ReferencePath: refPath,
+					UsagePath:     refPath,
 					LineNumber:    lineNum,
 				})
 			}
@@ -215,10 +215,10 @@ func findReferencesInFile(filePath, targetFile, sourceDir string, includeToctree
 		if matches := rst.LiteralIncludeDirectiveRegex.FindStringSubmatch(trimmedLine); matches != nil {
 			refPath := strings.TrimSpace(matches[1])
 			if referencesTarget(refPath, targetFile, sourceDir, filePath) {
-				references = append(references, FileReference{
+				usages = append(usages, FileUsage{
 					FilePath:      filePath,
 					DirectiveType: "literalinclude",
-					ReferencePath: refPath,
+					UsagePath:     refPath,
 					LineNumber:    lineNum,
 				})
 			}
@@ -231,10 +231,10 @@ func findReferencesInFile(filePath, targetFile, sourceDir string, includeToctree
 			if matches := rst.InputDirectiveRegex.FindStringSubmatch(trimmedLine); matches != nil {
 				refPath := strings.TrimSpace(matches[1])
 				if referencesTarget(refPath, targetFile, sourceDir, filePath) {
-					references = append(references, FileReference{
+					usages = append(usages, FileUsage{
 						FilePath:      filePath,
 						DirectiveType: "io-code-block",
-						ReferencePath: refPath,
+						UsagePath:     refPath,
 						LineNumber:    ioCodeBlockStartLine,
 					})
 				}
@@ -245,10 +245,10 @@ func findReferencesInFile(filePath, targetFile, sourceDir string, includeToctree
 			if matches := rst.OutputDirectiveRegex.FindStringSubmatch(trimmedLine); matches != nil {
 				refPath := strings.TrimSpace(matches[1])
 				if referencesTarget(refPath, targetFile, sourceDir, filePath) {
-					references = append(references, FileReference{
+					usages = append(usages, FileUsage{
 						FilePath:      filePath,
 						DirectiveType: "io-code-block",
-						ReferencePath: refPath,
+						UsagePath:     refPath,
 						LineNumber:    ioCodeBlockStartLine,
 					})
 				}
@@ -267,10 +267,10 @@ func findReferencesInFile(filePath, targetFile, sourceDir string, includeToctree
 			// Document names can be relative or absolute (starting with /)
 			docName := trimmedLine
 			if referencesToctreeTarget(docName, targetFile, sourceDir, filePath) {
-				references = append(references, FileReference{
+				usages = append(usages, FileUsage{
 					FilePath:      filePath,
 					DirectiveType: "toctree",
-					ReferencePath: docName,
+					UsagePath:     docName,
 					LineNumber:    toctreeStartLine,
 				})
 			}
@@ -281,7 +281,7 @@ func findReferencesInFile(filePath, targetFile, sourceDir string, includeToctree
 		return nil, err
 	}
 
-	return references, nil
+	return usages, nil
 }
 
 // referencesTarget checks if a reference path points to the target file.
@@ -345,7 +345,7 @@ func referencesToctreeTarget(docName, targetFile, sourceDir, currentFile string)
 	return resolvedPath == targetFile
 }
 
-// FilterByDirectiveType filters the analysis results to only include references
+// FilterByDirectiveType filters the analysis results to only include usages
 // of the specified directive type.
 //
 // Parameters:
@@ -353,75 +353,75 @@ func referencesToctreeTarget(docName, targetFile, sourceDir, currentFile string)
 //   - directiveType: The directive type to filter by (include, literalinclude, io-code-block)
 //
 // Returns:
-//   - *ReferenceAnalysis: A new analysis with filtered results
-func FilterByDirectiveType(analysis *ReferenceAnalysis, directiveType string) *ReferenceAnalysis {
-	filtered := &ReferenceAnalysis{
-		TargetFile:       analysis.TargetFile,
-		SourceDir:        analysis.SourceDir,
-		ReferencingFiles: []FileReference{},
-		ReferenceTree:    analysis.ReferenceTree,
+//   - *UsageAnalysis: A new analysis with filtered results
+func FilterByDirectiveType(analysis *UsageAnalysis, directiveType string) *UsageAnalysis {
+	filtered := &UsageAnalysis{
+		TargetFile: analysis.TargetFile,
+		SourceDir:  analysis.SourceDir,
+		UsingFiles: []FileUsage{},
+		UsageTree:  analysis.UsageTree,
 	}
 
-	// Filter references
-	for _, ref := range analysis.ReferencingFiles {
-		if ref.DirectiveType == directiveType {
-			filtered.ReferencingFiles = append(filtered.ReferencingFiles, ref)
+	// Filter usages
+	for _, usage := range analysis.UsingFiles {
+		if usage.DirectiveType == directiveType {
+			filtered.UsingFiles = append(filtered.UsingFiles, usage)
 		}
 	}
 
 	// Update counts
-	filtered.TotalReferences = len(filtered.ReferencingFiles)
-	filtered.TotalFiles = countUniqueFiles(filtered.ReferencingFiles)
+	filtered.TotalUsages = len(filtered.UsingFiles)
+	filtered.TotalFiles = countUniqueFiles(filtered.UsingFiles)
 
 	return filtered
 }
 
-// countUniqueFiles counts the number of unique files in the reference list.
+// countUniqueFiles counts the number of unique files in the usage list.
 //
 // Parameters:
-//   - refs: List of file references
+//   - usages: List of file usages
 //
 // Returns:
 //   - int: Number of unique files
-func countUniqueFiles(refs []FileReference) int {
+func countUniqueFiles(usages []FileUsage) int {
 	uniqueFiles := make(map[string]bool)
-	for _, ref := range refs {
-		uniqueFiles[ref.FilePath] = true
+	for _, usage := range usages {
+		uniqueFiles[usage.FilePath] = true
 	}
 	return len(uniqueFiles)
 }
 
-// GroupReferencesByFile groups references by file path and directive type.
+// GroupUsagesByFile groups usages by file path and directive type.
 //
-// This function takes a flat list of references and groups them by file,
-// counting how many times each file references the target.
+// This function takes a flat list of usages and groups them by file,
+// counting how many times each file uses the target.
 //
 // Parameters:
-//   - refs: List of file references
+//   - usages: List of file usages
 //
 // Returns:
-//   - []GroupedFileReference: List of grouped references, sorted by file path
-func GroupReferencesByFile(refs []FileReference) []GroupedFileReference {
+//   - []GroupedFileUsage: List of grouped usages, sorted by file path
+func GroupUsagesByFile(usages []FileUsage) []GroupedFileUsage {
 	// Group by file path and directive type
 	type groupKey struct {
 		filePath      string
 		directiveType string
 	}
-	groups := make(map[groupKey][]FileReference)
+	groups := make(map[groupKey][]FileUsage)
 
-	for _, ref := range refs {
-		key := groupKey{ref.FilePath, ref.DirectiveType}
-		groups[key] = append(groups[key], ref)
+	for _, usage := range usages {
+		key := groupKey{usage.FilePath, usage.DirectiveType}
+		groups[key] = append(groups[key], usage)
 	}
 
 	// Convert to slice
-	var grouped []GroupedFileReference
-	for key, refs := range groups {
-		grouped = append(grouped, GroupedFileReference{
+	var grouped []GroupedFileUsage
+	for key, usages := range groups {
+		grouped = append(grouped, GroupedFileUsage{
 			FilePath:      key.filePath,
 			DirectiveType: key.directiveType,
-			References:    refs,
-			Count:         len(refs),
+			Usages:        usages,
+			Count:         len(usages),
 		})
 	}
 

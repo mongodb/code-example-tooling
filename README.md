@@ -15,8 +15,6 @@ corpus.
 - `dependency-manager`: A Go CLI project to help us manage dependencies for multiple ecosystems in the docs monorepo
 - `examples-copier`: a Go app that runs as a GitHub App and copies files from the
    source code repo (generated code examples) to multiple target repos and branches.
-- `github-check-releases`: a Node.js script that gets the latest release versions
-  of products we use in our test suites, and creates Jira tickets for outdated versions.
 - `github-metrics`: a Node.js script that gets engagement metrics from GitHub for specified repos and writes them
   to a database in Atlas.
 - `query-docs-feedback`: a Go project with type definitions that queries the MongoDB

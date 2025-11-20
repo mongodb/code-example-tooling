@@ -396,16 +396,16 @@ With `--include-toctree`, also tracks:
 **Text** (default):
 ```
 ============================================================
-REFERENCE ANALYSIS
+USAGE ANALYSIS
 ============================================================
 Target File: /path/to/includes/intro.rst
 Total Files: 3
 Total Usages: 4
 ============================================================
 
-include             : 3 files, 4 references
+include             : 3 files, 4 usages
 
-  1. [include] duplicate-include-test.rst (2 references)
+  1. [include] duplicate-include-test.rst (2 usages)
   2. [include] include-test.rst
   3. [include] page.rst
 
@@ -414,16 +414,16 @@ include             : 3 files, 4 references
 **Text with --verbose:**
 ```
 ============================================================
-REFERENCE ANALYSIS
+USAGE ANALYSIS
 ============================================================
 Target File: /path/to/includes/intro.rst
 Total Files: 3
 Total Usages: 4
 ============================================================
 
-include             : 3 files, 4 references
+include             : 3 files, 4 usages
 
-  1. [include] duplicate-include-test.rst (2 references)
+  1. [include] duplicate-include-test.rst (2 usages)
      Line 6: /includes/intro.rst
      Line 13: /includes/intro.rst
   2. [include] include-test.rst
@@ -439,24 +439,24 @@ include             : 3 files, 4 references
   "target_file": "/path/to/includes/intro.rst",
   "source_dir": "/path/to/source",
   "total_files": 3,
-  "total_references": 4,
-  "referencing_files": [
+  "total_usages": 4,
+  "using_files": [
     {
       "file_path": "/path/to/duplicate-include-test.rst",
       "directive_type": "include",
-      "reference_path": "/includes/intro.rst",
+      "usage_path": "/includes/intro.rst",
       "line_number": 6
     },
     {
       "file_path": "/path/to/duplicate-include-test.rst",
       "directive_type": "include",
-      "reference_path": "/includes/intro.rst",
+      "usage_path": "/includes/intro.rst",
       "line_number": 13
     },
     {
       "file_path": "/path/to/include-test.rst",
       "directive_type": "include",
-      "reference_path": "/includes/intro.rst",
+      "usage_path": "/includes/intro.rst",
       "line_number": 6
     }
   ]
@@ -473,7 +473,7 @@ include             : 3 files, 4 references
 ./audit-cli analyze usage ~/docs/source/code-examples/connect.py
 
 # Get machine-readable output for scripting
-./audit-cli analyze usage ~/docs/source/includes/fact.rst --format json | jq '.total_references'
+./audit-cli analyze usage ~/docs/source/includes/fact.rst --format json | jq '.total_usages'
 
 # See exactly where a file is referenced (with line numbers)
 ./audit-cli analyze usage ~/docs/source/includes/intro.rst --verbose
@@ -501,10 +501,10 @@ include             : 3 files, 4 references
 # Filter to only show include directives (not literalinclude or io-code-block)
 ./audit-cli analyze usage ~/docs/source/includes/fact.rst --directive-type include
 
-# Filter to only show literalinclude references
+# Filter to only show literalinclude usages
 ./audit-cli analyze usage ~/docs/source/code-examples/example.py --directive-type literalinclude
 
-# Combine filters: count only literalinclude references
+# Combine filters: count only literalinclude usages
 ./audit-cli analyze usage ~/docs/source/code-examples/example.py -t literalinclude -c
 
 # Combine filters: list files that use this as an io-code-block

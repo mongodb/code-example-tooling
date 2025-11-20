@@ -23,6 +23,7 @@ func GetProductInfo(projectOrSubdir string) ProductInfo {
 }
 
 var SubProductDirs = []string{
+	AiIntegrationsDir,
 	DataFederationDir,
 	OnlineArchiveDir,
 	StreamProcessingDir,
@@ -32,6 +33,11 @@ var SubProductDirs = []string{
 }
 
 var productInfoMap = map[string]ProductInfo{
+	"ai-integrations": {
+		ProductName: Atlas,
+		ProductType: DirIsSubProduct,
+		SubProduct:  VectorSearch,
+	},
 	"atlas-cli": {
 		ProductName: Atlas,
 		ProductType: CollectionIsSubProduct,

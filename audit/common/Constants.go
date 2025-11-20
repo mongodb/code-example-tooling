@@ -107,6 +107,7 @@ const (
 	StreamProcessingDir = "atlas-stream-processing"
 	TriggersDir         = "triggers"
 	VectorSearchDir     = "atlas-vector-search"
+	AiIntegrationsDir   = "ai-integrations"
 )
 
 var CanonicalLanguages = []string{Bash, C, CPP,

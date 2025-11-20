@@ -142,13 +142,13 @@ workflow_configs:
 #
 # Required in env.yaml:
 #   MAIN_CONFIG_FILE: "main-config.yaml"
-#   USE_MAIN_CONFIG: "true"
+#   USE_MAIN_CONFIG: "true" # if "false", use optional CONFIG_FILE instead
 #   CONFIG_REPO_OWNER: "mongodb"
 #   CONFIG_REPO_NAME: "code-copier-config"
 #   CONFIG_REPO_BRANCH: "main"
 #
-# Optional (for backward compatibility):
-#   CONFIG_FILE: "copier-config.yaml"  # Legacy format
+# Optional:
+#   CONFIG_FILE: "copier-config.yaml"  # if USE_MAIN_CONFIG: "false"
 #
 # ============================================================================
 # EXAMPLE DIRECTORY STRUCTURE

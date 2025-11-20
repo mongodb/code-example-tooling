@@ -113,30 +113,6 @@
 # - "!important.js" - include this file even if excluded by other patterns
 #
 # ============================================================================
-# BENEFITS
-# ============================================================================
-#
-# 1. CONSISTENCY
-#    - All workflows use the same exclude patterns
-#    - No accidental copying of sensitive files
-#    - Standardized across projects
-#
-# 2. MAINTAINABILITY
-#    - Update patterns in one place
-#    - Affects all workflows using this file
-#    - Easy to add new patterns
-#
-# 3. SECURITY
-#    - Centralized list of sensitive files
-#    - Easy to audit
-#    - Reduces risk of leaking secrets
-#
-# 4. CLARITY
-#    - Self-documenting
-#    - Easy to understand what's excluded
-#    - Comments explain why
-#
-# ============================================================================
 # COMMON EXCLUDE PATTERN SETS
 # ============================================================================
 #

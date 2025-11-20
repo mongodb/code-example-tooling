@@ -33,10 +33,6 @@ Examples-copier is a GitHub app that automatically copies code examples and file
 
 ## Configuration
 
-### Do I need to use YAML configuration?
-
-No. The app supports both YAML and legacy JSON configurations. YAML is recommended for new deployments because it supports advanced features like pattern matching and path transformations.
-
 ### Can I use multiple transformations?
 
 Yes! You can define multiple workflows, each with its own transformations:

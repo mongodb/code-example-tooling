@@ -1,6 +1,6 @@
 # Quick Start: Main Config Architecture
 
-Get started with the new main config architecture in 5 minutes.
+Get started with the main config architecture in 5 minutes.
 
 ## What is Main Config?
 

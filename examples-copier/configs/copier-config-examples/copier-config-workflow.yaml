@@ -1,6 +1,6 @@
 # MFlix Workflow Configuration
-# This is the NEW workflow-based format with multi-org support
-# Replaces the legacy copy_rules format
+# This is the workflow-based format with multi-org support
+# Replaces the default copy_rules format
 
 # Global defaults (apply to all workflows unless overridden)
 defaults:

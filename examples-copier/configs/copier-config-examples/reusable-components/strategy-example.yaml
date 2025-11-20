@@ -94,28 +94,4 @@ auto_merge: false
 # auto_merge: false
 #
 # ============================================================================
-# BENEFITS
-# ============================================================================
-#
-# 1. CONSISTENCY
-#    - All workflows use the same PR format
-#    - Standardized messaging
-#    - Easy to maintain
-#
-# 2. REUSABILITY
-#    - Define once, use many times
-#    - Update in one place
-#    - Affects all workflows using this strategy
-#
-# 3. FLEXIBILITY
-#    - Can override specific fields
-#    - Mix and match strategies
-#    - Easy to create new strategies
-#
-# 4. DOCUMENTATION
-#    - Strategy is self-documenting
-#    - Clear what each PR will contain
-#    - Easy to understand and review
-#
-# ============================================================================
 

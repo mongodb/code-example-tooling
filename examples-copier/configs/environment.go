@@ -34,21 +34,21 @@ type Config struct {
 	DefaultPRMerge       bool
 	DefaultCommitMessage string
 
-	// New features
-	DryRun              bool
-	AuditEnabled        bool
-	MongoURI            string
-	MongoURISecretName  string
-	AuditDatabase       string
-	AuditCollection     string
-	MetricsEnabled      bool
+	// Optional features
+	DryRun             bool
+	AuditEnabled       bool
+	MongoURI           string
+	MongoURISecretName string
+	AuditDatabase      string
+	AuditCollection    string
+	MetricsEnabled     bool
 
 	// Slack notifications
-	SlackWebhookURL  string
-	SlackChannel     string
-	SlackUsername    string
-	SlackIconEmoji   string
-	SlackEnabled     bool
+	SlackWebhookURL string
+	SlackChannel    string
+	SlackUsername   string
+	SlackIconEmoji  string
+	SlackEnabled    bool
 
 	// GitHub API retry configuration
 	GitHubAPIMaxRetries        int
@@ -60,61 +60,61 @@ type Config struct {
 }
 
 const (
-	EnvFile              = "ENV"
-	Port                 = "PORT"
-	ConfigRepoName       = "CONFIG_REPO_NAME"
-	ConfigRepoOwner      = "CONFIG_REPO_OWNER"
-	AppId                = "GITHUB_APP_ID"
-	AppClientId          = "GITHUB_APP_CLIENT_ID"
-	InstallationId       = "INSTALLATION_ID"
-	CommitterName        = "COMMITTER_NAME"
-	CommitterEmail       = "COMMITTER_EMAIL"
-	ConfigFile           = "CONFIG_FILE"
-	MainConfigFile       = "MAIN_CONFIG_FILE"
-	UseMainConfig        = "USE_MAIN_CONFIG"
-	DeprecationFile      = "DEPRECATION_FILE"
-	WebserverPath        = "WEBSERVER_PATH"
-	ConfigRepoBranch     = "CONFIG_REPO_BRANCH"
-	PEMKeyName           = "PEM_NAME"
-	WebhookSecretName    = "WEBHOOK_SECRET_NAME"
-	WebhookSecret        = "WEBHOOK_SECRET"
-	CopierLogName        = "COPIER_LOG_NAME"
-	GoogleCloudProjectId = "GOOGLE_CLOUD_PROJECT_ID"
-	DefaultRecursiveCopy = "DEFAULT_RECURSIVE_COPY"
-	DefaultPRMerge       = "DEFAULT_PR_MERGE"
-	DefaultCommitMessage = "DEFAULT_COMMIT_MESSAGE"
-	DryRun               = "DRY_RUN"
-	AuditEnabled         = "AUDIT_ENABLED"
-	MongoURI             = "MONGO_URI"
-	MongoURISecretName   = "MONGO_URI_SECRET_NAME"
-	AuditDatabase        = "AUDIT_DATABASE"
-	AuditCollection      = "AUDIT_COLLECTION"
-	MetricsEnabled       = "METRICS_ENABLED"
-	SlackWebhookURL              = "SLACK_WEBHOOK_URL"
-	SlackChannel                 = "SLACK_CHANNEL"
-	SlackUsername                = "SLACK_USERNAME"
-	SlackIconEmoji               = "SLACK_ICON_EMOJI"
-	SlackEnabled                 = "SLACK_ENABLED"
-	GitHubAPIMaxRetries          = "GITHUB_API_MAX_RETRIES"
-	GitHubAPIInitialRetryDelay   = "GITHUB_API_INITIAL_RETRY_DELAY"
-	PRMergePollMaxAttempts       = "PR_MERGE_POLL_MAX_ATTEMPTS"
-	PRMergePollInterval          = "PR_MERGE_POLL_INTERVAL"
+	EnvFile                    = "ENV"
+	Port                       = "PORT"
+	ConfigRepoName             = "CONFIG_REPO_NAME"
+	ConfigRepoOwner            = "CONFIG_REPO_OWNER"
+	AppId                      = "GITHUB_APP_ID"
+	AppClientId                = "GITHUB_APP_CLIENT_ID"
+	InstallationId             = "INSTALLATION_ID"
+	CommitterName              = "COMMITTER_NAME"
+	CommitterEmail             = "COMMITTER_EMAIL"
+	ConfigFile                 = "CONFIG_FILE"
+	MainConfigFile             = "MAIN_CONFIG_FILE"
+	UseMainConfig              = "USE_MAIN_CONFIG"
+	DeprecationFile            = "DEPRECATION_FILE"
+	WebserverPath              = "WEBSERVER_PATH"
+	ConfigRepoBranch           = "CONFIG_REPO_BRANCH"
+	PEMKeyName                 = "PEM_NAME"
+	WebhookSecretName          = "WEBHOOK_SECRET_NAME"
+	WebhookSecret              = "WEBHOOK_SECRET"
+	CopierLogName              = "COPIER_LOG_NAME"
+	GoogleCloudProjectId       = "GOOGLE_CLOUD_PROJECT_ID"
+	DefaultRecursiveCopy       = "DEFAULT_RECURSIVE_COPY"
+	DefaultPRMerge             = "DEFAULT_PR_MERGE"
+	DefaultCommitMessage       = "DEFAULT_COMMIT_MESSAGE"
+	DryRun                     = "DRY_RUN"
+	AuditEnabled               = "AUDIT_ENABLED"
+	MongoURI                   = "MONGO_URI"
+	MongoURISecretName         = "MONGO_URI_SECRET_NAME"
+	AuditDatabase              = "AUDIT_DATABASE"
+	AuditCollection            = "AUDIT_COLLECTION"
+	MetricsEnabled             = "METRICS_ENABLED"
+	SlackWebhookURL            = "SLACK_WEBHOOK_URL"
+	SlackChannel               = "SLACK_CHANNEL"
+	SlackUsername              = "SLACK_USERNAME"
+	SlackIconEmoji             = "SLACK_ICON_EMOJI"
+	SlackEnabled               = "SLACK_ENABLED"
+	GitHubAPIMaxRetries        = "GITHUB_API_MAX_RETRIES"
+	GitHubAPIInitialRetryDelay = "GITHUB_API_INITIAL_RETRY_DELAY"
+	PRMergePollMaxAttempts     = "PR_MERGE_POLL_MAX_ATTEMPTS"
+	PRMergePollInterval        = "PR_MERGE_POLL_INTERVAL"
 )
 
 // NewConfig returns a new Config instance with default values
 func NewConfig() *Config {
 	return &Config{
-		Port:                 "8080",
-		CommitterName:        "Copier Bot",
-		CommitterEmail:       "bot@example.com",
-		ConfigFile:           "copier-config.yaml",
-		DeprecationFile:      "deprecated_examples.json",
-		WebserverPath:        "/webhook",
-		ConfigRepoBranch:     "main",                                                           // Default branch to fetch config file from
-		PEMKeyName:           "projects/1054147886816/secrets/CODE_COPIER_PEM/versions/latest", // default secret name for GCP Secret Manager
-		WebhookSecretName:    "projects/1054147886816/secrets/webhook-secret/versions/latest",  // default webhook secret name for GCP Secret Manager
-		CopierLogName:        "copy-copier-log",                                                // default log name for logging to GCP
-		GoogleCloudProjectId: "github-copy-code-examples",                                      // default project ID for logging to GCP
+		Port:                       "8080",
+		CommitterName:              "Copier Bot",
+		CommitterEmail:             "bot@example.com",
+		ConfigFile:                 "copier-config.yaml",
+		DeprecationFile:            "deprecated_examples.json",
+		WebserverPath:              "/webhook",
+		ConfigRepoBranch:           "main",                                                           // Default branch to fetch config file from
+		PEMKeyName:                 "projects/1054147886816/secrets/CODE_COPIER_PEM/versions/latest", // default secret name for GCP Secret Manager
+		WebhookSecretName:          "projects/1054147886816/secrets/webhook-secret/versions/latest",  // default webhook secret name for GCP Secret Manager
+		CopierLogName:              "copy-copier-log",                                                // default log name for logging to GCP
+		GoogleCloudProjectId:       "github-copy-code-examples",                                      // default project ID for logging to GCP
 		DefaultRecursiveCopy:       true,                                                             // system-wide default for recursive copying that individual config entries can override.
 		DefaultPRMerge:             false,                                                            // system-wide default for PR merge without review that individual config entries can override.
 		DefaultCommitMessage:       "Automated PR with updated examples",                             // default commit message used when per-config commit_message is absent.
@@ -178,7 +178,7 @@ func LoadEnvironment(envFile string) (*Config, error) {
 	config.GoogleCloudProjectId = getEnvWithDefault(GoogleCloudProjectId, config.GoogleCloudProjectId)
 	config.DefaultCommitMessage = getEnvWithDefault(DefaultCommitMessage, config.DefaultCommitMessage)
 
-	// New features
+	// Optional features
 	config.DryRun = getBoolEnvWithDefault(DryRun, false)
 	config.AuditEnabled = getBoolEnvWithDefault(AuditEnabled, false)
 	config.MongoURI = os.Getenv(MongoURI)

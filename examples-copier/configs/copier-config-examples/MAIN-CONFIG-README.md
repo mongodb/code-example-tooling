@@ -1,6 +1,6 @@
 # Main Config Architecture Guide
 
-This guide explains the new main config architecture that supports centralized configuration with distributed workflow definitions.
+This guide explains the main config architecture that supports centralized configuration with distributed workflow definitions.
 
 ## Table of Contents
 

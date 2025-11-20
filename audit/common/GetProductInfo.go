@@ -137,6 +137,11 @@ var productInfoMap = map[string]ProductInfo{
 		ProductType: CollectionIsProduct,
 		SubProduct:  "",
 	},
+	"drivers": {
+		ProductName: Drivers,
+		ProductType: CollectionIsProduct,
+		SubProduct:  "",
+	},
 	"entity-framework": {
 		ProductName: EFCoreProvider,
 		ProductType: CollectionIsProduct,

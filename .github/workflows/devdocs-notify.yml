@@ -10,24 +10,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check for new PR or issues
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const text = context.payload.issue?.body 
-                      || context.payload.pull_request?.body 
-                      || "";
-
-            await fetch(process.env.SLACK_WEBHOOK_URL, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                text: `:eyes: @DevDocs a PR was opened or issue created  in *${context.payload.repository.full_name}* 
-            Event: *${context.eventName}* 
-            Link: ${context.payload.comment?.html_url
-                    || context.payload.issue?.html_url
-                    || context.payload.pull_request?.html_url
-                    || context.payload.review?.html_url}`
-                }),
-              });
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          REPO_NAME: ${{ github.repository }}
+          # Make sure this secret name matches what is in your Repo Settings
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          # Build Slack payload safely using jq
+          SLACK_PAYLOAD=$(jq -n \
+            --arg repo "$REPO_NAME" \
+            '{
+              "channel": "#docs-devdocs-notifications",
+              "username": "Issue Notifier",
+              "icon_emoji": ":mega:",
+              "text": "📢 @DevDocs a PR was opened or issue created in \($repo)"
+            }')
+
+          # Send to Slack
+          curl -X POST \
+               -H 'Content-type: application/json' \
+               --data "$SLACK_PAYLOAD" \
+               "$SLACK_WEBHOOK"

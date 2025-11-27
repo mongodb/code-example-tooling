@@ -4,12 +4,14 @@
 // Currently supports:
 //   - includes: Analyze include directive relationships in RST files
 //   - usage: Find all files that use a target file
+//   - procedures: Analyze procedure variations and statistics
 //
 // Future subcommands could include analyzing cross-references, broken links, or content metrics.
 package analyze
 
 import (
 	"github.com/mongodb/code-example-tooling/audit-cli/commands/analyze/includes"
+	"github.com/mongodb/code-example-tooling/audit-cli/commands/analyze/procedures"
 	"github.com/mongodb/code-example-tooling/audit-cli/commands/analyze/usage"
 	"github.com/spf13/cobra"
 )
@@ -27,6 +29,7 @@ func NewAnalyzeCommand() *cobra.Command {
 Currently supports:
   - includes: Analyze include directive relationships (forward dependencies)
   - usage: Find all files that use a target file (reverse dependencies)
+  - procedures: Analyze procedure variations and statistics
 
 Future subcommands may support analyzing cross-references, broken links, or content metrics.`,
 	}
@@ -34,6 +37,7 @@ Future subcommands may support analyzing cross-references, broken links, or cont
 	// Add subcommands
 	cmd.AddCommand(includes.NewIncludesCommand())
 	cmd.AddCommand(usage.NewUsageCommand())
+	cmd.AddCommand(procedures.NewProceduresCommand())
 
 	return cmd
 }

@@ -31,3 +31,27 @@ var OutputDirectiveRegex = regexp.MustCompile(`^\.\.\s+output::\s+(.+)$`)
 // Example: .. toctree::
 var ToctreeDirectiveRegex = regexp.MustCompile(`^\.\.\s+toctree::`)
 
+// ProcedureDirectiveRegex matches .. procedure:: directives in RST files.
+// Example: .. procedure::
+var ProcedureDirectiveRegex = regexp.MustCompile(`^\.\.\s+procedure::`)
+
+// StepDirectiveRegex matches .. step:: directives in RST files.
+// Example: .. step:: Connect to the database
+var StepDirectiveRegex = regexp.MustCompile(`^\.\.\s+step::\s*(.*)$`)
+
+// TabsDirectiveRegex matches .. tabs:: directives in RST files.
+// Example: .. tabs::
+var TabsDirectiveRegex = regexp.MustCompile(`^\.\.\s+tabs::`)
+
+// TabDirectiveRegex matches .. tab:: directives in RST files.
+// Example: .. tab:: Python
+var TabDirectiveRegex = regexp.MustCompile(`^\.\.\s+tab::\s*(.*)$`)
+
+// ComposableTutorialDirectiveRegex matches .. composable-tutorial:: directives in RST files.
+// Example: .. composable-tutorial::
+var ComposableTutorialDirectiveRegex = regexp.MustCompile(`^\.\.\s+composable-tutorial::`)
+
+// SelectedContentDirectiveRegex matches .. selected-content:: directives in RST files.
+// Example: .. selected-content::
+var SelectedContentDirectiveRegex = regexp.MustCompile(`^\.\.\s+selected-content::`)
+

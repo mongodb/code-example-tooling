@@ -3,12 +3,14 @@
 // This package serves as the parent command for various extraction operations.
 // Currently supports:
 //   - code-examples: Extract code examples from RST directives
+//   - procedures: Extract procedure variations from RST files
 //
 // Future subcommands could include extracting tables, images, or other structured content.
 package extract
 
 import (
 	"github.com/mongodb/code-example-tooling/audit-cli/commands/extract/code-examples"
+	"github.com/mongodb/code-example-tooling/audit-cli/commands/extract/procedures"
 	"github.com/spf13/cobra"
 )
 
@@ -23,12 +25,15 @@ func NewExtractCommand() *cobra.Command {
 		Long: `Extract various types of content from reStructuredText files.
 
 Currently supports extracting code examples from directives like literalinclude,
-code-block, and io-code-block. Future subcommands may support extracting other
-types of structured content such as tables, images, or metadata.`,
+code-block, and io-code-block, as well as extracting procedure variations from
+composable tutorials, tabs, and procedure directives. Future subcommands may
+support extracting other types of structured content such as tables, images,
+or metadata.`,
 	}
 
 	// Add subcommands
 	cmd.AddCommand(code_examples.NewCodeExamplesCommand())
+	cmd.AddCommand(procedures.NewProceduresCommand())
 
 	return cmd
 }

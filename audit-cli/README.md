@@ -54,12 +54,14 @@ The CLI is organized into parent commands with subcommands:
 ```
 audit-cli
 ├── extract          # Extract content from RST files
-│   └── code-examples
+│   ├── code-examples
+│   └── procedures
 ├── search           # Search through extracted content or source files
 │   └── find-string
 ├── analyze          # Analyze RST file structures
 │   ├── includes
-│   └── usage
+│   ├── usage
+│   └── procedures
 └── compare          # Compare files across versions
     └── file-contents
 ```
@@ -139,6 +141,111 @@ After extraction, the code extraction report shows:
 - Number of output files written
 - Code examples by language
 - Code examples by directive type
+
+#### `extract procedures`
+
+Extract unique procedures from reStructuredText files into individual files. This command parses procedures and creates
+one file per unique procedure (grouped by heading and content). Each procedure file represents a distinct piece of content,
+even if it appears in multiple selections or variations.
+
+**Use Cases:**
+
+This command helps writers:
+- Extract all unique procedures from a page for testing or migration
+- Generate individual procedure files for each distinct procedure
+- Understand how many different procedures exist in a document
+- Create standalone procedure files for reuse or testing
+- See which selections each procedure appears in
+
+**Basic Usage:**
+
+```bash
+# Extract all unique procedures from a file
+./audit-cli extract procedures path/to/file.rst -o ./output
+
+# Extract only procedures that appear in a specific selection
+./audit-cli extract procedures path/to/file.rst -o ./output --selection "driver, nodejs"
+
+# Dry run (show what would be extracted without writing files)
+./audit-cli extract procedures path/to/file.rst -o ./output --dry-run
+
+# Verbose output (shows all selections each procedure appears in)
+./audit-cli extract procedures path/to/file.rst -o ./output -v
+
+# Expand include directives inline
+./audit-cli extract procedures path/to/file.rst -o ./output --expand-includes
+```
+
+**Flags:**
+
+- `-o, --output <dir>` - Output directory for extracted procedure files (default: `./output`)
+- `--selection <value>` - Extract only procedures that appear in a specific selection (e.g., "python", "driver, nodejs")
+- `--expand-includes` - Expand include directives inline instead of preserving them
+- `--dry-run` - Show what would be extracted without writing files
+- `-v, --verbose` - Show detailed processing information including all selections each procedure appears in
+
+**Output Format:**
+
+Extracted files are named: `{heading}-{first-step-title}-{hash}.rst`
+
+The filename includes:
+- **Heading**: The section heading above the procedure
+- **First step title**: The title of the first step (for readability)
+- **Hash**: A short 6-character hash of the content (for uniqueness)
+
+Examples:
+- `before-you-begin-pull-the-mongodb-docker-image-e8eeec.rst`
+- `install-mongodb-community-edition-download-the-tarball-44c437.rst`
+- `configuration-create-the-data-and-log-directories-f1d35b.rst`
+
+**Verbose Output:**
+
+With the `-v` flag, the command shows detailed information about each procedure:
+
+```
+Found 36 unique procedure(s):
+
+1. Before You Begin
+   Output file: before-you-begin-pull-the-mongodb-docker-image-e8eeec.rst
+   Steps: 5
+   Appears in 2 selection(s):
+     - docker, None, None, None, None, None, without-search-docker
+     - docker, None, None, None, None, None, with-search-docker
+
+2. Install MongoDB Community Edition
+   Output file: install-mongodb-community-edition-download-the-tarball-44c437.rst
+   Steps: 4
+   Appears in 1 selection(s):
+     - macos, None, None, tarball, None, None, None
+```
+
+**Supported Procedure Types:**
+
+The command recognizes and extracts:
+- `.. procedure::` directives with `.. step::` directives
+- Ordered lists (numbered or lettered) as procedures
+- `.. tabs::` directives with `:tabid:` options for variations
+- `.. composable-tutorial::` directives with `.. selected-content::` blocks
+- Sub-procedures (ordered lists within steps)
+- YAML steps files (automatically converted to RST format)
+
+**How Uniqueness is Determined:**
+
+Procedures are grouped by:
+1. **Heading**: The section heading above the procedure
+2. **Content hash**: A hash of the procedure's steps and content
+
+This means:
+- Procedures with the same heading but different content are treated as separate unique procedures
+- Procedures with identical content that appear in multiple selections are extracted once
+- The output file shows all selections where that procedure appears (visible with `-v` flag)
+
+**Report:**
+
+After extraction, the report shows:
+- Number of unique procedures extracted
+- Number of files written
+- Detailed list of procedures with step counts and selections (with `-v` flag)
 
 ### Search Commands
 
@@ -515,6 +622,151 @@ include             : 3 files, 4 usages
 ./audit-cli analyze usage ~/docs/source/includes/fact.rst --exclude "*/deprecated/*"
 ```
 
+#### `analyze procedures`
+
+Analyze procedures in reStructuredText files to understand procedure complexity, uniqueness, and how they appear across
+different selections.
+
+This command parses procedures from RST files and provides statistics about:
+- Total number of unique procedures (grouped by heading and content)
+- Total number of procedure appearances across all selections
+- Implementation types (procedure directive vs ordered list)
+- Step counts for each procedure
+- Detection of sub-procedures (ordered lists within steps)
+- All selections where each procedure appears
+
+**Use Cases:**
+
+This command helps writers:
+- Understand the complexity of procedures in a document
+- Count how many unique procedures exist vs. how many times they appear
+- Identify procedures that use different implementation approaches
+- See which selections each procedure appears in
+- Plan testing coverage for procedure variations
+- Scope work related to procedure updates
+
+**Basic Usage:**
+
+```bash
+# Get summary count of unique procedures and total appearances
+./audit-cli analyze procedures path/to/file.rst
+
+# Show summary with incremental reporting flags
+./audit-cli analyze procedures path/to/file.rst --list-summary
+
+# List all unique procedures with full details
+./audit-cli analyze procedures path/to/file.rst --list-all
+
+# Expand include directives inline before analyzing
+./audit-cli analyze procedures path/to/file.rst --expand-includes
+```
+
+**Flags:**
+
+- `--list-summary` - Show summary statistics plus a list of procedure headings
+- `--list-all` - Show full details for each procedure including steps, selections, and implementation
+- `--expand-includes` - Expand include directives inline instead of preserving them
+
+**Output:**
+
+**Default output (summary only):**
+```
+File: path/to/file.rst
+Total unique procedures: 36
+Total procedure appearances: 93
+```
+
+**With `--list-summary`:**
+```
+File: path/to/file.rst
+Total unique procedures: 36
+Total procedure appearances: 93
+
+Unique Procedures:
+  1. Before You Begin
+  2. Install MongoDB Community Edition
+  3. Configuration
+  4. Run MongoDB Community Edition
+  ...
+```
+
+**With `--list-all`:**
+```
+File: path/to/file.rst
+Total unique procedures: 36
+Total procedure appearances: 93
+
+================================================================================
+Procedure Details
+================================================================================
+
+1. Before You Begin
+   Line: 45
+   Implementation: procedure-directive
+   Steps: 5
+   Contains sub-procedures: no
+   Appears in 2 selection(s):
+     - docker, None, None, None, None, None, without-search-docker
+     - docker, None, None, None, None, None, with-search-docker
+
+   Steps:
+     1. Pull the MongoDB Docker Image
+     2. Run the MongoDB Docker Container
+     3. Verify MongoDB is Running
+     4. Connect to MongoDB
+     5. Stop the MongoDB Docker Container
+
+2. Install MongoDB Community Edition
+   Line: 123
+   Implementation: ordered-list
+   Steps: 4
+   Contains sub-procedures: yes
+   Appears in 10 selection(s):
+     - linux, None, None, tarball, None, None, with-search
+     - linux, None, None, tarball, None, None, without-search
+     ...
+
+   Steps:
+     1. Download the tarball
+     2. Extract the files from the tarball
+     3. Ensure the binaries are in a directory listed in your PATH
+     4. Run MongoDB Community Edition
+```
+
+**Understanding the Counts:**
+
+The command reports two key metrics:
+
+1. **Total unique procedures**: Number of distinct procedures (grouped by heading and content hash)
+   - Procedures with the same heading but different content are counted separately
+   - Procedures with identical content are counted once, even if they appear in multiple selections
+
+2. **Total procedure appearances**: Total number of times procedures appear across all selections
+   - If a procedure appears in 5 different selections, it contributes 5 to this count
+   - This represents the total number of procedure instances a user might encounter
+
+**Example:**
+- A file might have **36 unique procedures** that appear a total of **93 times** across different selections
+- This means some procedures appear in multiple selections (e.g., a "Before You Begin" procedure that's the same for Docker with and without search)
+
+**Supported Procedure Types:**
+
+The command recognizes:
+- `.. procedure::` directives with `.. step::` directives
+- Ordered lists (numbered or lettered) as procedures
+- `.. tabs::` directives with `:tabid:` options for variations
+- `.. composable-tutorial::` directives with `.. selected-content::` blocks
+- Sub-procedures (ordered lists within steps)
+- YAML steps files (automatically converted to RST format)
+
+**Deterministic Parsing:**
+
+The parser ensures deterministic results by:
+- Sorting all map iterations to ensure consistent ordering
+- Sorting procedures by line number
+- Computing content hashes in a consistent manner
+- This guarantees the same file will always produce the same counts and groupings
+
 ### Compare Commands
 
 #### `compare file-contents`
@@ -686,14 +938,19 @@ audit-cli/
 ├── commands/                        # Command implementations
 │   ├── extract/                     # Extract parent command
 │   │   ├── extract.go              # Parent command definition
-│   │   └── code-examples/          # Code examples subcommand
-│   │       ├── code_examples.go    # Command logic
-│   │       ├── code_examples_test.go # Tests
-│   │       ├── parser.go           # RST directive parsing
-│   │       ├── writer.go           # File writing logic
-│   │       ├── report.go           # Report generation
-│   │       ├── types.go            # Type definitions
-│   │       └── language.go         # Language normalization
+│   │   ├── code-examples/          # Code examples subcommand
+│   │   │   ├── code_examples.go    # Command logic
+│   │   │   ├── code_examples_test.go # Tests
+│   │   │   ├── parser.go           # RST directive parsing
+│   │   │   ├── writer.go           # File writing logic
+│   │   │   ├── report.go           # Report generation
+│   │   │   ├── types.go            # Type definitions
+│   │   │   └── language.go         # Language normalization
+│   │   └── procedures/             # Procedures extraction subcommand
+│   │       ├── procedures.go       # Command logic
+│   │       ├── parser.go           # Procedure parsing and filtering
+│   │       ├── writer.go           # RST file writing
+│   │       └── types.go            # Type definitions
 │   ├── search/                      # Search parent command
 │   │   ├── search.go               # Parent command definition
 │   │   └── find-string/            # Find string subcommand
@@ -707,6 +964,9 @@ audit-cli/
 │   │   │   ├── analyzer.go         # Include tree building
 │   │   │   ├── output.go           # Output formatting
 │   │   │   └── types.go            # Type definitions
+│   │   ├── procedures/             # Procedures analysis subcommand
+│   │   │   ├── procedures.go       # Command logic
+│   │   │   └── output.go           # Output formatting
 │   │   └── usage/                  # Usage analysis subcommand
 │   │       ├── usage.go            # Command logic
 │   │       ├── usage_test.go       # Tests
@@ -734,6 +994,7 @@ audit-cli/
 │       ├── parser.go               # Generic parsing with includes
 │       ├── include_resolver.go     # Include directive resolution
 │       ├── directive_parser.go     # Directive parsing
+│       ├── procedure_parser.go     # Procedure parsing (core logic)
 │       └── file_utils.go           # File utilities
 └── testdata/                        # Test fixtures
     ├── input-files/                # Test RST files

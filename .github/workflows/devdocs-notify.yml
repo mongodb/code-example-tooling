@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check for new PR or issues
-        env:
+        env: 
           REPO_NAME: ${{ github.repository }}
           # Make sure this secret name matches what is in your Repo Settings
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}

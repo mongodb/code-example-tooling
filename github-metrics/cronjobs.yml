@@ -1,0 +1,34 @@
+---
+# `image` can be skipped if the values are being set in your .drone.yml file
+image:
+  repository: 795250896452.dkr.ecr.us-east-1.amazonaws.com/docs/code-example-tooling
+  tag: latest
+
+# Service account configuration for IRSA (IAM Roles for Service Accounts)
+serviceAccount:
+  enabled: true
+  irsa:
+    accountId: "216656347858"
+    roleName: devDocsCodeToolingServiceRole
+
+# global secrets are references to k8s Secrets
+globalEnvSecrets:
+  GITHUB_TOKEN: github-token
+  ATLAS_CONNECTION_STRING: atlas-connection-string
+
+cronJobs:
+  - name: github-metrics-collection
+    # Run on 1st, 11th, and 21st of each month at 8am UTC
+    # This ensures no more than 10 days between runs, preventing data loss
+    # (GitHub metrics are only available for the trailing 14 days)
+    schedule: "0 8 1,11,21 * *"
+    command:
+      - node
+      - index.js
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi

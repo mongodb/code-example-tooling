@@ -1,0 +1,94 @@
+---
+kind: pipeline
+type: kubernetes
+name: github-metrics-test
+
+trigger:
+  branch:
+    - main
+  event:
+    - push          # Runs when PR is merged to main
+    - pull_request  # Also runs on PRs for early feedback
+
+steps:
+  - name: check-changes
+    image: alpine/git
+    commands:
+      - |
+        # Check if any files in github-metrics/ directory changed
+        if [ "$DRONE_BUILD_EVENT" = "pull_request" ]; then
+          # For PRs, compare against target branch
+          git diff --name-only origin/$DRONE_TARGET_BRANCH...HEAD | grep -q "^github-metrics/" && echo "Changes detected" || (echo "No changes in github-metrics/, skipping" && exit 78)
+        else
+          # For pushes, compare against previous commit
+          git diff --name-only $DRONE_COMMIT_BEFORE $DRONE_COMMIT_AFTER | grep -q "^github-metrics/" && echo "Changes detected" || (echo "No changes in github-metrics/, skipping" && exit 78)
+        fi
+
+  - name: test
+    image: node:20-alpine
+    commands:
+      - cd github-metrics
+      - npm ci
+      - node --version
+      - npm --version
+      - echo "Validating package.json and dependencies..."
+
+---
+depends_on: ['github-metrics-test']
+kind: pipeline
+type: kubernetes
+name: github-metrics-build
+
+trigger:
+  branch:
+    - main
+  event:
+    - push
+    - tag
+
+steps:
+  # Builds and publishes Docker image for production
+  - name: publish-production
+    image: plugins/kaniko-ecr
+    settings:
+      create_repository: true
+      registry: 795250896452.dkr.ecr.us-east-1.amazonaws.com
+      repo: docs/github-metrics
+      tags:
+        - git-${DRONE_COMMIT_SHA:0:7}
+        - latest
+      access_key:
+        from_secret: ecr_access_key
+      secret_key:
+        from_secret: ecr_secret_key
+      context: github-metrics
+      dockerfile: github-metrics/Dockerfile
+
+---
+depends_on: ['github-metrics-build']
+kind: pipeline
+type: kubernetes
+name: github-metrics-deploy
+
+trigger:
+  branch:
+    - main
+  event:
+    - push
+    - tag
+
+steps:
+  # Deploys cronjob to production using Helm
+  - name: deploy-production
+    image: quay.io/mongodb/drone-helm:v3
+    settings:
+      chart: mongodb/cronjobs
+      chart_version: 1.21.2
+      add_repos: [mongodb=https://10gen.github.io/helm-charts]
+      namespace: docs
+      release: github-metrics
+      values: image.tag=git-${DRONE_COMMIT_SHA:0:7},image.repository=795250896452.dkr.ecr.us-east-1.amazonaws.com/docs/github-metrics
+      values_files: ['github-metrics/cronjobs.yml']
+      api_server: https://api.prod.corp.mongodb.com
+      kubernetes_token:
+        from_secret: kubernetes_token

@@ -16,12 +16,21 @@ globalEnvSecrets:
   GITHUB_TOKEN: github-token
   ATLAS_CONNECTION_STRING: atlas-connection-string
 
+# Persistent volume for storing last run timestamp
+# This allows the cronjob to track when it last ran successfully
+persistence:
+  enabled: true
+  storageClass: "standard"
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  mountPath: /data
+
 cronJobs:
   - name: github-metrics-collection
-    # Run on 1st, 11th, and 21st of each month at 8am UTC
-    # This ensures no more than 10 days between runs, preventing data loss
-    # (GitHub metrics are only available for the trailing 14 days)
-    schedule: "0 8 1,11,21 * *"
+    # Run every Sunday at 8am UTC
+    # The job will check if 14 days have passed since the last run
+    # and skip execution if not enough time has elapsed
+    schedule: "0 8 * * 0"
     command:
       - node
       - index.js
@@ -32,3 +41,4 @@ cronJobs:
       limits:
         cpu: 500m
         memory: 512Mi
+

@@ -506,5 +506,5 @@ workflows:
 
 ## Questions?
 
-Contact the Developer Experience team or open an issue in the [code-example-tooling repository](https://github.com/mongodb/code-example-tooling/issues).
+Contact the Developer Docs team or open an issue in the [code-example-tooling repository](https://github.com/mongodb/code-example-tooling/issues).
 

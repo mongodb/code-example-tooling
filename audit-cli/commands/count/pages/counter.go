@@ -50,8 +50,9 @@ func CountPages(dirPath string, forProject string, excludeDirs []string, current
 
 	// Default exclusions at the root of content or source
 	defaultExclusions := map[string]bool{
-		"404":              true,
-		"meta":             true,
+		"404":               true,
+		"docs-platform":     true,
+		"meta":              true,
 		"table-of-contents": true,
 	}
 
@@ -208,6 +209,7 @@ func extractProjectName(relPath string) string {
 // Parameters:
 //   - relPath: Relative path from content directory
 //   - projectName: Name of the project (first directory component)
+//
 // Returns the version name, or empty string if non-versioned
 func extractVersionFromPath(relPath string, projectName string) string {
 	parts := strings.Split(relPath, string(filepath.Separator))
@@ -318,4 +320,3 @@ func getCurrentVersion(projectDir string) (string, error) {
 
 	return "", fmt.Errorf("no current version found in project directory: %s", projectDir)
 }
-

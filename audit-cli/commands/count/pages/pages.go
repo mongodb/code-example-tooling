@@ -13,10 +13,11 @@ import (
 // This command counts documentation pages (.txt files) in the MongoDB documentation monorepo.
 //
 // Usage:
-//   count pages /path/to/docs-monorepo
-//   count pages /path/to/docs-monorepo --for-project manual
-//   count pages /path/to/docs-monorepo --count-by-project
-//   count pages /path/to/docs-monorepo --exclude-dirs api-reference,generated
+//
+//	count pages /path/to/docs-monorepo
+//	count pages /path/to/docs-monorepo --for-project manual
+//	count pages /path/to/docs-monorepo --count-by-project
+//	count pages /path/to/docs-monorepo --exclude-dirs api-reference,generated
 //
 // Flags:
 //   - --for-project: Only count pages for a specific project
@@ -43,6 +44,7 @@ Automatic exclusions:
   - Files in code-examples directories (at root of content or source)
   - Files in the following directories at the root of content:
     - 404
+    - docs-platform
     - meta
     - table-of-contents
   - All non-.txt files
@@ -124,4 +126,3 @@ func runPages(dirPath string, forProject string, countByProject bool, excludeDir
 
 	return nil
 }
-

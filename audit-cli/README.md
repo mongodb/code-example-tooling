@@ -754,6 +754,7 @@ The command automatically excludes:
 - Files in `code-examples` directories at the root of `content` or `source` (these contain plain text examples, not pages)
 - Files in the following directories at the root of `content`:
   - `404` - Error pages
+  - `docs-platform` - Documentation for the MongoDB website and meta content
   - `meta` - MongoDB Meta Documentation - style guide, tools, etc.
   - `table-of-contents` - Navigation files
 - All non-`.txt` files (configuration files, YAML, etc.)

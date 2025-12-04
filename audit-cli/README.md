@@ -63,8 +63,9 @@ audit-cli
 │   └── usage
 ├── compare          # Compare files across versions
 │   └── file-contents
-└── count            # Count code examples
-    └── tested-examples
+└── count            # Count code examples and documentation pages
+    ├── tested-examples
+    └── pages
 ```
 
 ### Extract Commands
@@ -731,6 +732,135 @@ This command helps writers and maintainers:
 
 By default, prints a single integer (total count) for use in CI or scripting. With `--count-by-product`, displays a formatted table with product names and counts.
 
+#### `count pages`
+
+Count documentation pages (.txt files) in the MongoDB documentation monorepo.
+
+This command navigates to the `content` directory and recursively counts all `.txt` files, which represent documentation pages that resolve to unique URLs. The command automatically excludes certain directories and file types that don't represent actual documentation pages.
+
+**Use Cases:**
+
+This command helps writers and maintainers:
+- Track the total number of documentation pages across the monorepo
+- Monitor documentation coverage by product/project
+- Identify projects with extensive or minimal documentation
+- Exclude auto-generated or deprecated content from counts
+- Count only current versions of versioned documentation
+- Compare page counts across different documentation versions
+
+**Automatic Exclusions:**
+
+The command automatically excludes:
+- Files in `code-examples` directories at the root of `content` or `source` (these contain plain text examples, not pages)
+- Files in the following directories at the root of `content`:
+  - `404` - Error pages
+  - `meta` - MongoDB Meta Documentation - style guide, tools, etc.
+  - `table-of-contents` - Navigation files
+- All non-`.txt` files (configuration files, YAML, etc.)
+
+**Basic Usage:**
+
+```bash
+# Get total count of all documentation pages
+./audit-cli count pages /path/to/docs-monorepo
+
+# Count pages for a specific project
+./audit-cli count pages /path/to/docs-monorepo --for-project manual
+
+# Show counts broken down by project
+./audit-cli count pages /path/to/docs-monorepo --count-by-project
+
+# Exclude specific directories from counting
+./audit-cli count pages /path/to/docs-monorepo --exclude-dirs api-reference,generated
+
+# Count only current versions (for versioned projects)
+./audit-cli count pages /path/to/docs-monorepo --current-only
+
+# Show counts by project and version
+./audit-cli count pages /path/to/docs-monorepo --by-version
+
+# Combine flags: count pages for a specific project, excluding certain directories
+./audit-cli count pages /path/to/docs-monorepo --for-project atlas --exclude-dirs deprecated
+```
+
+**Flags:**
+
+- `--for-project <project>` - Only count pages for a specific project (directory name under `content/`)
+- `--count-by-project` - Display counts for each project in a formatted table
+- `--exclude-dirs <dirs>` - Comma-separated list of directory names to exclude from counting (e.g., `deprecated,archive`)
+- `--current-only` - Only count pages in the current version (for versioned projects, counts only `current` or `manual` version directories; for non-versioned projects, counts all pages)
+- `--by-version` - Display counts grouped by project and version (shows version breakdown for versioned projects; non-versioned projects show as "(no version)")
+
+**Output:**
+
+By default, prints a single integer (total count) for use in CI or scripting. With `--count-by-project`, displays a formatted table with project names and counts. With `--by-version`, displays a hierarchical breakdown by project and version.
+
+**Versioned Documentation:**
+
+Some MongoDB documentation projects contain multiple versions, represented as distinct directories between the project directory and the `source` directory:
+- **Versioned project structure**: `content/{project}/{version}/source/...`
+- **Non-versioned project structure**: `content/{project}/source/...`
+
+Version directory names follow these patterns:
+- `current` or `manual` - The current/latest version
+- `upcoming` - Pre-release version
+- `v{number}` - Specific version (e.g., `v8.0`, `v7.0`)
+
+The `--current-only` flag counts only files in the current version directory (`current` or `manual`) for versioned projects, while counting all files for non-versioned projects.
+
+The `--by-version` flag shows a breakdown of page counts for each version within each project.
+
+**Note:** The `--current-only` and `--by-version` flags are mutually exclusive.
+
+**Examples:**
+
+```bash
+# Quick count for CI/CD
+TOTAL_PAGES=$(./audit-cli count pages ~/docs-monorepo)
+echo "Total documentation pages: $TOTAL_PAGES"
+
+# Detailed breakdown by project
+./audit-cli count pages ~/docs-monorepo --count-by-project
+# Output:
+# Page Counts by Project:
+#
+#   app-services                       245
+#   atlas                              512
+#   manual                            1024
+#   ...
+#
+# Total: 2891
+
+# Count only Atlas pages
+./audit-cli count pages ~/docs-monorepo --for-project atlas
+# Output: 512
+
+# Exclude deprecated content
+./audit-cli count pages ~/docs-monorepo --exclude-dirs deprecated,archive --count-by-project
+
+# Count only current versions
+./audit-cli count pages ~/docs-monorepo --current-only
+# Output: 1245 (only counts current/manual versions)
+
+# Show breakdown by version
+./audit-cli count pages ~/docs-monorepo --by-version
+# Output:
+# Project: drivers
+#   manual                           150
+#   upcoming                         145
+#   v8.0                             140
+#   v7.0                             135
+#
+# Project: atlas
+#   (no version)                     200
+#
+# Total: 770
+
+# Count current version for a specific project
+./audit-cli count pages ~/docs-monorepo --for-project drivers --current-only
+# Output: 150
+```
+
 ## Development
 
 ### Project Structure
@@ -780,9 +910,15 @@ audit-cli/
 │   │       └── version_resolver.go # Version path resolution
 │   └── count/                       # Count parent command
 │       ├── count.go                # Parent command definition
-│       └── tested-examples/        # Tested examples counting subcommand
-│           ├── tested_examples.go  # Command logic
-│           ├── tested_examples_test.go # Tests
+│       ├── tested-examples/        # Tested examples counting subcommand
+│       │   ├── tested_examples.go  # Command logic
+│       │   ├── tested_examples_test.go # Tests
+│       │   ├── counter.go          # Counting logic
+│       │   ├── output.go           # Output formatting
+│       │   └── types.go            # Type definitions
+│       └── pages/                  # Pages counting subcommand
+│           ├── pages.go            # Command logic
+│           ├── pages_test.go       # Tests
 │           ├── counter.go          # Counting logic
 │           ├── output.go           # Output formatting
 │           └── types.go            # Type definitions

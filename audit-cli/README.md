@@ -35,11 +35,11 @@ This CLI tool helps maintain code quality across MongoDB's documentation by:
 ### Build from Source
 
 ```bash
-cd audit-cli
-go build
+cd audit-cli/bin
+go build ../
 ```
 
-This creates an `audit-cli` executable in the current directory.
+This creates an `audit-cli` executable in the `bin` directory.
 
 ### Run Without Building
 

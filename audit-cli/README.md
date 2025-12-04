@@ -11,6 +11,7 @@ A Go CLI tool for extracting and analyzing code examples from MongoDB documentat
   - [Search Commands](#search-commands)
   - [Analyze Commands](#analyze-commands)
   - [Compare Commands](#compare-commands)
+  - [Count Commands](#count-commands)
 - [Development](#development)
   - [Project Structure](#project-structure)
   - [Adding New Commands](#adding-new-commands)
@@ -60,8 +61,10 @@ audit-cli
 ├── analyze          # Analyze RST file structures
 │   ├── includes
 │   └── usage
-└── compare          # Compare files across versions
-    └── file-contents
+├── compare          # Compare files across versions
+│   └── file-contents
+└── count            # Count code examples
+    └── tested-examples
 ```
 
 ### Extract Commands
@@ -676,6 +679,58 @@ product-dir/
 Files that don't exist in certain versions are reported separately and do not cause errors. This is expected behavior
 since features may be added or removed across versions.
 
+### Count Commands
+
+#### `count tested-examples`
+
+Count tested code examples in the MongoDB documentation monorepo.
+
+This command navigates to the `content/code-examples/tested` directory from the monorepo root and counts all files recursively. The tested directory has a two-level structure: L1 (language directories) and L2 (product directories).
+
+**Use Cases:**
+
+This command helps writers and maintainers:
+- Track the total number of tested code examples
+- Monitor code example coverage by product
+- Identify products with few or many examples
+- Count only source files (excluding output files)
+
+**Basic Usage:**
+
+```bash
+# Get total count of all tested code examples
+./audit-cli count tested-examples /path/to/docs-monorepo
+
+# Count examples for a specific product
+./audit-cli count tested-examples /path/to/docs-monorepo --for-product pymongo
+
+# Show counts broken down by product
+./audit-cli count tested-examples /path/to/docs-monorepo --count-by-product
+
+# Count only source files (exclude .txt and .sh output files)
+./audit-cli count tested-examples /path/to/docs-monorepo --exclude-output
+```
+
+**Flags:**
+
+- `--for-product <product>` - Only count code examples for a specific product
+- `--count-by-product` - Display counts for each product
+- `--exclude-output` - Only count source files (exclude .txt and .sh files)
+
+**Valid Products:**
+
+- `mongosh` - MongoDB Shell
+- `csharp/driver` - C#/.NET Driver
+- `go/driver` - Go Driver
+- `go/atlas-sdk` - Atlas Go SDK
+- `java/driver-sync` - Java Sync Driver
+- `javascript/driver` - Node.js Driver
+- `pymongo` - PyMongo Driver
+
+**Output:**
+
+By default, prints a single integer (total count) for use in CI or scripting. With `--count-by-product`, displays a formatted table with product names and counts.
+
 ## Development
 
 ### Project Structure
@@ -713,16 +768,24 @@ audit-cli/
 │   │       ├── analyzer.go         # Reference finding logic
 │   │       ├── output.go           # Output formatting
 │   │       └── types.go            # Type definitions
-│   └── compare/                     # Compare parent command
-│       ├── compare.go              # Parent command definition
-│       └── file-contents/          # File contents comparison subcommand
-│           ├── file_contents.go    # Command logic
-│           ├── file_contents_test.go # Tests
-│           ├── comparer.go         # Comparison logic
-│           ├── differ.go           # Diff generation
+│   ├── compare/                     # Compare parent command
+│   │   ├── compare.go              # Parent command definition
+│   │   └── file-contents/          # File contents comparison subcommand
+│   │       ├── file_contents.go    # Command logic
+│   │       ├── file_contents_test.go # Tests
+│   │       ├── comparer.go         # Comparison logic
+│   │       ├── differ.go           # Diff generation
+│   │       ├── output.go           # Output formatting
+│   │       ├── types.go            # Type definitions
+│   │       └── version_resolver.go # Version path resolution
+│   └── count/                       # Count parent command
+│       ├── count.go                # Parent command definition
+│       └── tested-examples/        # Tested examples counting subcommand
+│           ├── tested_examples.go  # Command logic
+│           ├── tested_examples_test.go # Tests
+│           ├── counter.go          # Counting logic
 │           ├── output.go           # Output formatting
-│           ├── types.go            # Type definitions
-│           └── version_resolver.go # Version path resolution
+│           └── types.go            # Type definitions
 ├── internal/                        # Internal packages
 │   ├── pathresolver/               # Path resolution utilities
 │   │   ├── pathresolver.go         # Core path resolution
@@ -742,12 +805,14 @@ audit-cli/
     │       ├── includes/           # Included RST files
     │       └── code-examples/      # Code files for literalinclude
     ├── expected-output/            # Expected extraction results
-    └── compare/                    # Compare command test data
-        ├── product/                # Version structure tests
-        │   ├── manual/             # Manual version
-        │   ├── upcoming/           # Upcoming version
-        │   └── v8.0/               # v8.0 version
-        └── *.txt                   # Direct comparison tests
+    ├── compare/                    # Compare command test data
+    │   ├── product/                # Version structure tests
+    │   │   ├── manual/             # Manual version
+    │   │   ├── upcoming/           # Upcoming version
+    │   │   └── v8.0/               # v8.0 version
+    │   └── *.txt                   # Direct comparison tests
+    └── count-test-monorepo/        # Count command test data
+        └── content/code-examples/tested/  # Tested examples structure
 ```
 
 ### Adding New Commands

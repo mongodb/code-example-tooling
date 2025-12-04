@@ -459,6 +459,29 @@ func (c *YAMLConfig) SetDefaults() {
 		// Apply global defaults if not overridden
 		if workflow.CommitStrategy == nil && c.Defaults != nil && c.Defaults.CommitStrategy != nil {
 			workflow.CommitStrategy = c.Defaults.CommitStrategy
+		} else if workflow.CommitStrategy != nil && c.Defaults != nil && c.Defaults.CommitStrategy != nil {
+			// Merge individual fields from defaults if not set in workflow
+			if workflow.CommitStrategy.Type == "" {
+				workflow.CommitStrategy.Type = c.Defaults.CommitStrategy.Type
+			}
+			if workflow.CommitStrategy.CommitMessage == "" {
+				workflow.CommitStrategy.CommitMessage = c.Defaults.CommitStrategy.CommitMessage
+			}
+			if workflow.CommitStrategy.PRTitle == "" {
+				workflow.CommitStrategy.PRTitle = c.Defaults.CommitStrategy.PRTitle
+			}
+			if workflow.CommitStrategy.PRBody == "" {
+				workflow.CommitStrategy.PRBody = c.Defaults.CommitStrategy.PRBody
+			}
+			// For boolean fields, we can't distinguish between "not set" and "false"
+			// So we only apply defaults if the workflow doesn't have a commit_strategy at all
+			// This is already handled above, so we don't override UsePRTemplate or AutoMerge here
+			// unless we want to always inherit them when not explicitly set to true
+			if !workflow.CommitStrategy.UsePRTemplate && c.Defaults.CommitStrategy.UsePRTemplate {
+				workflow.CommitStrategy.UsePRTemplate = c.Defaults.CommitStrategy.UsePRTemplate
+			}
+			// Note: AutoMerge is intentionally not inherited here to avoid accidentally
+			// enabling auto-merge when a workflow specifies its own commit_strategy
 		}
 
 		if workflow.DeprecationCheck == nil && c.Defaults != nil && c.Defaults.DeprecationCheck != nil {
@@ -511,6 +534,29 @@ func (w *WorkflowConfig) SetDefaults() {
 		// Apply local defaults if not overridden
 		if workflow.CommitStrategy == nil && w.Defaults != nil && w.Defaults.CommitStrategy != nil {
 			workflow.CommitStrategy = w.Defaults.CommitStrategy
+		} else if workflow.CommitStrategy != nil && w.Defaults != nil && w.Defaults.CommitStrategy != nil {
+			// Merge individual fields from defaults if not set in workflow
+			if workflow.CommitStrategy.Type == "" {
+				workflow.CommitStrategy.Type = w.Defaults.CommitStrategy.Type
+			}
+			if workflow.CommitStrategy.CommitMessage == "" {
+				workflow.CommitStrategy.CommitMessage = w.Defaults.CommitStrategy.CommitMessage
+			}
+			if workflow.CommitStrategy.PRTitle == "" {
+				workflow.CommitStrategy.PRTitle = w.Defaults.CommitStrategy.PRTitle
+			}
+			if workflow.CommitStrategy.PRBody == "" {
+				workflow.CommitStrategy.PRBody = w.Defaults.CommitStrategy.PRBody
+			}
+			// For boolean fields, we can't distinguish between "not set" and "false"
+			// So we only apply defaults if the workflow doesn't have a commit_strategy at all
+			// This is already handled above, so we don't override UsePRTemplate or AutoMerge here
+			// unless we want to always inherit them when not explicitly set to true
+			if !workflow.CommitStrategy.UsePRTemplate && w.Defaults.CommitStrategy.UsePRTemplate {
+				workflow.CommitStrategy.UsePRTemplate = w.Defaults.CommitStrategy.UsePRTemplate
+			}
+			// Note: AutoMerge is intentionally not inherited here to avoid accidentally
+			// enabling auto-merge when a workflow specifies its own commit_strategy
 		}
 
 		if workflow.DeprecationCheck == nil && w.Defaults != nil && w.Defaults.DeprecationCheck != nil {

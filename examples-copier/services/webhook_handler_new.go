@@ -166,11 +166,15 @@ func HandleWebhookWithContainer(w http.ResponseWriter, r *http.Request, config *
 	repoOwner := repo.GetOwner().GetLogin()
 	repoName := repo.GetName()
 
+	// Extract the base branch (the branch the PR was merged into)
+	baseBranch := prEvt.GetPullRequest().GetBase().GetRef()
+
 	LogInfoCtx(ctx, "processing merged PR", map[string]interface{}{
-		"pr_number":  prNumber,
-		"sha":        sourceCommitSHA,
-		"repo":       fmt.Sprintf("%s/%s", repoOwner, repoName),
-		"elapsed_ms": time.Since(startTime).Milliseconds(),
+		"pr_number":   prNumber,
+		"sha":         sourceCommitSHA,
+		"repo":        fmt.Sprintf("%s/%s", repoOwner, repoName),
+		"base_branch": baseBranch,
+		"elapsed_ms":  time.Since(startTime).Milliseconds(),
 	})
 
 	// Respond immediately to avoid GitHub webhook timeout
@@ -197,11 +201,11 @@ func HandleWebhookWithContainer(w http.ResponseWriter, r *http.Request, config *
 	// Process asynchronously in background with a new context
 	// Don't use the request context as it will be cancelled when the request completes
 	bgCtx := context.Background()
-	go handleMergedPRWithContainer(bgCtx, prNumber, sourceCommitSHA, repoOwner, repoName, config, container)
+	go handleMergedPRWithContainer(bgCtx, prNumber, sourceCommitSHA, repoOwner, repoName, baseBranch, config, container)
 }
 
 // handleMergedPRWithContainer processes a merged PR using the new pattern matching system
-func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommitSHA string, repoOwner string, repoName string, config *configs.Config, container *ServiceContainer) {
+func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommitSHA string, repoOwner string, repoName string, baseBranch string, config *configs.Config, container *ServiceContainer) {
 	startTime := time.Now()
 
 	// Configure GitHub permissions
@@ -227,18 +231,20 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 		return
 	}
 
-	// Find workflows matching this source repo
+	// Find workflows matching this source repo and branch
 	webhookRepo := fmt.Sprintf("%s/%s", repoOwner, repoName)
-	matchingWorkflows := []types.Workflow{}
+	var matchingWorkflows []types.Workflow
 	for _, workflow := range yamlConfig.Workflows {
-		if workflow.Source.Repo == webhookRepo {
+		// Match both repository and branch
+		if workflow.Source.Repo == webhookRepo && workflow.Source.Branch == baseBranch {
 			matchingWorkflows = append(matchingWorkflows, workflow)
 		}
 	}
 
 	if len(matchingWorkflows) == 0 {
-		LogWarningCtx(ctx, "no workflows configured for source repository", map[string]interface{}{
+		LogWarningCtx(ctx, "no workflows configured for source repository and branch", map[string]interface{}{
 			"webhook_repo":   webhookRepo,
+			"base_branch":    baseBranch,
 			"workflow_count": len(yamlConfig.Workflows),
 		})
 		container.MetricsCollector.RecordWebhookFailed()
@@ -247,6 +253,7 @@ func handleMergedPRWithContainer(ctx context.Context, prNumber int, sourceCommit
 
 	LogInfoCtx(ctx, "found matching workflows", map[string]interface{}{
 		"webhook_repo":   webhookRepo,
+		"base_branch":    baseBranch,
 		"matching_count": len(matchingWorkflows),
 	})
 
@@ -361,5 +368,3 @@ func processFilesWithWorkflows(ctx context.Context, prNumber int, sourceCommitSH
 		"workflow_count": len(yamlConfig.Workflows),
 	})
 }
-
-

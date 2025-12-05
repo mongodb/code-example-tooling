@@ -767,6 +767,8 @@ The parser ensures deterministic results by:
 - Computing content hashes in a consistent manner
 - This guarantees the same file will always produce the same counts and groupings
 
+For more details about procedure parsing logic, refer to [docs/PROCEDURE_PARSING.md](docs/PROCEDURE_PARSING.md).
+
 ### Compare Commands
 
 #### `compare file-contents`

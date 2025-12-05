@@ -936,81 +936,90 @@ since features may be added or removed across versions.
 
 ```
 audit-cli/
-├── main.go                          # CLI entry point
-├── commands/                        # Command implementations
-│   ├── extract/                     # Extract parent command
-│   │   ├── extract.go              # Parent command definition
-│   │   ├── code-examples/          # Code examples subcommand
-│   │   │   ├── code_examples.go    # Command logic
-│   │   │   ├── code_examples_test.go # Tests
-│   │   │   ├── parser.go           # RST directive parsing
-│   │   │   ├── writer.go           # File writing logic
-│   │   │   ├── report.go           # Report generation
-│   │   │   ├── types.go            # Type definitions
-│   │   │   └── language.go         # Language normalization
-│   │   └── procedures/             # Procedures extraction subcommand
-│   │       ├── procedures.go       # Command logic
-│   │       ├── parser.go           # Procedure parsing and filtering
-│   │       ├── writer.go           # RST file writing
-│   │       └── types.go            # Type definitions
-│   ├── search/                      # Search parent command
-│   │   ├── search.go               # Parent command definition
-│   │   └── find-string/            # Find string subcommand
-│   │       ├── find_string.go      # Command logic
-│   │       ├── types.go            # Type definitions
-│   │       └── report.go           # Report generation
-│   ├── analyze/                     # Analyze parent command
-│   │   ├── analyze.go              # Parent command definition
-│   │   ├── includes/               # Includes analysis subcommand
-│   │   │   ├── includes.go         # Command logic
-│   │   │   ├── analyzer.go         # Include tree building
-│   │   │   ├── output.go           # Output formatting
-│   │   │   └── types.go            # Type definitions
-│   │   ├── procedures/             # Procedures analysis subcommand
-│   │   │   ├── procedures.go       # Command logic
-│   │   │   └── output.go           # Output formatting
-│   │   └── usage/                  # Usage analysis subcommand
-│   │       ├── usage.go            # Command logic
-│   │       ├── usage_test.go       # Tests
-│   │       ├── analyzer.go         # Reference finding logic
-│   │       ├── output.go           # Output formatting
-│   │       └── types.go            # Type definitions
-│   └── compare/                     # Compare parent command
-│       ├── compare.go              # Parent command definition
-│       └── file-contents/          # File contents comparison subcommand
-│           ├── file_contents.go    # Command logic
-│           ├── file_contents_test.go # Tests
-│           ├── comparer.go         # Comparison logic
-│           ├── differ.go           # Diff generation
-│           ├── output.go           # Output formatting
-│           ├── types.go            # Type definitions
-│           └── version_resolver.go # Version path resolution
-├── internal/                        # Internal packages
-│   ├── pathresolver/               # Path resolution utilities
-│   │   ├── pathresolver.go         # Core path resolution
-│   │   ├── pathresolver_test.go    # Tests
-│   │   ├── source_finder.go        # Source directory detection
-│   │   ├── version_resolver.go     # Version path resolution
-│   │   └── types.go                # Type definitions
-│   └── rst/                        # RST parsing utilities
-│       ├── parser.go               # Generic parsing with includes
-│       ├── include_resolver.go     # Include directive resolution
-│       ├── directive_parser.go     # Directive parsing
-│       ├── procedure_parser.go     # Procedure parsing (core logic)
-│       └── file_utils.go           # File utilities
-└── testdata/                        # Test fixtures
-    ├── input-files/                # Test RST files
-    │   └── source/                 # Source directory (required)
-    │       ├── *.rst               # Test files
-    │       ├── includes/           # Included RST files
-    │       └── code-examples/      # Code files for literalinclude
-    ├── expected-output/            # Expected extraction results
-    └── compare/                    # Compare command test data
-        ├── product/                # Version structure tests
-        │   ├── manual/             # Manual version
-        │   ├── upcoming/           # Upcoming version
-        │   └── v8.0/               # v8.0 version
-        └── *.txt                   # Direct comparison tests
+├── main.go                                  # CLI entry point
+├── commands/                                # Command implementations
+│   ├── extract/                             # Extract parent command
+│   │   ├── extract.go                       # Parent command definition
+│   │   ├── code-examples/                   # Code examples subcommand
+│   │   │   ├── code_examples.go             # Command logic
+│   │   │   ├── code_examples_test.go        # Tests
+│   │   │   ├── parser.go                    # RST directive parsing
+│   │   │   ├── writer.go                    # File writing logic
+│   │   │   ├── report.go                    # Report generation
+│   │   │   ├── types.go                     # Type definitions
+│   │   │   └── language.go                  # Language normalization
+│   │   └── procedures/                      # Procedures extraction subcommand
+│   │       ├── procedures.go                # Command logic
+│   │       ├── procedures_test.go           # Tests
+│   │       ├── parser.go                    # Filename generation and filtering
+│   │       ├── writer.go                    # RST file writing
+│   │       └── types.go                     # Type definitions
+│   ├── search/                              # Search parent command
+│   │   ├── search.go                        # Parent command definition
+│   │   └── find-string/                     # Find string subcommand
+│   │       ├── find_string.go               # Command logic
+│   │       ├── types.go                     # Type definitions
+│   │       └── report.go                    # Report generation
+│   ├── analyze/                             # Analyze parent command
+│   │   ├── analyze.go                       # Parent command definition
+│   │   ├── includes/                        # Includes analysis subcommand
+│   │   │   ├── includes.go                  # Command logic
+│   │   │   ├── analyzer.go                  # Include tree building
+│   │   │   ├── output.go                    # Output formatting
+│   │   │   └── types.go                     # Type definitions
+│   │   ├── procedures/                      # Procedures analysis subcommand
+│   │   │   ├── procedures.go                # Command logic
+│   │   │   ├── procedures_test.go           # Tests
+│   │   │   ├── analyzer.go                  # Procedure analysis logic
+│   │   │   ├── output.go                    # Output formatting
+│   │   │   └── types.go                     # Type definitions
+│   │   └── usage/                           # Usage analysis subcommand
+│   │       ├── usage.go                     # Command logic
+│   │       ├── usage_test.go                # Tests
+│   │       ├── analyzer.go                  # Reference finding logic
+│   │       ├── output.go                    # Output formatting
+│   │       └── types.go                     # Type definitions
+│   └── compare/                             # Compare parent command
+│       ├── compare.go                       # Parent command definition
+│       └── file-contents/                   # File contents comparison subcommand
+│           ├── file_contents.go             # Command logic
+│           ├── file_contents_test.go        # Tests
+│           ├── comparer.go                  # Comparison logic
+│           ├── differ.go                    # Diff generation
+│           ├── output.go                    # Output formatting
+│           ├── types.go                     # Type definitions
+│           └── version_resolver.go          # Version path resolution
+├── internal/                                # Internal packages
+│   ├── pathresolver/                        # Path resolution utilities
+│   │   ├── pathresolver.go                  # Core path resolution
+│   │   ├── pathresolver_test.go             # Tests
+│   │   ├── source_finder.go                 # Source directory detection
+│   │   ├── version_resolver.go              # Version path resolution
+│   │   └── types.go                         # Type definitions
+│   └── rst/                                 # RST parsing utilities
+│       ├── parser.go                        # Generic parsing with includes
+│       ├── include_resolver.go              # Include directive resolution
+│       ├── directive_parser.go              # Directive parsing
+│       ├── directive_regex.go               # Directive regex patterns
+│       ├── parse_procedures.go              # Procedure parsing (core logic)
+│       ├── parse_procedures_test.go         # Procedure parsing tests
+│       ├── get_procedure_variations.go      # Variation extraction logic
+│       ├── get_procedure_variations_test.go # Variation tests
+│       ├── procedure_types.go               # Procedure type definitions
+│       └── file_utils.go                    # File utilities
+└── testdata/                                # Test fixtures
+    ├── input-files/                         # Test RST files
+    │   └── source/                          # Source directory (required)
+    │       ├── *.rst                        # Test files
+    │       ├── includes/                    # Included RST files
+    │       └── code-examples/               # Code files for literalinclude
+    ├── expected-output/                     # Expected extraction results
+    └── compare/                             # Compare command test data
+        ├── product/                         # Version structure tests
+        │   ├── manual/                      # Manual version
+        │   ├── upcoming/                    # Upcoming version
+        │   └── v8.0/                        # v8.0 version
+        └── *.txt                            # Direct comparison tests
 ```
 
 ### Adding New Commands

@@ -1,0 +1,44 @@
+---
+# `image` can be skipped if the values are being set in your .drone.yml file
+image:
+  repository: 795250896452.dkr.ecr.us-east-1.amazonaws.com/docs/code-example-tooling
+  tag: latest
+
+# Service account configuration for IRSA (IAM Roles for Service Accounts)
+serviceAccount:
+  enabled: true
+  irsa:
+    accountId: "216656347858"
+    roleName: devDocsCodeToolingServiceRole
+
+# global secrets are references to k8s Secrets
+globalEnvSecrets:
+  GITHUB_TOKEN: github-token
+  ATLAS_CONNECTION_STRING: atlas-connection-string
+
+# Persistent volume for storing last run timestamp
+# This allows the cronjob to track when it last ran successfully
+persistence:
+  enabled: true
+  storageClass: "standard"
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  mountPath: /data
+
+cronJobs:
+  - name: github-metrics-collection
+    # Run every Sunday at 8am UTC
+    # The job will check if 14 days have passed since the last run
+    # and skip execution if not enough time has elapsed
+    schedule: "0 8 * * 0"
+    command:
+      - node
+      - index.js
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+

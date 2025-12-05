@@ -2,6 +2,7 @@ import { readFile } from 'fs/promises';
 import { getGitHubMetrics } from "./get-github-metrics.js";
 import { addMetricsToAtlas } from "./write-to-db.js";
 import { RepoDetails } from './RepoDetails.js'; // Import the RepoDetails class
+import { shouldRunMetricsCollection, recordSuccessfulRun } from './last-run-tracker.js';
 
 /* To change which repos to track metrics for, update the `repo-details.json` file.
 To track metrics for a new repo, add a new entry with the owner and repo name.
@@ -16,6 +17,17 @@ NOTE: The GitHub token used to retrieve the info from a repo MUST have repo admi
 // processRepos reads the JSON config file and iterates through the repos specified, converting each to an instance of the RepoDetails class.
 async function processRepos() {
     try {
+        // Check if we should run based on last run time
+        const { shouldRun, lastRun, daysSinceLastRun } = await shouldRunMetricsCollection();
+        
+        if (!shouldRun) {
+            console.log('Skipping metrics collection - not enough time has passed since last run.');
+            console.log(`Last run was ${daysSinceLastRun} days ago on ${lastRun?.toISOString()}`);
+            process.exit(0); // Exit successfully without running
+        }
+
+        console.log('Starting metrics collection...');
+        
         // Read the JSON file
         const data = await readFile('repo-details.json', 'utf8');
 
@@ -36,8 +48,13 @@ async function processRepos() {
         }
 
         await addMetricsToAtlas(metricsDocs);
+        
+        // Record successful run
+        await recordSuccessfulRun();
+        console.log('✓ Metrics collection completed successfully');
     } catch (error) {
         console.error('Error processing repos:', error);
+        throw error; // Re-throw to ensure the job fails
     }
 }
 
@@ -46,3 +63,4 @@ processRepos().catch(error => {
     console.error('Fatal error:', error);
     process.exit(1);
 });
+

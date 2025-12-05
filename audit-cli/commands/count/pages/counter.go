@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/mongodb/code-example-tooling/audit-cli/internal/projectinfo"
 )
 
 // CountPages counts .txt files in the content directory.
@@ -147,7 +149,7 @@ func CountPages(dirPath string, forProject string, excludeDirs []string, current
 				// For non-versioned projects, versionName will be empty, which is fine
 				if len(versions) > 0 {
 					// This is a versioned project - only count if in current version
-					if !isCurrentVersion(versionName) {
+					if !projectinfo.IsCurrentVersion(versionName) {
 						return nil
 					}
 				}
@@ -227,72 +229,38 @@ func extractVersionFromPath(relPath string, projectName string) string {
 	}
 
 	// Check if parts[1] looks like a version directory
-	if isVersionDirectory(parts[1]) {
+	if projectinfo.IsVersionDirectory(parts[1]) {
 		return parts[1]
 	}
 
 	return ""
 }
 
-// isVersionDirectory checks if a directory name looks like a version directory.
-// Version directories can be:
-// - "current" or "manual" (current version)
-// - "upcoming" (upcoming version)
-// - Starting with "v" (e.g., "v8.0", "v7.3")
-func isVersionDirectory(dirName string) bool {
-	if dirName == "current" || dirName == "manual" || dirName == "upcoming" {
-		return true
-	}
-	return strings.HasPrefix(dirName, "v")
-}
-
-// isCurrentVersion checks if a version name represents the current version.
-// The current version is either "current" or "manual".
-func isCurrentVersion(versionName string) bool {
-	return versionName == "current" || versionName == "manual"
-}
-
 // findVersionDirectories finds all version directories within a project directory.
 // Returns a list of VersionInfo structs with version names and whether they're current.
 // If the project has no versions (source is directly under project), returns empty slice.
 func findVersionDirectories(projectDir string) ([]VersionInfo, error) {
-	entries, err := os.ReadDir(projectDir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read project directory: %w", err)
-	}
-
-	var versions []VersionInfo
-	hasSourceDir := false
-
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-
-		dirName := entry.Name()
-
-		// Check if there's a direct "source" directory (non-versioned project)
-		if dirName == "source" {
-			hasSourceDir = true
-			continue
-		}
-
-		// Check if this looks like a version directory
-		if isVersionDirectory(dirName) {
-			// Verify it has a source subdirectory
-			sourceDir := filepath.Join(projectDir, dirName, "source")
-			if _, err := os.Stat(sourceDir); err == nil {
-				versions = append(versions, VersionInfo{
-					Name:      dirName,
-					IsCurrent: isCurrentVersion(dirName),
-				})
-			}
-		}
-	}
-
-	// If there's a direct source directory, this is a non-versioned project
-	if hasSourceDir {
+	// Check if there's a direct "source" directory (non-versioned project)
+	sourceDir := filepath.Join(projectDir, "source")
+	if _, err := os.Stat(sourceDir); err == nil {
+		// Non-versioned project
 		return []VersionInfo{}, nil
+	}
+
+	// Use projectinfo to discover all versions
+	versionNames, err := projectinfo.DiscoverAllVersions(projectDir)
+	if err != nil {
+		// If no versions found, treat as non-versioned
+		return []VersionInfo{}, nil
+	}
+
+	// Convert to VersionInfo structs with IsCurrent flag
+	var versions []VersionInfo
+	for _, name := range versionNames {
+		versions = append(versions, VersionInfo{
+			Name:      name,
+			IsCurrent: projectinfo.IsCurrentVersion(name),
+		})
 	}
 
 	return versions, nil

@@ -1,9 +1,11 @@
-// Package count provides the parent command for counting code examples and documentation pages.
+// Package count provides the parent command for counting documentation content.
 //
 // This package serves as the parent command for various counting operations.
 // Currently supports:
 //   - tested-examples: Count tested code examples in the MongoDB documentation monorepo
 //   - pages: Count documentation pages (.txt files) in the MongoDB documentation monorepo
+//
+// These commands help writers track coverage metrics and report to stakeholders.
 package count
 
 import (
@@ -14,13 +16,15 @@ import (
 
 // NewCountCommand creates the count parent command.
 //
-// This command serves as a parent for various counting operations on code examples and documentation pages.
+// This command serves as a parent for various counting operations on documentation content.
 // It doesn't perform any operations itself but provides a namespace for subcommands.
 func NewCountCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "count",
-		Short: "Count code examples and documentation pages",
-		Long: `Count various types of content in the MongoDB documentation.
+		Short: "Count documentation content for metrics and reporting",
+		Long: `Count various types of content in the MongoDB documentation monorepo.
+
+Helps writers track coverage metrics and report statistics to stakeholders.
 
 Currently supports:
   - tested-examples: Count tested code examples in the documentation monorepo

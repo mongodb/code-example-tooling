@@ -1,7 +1,8 @@
-package pathresolver
+package projectinfo
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -194,3 +195,69 @@ func IsVersionedProject(sourceDir string) (bool, error) {
 	return parentName != "", nil
 }
 
+// IsVersionDirectory checks if a directory name looks like a version directory.
+// Version directories can be:
+// - "current" or "manual" (current version)
+// - "upcoming" (upcoming version)
+// - Starting with "v" (e.g., "v8.0", "v7.3")
+func IsVersionDirectory(dirName string) bool {
+	if dirName == "current" || dirName == "manual" || dirName == "upcoming" {
+		return true
+	}
+	return strings.HasPrefix(dirName, "v")
+}
+
+// IsCurrentVersion checks if a version name represents the current version.
+// The current version is either "current" or "manual".
+func IsCurrentVersion(versionName string) bool {
+	return versionName == "current" || versionName == "manual"
+}
+
+// DiscoverAllVersions finds all version directories within a product directory.
+//
+// This function scans the product directory to find all subdirectories that:
+// 1. Look like version directories (e.g., "manual", "upcoming", "v8.0")
+// 2. Contain a "source" subdirectory
+//
+// Parameters:
+//   - productDir: The absolute path to the product directory
+//
+// Returns:
+//   - []string: List of version identifiers found
+//   - error: Any error encountered during discovery
+func DiscoverAllVersions(productDir string) ([]string, error) {
+	entries, err := os.ReadDir(productDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read product directory: %w", err)
+	}
+
+	var versions []string
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		dirName := entry.Name()
+
+		// Skip the "source" directory itself (for non-versioned projects)
+		if dirName == "source" {
+			continue
+		}
+
+		// Check if this looks like a version directory
+		if IsVersionDirectory(dirName) {
+			// Verify it has a source subdirectory
+			sourceDir := filepath.Join(productDir, dirName, "source")
+			if info, err := os.Stat(sourceDir); err == nil && info.IsDir() {
+				versions = append(versions, dirName)
+			}
+		}
+	}
+
+	if len(versions) == 0 {
+		return nil, fmt.Errorf("no version directories found in %s", productDir)
+	}
+
+	return versions, nil
+}

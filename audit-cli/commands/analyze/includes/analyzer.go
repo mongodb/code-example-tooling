@@ -36,28 +36,31 @@ func AnalyzeIncludes(filePath string, verbose bool) (*IncludeAnalysis, error) {
 	}
 
 	// Build the tree structure
-	visited := make(map[string]bool)
-	tree, err := buildIncludeTree(absPath, visited, verbose, 0)
+	// Use a recursion path to detect true circular includes
+	recursionPath := make(map[string]bool)
+	// Track which files we've seen for verbose output (to show duplicates with different bullet)
+	seenFiles := make(map[string]bool)
+	tree, err := buildIncludeTree(absPath, recursionPath, seenFiles, verbose, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	// Collect all unique files from the visited map
-	// The visited map contains all unique files that were processed
-	allFiles := make([]string, 0, len(visited))
-	for file := range visited {
-		allFiles = append(allFiles, file)
-	}
+	// Collect all unique files from the tree
+	allFiles := collectUniqueFiles(tree)
 
 	// Calculate max depth
 	maxDepth := calculateMaxDepth(tree, 0)
 
+	// Count total include directives
+	totalDirectives := countIncludeDirectives(tree)
+
 	analysis := &IncludeAnalysis{
-		RootFile:   absPath,
-		Tree:       tree,
-		AllFiles:   allFiles,
-		TotalFiles: len(allFiles),
-		MaxDepth:   maxDepth,
+		RootFile:               absPath,
+		Tree:                   tree,
+		AllFiles:               allFiles,
+		TotalFiles:             len(allFiles),
+		TotalIncludeDirectives: totalDirectives,
+		MaxDepth:               maxDepth,
 	}
 
 	return analysis, nil
@@ -66,18 +69,19 @@ func AnalyzeIncludes(filePath string, verbose bool) (*IncludeAnalysis, error) {
 // buildIncludeTree recursively builds a tree of include relationships.
 //
 // This function creates an IncludeNode for the given file and recursively
-// processes all files it includes, preventing circular includes.
+// processes all files it includes, preventing true circular includes.
 //
 // Parameters:
 //   - filePath: Path to the file to process
-//   - visited: Map tracking already-processed files (prevents circular includes)
+//   - recursionPath: Map tracking files in the current recursion path (prevents circular includes)
+//   - seenFiles: Map tracking files we've already printed (for duplicate indicators in verbose mode)
 //   - verbose: If true, print detailed processing information
 //   - depth: Current depth in the tree (for verbose output)
 //
 // Returns:
 //   - *IncludeNode: Tree node representing this file and its includes
 //   - error: Any error encountered during processing
-func buildIncludeTree(filePath string, visited map[string]bool, verbose bool, depth int) (*IncludeNode, error) {
+func buildIncludeTree(filePath string, recursionPath map[string]bool, seenFiles map[string]bool, verbose bool, depth int) (*IncludeNode, error) {
 	absPath, err := filepath.Abs(filePath)
 	if err != nil {
 		return nil, err
@@ -89,15 +93,19 @@ func buildIncludeTree(filePath string, visited map[string]bool, verbose bool, de
 		Children: []*IncludeNode{},
 	}
 
-	// Check if we've already visited this file (circular include)
-	if visited[absPath] {
+	// Check if this file is already in the current recursion path (true circular include)
+	if recursionPath[absPath] {
 		if verbose {
 			indent := getIndent(depth)
-			fmt.Printf("%s⚠ Circular include detected: %s\n", indent, filepath.Base(absPath))
+			fmt.Printf("%s⚠ Circular include detected: %s\n", indent, formatDisplayPath(absPath))
 		}
 		return node, nil
 	}
-	visited[absPath] = true
+
+	// Add this file to the recursion path
+	recursionPath[absPath] = true
+	// Ensure we remove it when we're done processing this branch
+	defer delete(recursionPath, absPath)
 
 	// Find include directives in this file
 	includeFiles, err := rst.FindIncludeDirectives(absPath)
@@ -106,14 +114,31 @@ func buildIncludeTree(filePath string, visited map[string]bool, verbose bool, de
 		includeFiles = []string{}
 	}
 
-	if verbose && len(includeFiles) > 0 {
+	// Print verbose output for this file
+	if verbose {
 		indent := getIndent(depth)
-		fmt.Printf("%s📄 %s (%d includes)\n", indent, filepath.Base(absPath), len(includeFiles))
+		// Use hollow bullet (◦) for files we've seen before, filled bullet (•) for first occurrence
+		bullet := "•"
+		if seenFiles[absPath] {
+			bullet = "◦"
+		} else {
+			seenFiles[absPath] = true
+		}
+
+		if len(includeFiles) > 0 {
+			directiveWord := "include directives"
+			if len(includeFiles) == 1 {
+				directiveWord = "include directive"
+			}
+			fmt.Printf("%s%s %s (%d %s)\n", indent, bullet, formatDisplayPath(absPath), len(includeFiles), directiveWord)
+		} else {
+			fmt.Printf("%s%s %s\n", indent, bullet, formatDisplayPath(absPath))
+		}
 	}
 
 	// Recursively process each included file
 	for _, includeFile := range includeFiles {
-		childNode, err := buildIncludeTree(includeFile, visited, verbose, depth+1)
+		childNode, err := buildIncludeTree(includeFile, recursionPath, seenFiles, verbose, depth+1)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: failed to process file %s: %v\n", includeFile, err)
 			continue
@@ -165,5 +190,72 @@ func getIndent(depth int) string {
 		indent += "  "
 	}
 	return indent
+}
+
+// collectUniqueFiles traverses the tree and collects all unique file paths.
+//
+// This function recursively walks the tree and builds a list of all unique
+// files that appear in the tree, even if they appear multiple times.
+//
+// Parameters:
+//   - node: The root node of the tree to traverse
+//
+// Returns:
+//   - []string: List of unique file paths
+func collectUniqueFiles(node *IncludeNode) []string {
+	if node == nil {
+		return []string{}
+	}
+
+	visited := make(map[string]bool)
+	var files []string
+
+	var traverse func(*IncludeNode)
+	traverse = func(n *IncludeNode) {
+		if n == nil {
+			return
+		}
+
+		// Add this file if we haven't seen it before
+		if !visited[n.FilePath] {
+			visited[n.FilePath] = true
+			files = append(files, n.FilePath)
+		}
+
+		// Traverse children
+		for _, child := range n.Children {
+			traverse(child)
+		}
+	}
+
+	traverse(node)
+	return files
+}
+
+// countIncludeDirectives counts the total number of include directive instances in the tree.
+//
+// This function counts every include directive in every file, including duplicates.
+// For example, if file A includes file B, and file C also includes file B,
+// that counts as 2 include directives (even though B is only one unique file).
+//
+// Parameters:
+//   - node: The root node of the tree to traverse
+//
+// Returns:
+//   - int: Total number of include directive instances
+func countIncludeDirectives(node *IncludeNode) int {
+	if node == nil {
+		return 0
+	}
+
+	// Count the children of this node (these are the include directives in this file)
+	count := len(node.Children)
+
+	// Recursively count include directives in all children
+	for _, child := range node.Children {
+		count += countIncludeDirectives(child)
+	}
+
+	return count
 }
 

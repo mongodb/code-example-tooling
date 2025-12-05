@@ -1,6 +1,6 @@
 # audit-cli
 
-A Go CLI tool for extracting and analyzing code examples from MongoDB documentation written in reStructuredText (RST).
+A Go CLI tool for performing audit-related tasks in the MongoDB documentation monorepo.
 
 ## Table of Contents
 
@@ -21,14 +21,17 @@ A Go CLI tool for extracting and analyzing code examples from MongoDB documentat
 
 ## Overview
 
-This CLI tool helps maintain code quality across MongoDB's documentation by:
+This CLI tool helps with maintenance and audit-related tasks across MongoDB's documentation by:
 
-1. **Extracting code examples** from RST files into individual, testable files
-2. **Searching extracted code** for specific patterns or substrings
-3. **Analyzing include relationships** to understand file dependencies
+1. **Extracting code examples** or **procedures** from RST files into individual, testable files
+2. **Searching files** for specific patterns or substrings
+3. **Analyzing reference relationships** to understand file dependencies
 4. **Comparing file contents** across documentation versions to identify differences
 5. **Following include directives** to process entire documentation trees
-6. **Handling MongoDB-specific conventions** like steps files, extracts, and template variables
+6. **Counting documentation pages** or **tested code examples** to track coverage and quality metrics
+
+This CLI provides built-in handling for MongoDB-specific conventions like steps files, extracts, version comprehension,
+and template variables.
 
 ## Installation
 
@@ -63,7 +66,6 @@ audit-cli
 │   ├── includes
 │   ├── usage
 │   └── procedures
-│   └── usage
 ├── compare          # Compare files across versions
 │   └── file-contents
 └── count            # Count code examples and documentation pages
@@ -256,7 +258,8 @@ After extraction, the report shows:
 
 #### `search find-string`
 
-Search through files for a specific substring. Can search through extracted code example files or RST source files.
+Search through files for a specific substring. Can search through extracted code example or procedure files or RST
+source files.
 
 **Default Behavior:**
 - **Case-insensitive** search (matches "curl", "CURL", "Curl", etc.)
@@ -337,13 +340,14 @@ With `-v` flag, also shows:
 
 Analyze `include` directive relationships in RST files to understand file dependencies.
 
-This command recursively follows `.. include::` directives to show all files that are referenced from a starting file. This helps you understand which content is transcluded into a page.
+This command recursively follows `.. include::` directives to show all files that are referenced from a starting file.
+This helps you understand which content is transcluded into a page.
 
 **Use Cases:**
 
 This command helps writers:
 - Understand the impact of changes to widely-included files
-- Identify circular include dependencies (files included multiple times)
+- Identify files included multiple times
 - Document file relationships for maintenance
 - Plan refactoring of complex include structures
 - See what content is actually pulled into a page
@@ -406,9 +410,12 @@ the `analyze usage` command with the `--include-toctree` flag.
 
 #### `analyze usage`
 
-Find all files that use a target file through RST directives. This performs reverse dependency analysis, showing which files reference the target file through `include`, `literalinclude`, `io-code-block`, or `toctree` directives.
+Find all files that use a target file through RST directives. This performs reverse dependency analysis, showing which
+files reference the target file through `include`, `literalinclude`, `io-code-block`, or `toctree` directives.
 
-The command searches all RST files (`.rst` and `.txt` extensions) and YAML files (`.yaml` and `.yml` extensions) in the source directory tree. YAML files are included because extract and release files contain RST directives within their content blocks.
+The command searches all RST files (`.rst` and `.txt` extensions) and YAML files (`.yaml` and `.yml` extensions) in the
+source directory tree. YAML files are included because extract and release files contain RST directives within their
+content blocks.
 
 **Use Cases:**
 
@@ -501,7 +508,8 @@ With `--include-toctree`, also tracks:
       getting-started
    ```
 
-**Note:** Only file-based references are tracked. Inline content (e.g., `.. input::` with `:language:` but no file path) is not tracked since it doesn't reference external files.
+**Note:** Only file-based references are tracked. Inline content (e.g., `.. input::` with `:language:` but no file path)
+is not tracked since it doesn't reference external files.
 
 **Output Formats:**
 

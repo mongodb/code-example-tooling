@@ -83,25 +83,40 @@ workflows:
 
 ## Path Transformations
 
+Path transformations are used with **`glob`** and **`regex`** transformation types using the `transform` parameter.
+
 ### Built-in Variables
 - `${path}` - Full source path
 - `${filename}` - File name only
 - `${dir}` - Directory path
 - `${ext}` - File extension
+- `${relative_path}` - Path relative to glob pattern prefix (glob only)
 
-### Examples
+### Glob Transformation Examples
 ```yaml
 # Keep same path
-path_transform: "${path}"
+transformations:
+  - glob:
+      pattern: "examples/**/*.go"
+      transform: "${path}"
 
 # Change directory
-path_transform: "docs/${path}"
+transformations:
+  - glob:
+      pattern: "examples/**/*.go"
+      transform: "docs/${relative_path}"
 
-# Reorganize structure
-path_transform: "docs/${lang}/${category}/${filename}"
+# Reorganize structure (using custom variables from regex)
+transformations:
+  - regex:
+      pattern: "^examples/(?P<lang>[^/]+)/(?P<category>[^/]+)/(?P<file>.+)$"
+      transform: "docs/${lang}/${category}/${file}"
 
 # Change extension
-path_transform: "${dir}/${filename}.md"
+transformations:
+  - glob:
+      pattern: "examples/**/*.txt"
+      transform: "${dir}/${filename}.md"
 ```
 
 ## Commit Strategies

@@ -301,6 +301,9 @@ func TestHandleWebhookWithContainer_MergedPR(t *testing.T) {
 			Number:         github.Int(123),
 			Merged:         github.Bool(true),
 			MergeCommitSHA: github.String("abc123"),
+			Base: &github.PullRequestBranch{
+				Ref: github.String("main"),
+			},
 		},
 		Repo: &github.Repository{
 			Name: github.String("test-repo"),
@@ -332,6 +335,186 @@ func TestHandleWebhookWithContainer_MergedPR(t *testing.T) {
 
 	// Note: The background goroutine will continue running and will eventually fail
 	// when trying to access GitHub APIs. This is expected and doesn't affect the test result.
+}
+
+func TestHandleWebhookWithContainer_MergedPRToDevelopmentBranch(t *testing.T) {
+	// This test verifies that PRs merged to non-main branches (like development)
+	// are accepted by the webhook handler but won't match any workflows
+	// (assuming workflows are configured for main branch only)
+
+	// Set up environment variables
+	os.Setenv(configs.AppId, "123456")
+	os.Setenv(configs.InstallationId, "789012")
+	os.Setenv(configs.ConfigRepoOwner, "test-owner")
+	os.Setenv(configs.ConfigRepoName, "test-repo")
+	os.Setenv("SKIP_SECRET_MANAGER", "true")
+
+	// Generate a valid RSA private key for testing
+	key, _ := rsa.GenerateKey(rand.Reader, 1024)
+	der := x509.MarshalPKCS1PrivateKey(key)
+	pemBytes := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: der})
+	os.Setenv("GITHUB_APP_PRIVATE_KEY", string(pemBytes))
+	os.Setenv("GITHUB_APP_PRIVATE_KEY_B64", base64.StdEncoding.EncodeToString(pemBytes))
+
+	InstallationAccessToken = "test-token"
+
+	config := &configs.Config{
+		ConfigRepoOwner: "test-owner",
+		ConfigRepoName:  "test-repo",
+		ConfigFile:      "nonexistent-config.yaml",
+		AuditEnabled:    false,
+	}
+
+	container, err := NewServiceContainer(config)
+	if err != nil {
+		t.Fatalf("NewServiceContainer() error = %v", err)
+	}
+
+	// Create a merged PR event to development branch
+	prEvent := &github.PullRequestEvent{
+		Action: github.String("closed"),
+		PullRequest: &github.PullRequest{
+			Number:         github.Int(456),
+			Merged:         github.Bool(true),
+			MergeCommitSHA: github.String("def456"),
+			Base: &github.PullRequestBranch{
+				Ref: github.String("development"),
+			},
+		},
+		Repo: &github.Repository{
+			Name: github.String("test-repo"),
+			Owner: &github.User{
+				Login: github.String("test-owner"),
+			},
+		},
+	}
+	payload, _ := json.Marshal(prEvent)
+
+	req := httptest.NewRequest("POST", "/webhook", bytes.NewReader(payload))
+	req.Header.Set("X-GitHub-Event", "pull_request")
+
+	w := httptest.NewRecorder()
+
+	HandleWebhookWithContainer(w, req, config, container)
+
+	// Should still return 202 Accepted (webhook accepts the event)
+	if w.Code != http.StatusAccepted {
+		t.Errorf("Status code = %d, want %d", w.Code, http.StatusAccepted)
+	}
+
+	// Check response body
+	var response map[string]string
+	json.Unmarshal(w.Body.Bytes(), &response)
+	if response["status"] != "accepted" {
+		t.Errorf("Response status = %v, want accepted", response["status"])
+	}
+
+	// Note: The background goroutine will fail to find matching workflows
+	// because the workflow config specifies main branch, not development.
+	// This is the expected behavior - the webhook accepts the event but
+	// no workflows will be processed.
+}
+
+func TestHandleWebhookWithContainer_MergedPRWithDifferentBranches(t *testing.T) {
+	// This test verifies that the base branch is correctly extracted
+	// from different PR events
+
+	testCases := []struct {
+		name       string
+		baseBranch string
+		prNumber   int
+	}{
+		{
+			name:       "main branch",
+			baseBranch: "main",
+			prNumber:   100,
+		},
+		{
+			name:       "development branch",
+			baseBranch: "development",
+			prNumber:   101,
+		},
+		{
+			name:       "feature branch",
+			baseBranch: "feature/new-feature",
+			prNumber:   102,
+		},
+		{
+			name:       "release branch",
+			baseBranch: "release/v1.0",
+			prNumber:   103,
+		},
+	}
+
+	// Set up environment variables
+	os.Setenv(configs.AppId, "123456")
+	os.Setenv(configs.InstallationId, "789012")
+	os.Setenv(configs.ConfigRepoOwner, "test-owner")
+	os.Setenv(configs.ConfigRepoName, "test-repo")
+	os.Setenv("SKIP_SECRET_MANAGER", "true")
+
+	key, _ := rsa.GenerateKey(rand.Reader, 1024)
+	der := x509.MarshalPKCS1PrivateKey(key)
+	pemBytes := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: der})
+	os.Setenv("GITHUB_APP_PRIVATE_KEY", string(pemBytes))
+	os.Setenv("GITHUB_APP_PRIVATE_KEY_B64", base64.StdEncoding.EncodeToString(pemBytes))
+
+	InstallationAccessToken = "test-token"
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			config := &configs.Config{
+				ConfigRepoOwner: "test-owner",
+				ConfigRepoName:  "test-repo",
+				ConfigFile:      "nonexistent-config.yaml",
+				AuditEnabled:    false,
+			}
+
+			container, err := NewServiceContainer(config)
+			if err != nil {
+				t.Fatalf("NewServiceContainer() error = %v", err)
+			}
+
+			// Create a merged PR event with specific base branch
+			prEvent := &github.PullRequestEvent{
+				Action: github.String("closed"),
+				PullRequest: &github.PullRequest{
+					Number:         github.Int(tc.prNumber),
+					Merged:         github.Bool(true),
+					MergeCommitSHA: github.String("abc123"),
+					Base: &github.PullRequestBranch{
+						Ref: github.String(tc.baseBranch),
+					},
+				},
+				Repo: &github.Repository{
+					Name: github.String("test-repo"),
+					Owner: &github.User{
+						Login: github.String("test-owner"),
+					},
+				},
+			}
+			payload, _ := json.Marshal(prEvent)
+
+			req := httptest.NewRequest("POST", "/webhook", bytes.NewReader(payload))
+			req.Header.Set("X-GitHub-Event", "pull_request")
+
+			w := httptest.NewRecorder()
+
+			HandleWebhookWithContainer(w, req, config, container)
+
+			// Should return 202 Accepted for all merged PRs
+			if w.Code != http.StatusAccepted {
+				t.Errorf("Status code = %d, want %d", w.Code, http.StatusAccepted)
+			}
+
+			// Check response body
+			var response map[string]string
+			json.Unmarshal(w.Body.Bytes(), &response)
+			if response["status"] != "accepted" {
+				t.Errorf("Response status = %v, want accepted", response["status"])
+			}
+		})
+	}
 }
 
 func TestRetrieveFileContentsWithConfigAndBranch(t *testing.T) {

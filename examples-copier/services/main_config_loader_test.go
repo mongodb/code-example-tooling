@@ -469,14 +469,16 @@ workflow_configs:
 
 	assert.Len(t, yamlConfig.Workflows, 2)
 
-	// First workflow should have workflow-specific title
+	// First workflow should have workflow-specific title and inherit type from workflow config defaults
 	workflow1 := yamlConfig.Workflows[0]
 	assert.Equal(t, "workflow-with-override", workflow1.Name)
 	assert.NotNil(t, workflow1.CommitStrategy)
 	assert.Equal(t, "Workflow Specific Title", workflow1.CommitStrategy.PRTitle)
-	// When commit_strategy is specified at workflow level, it replaces the entire object
-	// So AutoMerge will be false (default) since it wasn't specified in the workflow-level override
-	assert.False(t, workflow1.CommitStrategy.AutoMerge)
+	// Type should be inherited from workflow config defaults
+	assert.Equal(t, "pull_request", workflow1.CommitStrategy.Type)
+	// Note: AutoMerge is intentionally NOT inherited to avoid accidentally enabling auto-merge
+	// when a workflow specifies its own commit_strategy
+	assert.False(t, workflow1.CommitStrategy.AutoMerge, "AutoMerge should NOT be inherited for safety reasons")
 
 	// Second workflow should inherit workflow config defaults
 	workflow2 := yamlConfig.Workflows[1]

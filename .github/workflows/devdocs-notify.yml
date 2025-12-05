@@ -13,16 +13,22 @@ jobs:
         env:
           REPO_NAME: ${{ github.repository }}
           # Make sure this secret name matches what is in your Repo Settings
+          PR_TITLE: ${{ github.event.pull_request.title || github.event.issue.title }}
+          PR_USER: ${{ github.event.pull_request.user.login || github.event.comment.user.login }}
+          PR_URL: ${{ github.event.pull_request.html_url || github.event.comment.html_url }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           # Build Slack payload safely using jq
           SLACK_PAYLOAD=$(jq -n \
             --arg repo "$REPO_NAME" \
+            --arg title "$PR_TITLE" \
+            --arg user "$PR_USER" \
+            --arg url "$PR_URL" \
             '{
               "channel": "#docs-devdocs-notifications",
               "username": "Issue Notifier",
               "icon_emoji": ":mega:",
-              "text": "📢 @DevDocs a PR was opened or issue created in \($repo)"
+              "text": "*📢 @DevDocs a PR was opened or issue created in * \($repo)\n*Title:* \($title)\n*By:* \($user)\n*URL:* \($url)"
             }')
 
           # Send to Slack

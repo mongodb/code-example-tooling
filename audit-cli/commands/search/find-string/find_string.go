@@ -1,7 +1,7 @@
-// Package find_string provides functionality for searching code example files for substrings.
+// Package find_string provides functionality for searching documentation files for substrings.
 //
 // This package implements the "search find-string" subcommand, which searches through
-// extracted code example files to find occurrences of a specific substring.
+// RST source files or extracted content to find occurrences of a specific substring.
 //
 // By default, the search is case-insensitive and matches exact words only (not partial matches
 // within larger words). These behaviors can be changed with the --case-sensitive and
@@ -29,7 +29,7 @@ import (
 
 // NewFindStringCommand creates the find-string subcommand.
 //
-// This command searches through extracted code example files for a specific substring.
+// This command searches through documentation files or extracted content for a specific substring.
 // Supports flags for recursive search, following includes, and verbose output.
 //
 // Flags:
@@ -49,9 +49,12 @@ func NewFindStringCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "find-string [filepath] [substring]",
-		Short: "Search for a substring in extracted code example files",
-		Long: `Search through extracted code example files to find occurrences of a specific substring.
-Reports the number of code examples containing the substring.
+		Short: "Search for a substring in documentation files",
+		Long: `Search through RST source files or extracted content to find occurrences of a specific substring.
+Reports the number of files containing the substring.
+
+Helps writers identify files that need updates when a string needs to be changed,
+and scope maintenance work related to specific changes.
 
 By default, the search is case-insensitive and matches exact words only. Use --case-sensitive
 to make the search case-sensitive, or --partial-match to allow matching the substring as part

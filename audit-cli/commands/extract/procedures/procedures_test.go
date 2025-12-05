@@ -253,7 +253,7 @@ func TestGenerateOutputFilename(t *testing.T) {
 		}
 
 		// Verify filename contains a hash (6 characters before .rst)
-		parts := strings.Split(v.OutputFile, "-")
+		parts := strings.Split(v.OutputFile, "_")
 		if len(parts) < 2 {
 			t.Errorf("Filename should contain at least heading and hash: %s", v.OutputFile)
 		}
@@ -311,8 +311,8 @@ func TestContentHash(t *testing.T) {
 			filename := variations[0].OutputFile
 			// Remove .rst extension
 			nameWithoutExt := strings.TrimSuffix(filename, ".rst")
-			// Get last part after last hyphen (the hash)
-			parts := strings.Split(nameWithoutExt, "-")
+			// Get last part after last underscore (the hash)
+			parts := strings.Split(nameWithoutExt, "_")
 			hash := parts[len(parts)-1]
 			hashes = append(hashes, hash)
 		}

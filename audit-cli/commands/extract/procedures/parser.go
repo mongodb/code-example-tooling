@@ -107,8 +107,8 @@ func generateVariations(procedure rst.Procedure, sourceFile string, selectionFil
 
 // generateOutputFilename generates the output filename for a procedure.
 //
-// Format: {heading}-{first-step-title}-{hash}.rst
-// Example: "before-you-begin-pull-the-mongodb-docker-image-a1b2c3.rst"
+// Format: {heading}_{first-step-title}_{hash}.rst
+// Example: "before-you-begin_pull-the-mongodb-docker-image_a1b2c3.rst"
 //
 // The hash is a short (6 character) hash of the procedure content to ensure uniqueness.
 func generateOutputFilename(sourceFile string, procedure rst.Procedure, variationName string) string {
@@ -129,10 +129,10 @@ func generateOutputFilename(sourceFile string, procedure rst.Procedure, variatio
 	// If the procedure has steps, use the first step title to make the filename descriptive
 	if len(procedure.Steps) > 0 && procedure.Steps[0].Title != "" {
 		firstStepTitle := sanitizeFilename(procedure.Steps[0].Title)
-		return fmt.Sprintf("%s-%s-%s.rst", title, firstStepTitle, shortHash)
+		return fmt.Sprintf("%s_%s_%s.rst", title, firstStepTitle, shortHash)
 	}
 
-	return fmt.Sprintf("%s-%s.rst", title, shortHash)
+	return fmt.Sprintf("%s_%s.rst", title, shortHash)
 }
 
 // computeContentHash generates a hash of the procedure's content for uniqueness.

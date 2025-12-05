@@ -186,7 +186,7 @@ This command helps writers:
 
 **Output Format:**
 
-Extracted files are named: `{heading}-{first-step-title}-{hash}.rst`
+Extracted files are named: `{heading}_{first-step-title}_{hash}.rst`
 
 The filename includes:
 - **Heading**: The section heading above the procedure
@@ -194,9 +194,9 @@ The filename includes:
 - **Hash**: A short 6-character hash of the content (for uniqueness)
 
 Examples:
-- `before-you-begin-pull-the-mongodb-docker-image-e8eeec.rst`
-- `install-mongodb-community-edition-download-the-tarball-44c437.rst`
-- `configuration-create-the-data-and-log-directories-f1d35b.rst`
+- `before-you-begin_pull-the-mongodb-docker-image_e8eeec.rst`
+- `install-mongodb-community-edition_download-the-tarball_44c437.rst`
+- `configuration_create-the-data-and-log-directories_f1d35b.rst`
 
 **Verbose Output:**
 

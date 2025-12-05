@@ -129,11 +129,7 @@ func TestCountPagesCodeExamplesInSubdirectory(t *testing.T) {
 	}
 
 	// Manual has a code-examples subdirectory with example.txt
-	// This should be counted (only root-level code-examples is excluded)
-	// Expected: index, tutorial, reference, code-examples/example, deprecated/old = 5
-	// Wait, let me check the actual structure...
-	// Actually, we created manual/source/code-examples/example.txt
-	// This should NOT be excluded because it's not at the root of content
+	// Expected: index, tutorial, reference, deprecated/old = 4
 	expectedTotal := 4 // We're excluding code-examples at source level too
 	if result.TotalCount != expectedTotal {
 		t.Errorf("Expected total count %d, got %d", expectedTotal, result.TotalCount)

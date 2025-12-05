@@ -718,7 +718,7 @@ This command helps writers and maintainers:
 - `--count-by-product` - Display counts for each product
 - `--exclude-output` - Only count source files (exclude .txt and .sh files)
 
-**Valid Products:**
+**Current Valid Products:**
 
 - `mongosh` - MongoDB Shell
 - `csharp/driver` - C#/.NET Driver

@@ -3,6 +3,9 @@ package includes
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
+
+	"github.com/mongodb/code-example-tooling/audit-cli/internal/pathresolver"
 )
 
 // PrintTree prints the include tree structure.
@@ -45,13 +48,13 @@ func printTreeNode(node *IncludeNode, prefix string, isLast bool, isRoot bool) {
 
 	// Print the current node
 	if isRoot {
-		fmt.Printf("%s\n", filepath.Base(node.FilePath))
+		fmt.Printf("%s\n", formatDisplayPath(node.FilePath))
 	} else {
 		connector := "├── "
 		if isLast {
 			connector = "└── "
 		}
-		fmt.Printf("%s%s%s\n", prefix, connector, filepath.Base(node.FilePath))
+		fmt.Printf("%s%s%s\n", prefix, connector, formatDisplayPath(node.FilePath))
 	}
 
 	// Print children
@@ -112,5 +115,71 @@ func PrintSummary(analysis *IncludeAnalysis) {
 	fmt.Println("Use --tree to see the hierarchical structure")
 	fmt.Println("Use --list to see a flat list of all files")
 	fmt.Println()
+}
+
+// formatDisplayPath formats a file path for display in the tree or verbose output.
+//
+// This function returns:
+//   - If the file is in an "includes" directory: the path starting from "includes"
+//     (e.g., "includes/load-sample-data.rst" or "includes/php/connection.rst")
+//   - If the file is NOT in an "includes" directory: the path from the source directory
+//     (e.g., "get-started/node/language-connection-steps.rst")
+//
+// This helps writers understand the directory structure and disambiguate files
+// with the same name in different directories.
+//
+// Parameters:
+//   - filePath: Absolute path to the file
+//
+// Returns:
+//   - string: Formatted path for display
+func formatDisplayPath(filePath string) string {
+	// Try to find the source directory
+	sourceDir, err := pathresolver.FindSourceDirectory(filePath)
+	if err != nil {
+		// If we can't find source directory, just return the base name
+		return filepath.Base(filePath)
+	}
+
+	// Check if the file is in an includes directory
+	// Walk up from the file to find if there's an "includes" directory
+	dir := filepath.Dir(filePath)
+	var includesDir string
+
+	for {
+		// Check if the current directory is named "includes"
+		if filepath.Base(dir) == "includes" {
+			includesDir = dir
+			break
+		}
+
+		// Move up one directory
+		parent := filepath.Dir(dir)
+
+		// If we've reached the source directory or root, stop
+		if parent == dir || dir == sourceDir {
+			break
+		}
+
+		dir = parent
+	}
+
+	// If we found an includes directory, get the relative path from it
+	if includesDir != "" {
+		relPath, err := filepath.Rel(includesDir, filePath)
+		if err == nil && !strings.HasPrefix(relPath, "..") {
+			// Prepend "includes/" to show it's in the includes directory
+			return filepath.Join("includes", relPath)
+		}
+	}
+
+	// Otherwise, get the relative path from the source directory
+	relPath, err := filepath.Rel(sourceDir, filePath)
+	if err != nil {
+		// If we can't get relative path, just return the base name
+		return filepath.Base(filePath)
+	}
+
+	return relPath
 }
 

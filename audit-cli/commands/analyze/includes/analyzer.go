@@ -93,7 +93,7 @@ func buildIncludeTree(filePath string, visited map[string]bool, verbose bool, de
 	if visited[absPath] {
 		if verbose {
 			indent := getIndent(depth)
-			fmt.Printf("%s⚠ Circular include detected: %s\n", indent, filepath.Base(absPath))
+			fmt.Printf("%s⚠ Circular include detected: %s\n", indent, formatDisplayPath(absPath))
 		}
 		return node, nil
 	}
@@ -108,7 +108,7 @@ func buildIncludeTree(filePath string, visited map[string]bool, verbose bool, de
 
 	if verbose && len(includeFiles) > 0 {
 		indent := getIndent(depth)
-		fmt.Printf("%s📄 %s (%d includes)\n", indent, filepath.Base(absPath), len(includeFiles))
+		fmt.Printf("%s📄 %s (%d includes)\n", indent, formatDisplayPath(absPath), len(includeFiles))
 	}
 
 	// Recursively process each included file

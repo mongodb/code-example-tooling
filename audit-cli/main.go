@@ -12,11 +12,14 @@
 //   - includes: Analyze include directive relationships
 //   - compare: Compare files across different versions
 //   - file-contents: Compare file contents across versions
+//   - count: Count code examples
+//   - tested-examples: Count tested code examples in the monorepo
 package main
 
 import (
 	"github.com/mongodb/code-example-tooling/audit-cli/commands/analyze"
 	"github.com/mongodb/code-example-tooling/audit-cli/commands/compare"
+	"github.com/mongodb/code-example-tooling/audit-cli/commands/count"
 	"github.com/mongodb/code-example-tooling/audit-cli/commands/extract"
 	"github.com/mongodb/code-example-tooling/audit-cli/commands/search"
 	"github.com/spf13/cobra"
@@ -38,6 +41,7 @@ with special handling for MongoDB documentation conventions.`,
 	rootCmd.AddCommand(search.NewSearchCommand())
 	rootCmd.AddCommand(analyze.NewAnalyzeCommand())
 	rootCmd.AddCommand(compare.NewCompareCommand())
+	rootCmd.AddCommand(count.NewCountCommand())
 
 	err := rootCmd.Execute()
 	if err != nil {

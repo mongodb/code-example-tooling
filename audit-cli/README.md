@@ -380,8 +380,22 @@ This command helps writers:
 **Output Formats:**
 
 **Summary** (default - no flags):
+```
+============================================================
+INCLUDE ANALYSIS SUMMARY
+============================================================
+Root File: /path/to/file.rst
+Unique Files: 18
+Include Directives: 56
+Max Depth: 2
+============================================================
+
+Use --tree to see the hierarchical structure
+Use --list to see a flat list of all files
+```
 - Root file path
-- Total number of files
+- Number of unique files discovered
+- Total number of include directive instances (counting duplicates)
 - Maximum depth of include nesting
 - Hints to use --tree or --list for more details
 
@@ -389,18 +403,49 @@ This command helps writers:
 - Hierarchical tree structure showing include relationships
 - Uses box-drawing characters for visual clarity
 - Shows which files include which other files
+- Displays directory paths to help disambiguate files with the same name
+  - Files in `includes` directories: `includes/filename.rst`
+  - Files outside `includes`: `path/from/source/filename.rst`
 
 **List** (--list flag):
-- Flat numbered list of all files
+- Flat numbered list of all unique files
 - Files listed in depth-first traversal order
 - Shows absolute paths to all files
 
+**Verbose** (-v flag):
+- Shows complete dependency tree with all nodes (including duplicates)
+- Each file displays the number of include directives it contains
+- Uses visual indicators to show duplicate includes:
+  - `•` (filled bullet) - First occurrence of a file
+  - `◦` (hollow bullet) - Subsequent occurrences (duplicates)
+- Example output:
+```
+• get-started.txt (24 include directives)
+  • get-started/node/language-connection-steps.rst (3 include directives)
+    • includes/load-sample-data.rst
+    • includes/connection-string-note.rst
+    • includes/application-output.rst
+  • includes/next-steps.rst
+  • get-started/python/language-connection-steps.rst (3 include directives)
+    ◦ includes/load-sample-data.rst
+    ◦ includes/connection-string-note.rst
+    ◦ includes/application-output.rst
+  ◦ includes/next-steps.rst
+```
+
 **Note on File Counting:**
 
-The total file count represents **unique files** discovered through include directives. If a file is included multiple
-times (e.g., file A includes file C, and file B also includes file C), the file is counted only once in the total.
-However, the tree view will show it in all locations where it appears, with subsequent occurrences marked as circular
-includes in verbose mode.
+The command reports two distinct metrics:
+
+1. **Unique Files**: Number of distinct files discovered through include directives. If a file is included multiple
+   times (e.g., file A includes file C, and file B also includes file C), the file is counted only once.
+
+2. **Include Directives**: Total number of include directive instances across all files. This counts every occurrence,
+   including duplicates. For example, if `load-sample-data.rst` is included 12 times across different files, it
+   contributes 12 to this count.
+
+In verbose mode, the tree view shows files in all locations where they appear. Duplicate occurrences are marked with
+a hollow bullet (`◦`) to help you identify files that are included multiple times.
 
 **Note on Toctree:**
 

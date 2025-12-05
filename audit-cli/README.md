@@ -855,20 +855,17 @@ This command helps writers:
 # Version comparison across MongoDB documentation versions
 ./audit-cli compare file-contents \
   /path/to/manual/manual/source/includes/example.rst \
-  --product-dir /path/to/manual \
   --versions manual,upcoming,v8.0,v7.0
 
 # Show which files differ
 ./audit-cli compare file-contents \
   /path/to/manual/manual/source/includes/example.rst \
-  --product-dir /path/to/manual \
   --versions manual,upcoming,v8.0,v7.0 \
   --show-paths
 
 # Show detailed diffs
 ./audit-cli compare file-contents \
   /path/to/manual/manual/source/includes/example.rst \
-  --product-dir /path/to/manual \
   --versions manual,upcoming,v8.0,v7.0 \
   --show-diff
 
@@ -878,7 +875,6 @@ This command helps writers:
 
 **Flags:**
 
-- `-p, --product-dir <dir>` - Product directory path (required for version comparison)
 - `-V, --versions <list>` - Comma-separated list of versions (e.g., `manual,upcoming,v8.0`)
 - `--show-paths` - Display file paths grouped by status (matching, differing, not found)
 - `-d, --show-diff` - Display unified diff output (implies `--show-paths`)
@@ -901,12 +897,11 @@ This mode:
 
 **2. Version Comparison (Product Directory)**
 
-Provide one file path plus `--product-dir` and `--versions`:
+Provide one file path plus `--versions`. The product directory is automatically detected from the file path:
 
 ```bash
 ./audit-cli compare file-contents \
   /path/to/manual/manual/source/includes/example.rst \
-  --product-dir /path/to/manual \
   --versions manual,upcoming,v8.0
 ```
 
@@ -961,13 +956,11 @@ product-dir/
 # Check if a file is consistent across all versions
 ./audit-cli compare file-contents \
   ~/workspace/docs-mongodb-internal/content/manual/manual/source/includes/fact-atlas-search.rst \
-  --product-dir ~/workspace/docs-mongodb-internal/content/manual \
   --versions manual,upcoming,v8.0,v7.0,v6.0
 
 # Find differences and see what changed
 ./audit-cli compare file-contents \
   ~/workspace/docs-mongodb-internal/content/manual/manual/source/includes/fact-atlas-search.rst \
-  --product-dir ~/workspace/docs-mongodb-internal/content/manual \
   --versions manual,upcoming,v8.0,v7.0,v6.0 \
   --show-diff
 

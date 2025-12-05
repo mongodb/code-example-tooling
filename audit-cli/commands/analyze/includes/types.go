@@ -14,10 +14,11 @@ type IncludeNode struct {
 // This type holds both the tree structure and the flat list of all files
 // discovered through include directives.
 type IncludeAnalysis struct {
-	RootFile   string       // The original file that was analyzed
-	Tree       *IncludeNode // Tree structure of include relationships
-	AllFiles   []string     // Flat list of all files (in order discovered)
-	TotalFiles int          // Total number of unique files
-	MaxDepth   int          // Maximum depth of include nesting
+	RootFile              string       // The original file that was analyzed
+	Tree                  *IncludeNode // Tree structure of include relationships
+	AllFiles              []string     // Flat list of all files (in order discovered)
+	TotalFiles            int          // Total number of unique files
+	TotalIncludeDirectives int         // Total number of include directive instances across all files
+	MaxDepth              int          // Maximum depth of include nesting
 }
 

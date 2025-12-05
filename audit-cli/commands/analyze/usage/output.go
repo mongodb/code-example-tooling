@@ -25,12 +25,13 @@ const (
 //   - analysis: The analysis results to print
 //   - format: The output format (text or json)
 //   - verbose: If true, show additional details
-func PrintAnalysis(analysis *UsageAnalysis, format OutputFormat, verbose bool) error {
+//   - recursive: If true, indicates recursive mode was used
+func PrintAnalysis(analysis *UsageAnalysis, format OutputFormat, verbose bool, recursive bool) error {
 	switch format {
 	case FormatJSON:
 		return printJSON(analysis)
 	case FormatText:
-		printText(analysis, verbose)
+		printText(analysis, verbose, recursive)
 		return nil
 	default:
 		return fmt.Errorf("unknown output format: %s", format)
@@ -38,23 +39,41 @@ func PrintAnalysis(analysis *UsageAnalysis, format OutputFormat, verbose bool) e
 }
 
 // printText prints the analysis results in human-readable text format.
-func printText(analysis *UsageAnalysis, verbose bool) {
+func printText(analysis *UsageAnalysis, verbose bool, recursive bool) {
 	fmt.Println("============================================================")
-	fmt.Println("USAGE ANALYSIS")
+	if recursive {
+		fmt.Println("RECURSIVE USAGE ANALYSIS")
+	} else {
+		fmt.Println("USAGE ANALYSIS")
+	}
 	fmt.Println("============================================================")
 	fmt.Printf("Target File: %s\n", analysis.TargetFile)
-	fmt.Printf("Total Files: %d\n", analysis.TotalFiles)
-	fmt.Printf("Total Usages: %d\n", analysis.TotalUsages)
+	if recursive {
+		fmt.Printf("Total .txt Files: %d\n", analysis.TotalFiles)
+		fmt.Println("(Showing only .txt documentation pages)")
+	} else {
+		fmt.Printf("Total Files: %d\n", analysis.TotalFiles)
+		fmt.Printf("Total Usages: %d\n", analysis.TotalUsages)
+	}
 	fmt.Println("============================================================")
 	fmt.Println()
 
 	if analysis.TotalUsages == 0 {
-		fmt.Println("No files use this file.")
-		fmt.Println()
-		fmt.Println("This could mean:")
-		fmt.Println("  - The file is not included in any documentation pages")
-		fmt.Println("  - The file might be orphaned (not used)")
-		fmt.Println("  - The file is used with a different path")
+		if recursive {
+			fmt.Println("No .txt files ultimately use this file.")
+			fmt.Println()
+			fmt.Println("This could mean:")
+			fmt.Println("  - The file is only used by other include files, not by any .txt pages")
+			fmt.Println("  - The file might be orphaned (not used)")
+			fmt.Println("  - The file is used with a different path")
+		} else {
+			fmt.Println("No files use this file.")
+			fmt.Println()
+			fmt.Println("This could mean:")
+			fmt.Println("  - The file is not included in any documentation pages")
+			fmt.Println("  - The file might be orphaned (not used)")
+			fmt.Println("  - The file is used with a different path")
+		}
 		fmt.Println()
 		fmt.Println("Note: By default, only content inclusion directives are searched.")
 		fmt.Println("Use --include-toctree to also search for toctree navigation links.")
@@ -62,29 +81,32 @@ func printText(analysis *UsageAnalysis, verbose bool) {
 		return
 	}
 
-	// Group usages by directive type
-	byDirectiveType := groupByDirectiveType(analysis.UsingFiles)
+	// In recursive mode, skip the directive type breakdown since we only show .txt files
+	if !recursive {
+		// Group usages by directive type
+		byDirectiveType := groupByDirectiveType(analysis.UsingFiles)
 
-	// Print breakdown by directive type with file and reference counts
-	directiveTypes := []string{"include", "literalinclude", "io-code-block", "toctree"}
-	for _, directiveType := range directiveTypes {
-		if refs, ok := byDirectiveType[directiveType]; ok {
-			uniqueFiles := countUniqueFiles(refs)
-			totalRefs := len(refs)
-			if uniqueFiles == totalRefs {
-				// No duplicates - just show count
-				fmt.Printf("%-20s: %d\n", directiveType, uniqueFiles)
-			} else {
-				// Has duplicates - show both counts
-				if uniqueFiles == 1 {
-					fmt.Printf("%-20s: %d file, %d usages\n", directiveType, uniqueFiles, totalRefs)
+		// Print breakdown by directive type with file and reference counts
+		directiveTypes := []string{"include", "literalinclude", "io-code-block", "toctree"}
+		for _, directiveType := range directiveTypes {
+			if refs, ok := byDirectiveType[directiveType]; ok {
+				uniqueFiles := countUniqueFiles(refs)
+				totalRefs := len(refs)
+				if uniqueFiles == totalRefs {
+					// No duplicates - just show count
+					fmt.Printf("%-20s: %d\n", directiveType, uniqueFiles)
 				} else {
-					fmt.Printf("%-20s: %d files, %d usages\n", directiveType, uniqueFiles, totalRefs)
+					// Has duplicates - show both counts
+					if uniqueFiles == 1 {
+						fmt.Printf("%-20s: %d file, %d usages\n", directiveType, uniqueFiles, totalRefs)
+					} else {
+						fmt.Printf("%-20s: %d files, %d usages\n", directiveType, uniqueFiles, totalRefs)
+					}
 				}
 			}
 		}
+		fmt.Println()
 	}
-	fmt.Println()
 
 	// Group usages by file
 	grouped := GroupUsagesByFile(analysis.UsingFiles)
@@ -97,19 +119,24 @@ func printText(analysis *UsageAnalysis, verbose bool) {
 			relPath = group.FilePath
 		}
 
-		// Print file path with directive type label
-		if group.Count > 1 {
-			// Multiple usages from this file
-			fmt.Printf("%3d. [%s] %s (%d usages)\n", i+1, group.DirectiveType, relPath, group.Count)
+		if recursive {
+			// In recursive mode, just show the .txt file paths
+			fmt.Printf("%3d. %s\n", i+1, relPath)
 		} else {
-			// Single usage
-			fmt.Printf("%3d. [%s] %s\n", i+1, group.DirectiveType, relPath)
-		}
+			// Print file path with directive type label
+			if group.Count > 1 {
+				// Multiple usages from this file
+				fmt.Printf("%3d. [%s] %s (%d usages)\n", i+1, group.DirectiveType, relPath, group.Count)
+			} else {
+				// Single usage
+				fmt.Printf("%3d. [%s] %s\n", i+1, group.DirectiveType, relPath)
+			}
 
-		// Print line numbers in verbose mode
-		if verbose {
-			for _, usage := range group.Usages {
-				fmt.Printf("     Line %d: %s\n", usage.LineNumber, usage.UsagePath)
+			// Print line numbers in verbose mode
+			if verbose {
+				for _, usage := range group.Usages {
+					fmt.Printf("     Line %d: %s\n", usage.LineNumber, usage.UsagePath)
+				}
 			}
 		}
 	}

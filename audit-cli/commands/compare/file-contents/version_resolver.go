@@ -1,7 +1,7 @@
 package file_contents
 
 import (
-	"github.com/mongodb/code-example-tooling/audit-cli/internal/pathresolver"
+	"github.com/mongodb/code-example-tooling/audit-cli/internal/projectinfo"
 )
 
 // ResolveVersionPaths resolves file paths for all specified versions.
@@ -25,10 +25,10 @@ import (
 //   - versions: List of version identifiers
 //
 // Returns:
-//   - []pathresolver.VersionPath: List of resolved version paths
+//   - []projectinfo.VersionPath: List of resolved version paths
 //   - error: Any error encountered during resolution
-func ResolveVersionPaths(referenceFile string, productDir string, versions []string) ([]pathresolver.VersionPath, error) {
-	return pathresolver.ResolveVersionPaths(referenceFile, productDir, versions)
+func ResolveVersionPaths(referenceFile string, productDir string, versions []string) ([]projectinfo.VersionPath, error) {
+	return projectinfo.ResolveVersionPaths(referenceFile, productDir, versions)
 }
 
 // ExtractVersionFromPath extracts the version identifier from a file path.
@@ -49,6 +49,6 @@ func ResolveVersionPaths(referenceFile string, productDir string, versions []str
 //   - string: The version identifier
 //   - error: Any error encountered during extraction
 func ExtractVersionFromPath(filePath string, productDir string) (string, error) {
-	return pathresolver.ExtractVersionFromPath(filePath, productDir)
+	return projectinfo.ExtractVersionFromPath(filePath, productDir)
 }
 

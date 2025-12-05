@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mongodb/code-example-tooling/audit-cli/internal/pathresolver"
+	"github.com/mongodb/code-example-tooling/audit-cli/internal/projectinfo"
 )
 
 // PrintTree prints the include tree structure.
@@ -138,7 +138,7 @@ func PrintSummary(analysis *IncludeAnalysis) {
 //   - string: Formatted path for display
 func formatDisplayPath(filePath string) string {
 	// Try to find the source directory
-	sourceDir, err := pathresolver.FindSourceDirectory(filePath)
+	sourceDir, err := projectinfo.FindSourceDirectory(filePath)
 	if err != nil {
 		// If we can't find source directory, just return the base name
 		return filepath.Base(filePath)

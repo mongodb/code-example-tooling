@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mongodb/code-example-tooling/audit-cli/internal/pathresolver"
+	"github.com/mongodb/code-example-tooling/audit-cli/internal/projectinfo"
 	"github.com/mongodb/code-example-tooling/audit-cli/internal/rst"
 )
 
@@ -44,7 +44,7 @@ func AnalyzeUsage(targetFile string, includeToctree bool, verbose bool, excludeP
 	}
 
 	// Find the source directory
-	sourceDir, err := pathresolver.FindSourceDirectory(absTargetFile)
+	sourceDir, err := projectinfo.FindSourceDirectory(absTargetFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find source directory: %w\n\nThe source directory is detected by looking for a 'source' directory in the file's path.\nMake sure the target file is within a documentation repository with a 'source' directory.", err)
 	}
@@ -165,7 +165,7 @@ func AnalyzeUsageRecursive(targetFile string, includeToctree bool, verbose bool,
 	}
 
 	// Find the source directory
-	sourceDir, err := pathresolver.FindSourceDirectory(absTargetFile)
+	sourceDir, err := projectinfo.FindSourceDirectory(absTargetFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find source directory: %w\n\nThe source directory is detected by looking for a 'source' directory in the file's path.\nMake sure the target file is within a documentation repository with a 'source' directory.", err)
 	}

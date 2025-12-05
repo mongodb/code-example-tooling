@@ -852,7 +852,11 @@ This command helps writers:
 # Compare with diff output
 ./audit-cli compare file-contents file1.rst file2.rst --show-diff
 
-# Version comparison across MongoDB documentation versions
+# Version comparison - auto-discovers all versions
+./audit-cli compare file-contents \
+  /path/to/manual/manual/source/includes/example.rst
+
+# Version comparison - specific versions only
 ./audit-cli compare file-contents \
   /path/to/manual/manual/source/includes/example.rst \
   --versions manual,upcoming,v8.0,v7.0
@@ -860,25 +864,25 @@ This command helps writers:
 # Show which files differ
 ./audit-cli compare file-contents \
   /path/to/manual/manual/source/includes/example.rst \
-  --versions manual,upcoming,v8.0,v7.0 \
   --show-paths
 
 # Show detailed diffs
 ./audit-cli compare file-contents \
   /path/to/manual/manual/source/includes/example.rst \
-  --versions manual,upcoming,v8.0,v7.0 \
   --show-diff
 
-# Verbose output (show processing details)
-./audit-cli compare file-contents file1.rst file2.rst -v
+# Verbose output (show processing details and auto-discovered versions)
+./audit-cli compare file-contents \
+  /path/to/manual/manual/source/includes/example.rst \
+  -v
 ```
 
 **Flags:**
 
-- `-V, --versions <list>` - Comma-separated list of versions (e.g., `manual,upcoming,v8.0`)
+- `-V, --versions <list>` - Comma-separated list of versions (optional; auto-discovers all versions if not specified)
 - `--show-paths` - Display file paths grouped by status (matching, differing, not found)
 - `-d, --show-diff` - Display unified diff output (implies `--show-paths`)
-- `-v, --verbose` - Show detailed processing information
+- `-v, --verbose` - Show detailed processing information (including auto-discovered versions and product directory)
 
 **Comparison Modes:**
 
@@ -897,15 +901,22 @@ This mode:
 
 **2. Version Comparison (Product Directory)**
 
-Provide one file path plus `--versions`. The product directory is automatically detected from the file path:
+Provide one file path. The product directory and versions are automatically detected from the file path:
 
 ```bash
+# Auto-discover all versions
+./audit-cli compare file-contents \
+  /path/to/manual/manual/source/includes/example.rst
+
+# Or specify specific versions
 ./audit-cli compare file-contents \
   /path/to/manual/manual/source/includes/example.rst \
   --versions manual,upcoming,v8.0
 ```
 
 This mode:
+- Automatically detects the product directory from the file path
+- Auto-discovers all available versions (unless `--versions` is specified)
 - Extracts the relative path from the reference file
 - Resolves the same relative path in each version directory
 - Compares all versions against the reference file
@@ -953,18 +964,21 @@ product-dir/
 **Examples:**
 
 ```bash
-# Check if a file is consistent across all versions
+# Check if a file is consistent across all versions (auto-discovered)
+./audit-cli compare file-contents \
+  ~/workspace/docs-mongodb-internal/content/manual/manual/source/includes/fact-atlas-search.rst
+
+# Find differences and see what changed (all versions)
+./audit-cli compare file-contents \
+  ~/workspace/docs-mongodb-internal/content/manual/manual/source/includes/fact-atlas-search.rst \
+  --show-diff
+
+# Compare across specific versions only
 ./audit-cli compare file-contents \
   ~/workspace/docs-mongodb-internal/content/manual/manual/source/includes/fact-atlas-search.rst \
   --versions manual,upcoming,v8.0,v7.0,v6.0
 
-# Find differences and see what changed
-./audit-cli compare file-contents \
-  ~/workspace/docs-mongodb-internal/content/manual/manual/source/includes/fact-atlas-search.rst \
-  --versions manual,upcoming,v8.0,v7.0,v6.0 \
-  --show-diff
-
-# Compare two specific versions of a file
+# Compare two specific versions of a file directly
 ./audit-cli compare file-contents \
   ~/workspace/docs-mongodb-internal/content/manual/manual/source/includes/example.rst \
   ~/workspace/docs-mongodb-internal/content/manual/v8.0/source/includes/example.rst \
@@ -1237,7 +1251,7 @@ audit-cli/
 │           ├── output.go                    # Output formatting
 │           └── types.go                     # Type definitions
 ├── internal/                                # Internal packages
-│   ├── pathresolver/                        # Path resolution utilities
+│   ├── projectinfo/                         # Project structure and info utilities
 │   │   ├── pathresolver.go                  # Core path resolution
 │   │   ├── pathresolver_test.go             # Tests
 │   │   ├── source_finder.go                 # Source directory detection
@@ -1841,22 +1855,24 @@ used as the base for resolving relative include paths.
 
 ## Internal Packages
 
-### `internal/pathresolver`
+### `internal/projectinfo`
 
-Provides centralized path resolution utilities for working with MongoDB documentation structure:
+Provides centralized utilities for understanding MongoDB documentation project structure:
 
 - **Source directory detection** - Finds the documentation root by walking up the directory tree
 - **Project info detection** - Identifies product directory, version, and whether a project is versioned
+- **Version discovery** - Automatically discovers all available versions in a product directory
 - **Version path resolution** - Resolves file paths across multiple documentation versions
 - **Relative path resolution** - Resolves paths relative to the source directory
 
 **Key Functions:**
 - `FindSourceDirectory(filePath string)` - Finds the source directory for a given file
 - `DetectProjectInfo(filePath string)` - Detects project structure information
+- `DiscoverAllVersions(productDir string)` - Discovers all available versions in a product
 - `ResolveVersionPaths(referenceFile, productDir string, versions []string)` - Resolves paths across versions
 - `ResolveRelativeToSource(sourceDir, relativePath string)` - Resolves relative paths
 
-See the code in `internal/pathresolver/` for implementation details.
+See the code in `internal/projectinfo/` for implementation details.
 
 ### `internal/rst`
 

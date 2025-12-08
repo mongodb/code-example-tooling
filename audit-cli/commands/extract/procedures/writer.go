@@ -67,6 +67,15 @@ func WriteAllVariations(variations []ProcedureVariation, outputDir string, dryRu
 			return filesWritten, err
 		}
 
+		if verbose {
+			outputPath := filepath.Join(outputDir, variation.OutputFile)
+			if dryRun {
+				fmt.Printf("  [DRY RUN] Would write: %s\n", outputPath)
+			} else {
+				fmt.Printf("  Wrote: %s\n", outputPath)
+			}
+		}
+
 		filesWritten++
 	}
 

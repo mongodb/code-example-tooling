@@ -102,6 +102,9 @@ This command helps writers:
 # Extract recursively from all subdirectories
 ./audit-cli extract code-examples path/to/docs -o ./output -r
 
+# Extract recursively and preserve directory structure
+./audit-cli extract code-examples path/to/docs -o ./output -r --preserve-dirs
+
 # Follow include directives
 ./audit-cli extract code-examples path/to/file.rst -o ./output -f
 
@@ -121,6 +124,11 @@ This command helps writers:
 - `-r, --recursive` - Recursively scan directories for RST files. If you do not provide this flag, the tool will only
   extract code examples from the top-level RST file. If you do provide this flag, the tool will recursively scan all
   subdirectories for RST files and extract code examples from all files.
+- `--preserve-dirs` - Preserve directory structure in output (use with `--recursive`). By default, all extracted files
+  are written to a flat structure in the output directory. When this flag is enabled with `--recursive`, the tool will
+  preserve the directory structure relative to the input directory. For example, if extracting from `docs/source/` and
+  a file is located at `docs/source/includes/example.rst`, the output will be written to `output/includes/example.*.ext`
+  instead of `output/example.*.ext`.
 - `-f, --follow-includes` - Follow `.. include::` directives in RST files. If you do not provide this flag, the tool
   will only extract code examples from the top-level RST file. If you do provide this flag, the tool will follow any
   `.. include::` directives in the RST file and extract code examples from all included files. When combined with `-r`,

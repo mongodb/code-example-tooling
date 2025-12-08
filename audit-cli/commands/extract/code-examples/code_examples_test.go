@@ -21,7 +21,7 @@ func TestLiteralIncludeDirective(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	// Run the extract command
-	report, err := RunExtract(inputFile, tempDir, false, false, false, false)
+	report, err := RunExtract(inputFile, tempDir, false, false, false, false, false)
 	if err != nil {
 		t.Fatalf("RunExtract failed: %v", err)
 	}
@@ -110,7 +110,7 @@ func TestIncludeDirectiveFollowing(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	// Run the extract command with include following enabled
-	report, err := RunExtract(inputFile, tempDir, false, true, false, false)
+	report, err := RunExtract(inputFile, tempDir, false, true, false, false, false)
 	if err != nil {
 		t.Fatalf("RunExtract failed: %v", err)
 	}
@@ -166,7 +166,7 @@ func TestCodeBlockDirective(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	// Run extract on code-block test file
-	report, err := RunExtract(inputFile, tempDir, false, false, false, false)
+	report, err := RunExtract(inputFile, tempDir, false, false, false, false, false)
 	if err != nil {
 		t.Fatalf("RunExtract failed: %v", err)
 	}
@@ -229,7 +229,7 @@ func TestNestedCodeBlockDirective(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	// Run extract on nested code-block test file
-	report, err := RunExtract(inputFile, tempDir, false, false, false, false)
+	report, err := RunExtract(inputFile, tempDir, false, false, false, false, false)
 	if err != nil {
 		t.Fatalf("RunExtract failed: %v", err)
 	}
@@ -304,7 +304,7 @@ func TestIoCodeBlockDirective(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	// Run extract on io-code-block test file
-	report, err := RunExtract(inputFile, tempDir, false, false, false, false)
+	report, err := RunExtract(inputFile, tempDir, false, false, false, false, false)
 	if err != nil {
 		t.Fatalf("RunExtract failed: %v", err)
 	}
@@ -405,7 +405,7 @@ func TestEmptyFile(t *testing.T) {
 	}
 
 	// Run the extract command
-	report, err := RunExtract(emptyFile, outputDir, false, false, false, false)
+	report, err := RunExtract(emptyFile, outputDir, false, false, false, false, false)
 	if err != nil {
 		t.Fatalf("RunExtract failed: %v", err)
 	}
@@ -435,7 +435,7 @@ func TestRecursiveDirectoryScanning(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	// Run the extract command with recursive=true, followIncludes=false
-	report, err := RunExtract(inputDir, tempDir, true, false, false, false)
+	report, err := RunExtract(inputDir, tempDir, true, false, false, false, false)
 	if err != nil {
 		t.Fatalf("RunExtract failed: %v", err)
 	}
@@ -485,7 +485,7 @@ func TestFollowIncludesWithoutRecursive(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	// Run the extract command with recursive=false, followIncludes=true
-	report, err := RunExtract(inputFile, tempDir, false, true, false, false)
+	report, err := RunExtract(inputFile, tempDir, false, true, false, false, false)
 	if err != nil {
 		t.Fatalf("RunExtract failed: %v", err)
 	}
@@ -526,7 +526,7 @@ func TestRecursiveWithFollowIncludes(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	// Run the extract command with recursive=true, followIncludes=true
-	report, err := RunExtract(inputDir, tempDir, true, true, false, false)
+	report, err := RunExtract(inputDir, tempDir, true, true, false, false, false)
 	if err != nil {
 		t.Fatalf("RunExtract failed: %v", err)
 	}
@@ -573,7 +573,7 @@ func TestNoFlagsOnDirectory(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	// Run the extract command with recursive=false, followIncludes=false on a directory
-	report, err := RunExtract(inputDir, tempDir, false, false, false, false)
+	report, err := RunExtract(inputDir, tempDir, false, false, false, false, false)
 	if err != nil {
 		t.Fatalf("RunExtract failed: %v", err)
 	}
@@ -594,5 +594,104 @@ func TestNoFlagsOnDirectory(t *testing.T) {
 	if report.OutputFilesWritten < 30 {
 		t.Errorf("Expected at least 30 output files, got %d",
 			report.OutputFilesWritten)
+	}
+}
+
+// TestPreserveDirs tests that --preserve-dirs flag preserves directory structure
+func TestPreserveDirs(t *testing.T) {
+	// Setup paths
+	testDataDir := filepath.Join("..", "..", "..", "testdata")
+	inputDir := filepath.Join(testDataDir, "input-files", "source")
+
+	// Create temporary output directory
+	tempDir, err := os.MkdirTemp("", "audit-test-preserve-dirs-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Run the extract command with recursive=true, preserveDirs=true
+	report, err := RunExtract(inputDir, tempDir, true, false, false, false, true)
+	if err != nil {
+		t.Fatalf("RunExtract failed: %v", err)
+	}
+
+	// Verify that files were extracted
+	if report.OutputFilesWritten < 30 {
+		t.Errorf("Expected at least 30 output files, got %d", report.OutputFilesWritten)
+	}
+
+	// Verify that directory structure is preserved
+	// Check that files from includes/ subdirectory are in the includes/ subdirectory of output
+	includesOutputDir := filepath.Join(tempDir, "includes")
+	if _, err := os.Stat(includesOutputDir); os.IsNotExist(err) {
+		t.Errorf("Expected includes/ subdirectory in output, but it doesn't exist")
+	}
+
+	// Check that files from the root are in the root of output
+	// literalinclude-test.rst should produce files in the root
+	rootFiles, err := os.ReadDir(tempDir)
+	if err != nil {
+		t.Fatalf("Failed to read output directory: %v", err)
+	}
+
+	hasRootFiles := false
+	for _, entry := range rootFiles {
+		if !entry.IsDir() {
+			hasRootFiles = true
+			break
+		}
+	}
+
+	if !hasRootFiles {
+		t.Errorf("Expected files in the root of output directory")
+	}
+
+	// Verify that files from includes/ are in the includes/ subdirectory
+	if _, err := os.Stat(includesOutputDir); err == nil {
+		includesFiles, err := os.ReadDir(includesOutputDir)
+		if err != nil {
+			t.Fatalf("Failed to read includes output directory: %v", err)
+		}
+
+		if len(includesFiles) == 0 {
+			t.Errorf("Expected files in includes/ subdirectory of output")
+		}
+	}
+}
+
+// TestPreserveDirsWithoutRecursive tests that --preserve-dirs without --recursive still works
+func TestPreserveDirsWithoutRecursive(t *testing.T) {
+	// Setup paths
+	testDataDir := filepath.Join("..", "..", "..", "testdata")
+	inputFile := filepath.Join(testDataDir, "input-files", "source", "literalinclude-test.rst")
+
+	// Create temporary output directory
+	tempDir, err := os.MkdirTemp("", "audit-test-preserve-single-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Run the extract command with recursive=false, preserveDirs=true
+	// This should work but have no effect since we're processing a single file
+	report, err := RunExtract(inputFile, tempDir, false, false, false, false, true)
+	if err != nil {
+		t.Fatalf("RunExtract failed: %v", err)
+	}
+
+	// Verify that files were extracted
+	if report.OutputFilesWritten != 7 {
+		t.Errorf("Expected 7 output files, got %d", report.OutputFilesWritten)
+	}
+
+	// All files should be in the root since we're processing a single file
+	files, err := os.ReadDir(tempDir)
+	if err != nil {
+		t.Fatalf("Failed to read output directory: %v", err)
+	}
+
+	if len(files) != 7 {
+		t.Errorf("Expected 7 files in output directory, got %d", len(files))
 	}
 }

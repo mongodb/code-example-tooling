@@ -29,6 +29,7 @@ import (
 //   - -o, --output: Output directory for extracted files
 //   - --dry-run: Show what would be extracted without writing files
 //   - -v, --verbose: Show detailed processing information
+//   - --preserve-dirs: Preserve directory structure when used with --recursive
 func NewCodeExamplesCommand() *cobra.Command {
 	var (
 		recursive      bool
@@ -36,6 +37,7 @@ func NewCodeExamplesCommand() *cobra.Command {
 		outputDir      string
 		dryRun         bool
 		verbose        bool
+		preserveDirs   bool
 	)
 
 	cmd := &cobra.Command{
@@ -46,7 +48,7 @@ and output them as individual files.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			filePath := args[0]
-			return runExtract(filePath, recursive, followIncludes, outputDir, dryRun, verbose)
+			return runExtract(filePath, recursive, followIncludes, outputDir, dryRun, verbose, preserveDirs)
 		},
 	}
 
@@ -55,6 +57,7 @@ and output them as individual files.`,
 	cmd.Flags().StringVarP(&outputDir, "output", "o", "./output", "Output directory for code example files")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what would be outputted without writing files")
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Provide additional information during execution")
+	cmd.Flags().BoolVar(&preserveDirs, "preserve-dirs", false, "Preserve directory structure in output (use with --recursive)")
 
 	return cmd
 }
@@ -71,12 +74,13 @@ and output them as individual files.`,
 //   - followIncludes: If true, follow .. include:: directives
 //   - dryRun: If true, show what would be extracted without writing files
 //   - verbose: If true, show detailed processing information
+//   - preserveDirs: If true, preserve directory structure in output (use with recursive)
 //
 // Returns:
 //   - *Report: Statistics about the extraction operation
 //   - error: Any error encountered during extraction
-func RunExtract(filePath string, outputDir string, recursive bool, followIncludes bool, dryRun bool, verbose bool) (*Report, error) {
-	report, err := runExtractInternal(filePath, recursive, followIncludes, outputDir, dryRun, verbose)
+func RunExtract(filePath string, outputDir string, recursive bool, followIncludes bool, dryRun bool, verbose bool, preserveDirs bool) (*Report, error) {
+	report, err := runExtractInternal(filePath, recursive, followIncludes, outputDir, dryRun, verbose, preserveDirs)
 	return report, err
 }
 
@@ -84,13 +88,13 @@ func RunExtract(filePath string, outputDir string, recursive bool, followInclude
 //
 // This is a thin wrapper around runExtractInternal that discards the report
 // and only returns errors, suitable for use in the CLI command handler.
-func runExtract(filePath string, recursive bool, followIncludes bool, outputDir string, dryRun bool, verbose bool) error {
-	_, err := runExtractInternal(filePath, recursive, followIncludes, outputDir, dryRun, verbose)
+func runExtract(filePath string, recursive bool, followIncludes bool, outputDir string, dryRun bool, verbose bool, preserveDirs bool) error {
+	_, err := runExtractInternal(filePath, recursive, followIncludes, outputDir, dryRun, verbose, preserveDirs)
 	return err
 }
 
 // runExtractInternal executes the extraction operation
-func runExtractInternal(filePath string, recursive bool, followIncludes bool, outputDir string, dryRun bool, verbose bool) (*Report, error) {
+func runExtractInternal(filePath string, recursive bool, followIncludes bool, outputDir string, dryRun bool, verbose bool, preserveDirs bool) (*Report, error) {
 	fileInfo, err := os.Stat(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to access path %s: %w", filePath, err)
@@ -99,6 +103,7 @@ func runExtractInternal(filePath string, recursive bool, followIncludes bool, ou
 	report := NewReport()
 
 	var filesToProcess []string
+	var rootPath string
 
 	if fileInfo.IsDir() {
 		if verbose {
@@ -108,8 +113,10 @@ func runExtractInternal(filePath string, recursive bool, followIncludes bool, ou
 		if err != nil {
 			return nil, fmt.Errorf("failed to traverse directory: %w", err)
 		}
+		rootPath = filePath
 	} else {
 		filesToProcess = []string{filePath}
+		rootPath = ""
 	}
 
 	var filteredFiles []string
@@ -151,7 +158,7 @@ func runExtractInternal(filePath string, recursive bool, followIncludes bool, ou
 		}
 
 		for _, example := range examples {
-			outputPath, err := WriteCodeExample(example, outputDir, dryRun)
+			outputPath, err := WriteCodeExample(example, outputDir, rootPath, dryRun, preserveDirs)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Warning: failed to write code example: %v\n", err)
 				continue

@@ -582,8 +582,9 @@ func TestNoFlagsOnDirectory(t *testing.T) {
 	// Should NOT include files in includes/ subdirectory
 	// Expected: code-block-test.rst, duplicate-include-test.rst, include-test.rst,
 	//           io-code-block-test.rst, literalinclude-test.rst, nested-code-block-test.rst,
-	//           nested-include-test.rst, index.rst, procedure-test.rst, procedure-with-includes.rst (10 files)
-	expectedFiles := 11
+	//           nested-include-test.rst, index.rst, procedure-test.rst, procedure-with-includes.rst,
+	//           rotate-key-sharded-cluster.txt, continuation-marker-test.rst (12 files)
+	expectedFiles := 13
 	if report.FilesTraversed != expectedFiles {
 		t.Errorf("Expected %d files traversed (top-level only), got %d",
 			expectedFiles, report.FilesTraversed)

@@ -114,6 +114,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -178,7 +179,37 @@ func parseProceduresFromLines(lines []string, filePath string) ([]Procedure, err
 			if isHeadingUnderline(nextLine) && len(nextLine) >= len(trimmedLine) {
 				// Skip empty headings and generic headings that don't provide meaningful context
 				headingLower := strings.ToLower(trimmedLine)
-				if trimmedLine != "" && headingLower != "procedure" && headingLower != "overview" && headingLower != "steps" {
+
+				// Check if this is a "Procedure" heading
+				if headingLower == "procedure" || headingLower == "steps" {
+					currentHeading = trimmedLine
+					i += 2 // Skip heading and underline
+
+					// Look ahead to see if the next heading is numbered
+					// If so, parse as hierarchical procedure
+					j := i
+					for j < len(lines) && strings.TrimSpace(lines[j]) == "" {
+						j++
+					}
+					if j+1 < len(lines) {
+						nextHeading := strings.TrimSpace(lines[j])
+						nextUnderline := strings.TrimSpace(lines[j+1])
+						if isHeadingUnderline(nextUnderline) && isNumberedHeading(nextHeading) {
+							// Parse hierarchical procedure
+							procedure, endLine := parseHierarchicalProcedure(lines, j, currentHeading)
+							if len(procedure.Steps) > 0 {
+								procedure.LineNum = i - 1 // Line where "Procedure" heading starts
+								procedure.EndLineNum = endLine + 1
+								procedures = append(procedures, procedure)
+							}
+							i = endLine + 1
+							continue
+						}
+					}
+					continue
+				}
+
+				if trimmedLine != "" && headingLower != "overview" {
 					currentHeading = trimmedLine
 				}
 				i += 2 // Skip heading and underline
@@ -272,6 +303,165 @@ func isHeadingUnderline(line string) bool {
 	return true
 }
 
+// isNumberedHeading checks if a heading starts with a number followed by a period
+func isNumberedHeading(heading string) bool {
+	trimmed := strings.TrimSpace(heading)
+	if len(trimmed) < 3 {
+		return false
+	}
+	// Check if it starts with a digit followed by a period
+	if trimmed[0] >= '0' && trimmed[0] <= '9' {
+		// Find the period
+		for i := 1; i < len(trimmed); i++ {
+			if trimmed[i] == '.' {
+				return true
+			}
+			if trimmed[i] < '0' || trimmed[i] > '9' {
+				return false
+			}
+		}
+	}
+	return false
+}
+
+// parseHierarchicalProcedure parses a procedure with numbered headings as steps
+// This handles the pattern where a "Procedure" heading is followed by numbered headings
+// like "1. First Step", "2. Second Step", etc.
+func parseHierarchicalProcedure(lines []string, startIdx int, title string) (Procedure, int) {
+	procedure := Procedure{
+		Type:  OrderedList,
+		Title: title,
+		Steps: []Step{},
+	}
+
+	i := startIdx
+
+	// Parse each numbered heading as a step
+	for i < len(lines) {
+		line := lines[i]
+		trimmedLine := strings.TrimSpace(line)
+
+		// Empty line
+		if trimmedLine == "" {
+			i++
+			continue
+		}
+
+		// Check if this is a numbered heading
+		if i+1 < len(lines) {
+			nextLine := strings.TrimSpace(lines[i+1])
+			if isHeadingUnderline(nextLine) && len(nextLine) >= len(trimmedLine) {
+				if isNumberedHeading(trimmedLine) {
+					// Parse this numbered heading as a step
+					step, endLine := parseNumberedHeadingStep(lines, i)
+					procedure.Steps = append(procedure.Steps, step)
+					i = endLine + 1
+					continue
+				} else {
+					// Non-numbered heading - end of this procedure
+					break
+				}
+			}
+		}
+
+		// Check for directive or other content that signals end of procedure
+		if strings.HasPrefix(trimmedLine, "..") {
+			break
+		}
+
+		i++
+	}
+
+	// Check for sub-steps
+	for _, step := range procedure.Steps {
+		if len(step.SubSteps) > 0 {
+			procedure.HasSubSteps = true
+			break
+		}
+	}
+
+	return procedure, i - 1
+}
+
+// parseNumberedHeadingStep parses a numbered heading and its content as a procedure step
+func parseNumberedHeadingStep(lines []string, startIdx int) (Step, int) {
+	heading := strings.TrimSpace(lines[startIdx])
+	_ = strings.TrimSpace(lines[startIdx+1]) // underline (not used but needed to skip)
+
+	step := Step{
+		Title:   heading,
+		LineNum: startIdx + 1,
+	}
+
+	i := startIdx + 2 // Skip heading and underline
+	var contentLines []string
+	var subSteps []Step
+	var subProcedures []SubProcedure
+
+	// Parse the content under this heading
+	for i < len(lines) {
+		line := lines[i]
+		trimmedLine := strings.TrimSpace(line)
+
+		// Empty line
+		if trimmedLine == "" {
+			contentLines = append(contentLines, "")
+			i++
+			continue
+		}
+
+		// Check if we've hit the next numbered heading
+		if i+1 < len(lines) {
+			nextLine := strings.TrimSpace(lines[i+1])
+			if isHeadingUnderline(nextLine) && len(nextLine) >= len(trimmedLine) {
+				// This is a heading - check if it's numbered (next step) or a subheading
+				if isNumberedHeading(trimmedLine) {
+					// Next numbered step - we're done with this step
+					break
+				}
+				// Non-numbered heading - could be a subheading, include it in content
+			}
+		}
+
+		// Check for ordered list (sub-steps)
+		if isOrderedListStart(trimmedLine) {
+			subProcedureSteps, listType, endLine := parseOrderedListSteps(lines, i)
+			// Add as a separate sub-procedure with its list type
+			subProcedures = append(subProcedures, SubProcedure{
+				Steps:    subProcedureSteps,
+				ListType: listType,
+			})
+			// Also add to subSteps for backward compatibility
+			subSteps = append(subSteps, subProcedureSteps...)
+			// Add the sub-steps to content as well
+			for j := i; j <= endLine; j++ {
+				contentLines = append(contentLines, lines[j])
+			}
+			i = endLine + 1
+			continue
+		}
+
+		// Check for directive
+		if strings.HasPrefix(trimmedLine, "..") {
+			// Include directives in content
+			contentLines = append(contentLines, line)
+			i++
+			continue
+		}
+
+		// Regular content line
+		contentLines = append(contentLines, line)
+		i++
+	}
+
+	step.Content = strings.Join(contentLines, "\n")
+	step.SubSteps = subSteps
+	step.SubProcedures = subProcedures
+
+	return step, i - 1
+}
+
+
 // computeProcedureContentHash generates a hash of the procedure's content
 // to detect when procedures are identical across different selections
 func computeProcedureContentHash(proc *Procedure) string {
@@ -322,7 +512,7 @@ func computeProcedureContentHash(proc *Procedure) string {
 
 // isOrderedListStart checks if a line starts an ordered list
 func isOrderedListStart(line string) bool {
-	return numberedListRegex.MatchString(line) || letteredListRegex.MatchString(line)
+	return numberedListRegex.MatchString(line) || letteredListRegex.MatchString(line) || continuationMarkerRegex.MatchString(line)
 }
 
 // getIndentLevel returns the indentation level of a line
@@ -703,8 +893,14 @@ func parseStepDirectiveFromLines(lines []string, startIdx int, title string, fil
 
 		// Check for ordered list (sub-steps)
 		if isOrderedListStart(trimmedLine) {
-			subSteps, endLine := parseOrderedListSteps(lines, i)
-			step.SubSteps = append(step.SubSteps, subSteps...)
+			subProcedureSteps, listType, endLine := parseOrderedListSteps(lines, i)
+			// Add as a separate sub-procedure with its list type
+			step.SubProcedures = append(step.SubProcedures, SubProcedure{
+				Steps:    subProcedureSteps,
+				ListType: listType,
+			})
+			// Also add to SubSteps for backward compatibility
+			step.SubSteps = append(step.SubSteps, subProcedureSteps...)
 			// Add the sub-steps to content as well
 			for j := i; j <= endLine; j++ {
 				contentLines = append(contentLines, lines[j])
@@ -782,17 +978,21 @@ func parseOrderedListProcedure(lines []string, startIdx int, title string) (Proc
 		Steps: []Step{},
 	}
 
-	steps, endLine := parseOrderedListSteps(lines, startIdx)
+	steps, _, endLine := parseOrderedListSteps(lines, startIdx)
 	procedure.Steps = steps
 
 	return procedure, endLine
 }
 
-// parseOrderedListSteps parses ordered list items as steps
-func parseOrderedListSteps(lines []string, startIdx int) ([]Step, int) {
+// parseOrderedListSteps parses ordered list items as steps and returns the list type
+func parseOrderedListSteps(lines []string, startIdx int) ([]Step, string, int) {
 	var steps []Step
 	i := startIdx
 	baseIndent := getIndentLevel(lines[i])
+
+	// Track the list type (numbered or lettered) and the last marker
+	var listType string // "numbered" or "lettered"
+	var lastMarker string // last number or letter used
 
 	for i < len(lines) {
 		line := lines[i]
@@ -808,8 +1008,28 @@ func parseOrderedListSteps(lines []string, startIdx int) ([]Step, int) {
 
 		// Check if this is a list item at the same level
 		if indent == baseIndent && isOrderedListStart(trimmedLine) {
-			step, endLine := parseOrderedListItem(lines, i)
+			// Determine list type from first item if not set
+			if listType == "" {
+				if numberedListRegex.MatchString(trimmedLine) {
+					listType = "numbered"
+				} else if letteredListRegex.MatchString(trimmedLine) {
+					listType = "lettered"
+				}
+			}
+
+			step, endLine := parseOrderedListItem(lines, i, listType, lastMarker)
 			steps = append(steps, step)
+
+			// Update last marker based on the step we just parsed
+			marker := getListMarker(lines[i], listType)
+			if marker != "" {
+				// Regular marker - use it
+				lastMarker = marker
+			} else {
+				// Continuation marker - compute the next marker
+				lastMarker = getNextMarker(lastMarker, listType)
+			}
+
 			i = endLine + 1
 			continue
 		}
@@ -822,11 +1042,11 @@ func parseOrderedListSteps(lines []string, startIdx int) ([]Step, int) {
 		i++
 	}
 
-	return steps, i - 1
+	return steps, listType, i - 1
 }
 
 // parseOrderedListItem parses a single ordered list item
-func parseOrderedListItem(lines []string, startIdx int) (Step, int) {
+func parseOrderedListItem(lines []string, startIdx int, listType string, lastMarker string) (Step, int) {
 	line := lines[startIdx]
 	var title string
 	var contentLines []string
@@ -836,6 +1056,14 @@ func parseOrderedListItem(lines []string, startIdx int) (Step, int) {
 		title = strings.TrimSpace(matches[3])
 	} else if matches := letteredListRegex.FindStringSubmatch(line); len(matches) > 3 {
 		title = strings.TrimSpace(matches[3])
+	} else if matches := continuationMarkerRegex.FindStringSubmatch(line); len(matches) > 2 {
+		// Handle continuation marker (#.) - convert to next number/letter
+		nextMarker := getNextMarker(lastMarker, listType)
+		title = strings.TrimSpace(matches[2])
+		// Prepend the computed marker to the title for display purposes
+		if nextMarker != "" {
+			title = nextMarker + ". " + title
+		}
 	}
 
 	baseIndent := getIndentLevel(line)
@@ -891,6 +1119,65 @@ func parseOrderedListItem(lines []string, startIdx int) (Step, int) {
 
 	return step, i - 1
 }
+
+// getListMarker extracts the marker (number or letter) from a list item line
+func getListMarker(line string, listType string) string {
+	trimmedLine := strings.TrimSpace(line)
+
+	// Check for continuation marker - return empty string as we'll compute it
+	if continuationMarkerRegex.MatchString(trimmedLine) {
+		return ""
+	}
+
+	if listType == "numbered" {
+		if matches := numberedListRegex.FindStringSubmatch(trimmedLine); len(matches) > 2 {
+			return matches[2]
+		}
+	} else if listType == "lettered" {
+		if matches := letteredListRegex.FindStringSubmatch(trimmedLine); len(matches) > 2 {
+			return matches[2]
+		}
+	}
+
+	return ""
+}
+
+// getNextMarker computes the next marker in a sequence
+func getNextMarker(lastMarker string, listType string) string {
+	if lastMarker == "" {
+		// If no last marker, start from 1 or 'a'
+		if listType == "numbered" {
+			return "1"
+		} else if listType == "lettered" {
+			return "a"
+		}
+		return ""
+	}
+
+	if listType == "numbered" {
+		// Parse the number and increment
+		if num, err := strconv.Atoi(lastMarker); err == nil {
+			return strconv.Itoa(num + 1)
+		}
+	} else if listType == "lettered" {
+		// Increment the letter
+		if len(lastMarker) == 1 {
+			char := lastMarker[0]
+			if char >= 'a' && char < 'z' {
+				return string(char + 1)
+			} else if char >= 'A' && char < 'Z' {
+				return string(char + 1)
+			} else if char == 'z' {
+				return "aa" // Handle overflow (rare case)
+			} else if char == 'Z' {
+				return "AA"
+			}
+		}
+	}
+
+	return lastMarker
+}
+
 
 // parseTabsVariation parses a .. tabs:: directive and its tab content
 func parseTabsVariation(lines []string, startIdx int) (Variation, int) {

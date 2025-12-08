@@ -182,3 +182,233 @@ func TestAbsolutePath(t *testing.T) {
 
 	t.Logf("Successfully parsed with absolute path: %s", absPath)
 }
+
+func TestContinuationMarkers(t *testing.T) {
+	testFile := "../../testdata/input-files/source/continuation-marker-test.rst"
+
+	procedures, err := ParseProceduresWithOptions(testFile, false)
+	if err != nil {
+		t.Fatalf("ParseProceduresWithOptions failed: %v", err)
+	}
+
+	if len(procedures) != 2 {
+		t.Fatalf("Expected 2 procedures, got %d", len(procedures))
+	}
+
+	// Test lettered list with continuation markers
+	letteredProc := procedures[0]
+	if letteredProc.Title != "Lettered List with Continuation" {
+		t.Errorf("Expected title 'Lettered List with Continuation', got '%s'", letteredProc.Title)
+	}
+
+	if len(letteredProc.Steps) != 3 {
+		t.Fatalf("Expected 3 steps in lettered list, got %d", len(letteredProc.Steps))
+	}
+
+	// Verify step titles (note: regular list items don't include the marker in the title)
+	// Only continuation markers get the computed marker prepended
+	expectedTitles := []string{"First step", "b. Second step", "c. Third step"}
+	for i, step := range letteredProc.Steps {
+		if step.Title != expectedTitles[i] {
+			t.Errorf("Step %d: expected title '%s', got '%s'", i, expectedTitles[i], step.Title)
+		}
+	}
+
+	// Test numbered list with continuation markers
+	numberedProc := procedures[1]
+	if numberedProc.Title != "Numbered List with Continuation" {
+		t.Errorf("Expected title 'Numbered List with Continuation', got '%s'", numberedProc.Title)
+	}
+
+	if len(numberedProc.Steps) != 4 {
+		t.Fatalf("Expected 4 steps in numbered list, got %d", len(numberedProc.Steps))
+	}
+
+	// Verify step titles (note: regular list items don't include the marker in the title)
+	// Only continuation markers get the computed marker prepended
+	expectedNumberedTitles := []string{"First step", "2. Second step", "3. Third step", "4. Fourth step"}
+	for i, step := range numberedProc.Steps {
+		if step.Title != expectedNumberedTitles[i] {
+			t.Errorf("Step %d: expected title '%s', got '%s'", i, expectedNumberedTitles[i], step.Title)
+		}
+	}
+
+	t.Logf("Continuation markers parsed correctly")
+}
+
+func TestHierarchicalProcedure(t *testing.T) {
+	testFile := "../../testdata/input-files/source/rotate-key-sharded-cluster.txt"
+
+	procedures, err := ParseProceduresWithOptions(testFile, false)
+	if err != nil {
+		t.Fatalf("ParseProceduresWithOptions failed: %v", err)
+	}
+
+	// Should parse as 1 procedure (not 10 separate procedures)
+	if len(procedures) != 1 {
+		t.Fatalf("Expected 1 procedure, got %d", len(procedures))
+	}
+
+	proc := procedures[0]
+	if proc.Title != "Procedure" {
+		t.Errorf("Expected title 'Procedure', got '%s'", proc.Title)
+	}
+
+	// Should have 4 top-level steps (the numbered headings)
+	if len(proc.Steps) != 4 {
+		t.Fatalf("Expected 4 steps, got %d", len(proc.Steps))
+	}
+
+	// Verify step titles match the numbered headings
+	expectedStepTitles := []string{
+		"1. Modify the Keyfile to Include Old and New Keys",
+		"2. Restart Each Member",
+		"3. Update Keyfile Content to the New Key Only",
+		"4. Restart Each Member",
+	}
+
+	for i, step := range proc.Steps {
+		if step.Title != expectedStepTitles[i] {
+			t.Errorf("Step %d: expected title '%s', got '%s'", i, expectedStepTitles[i], step.Title)
+		}
+	}
+
+	// Verify HasSubSteps is set
+	if !proc.HasSubSteps {
+		t.Error("Expected HasSubSteps to be true")
+	}
+
+	// Verify that step 2 has sub-steps (the ordered lists)
+	step2 := proc.Steps[1]
+	if len(step2.SubSteps) == 0 {
+		t.Error("Expected step 2 to have sub-steps")
+	}
+
+	t.Logf("Hierarchical procedure parsed correctly with %d steps", len(proc.Steps))
+}
+
+func TestSubProcedureDetection(t *testing.T) {
+	testFile := "../../testdata/input-files/source/procedure-test.rst"
+
+	procedures, err := ParseProceduresWithOptions(testFile, false)
+	if err != nil {
+		t.Fatalf("ParseProceduresWithOptions failed: %v", err)
+	}
+
+	// Find the "Procedure with Sub-steps" procedure
+	var subStepProc *Procedure
+	for i := range procedures {
+		if procedures[i].Title == "Procedure with Sub-steps" {
+			subStepProc = &procedures[i]
+			break
+		}
+	}
+
+	if subStepProc == nil {
+		t.Fatal("Could not find 'Procedure with Sub-steps'")
+	}
+
+	// Verify HasSubSteps is set
+	if !subStepProc.HasSubSteps {
+		t.Error("Expected HasSubSteps to be true for 'Procedure with Sub-steps'")
+	}
+
+	// Verify at least one step has sub-steps
+	hasSubSteps := false
+	for _, step := range subStepProc.Steps {
+		if len(step.SubSteps) > 0 {
+			hasSubSteps = true
+			break
+		}
+	}
+
+	if !hasSubSteps {
+		t.Error("Expected at least one step to have sub-steps")
+	}
+
+	t.Logf("Sub-procedure detection working correctly")
+}
+
+func TestSubProcedureListTypes(t *testing.T) {
+	testFile := "../../testdata/input-files/source/rotate-key-sharded-cluster.txt"
+
+	procedures, err := ParseProceduresWithOptions(testFile, false)
+	if err != nil {
+		t.Fatalf("ParseProceduresWithOptions failed: %v", err)
+	}
+
+	// Find the hierarchical procedure
+	if len(procedures) == 0 {
+		t.Fatal("Expected at least one procedure")
+	}
+
+	proc := procedures[0]
+
+	// Verify it has steps with sub-procedures
+	if len(proc.Steps) < 2 {
+		t.Fatalf("Expected at least 2 steps, got %d", len(proc.Steps))
+	}
+
+	// Check step 2 (index 1) which should have sub-procedures
+	step := proc.Steps[1]
+	if len(step.SubProcedures) == 0 {
+		t.Fatal("Expected step 2 to have sub-procedures")
+	}
+
+	// Verify all sub-procedures have the correct list type
+	for i, subProc := range step.SubProcedures {
+		if subProc.ListType != "lettered" {
+			t.Errorf("Sub-procedure %d: expected list type 'lettered', got '%s'", i+1, subProc.ListType)
+		}
+
+		if len(subProc.Steps) == 0 {
+			t.Errorf("Sub-procedure %d: expected at least one step", i+1)
+		}
+
+		// Verify steps are present
+		t.Logf("Sub-procedure %d has %d steps with list type '%s'", i+1, len(subProc.Steps), subProc.ListType)
+	}
+
+	// Verify backward compatibility - SubSteps should still be populated
+	if len(step.SubSteps) == 0 {
+		t.Error("Expected SubSteps to be populated for backward compatibility")
+	}
+
+	// Count total steps across all sub-procedures
+	totalSteps := 0
+	for _, subProc := range step.SubProcedures {
+		totalSteps += len(subProc.Steps)
+	}
+
+	// Verify SubSteps has the same total count
+	if len(step.SubSteps) != totalSteps {
+		t.Errorf("Expected SubSteps to have %d steps (flattened), got %d", totalSteps, len(step.SubSteps))
+	}
+
+	t.Logf("Sub-procedure list types tracked correctly: %d sub-procedures with %d total steps",
+		len(step.SubProcedures), totalSteps)
+}
+
+func TestNumberedHeadingDetection(t *testing.T) {
+	tests := []struct {
+		heading  string
+		expected bool
+	}{
+		{"1. First Step", true},
+		{"2. Second Step", true},
+		{"10. Tenth Step", true},
+		{"123. Large Number", true},
+		{"Step 1", false},
+		{"1 First Step", false},
+		{"a. Lettered Step", false},
+		{"Procedure", false},
+		{"", false},
+	}
+
+	for _, tt := range tests {
+		result := isNumberedHeading(tt.heading)
+		if result != tt.expected {
+			t.Errorf("isNumberedHeading(%q) = %v, want %v", tt.heading, result, tt.expected)
+		}
+	}
+}

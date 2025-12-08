@@ -31,11 +31,13 @@ import (
 //   - -v, --verbose: Show detailed processing information
 func NewProceduresCommand() *cobra.Command {
 	var (
-		selection      string
-		outputDir      string
-		dryRun         bool
-		verbose        bool
-		expandIncludes bool
+		selection         string
+		outputDir         string
+		dryRun            bool
+		verbose           bool
+		expandIncludes    bool
+		showSteps         bool
+		showSubProcedures bool
 	)
 
 	cmd := &cobra.Command{
@@ -60,7 +62,7 @@ to inline the content of included files.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			filePath := args[0]
-			return runExtract(filePath, selection, outputDir, dryRun, verbose, expandIncludes)
+			return runExtract(filePath, selection, outputDir, dryRun, verbose, expandIncludes, showSteps, showSubProcedures)
 		},
 	}
 
@@ -69,12 +71,14 @@ to inline the content of included files.`,
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what would be extracted without writing files")
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Provide additional information during execution")
 	cmd.Flags().BoolVar(&expandIncludes, "expand-includes", false, "Expand include directives inline instead of preserving them")
+	cmd.Flags().BoolVar(&showSteps, "show-steps", false, "Show detailed information about each step in the procedure")
+	cmd.Flags().BoolVar(&showSubProcedures, "show-sub-procedures", false, "Show information about detected sub-procedures within steps")
 
 	return cmd
 }
 
 // runExtract executes the extraction operation.
-func runExtract(filePath string, selection string, outputDir string, dryRun bool, verbose bool, expandIncludes bool) error {
+func runExtract(filePath string, selection string, outputDir string, dryRun bool, verbose bool, expandIncludes bool, showSteps bool, showSubProcedures bool) error {
 	// Verify the file exists
 	fileInfo, err := os.Stat(filePath)
 	if err != nil {
@@ -120,6 +124,83 @@ func runExtract(filePath string, selection string, outputDir string, dryRun bool
 				}
 			} else {
 				fmt.Printf("   Appears in: (no specific selections)\n")
+			}
+
+			// Show step details if requested
+			if showSteps {
+				fmt.Printf("\n   Step Details:\n")
+				for stepIdx, step := range v.Procedure.Steps {
+					// Check if the title already contains numbering
+					hasNumbering := false
+					title := step.Title
+					if len(title) > 0 {
+						// Check for numbered (1., 2., etc.) or lettered (a., b., etc.) prefix
+						if (title[0] >= '0' && title[0] <= '9') || (title[0] >= 'a' && title[0] <= 'z') {
+							if len(title) > 1 && title[1] == '.' {
+								hasNumbering = true
+							}
+						}
+					}
+
+					if hasNumbering {
+						fmt.Printf("   - %s\n", title)
+					} else {
+						fmt.Printf("   %d. %s\n", stepIdx+1, title)
+					}
+
+					if len(step.SubProcedures) > 0 {
+						totalSubSteps := 0
+						for _, subProc := range step.SubProcedures {
+							totalSubSteps += len(subProc.Steps)
+						}
+						fmt.Printf("      Contains %d sub-procedure(s) with a total of %d sub-step(s)\n", len(step.SubProcedures), totalSubSteps)
+					}
+					if len(step.Variations) > 0 {
+						fmt.Printf("      Contains %d variation(s)\n", len(step.Variations))
+					}
+				}
+			}
+
+			// Show sub-procedure information if requested
+			if showSubProcedures && v.Procedure.HasSubSteps {
+				fmt.Printf("\n   Sub-Procedures:\n")
+				for stepIdx, step := range v.Procedure.Steps {
+					if len(step.SubProcedures) > 0 {
+						totalSubSteps := 0
+						for _, subProc := range step.SubProcedures {
+							totalSubSteps += len(subProc.Steps)
+						}
+						fmt.Printf("   Step %d (%s) contains %d sub-procedure(s) with a total of %d sub-step(s)\n",
+							stepIdx+1, step.Title, len(step.SubProcedures), totalSubSteps)
+
+						for subProcIdx, subProc := range step.SubProcedures {
+							fmt.Printf("\n      Sub-procedure %d (%d step(s)):\n", subProcIdx+1, len(subProc.Steps))
+							for subStepIdx, subStep := range subProc.Steps {
+								// Use the appropriate marker based on list type
+								marker := ""
+								if subProc.ListType == "lettered" {
+									// Convert index to letter (0->a, 1->b, etc.)
+									marker = string(rune('a' + subStepIdx))
+								} else {
+									// Default to numbered
+									marker = fmt.Sprintf("%d", subStepIdx+1)
+								}
+
+								// Strip any existing marker from the title
+								title := subStep.Title
+								// Check if title starts with a marker (e.g., "a. ", "b. ", "1. ", "2. ")
+								if len(title) > 2 && title[1] == '.' && title[2] == ' ' {
+									// Check if it's a letter or number marker
+									if (title[0] >= 'a' && title[0] <= 'z') || (title[0] >= '0' && title[0] <= '9') {
+										title = title[3:] // Strip the marker
+									}
+								}
+
+								fmt.Printf("         %s. %s\n", marker, title)
+							}
+						}
+					}
+				}
 			}
 		}
 		fmt.Println()

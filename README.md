@@ -5,6 +5,7 @@
 > - [tooling](https://github.com/grove-platform/tooling)
 > - [github-copier](https://github.com/grove-platform/github-copier)
 > - [audit-cli](https://github.com/grove-platform/audit-cli)
+>
 > Please direct any new issues or PRs to those repositories.
 
 This repository contains tooling that the MongoDB Developer Docs team

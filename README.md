@@ -1,6 +1,6 @@
 # Code Example Tooling
 
-> [! IMPORTANT]
+> [!IMPORTANT]
 > The contents of this repo have been moved to three new repositories in the `grove-platform` org:
 > - [tooling](https://github.com/grove-platform/tooling)
 > - [github-copier](https://github.com/grove-platform/github-copier)

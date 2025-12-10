@@ -372,9 +372,9 @@ func parseHierarchicalProcedure(lines []string, startIdx int, title string) (Pro
 		i++
 	}
 
-	// Check for sub-steps
+	// Check for sub-procedures
 	for _, step := range procedure.Steps {
-		if len(step.SubSteps) > 0 {
+		if len(step.SubProcedures) > 0 {
 			procedure.HasSubSteps = true
 			break
 		}
@@ -395,7 +395,6 @@ func parseNumberedHeadingStep(lines []string, startIdx int) (Step, int) {
 
 	i := startIdx + 2 // Skip heading and underline
 	var contentLines []string
-	var subSteps []Step
 	var subProcedures []SubProcedure
 
 	// Parse the content under this heading
@@ -431,8 +430,6 @@ func parseNumberedHeadingStep(lines []string, startIdx int) (Step, int) {
 				Steps:    subProcedureSteps,
 				ListType: listType,
 			})
-			// Also add to subSteps for backward compatibility
-			subSteps = append(subSteps, subProcedureSteps...)
 			// Add the sub-steps to content as well
 			for j := i; j <= endLine; j++ {
 				contentLines = append(contentLines, lines[j])
@@ -455,7 +452,6 @@ func parseNumberedHeadingStep(lines []string, startIdx int) (Step, int) {
 	}
 
 	step.Content = strings.Join(contentLines, "\n")
-	step.SubSteps = subSteps
 	step.SubProcedures = subProcedures
 
 	return step, i - 1
@@ -496,12 +492,16 @@ func computeProcedureContentHash(proc *Procedure) string {
 			}
 		}
 
-		// Include substeps
-		for _, substep := range step.SubSteps {
-			content.WriteString(substep.Title)
+		// Include sub-procedures
+		for _, subProc := range step.SubProcedures {
+			content.WriteString(subProc.ListType)
 			content.WriteString("|")
-			content.WriteString(substep.Content)
-			content.WriteString("|")
+			for _, substep := range subProc.Steps {
+				content.WriteString(substep.Title)
+				content.WriteString("|")
+				content.WriteString(substep.Content)
+				content.WriteString("|")
+			}
 		}
 	}
 
@@ -817,9 +817,9 @@ func parseProcedureDirectiveFromLines(lines []string, startIdx int, title string
 		i++
 	}
 
-	// Check for sub-steps
+	// Check for sub-procedures
 	for _, step := range procedure.Steps {
-		if len(step.SubSteps) > 0 {
+		if len(step.SubProcedures) > 0 {
 			procedure.HasSubSteps = true
 			break
 		}
@@ -835,7 +835,6 @@ func parseStepDirectiveFromLines(lines []string, startIdx int, title string, fil
 		Options:    make(map[string]string),
 		LineNum:    startIdx + 1,
 		Variations: []Variation{},
-		SubSteps:   []Step{},
 	}
 
 	i := startIdx + 1 // Skip the .. step:: line
@@ -899,8 +898,6 @@ func parseStepDirectiveFromLines(lines []string, startIdx int, title string, fil
 				Steps:    subProcedureSteps,
 				ListType: listType,
 			})
-			// Also add to SubSteps for backward compatibility
-			step.SubSteps = append(step.SubSteps, subProcedureSteps...)
 			// Add the sub-steps to content as well
 			for j := i; j <= endLine; j++ {
 				contentLines = append(contentLines, lines[j])

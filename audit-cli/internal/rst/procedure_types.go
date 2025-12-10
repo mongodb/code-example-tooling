@@ -41,7 +41,6 @@ type Step struct {
 	Options       map[string]string // Step options
 	LineNum       int               // Line number where step starts
 	Variations    []Variation       // Variations within this step (tabs or selected content)
-	SubSteps      []Step            // DEPRECATED: Use SubProcedures instead. Kept for backward compatibility.
 	SubProcedures []SubProcedure    // Multiple sub-procedures (each is an ordered list within this step)
 }
 

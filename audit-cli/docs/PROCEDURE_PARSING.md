@@ -418,7 +418,6 @@ type Step struct {
     Title         string
     Content       string
     SubProcedures []SubProcedure // Multiple sub-procedures within this step
-    SubSteps      []Step         // Deprecated: Flattened list for backward compatibility
 }
 ```
 
@@ -426,7 +425,6 @@ type Step struct {
 - Detects each ordered list within a step as a separate sub-procedure
 - Determines list type from the first item (`1.` → numbered, `a.` → lettered)
 - Stores each sub-procedure with its list type
-- Maintains `SubSteps` as a flattened list for backward compatibility
 
 ### Display with `--show-sub-procedures` Flag
 
@@ -434,13 +432,13 @@ The `extract procedures` command includes a `--show-sub-procedures` flag that di
 
 **Example Output:**
 ```
-Step 2 (Restart Each Member) contains 2 sub-procedure(s) with a total of 5 sub-step(s)
+Step 2 (Restart Each Member) contains 2 sub-procedures with a total of 5 sub-steps
 
-   Sub-procedure 1 (2 step(s)):
+   Sub-procedure 1 (2 steps):
       a. Shut down the member.
       b. Restart the member.
 
-   Sub-procedure 2 (3 step(s)):
+   Sub-procedure 2 (3 steps):
       a. Step down the primary.
       b. Shut down the member.
       c. Restart the member.
@@ -450,10 +448,6 @@ Step 2 (Restart Each Member) contains 2 sub-procedure(s) with a total of 5 sub-s
 - Makes it easier for writers to match CLI output with source files
 - Preserves the semantic meaning of list marker types
 - Shows the structure of multiple sub-procedures within a step
-
-### Backward Compatibility
-
-The `SubSteps` field is still populated with a flattened list of all sub-steps for backward compatibility with existing code that depends on it. New code should use `SubProcedures` to access the structured sub-procedure information.
 
 ## Include Directive Handling
 

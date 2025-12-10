@@ -8,7 +8,8 @@
 //   - Procedure directives
 //
 // The extracted procedures are written to individual RST files with standardized naming:
-//   {heading}-{selection}.rst
+//
+//	{heading}-{selection}.rst
 //
 // Supports filtering to extract only specific variations using the --selection flag.
 package procedures
@@ -109,7 +110,7 @@ func runExtract(filePath string, selection string, outputDir string, dryRun bool
 
 	// Report what was found
 	if verbose || dryRun {
-		fmt.Printf("\nFound %d unique procedure(s):\n", len(variations))
+		fmt.Printf("\nFound %d unique procedures:\n", len(variations))
 		for i, v := range variations {
 			fmt.Printf("\n%d. %s\n", i+1, v.Procedure.Title)
 			fmt.Printf("   Output file: %s\n", v.OutputFile)
@@ -118,7 +119,7 @@ func runExtract(filePath string, selection string, outputDir string, dryRun bool
 			if v.VariationName != "" {
 				// Split the selections and format as a list
 				selections := strings.Split(v.VariationName, "; ")
-				fmt.Printf("   Appears in %d selection(s):\n", len(selections))
+				fmt.Printf("   Appears in %d selections:\n", len(selections))
 				for _, sel := range selections {
 					fmt.Printf("     - %s\n", sel)
 				}
@@ -153,10 +154,10 @@ func runExtract(filePath string, selection string, outputDir string, dryRun bool
 						for _, subProc := range step.SubProcedures {
 							totalSubSteps += len(subProc.Steps)
 						}
-						fmt.Printf("      Contains %d sub-procedure(s) with a total of %d sub-step(s)\n", len(step.SubProcedures), totalSubSteps)
+						fmt.Printf("      Contains %d sub-procedures with a total of %d sub-steps\n", len(step.SubProcedures), totalSubSteps)
 					}
 					if len(step.Variations) > 0 {
-						fmt.Printf("      Contains %d variation(s)\n", len(step.Variations))
+						fmt.Printf("      Contains %d variations\n", len(step.Variations))
 					}
 				}
 			}
@@ -170,11 +171,11 @@ func runExtract(filePath string, selection string, outputDir string, dryRun bool
 						for _, subProc := range step.SubProcedures {
 							totalSubSteps += len(subProc.Steps)
 						}
-						fmt.Printf("   Step %d (%s) contains %d sub-procedure(s) with a total of %d sub-step(s)\n",
+						fmt.Printf("   Step %d (%s) contains %d sub-procedures with a total of %d sub-steps\n",
 							stepIdx+1, step.Title, len(step.SubProcedures), totalSubSteps)
 
 						for subProcIdx, subProc := range step.SubProcedures {
-							fmt.Printf("\n      Sub-procedure %d (%d step(s)):\n", subProcIdx+1, len(subProc.Steps))
+							fmt.Printf("\n      Sub-procedure %d (%d steps):\n", subProcIdx+1, len(subProc.Steps))
 							for subStepIdx, subStep := range subProc.Steps {
 								// Use the appropriate marker based on list type
 								marker := ""
@@ -214,11 +215,10 @@ func runExtract(filePath string, selection string, outputDir string, dryRun bool
 
 	// Print summary
 	if dryRun {
-		fmt.Printf("Dry run complete. Would have written %d file(s) to %s\n", len(variations), outputDir)
+		fmt.Printf("Dry run complete. Would have written %d files to %s\n", len(variations), outputDir)
 	} else {
-		fmt.Printf("Successfully extracted %d unique procedure(s) to %s\n", filesWritten, outputDir)
+		fmt.Printf("Successfully extracted %d unique procedures to %s\n", filesWritten, outputDir)
 	}
 
 	return nil
 }
-

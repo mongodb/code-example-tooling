@@ -278,10 +278,10 @@ func TestHierarchicalProcedure(t *testing.T) {
 		t.Error("Expected HasSubSteps to be true")
 	}
 
-	// Verify that step 2 has sub-steps (the ordered lists)
+	// Verify that step 2 has sub-procedures (the ordered lists)
 	step2 := proc.Steps[1]
-	if len(step2.SubSteps) == 0 {
-		t.Error("Expected step 2 to have sub-steps")
+	if len(step2.SubProcedures) == 0 {
+		t.Error("Expected step 2 to have sub-procedures")
 	}
 
 	t.Logf("Hierarchical procedure parsed correctly with %d steps", len(proc.Steps))
@@ -313,17 +313,17 @@ func TestSubProcedureDetection(t *testing.T) {
 		t.Error("Expected HasSubSteps to be true for 'Procedure with Sub-steps'")
 	}
 
-	// Verify at least one step has sub-steps
-	hasSubSteps := false
+	// Verify at least one step has sub-procedures
+	hasSubProcedures := false
 	for _, step := range subStepProc.Steps {
-		if len(step.SubSteps) > 0 {
-			hasSubSteps = true
+		if len(step.SubProcedures) > 0 {
+			hasSubProcedures = true
 			break
 		}
 	}
 
-	if !hasSubSteps {
-		t.Error("Expected at least one step to have sub-steps")
+	if !hasSubProcedures {
+		t.Error("Expected at least one step to have sub-procedures")
 	}
 
 	t.Logf("Sub-procedure detection working correctly")
@@ -369,20 +369,10 @@ func TestSubProcedureListTypes(t *testing.T) {
 		t.Logf("Sub-procedure %d has %d steps with list type '%s'", i+1, len(subProc.Steps), subProc.ListType)
 	}
 
-	// Verify backward compatibility - SubSteps should still be populated
-	if len(step.SubSteps) == 0 {
-		t.Error("Expected SubSteps to be populated for backward compatibility")
-	}
-
 	// Count total steps across all sub-procedures
 	totalSteps := 0
 	for _, subProc := range step.SubProcedures {
 		totalSteps += len(subProc.Steps)
-	}
-
-	// Verify SubSteps has the same total count
-	if len(step.SubSteps) != totalSteps {
-		t.Errorf("Expected SubSteps to have %d steps (flattened), got %d", totalSteps, len(step.SubSteps))
 	}
 
 	t.Logf("Sub-procedure list types tracked correctly: %d sub-procedures with %d total steps",

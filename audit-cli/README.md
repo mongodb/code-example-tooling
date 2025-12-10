@@ -1,6 +1,6 @@
 # audit-cli
 
-A Go CLI tool for extracting and analyzing code examples from MongoDB documentation written in reStructuredText (RST).
+A Go CLI tool for performing audit-related tasks in the MongoDB documentation monorepo.
 
 ## Table of Contents
 
@@ -21,14 +21,17 @@ A Go CLI tool for extracting and analyzing code examples from MongoDB documentat
 
 ## Overview
 
-This CLI tool helps maintain code quality across MongoDB's documentation by:
+This CLI tool helps with maintenance and audit-related tasks across MongoDB's documentation by:
 
-1. **Extracting code examples** from RST files into individual, testable files
-2. **Searching extracted code** for specific patterns or substrings
-3. **Analyzing include relationships** to understand file dependencies
+1. **Extracting code examples** or **procedures** from RST files into individual, testable files
+2. **Searching files** for specific patterns or substrings
+3. **Analyzing reference relationships** to understand file dependencies
 4. **Comparing file contents** across documentation versions to identify differences
 5. **Following include directives** to process entire documentation trees
-6. **Handling MongoDB-specific conventions** like steps files, extracts, and template variables
+6. **Counting documentation pages** or **tested code examples** to track coverage and quality metrics
+
+This CLI provides built-in handling for MongoDB-specific conventions like steps files, extracts, version comprehension,
+and template variables.
 
 ## Installation
 
@@ -63,7 +66,6 @@ audit-cli
 │   ├── includes
 │   ├── usage
 │   └── procedures
-│   └── usage
 ├── compare          # Compare files across versions
 │   └── file-contents
 └── count            # Count code examples and documentation pages
@@ -100,6 +102,9 @@ This command helps writers:
 # Extract recursively from all subdirectories
 ./audit-cli extract code-examples path/to/docs -o ./output -r
 
+# Extract recursively and preserve directory structure
+./audit-cli extract code-examples path/to/docs -o ./output -r --preserve-dirs
+
 # Follow include directives
 ./audit-cli extract code-examples path/to/file.rst -o ./output -f
 
@@ -119,6 +124,11 @@ This command helps writers:
 - `-r, --recursive` - Recursively scan directories for RST files. If you do not provide this flag, the tool will only
   extract code examples from the top-level RST file. If you do provide this flag, the tool will recursively scan all
   subdirectories for RST files and extract code examples from all files.
+- `--preserve-dirs` - Preserve directory structure in output (use with `--recursive`). By default, all extracted files
+  are written to a flat structure in the output directory. When this flag is enabled with `--recursive`, the tool will
+  preserve the directory structure relative to the input directory. For example, if extracting from `docs/source/` and
+  a file is located at `docs/source/includes/example.rst`, the output will be written to `output/includes/example.*.ext`
+  instead of `output/example.*.ext`.
 - `-f, --follow-includes` - Follow `.. include::` directives in RST files. If you do not provide this flag, the tool
   will only extract code examples from the top-level RST file. If you do provide this flag, the tool will follow any
   `.. include::` directives in the RST file and extract code examples from all included files. When combined with `-r`,
@@ -256,7 +266,8 @@ After extraction, the report shows:
 
 #### `search find-string`
 
-Search through files for a specific substring. Can search through extracted code example files or RST source files.
+Search through files for a specific substring. Can search through extracted code example or procedure files or RST
+source files.
 
 **Default Behavior:**
 - **Case-insensitive** search (matches "curl", "CURL", "Curl", etc.)
@@ -337,13 +348,14 @@ With `-v` flag, also shows:
 
 Analyze `include` directive relationships in RST files to understand file dependencies.
 
-This command recursively follows `.. include::` directives to show all files that are referenced from a starting file. This helps you understand which content is transcluded into a page.
+This command recursively follows `.. include::` directives to show all files that are referenced from a starting file.
+This helps you understand which content is transcluded into a page.
 
 **Use Cases:**
 
 This command helps writers:
 - Understand the impact of changes to widely-included files
-- Identify circular include dependencies (files included multiple times)
+- Identify files included multiple times
 - Document file relationships for maintenance
 - Plan refactoring of complex include structures
 - See what content is actually pulled into a page
@@ -376,8 +388,22 @@ This command helps writers:
 **Output Formats:**
 
 **Summary** (default - no flags):
+```
+============================================================
+INCLUDE ANALYSIS SUMMARY
+============================================================
+Root File: /path/to/file.rst
+Unique Files: 18
+Include Directives: 56
+Max Depth: 2
+============================================================
+
+Use --tree to see the hierarchical structure
+Use --list to see a flat list of all files
+```
 - Root file path
-- Total number of files
+- Number of unique files discovered
+- Total number of include directive instances (counting duplicates)
 - Maximum depth of include nesting
 - Hints to use --tree or --list for more details
 
@@ -385,18 +411,49 @@ This command helps writers:
 - Hierarchical tree structure showing include relationships
 - Uses box-drawing characters for visual clarity
 - Shows which files include which other files
+- Displays directory paths to help disambiguate files with the same name
+  - Files in `includes` directories: `includes/filename.rst`
+  - Files outside `includes`: `path/from/source/filename.rst`
 
 **List** (--list flag):
-- Flat numbered list of all files
+- Flat numbered list of all unique files
 - Files listed in depth-first traversal order
 - Shows absolute paths to all files
 
+**Verbose** (-v flag):
+- Shows complete dependency tree with all nodes (including duplicates)
+- Each file displays the number of include directives it contains
+- Uses visual indicators to show duplicate includes:
+  - `•` (filled bullet) - First occurrence of a file
+  - `◦` (hollow bullet) - Subsequent occurrences (duplicates)
+- Example output:
+```
+• get-started.txt (24 include directives)
+  • get-started/node/language-connection-steps.rst (3 include directives)
+    • includes/load-sample-data.rst
+    • includes/connection-string-note.rst
+    • includes/application-output.rst
+  • includes/next-steps.rst
+  • get-started/python/language-connection-steps.rst (3 include directives)
+    ◦ includes/load-sample-data.rst
+    ◦ includes/connection-string-note.rst
+    ◦ includes/application-output.rst
+  ◦ includes/next-steps.rst
+```
+
 **Note on File Counting:**
 
-The total file count represents **unique files** discovered through include directives. If a file is included multiple
-times (e.g., file A includes file C, and file B also includes file C), the file is counted only once in the total.
-However, the tree view will show it in all locations where it appears, with subsequent occurrences marked as circular
-includes in verbose mode.
+The command reports two distinct metrics:
+
+1. **Unique Files**: Number of distinct files discovered through include directives. If a file is included multiple
+   times (e.g., file A includes file C, and file B also includes file C), the file is counted only once.
+
+2. **Include Directives**: Total number of include directive instances across all files. This counts every occurrence,
+   including duplicates. For example, if `load-sample-data.rst` is included 12 times across different files, it
+   contributes 12 to this count.
+
+In verbose mode, the tree view shows files in all locations where they appear. Duplicate occurrences are marked with
+a hollow bullet (`◦`) to help you identify files that are included multiple times.
 
 **Note on Toctree:**
 
@@ -406,9 +463,12 @@ the `analyze usage` command with the `--include-toctree` flag.
 
 #### `analyze usage`
 
-Find all files that use a target file through RST directives. This performs reverse dependency analysis, showing which files reference the target file through `include`, `literalinclude`, `io-code-block`, or `toctree` directives.
+Find all files that use a target file through RST directives. This performs reverse dependency analysis, showing which
+files reference the target file through `include`, `literalinclude`, `io-code-block`, or `toctree` directives.
 
-The command searches all RST files (`.rst` and `.txt` extensions) and YAML files (`.yaml` and `.yml` extensions) in the source directory tree. YAML files are included because extract and release files contain RST directives within their content blocks.
+The command searches all RST files (`.rst` and `.txt` extensions) and YAML files (`.yaml` and `.yml` extensions) in the
+source directory tree. YAML files are included because extract and release files contain RST directives within their
+content blocks.
 
 **Use Cases:**
 
@@ -501,7 +561,8 @@ With `--include-toctree`, also tracks:
       getting-started
    ```
 
-**Note:** Only file-based references are tracked. Inline content (e.g., `.. input::` with `:language:` but no file path) is not tracked since it doesn't reference external files.
+**Note:** Only file-based references are tracked. Inline content (e.g., `.. input::` with `:language:` but no file path)
+is not tracked since it doesn't reference external files.
 
 **Output Formats:**
 
@@ -799,37 +860,37 @@ This command helps writers:
 # Compare with diff output
 ./audit-cli compare file-contents file1.rst file2.rst --show-diff
 
-# Version comparison across MongoDB documentation versions
+# Version comparison - auto-discovers all versions
+./audit-cli compare file-contents \
+  /path/to/manual/manual/source/includes/example.rst
+
+# Version comparison - specific versions only
 ./audit-cli compare file-contents \
   /path/to/manual/manual/source/includes/example.rst \
-  --product-dir /path/to/manual \
   --versions manual,upcoming,v8.0,v7.0
 
 # Show which files differ
 ./audit-cli compare file-contents \
   /path/to/manual/manual/source/includes/example.rst \
-  --product-dir /path/to/manual \
-  --versions manual,upcoming,v8.0,v7.0 \
   --show-paths
 
 # Show detailed diffs
 ./audit-cli compare file-contents \
   /path/to/manual/manual/source/includes/example.rst \
-  --product-dir /path/to/manual \
-  --versions manual,upcoming,v8.0,v7.0 \
   --show-diff
 
-# Verbose output (show processing details)
-./audit-cli compare file-contents file1.rst file2.rst -v
+# Verbose output (show processing details and auto-discovered versions)
+./audit-cli compare file-contents \
+  /path/to/manual/manual/source/includes/example.rst \
+  -v
 ```
 
 **Flags:**
 
-- `-p, --product-dir <dir>` - Product directory path (required for version comparison)
-- `-V, --versions <list>` - Comma-separated list of versions (e.g., `manual,upcoming,v8.0`)
+- `-V, --versions <list>` - Comma-separated list of versions (optional; auto-discovers all versions if not specified)
 - `--show-paths` - Display file paths grouped by status (matching, differing, not found)
 - `-d, --show-diff` - Display unified diff output (implies `--show-paths`)
-- `-v, --verbose` - Show detailed processing information
+- `-v, --verbose` - Show detailed processing information (including auto-discovered versions and product directory)
 
 **Comparison Modes:**
 
@@ -848,16 +909,22 @@ This mode:
 
 **2. Version Comparison (Product Directory)**
 
-Provide one file path plus `--product-dir` and `--versions`:
+Provide one file path. The product directory and versions are automatically detected from the file path:
 
 ```bash
+# Auto-discover all versions
+./audit-cli compare file-contents \
+  /path/to/manual/manual/source/includes/example.rst
+
+# Or specify specific versions
 ./audit-cli compare file-contents \
   /path/to/manual/manual/source/includes/example.rst \
-  --product-dir /path/to/manual \
   --versions manual,upcoming,v8.0
 ```
 
 This mode:
+- Automatically detects the product directory from the file path
+- Auto-discovers all available versions (unless `--versions` is specified)
 - Extracts the relative path from the reference file
 - Resolves the same relative path in each version directory
 - Compares all versions against the reference file
@@ -905,20 +972,21 @@ product-dir/
 **Examples:**
 
 ```bash
-# Check if a file is consistent across all versions
+# Check if a file is consistent across all versions (auto-discovered)
 ./audit-cli compare file-contents \
-  ~/workspace/docs-mongodb-internal/content/manual/manual/source/includes/fact-atlas-search.rst \
-  --product-dir ~/workspace/docs-mongodb-internal/content/manual \
-  --versions manual,upcoming,v8.0,v7.0,v6.0
+  ~/workspace/docs-mongodb-internal/content/manual/manual/source/includes/fact-atlas-search.rst
 
-# Find differences and see what changed
+# Find differences and see what changed (all versions)
 ./audit-cli compare file-contents \
   ~/workspace/docs-mongodb-internal/content/manual/manual/source/includes/fact-atlas-search.rst \
-  --product-dir ~/workspace/docs-mongodb-internal/content/manual \
-  --versions manual,upcoming,v8.0,v7.0,v6.0 \
   --show-diff
 
-# Compare two specific versions of a file
+# Compare across specific versions only
+./audit-cli compare file-contents \
+  ~/workspace/docs-mongodb-internal/content/manual/manual/source/includes/fact-atlas-search.rst \
+  --versions manual,upcoming,v8.0,v7.0,v6.0
+
+# Compare two specific versions of a file directly
 ./audit-cli compare file-contents \
   ~/workspace/docs-mongodb-internal/content/manual/manual/source/includes/example.rst \
   ~/workspace/docs-mongodb-internal/content/manual/v8.0/source/includes/example.rst \
@@ -1191,7 +1259,7 @@ audit-cli/
 │           ├── output.go                    # Output formatting
 │           └── types.go                     # Type definitions
 ├── internal/                                # Internal packages
-│   ├── pathresolver/                        # Path resolution utilities
+│   ├── projectinfo/                         # Project structure and info utilities
 │   │   ├── pathresolver.go                  # Core path resolution
 │   │   ├── pathresolver_test.go             # Tests
 │   │   ├── source_finder.go                 # Source directory detection
@@ -1795,22 +1863,24 @@ used as the base for resolving relative include paths.
 
 ## Internal Packages
 
-### `internal/pathresolver`
+### `internal/projectinfo`
 
-Provides centralized path resolution utilities for working with MongoDB documentation structure:
+Provides centralized utilities for understanding MongoDB documentation project structure:
 
 - **Source directory detection** - Finds the documentation root by walking up the directory tree
 - **Project info detection** - Identifies product directory, version, and whether a project is versioned
+- **Version discovery** - Automatically discovers all available versions in a product directory
 - **Version path resolution** - Resolves file paths across multiple documentation versions
 - **Relative path resolution** - Resolves paths relative to the source directory
 
 **Key Functions:**
 - `FindSourceDirectory(filePath string)` - Finds the source directory for a given file
 - `DetectProjectInfo(filePath string)` - Detects project structure information
+- `DiscoverAllVersions(productDir string)` - Discovers all available versions in a product
 - `ResolveVersionPaths(referenceFile, productDir string, versions []string)` - Resolves paths across versions
 - `ResolveRelativeToSource(sourceDir, relativePath string)` - Resolves relative paths
 
-See the code in `internal/pathresolver/` for implementation details.
+See the code in `internal/projectinfo/` for implementation details.
 
 ### `internal/rst`
 

@@ -74,10 +74,16 @@ func printSummary(result *ComparisonResult) {
 			fmt.Printf("  - %d version(s) had errors\n", result.ErrorFiles)
 		}
 
-		// Show hints
-		fmt.Println()
-		fmt.Println("Use --show-paths to see which files differ")
-		fmt.Println("Use --show-diff to see the differences")
+		// Show hints (only in version comparison mode)
+		if result.ReferenceVersion != "" {
+			fmt.Println()
+			fmt.Println("Use --show-paths to see which files differ")
+			fmt.Println("Use --show-diff to see the differences")
+		} else {
+			// Direct comparison mode - only show diff hint
+			fmt.Println()
+			fmt.Println("Use --show-diff to see the differences")
+		}
 	} else if result.NotFoundFiles > 0 || result.ErrorFiles > 0 {
 		// No differences, but some files not found or had errors
 		fmt.Printf("✓ No differences found among existing files\n")

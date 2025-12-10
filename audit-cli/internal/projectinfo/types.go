@@ -1,4 +1,4 @@
-package pathresolver
+package projectinfo
 
 // ProjectInfo contains information about a documentation project's structure.
 //

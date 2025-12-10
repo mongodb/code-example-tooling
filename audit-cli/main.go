@@ -1,19 +1,15 @@
 // Package main provides the entry point for the audit-cli tool.
 //
-// audit-cli is a command-line tool for extracting and analyzing code examples
-// from MongoDB documentation written in reStructuredText (RST).
+// audit-cli is a command-line tool for performing audit-related tasks in the
+// MongoDB documentation monorepo. It helps technical writers with maintenance
+// tasks, scoping work, and reporting information to stakeholders.
 //
 // The CLI is organized into parent commands with subcommands:
-//   - extract: Extract content from RST files
-//   - code-examples: Extract code examples from RST directives
-//   - search: Search through extracted content
-//   - find-string: Search for substrings in extracted files
-//   - analyze: Analyze RST file structures
-//   - includes: Analyze include directive relationships
+//   - extract: Extract content from RST files (code examples, procedures)
+//   - search: Search through documentation files
+//   - analyze: Analyze RST file structures and relationships
 //   - compare: Compare files across different versions
-//   - file-contents: Compare file contents across versions
-//   - count: Count code examples
-//   - tested-examples: Count tested code examples in the monorepo
+//   - count: Count documentation content (code examples, pages)
 package main
 
 import (
@@ -28,12 +24,17 @@ import (
 func main() {
 	var rootCmd = &cobra.Command{
 		Use:   "audit-cli",
-		Short: "A CLI tool for extracting and analyzing code examples from MongoDB documentation",
-		Long: `audit-cli extracts code examples from reStructuredText files and provides
-tools for searching and analyzing the extracted content.
+		Short: "A CLI tool for auditing and analyzing MongoDB documentation",
+		Long: `audit-cli helps MongoDB technical writers perform audit-related tasks in the
+documentation monorepo, including:
 
-Supports extraction from literalinclude, code-block, and io-code-block directives,
-with special handling for MongoDB documentation conventions.`,
+  - Extracting content (code examples, procedures) for testing and migration
+  - Searching documentation files for specific strings or patterns
+  - Analyzing file dependencies and relationships
+  - Comparing files across documentation versions
+  - Counting documentation content for reporting and metrics
+
+Designed for maintenance tasks, scoping work, and reporting to stakeholders.`,
 	}
 
 	// Add parent commands

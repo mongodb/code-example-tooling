@@ -36,12 +36,18 @@ type TabSetInfo struct {
 
 // Step represents a single step in a procedure.
 type Step struct {
-	Title      string            // Step title (for .. step:: directive)
-	Content    string            // Step content (raw RST)
-	Options    map[string]string // Step options
-	LineNum    int               // Line number where step starts
-	Variations []Variation       // Variations within this step (tabs or selected content)
-	SubSteps   []Step            // Sub-steps (ordered lists within this step)
+	Title         string            // Step title (for .. step:: directive)
+	Content       string            // Step content (raw RST)
+	Options       map[string]string // Step options
+	LineNum       int               // Line number where step starts
+	Variations    []Variation       // Variations within this step (tabs or selected content)
+	SubProcedures []SubProcedure    // Multiple sub-procedures (each is an ordered list within this step)
+}
+
+// SubProcedure represents an ordered list within a step
+type SubProcedure struct {
+	Steps    []Step // The steps in this sub-procedure
+	ListType string // "numbered" or "lettered" - the type of ordered list marker used
 }
 
 // Variation represents a content variation within a step.
@@ -97,6 +103,8 @@ var (
 	numberedListRegex = regexp.MustCompile(`^(\s*)(\d+)[\.\)]\s+(.*)$`)
 	// Matches lettered lists: a. or a) or A. or A)
 	letteredListRegex = regexp.MustCompile(`^(\s*)([a-zA-Z])[\.\)]\s+(.*)$`)
+	// Matches continuation marker: #. (used to continue an ordered list)
+	continuationMarkerRegex = regexp.MustCompile(`^(\s*)#[\.\)]\s+(.*)$`)
 )
 
 // YAMLStep represents a step in a YAML steps file

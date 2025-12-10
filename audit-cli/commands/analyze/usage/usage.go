@@ -37,6 +37,7 @@ import (
 //   - -t, --directive-type: Filter by directive type (include, literalinclude, io-code-block, toctree)
 //   - --include-toctree: Include toctree entries (navigation links) in addition to content inclusion directives
 //   - --exclude: Exclude paths matching this glob pattern (e.g., '*/archive/*')
+//   - -r, --recursive: Recursively follow usage tree until reaching only .txt files (documentation pages)
 func NewUsageCommand() *cobra.Command {
 	var (
 		format         string
@@ -47,6 +48,7 @@ func NewUsageCommand() *cobra.Command {
 		directiveType  string
 		includeToctree bool
 		excludePattern string
+		recursive      bool
 	)
 
 	cmd := &cobra.Command{
@@ -103,10 +105,13 @@ Examples:
   analyze usage /path/to/file.rst --exclude "*/archive/*"
 
   # Filter by directive type
-  analyze usage /path/to/file.rst --directive-type include`,
+  analyze usage /path/to/file.rst --directive-type include
+
+  # Recursively follow usage tree to find all .txt documentation pages
+  analyze usage /path/to/includes/fact.rst --recursive`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runUsage(args[0], format, verbose, countOnly, pathsOnly, summaryOnly, directiveType, includeToctree, excludePattern)
+			return runUsage(args[0], format, verbose, countOnly, pathsOnly, summaryOnly, directiveType, includeToctree, excludePattern, recursive)
 		},
 	}
 
@@ -118,6 +123,7 @@ Examples:
 	cmd.Flags().StringVarP(&directiveType, "directive-type", "t", "", "Filter by directive type (include, literalinclude, io-code-block, toctree)")
 	cmd.Flags().BoolVar(&includeToctree, "include-toctree", false, "Include toctree entries (navigation links) in addition to content inclusion directives")
 	cmd.Flags().StringVar(&excludePattern, "exclude", "", "Exclude paths matching this glob pattern (e.g., '*/archive/*' or '*/deprecated/*')")
+	cmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "Recursively follow usage tree until reaching only .txt files (documentation pages)")
 
 	return cmd
 }
@@ -136,10 +142,11 @@ Examples:
 //   - directiveType: Filter by directive type (empty string means all types)
 //   - includeToctree: If true, include toctree entries in the search
 //   - excludePattern: Glob pattern for paths to exclude (empty string means no exclusion)
+//   - recursive: If true, recursively follow usage tree until reaching only .txt files
 //
 // Returns:
 //   - error: Any error encountered during analysis
-func runUsage(targetFile, format string, verbose, countOnly, pathsOnly, summaryOnly bool, directiveType string, includeToctree bool, excludePattern string) error {
+func runUsage(targetFile, format string, verbose, countOnly, pathsOnly, summaryOnly bool, directiveType string, includeToctree bool, excludePattern string, recursive bool) error {
 	// Validate directive type if specified
 	if directiveType != "" {
 		validTypes := map[string]bool{
@@ -178,7 +185,17 @@ func runUsage(targetFile, format string, verbose, countOnly, pathsOnly, summaryO
 	}
 
 	// Perform analysis
-	analysis, err := AnalyzeUsage(targetFile, includeToctree, verbose, excludePattern)
+	var analysis *UsageAnalysis
+	var err error
+
+	if recursive {
+		// Perform recursive analysis to find all .txt files
+		analysis, err = AnalyzeUsageRecursive(targetFile, includeToctree, verbose, excludePattern)
+	} else {
+		// Perform standard single-level analysis
+		analysis, err = AnalyzeUsage(targetFile, includeToctree, verbose, excludePattern)
+	}
+
 	if err != nil {
 		return fmt.Errorf("failed to analyze usage: %w", err)
 	}
@@ -205,6 +222,6 @@ func runUsage(targetFile, format string, verbose, countOnly, pathsOnly, summaryO
 	}
 
 	// Print full results
-	return PrintAnalysis(analysis, outputFormat, verbose)
+	return PrintAnalysis(analysis, outputFormat, verbose, recursive)
 }
 

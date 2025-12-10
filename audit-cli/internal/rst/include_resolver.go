@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mongodb/code-example-tooling/audit-cli/internal/pathresolver"
+	"github.com/mongodb/code-example-tooling/audit-cli/internal/projectinfo"
 )
 
 // FindIncludeDirectives finds all include directives in a file and resolves their paths.
@@ -137,7 +137,7 @@ func FindToctreeEntries(filePath string) ([]string, error) {
 //   - error: Error if the document cannot be found
 func ResolveToctreePath(currentFilePath, docName string) (string, error) {
 	// Find the source directory
-	sourceDir, err := pathresolver.FindSourceDirectory(currentFilePath)
+	sourceDir, err := projectinfo.FindSourceDirectory(currentFilePath)
 	if err != nil {
 		return "", err
 	}
@@ -196,7 +196,7 @@ func ResolveIncludePath(currentFilePath, includePath string) (string, error) {
 	}
 
 	// Find the source directory by walking up from the current file
-	sourceDir, err := pathresolver.FindSourceDirectory(currentFilePath)
+	sourceDir, err := projectinfo.FindSourceDirectory(currentFilePath)
 	if err != nil {
 		return "", err
 	}

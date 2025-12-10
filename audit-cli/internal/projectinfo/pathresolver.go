@@ -1,4 +1,4 @@
-package pathresolver
+package projectinfo
 
 import (
 	"fmt"

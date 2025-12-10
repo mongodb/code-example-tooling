@@ -16,8 +16,10 @@ package file_contents
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
+	"github.com/mongodb/code-example-tooling/audit-cli/internal/projectinfo"
 	"github.com/spf13/cobra"
 )
 
@@ -31,21 +33,21 @@ import (
 //      compare file-contents file1.rst file2.rst
 //
 //   2. Version comparison:
-//      compare file-contents file.rst --product-dir /path/to/product --versions v1,v2,v3
+//      compare file-contents file.rst --versions v1,v2,v3
+//
+// The product directory is automatically detected from the file path.
 //
 // Flags:
-//   - -p, --product-dir: Product directory path (required for version comparison)
-//   - -V, --versions: Comma-separated list of versions (required for version comparison)
+//   - -V, --versions: Comma-separated list of versions (optional; auto-discovers all versions if not specified)
 //   - --show-paths: Display file paths of files that differ
 //   - -d, --show-diff: Display unified diff output
 //   - -v, --verbose: Show detailed processing information
 func NewFileContentsCommand() *cobra.Command {
 	var (
-		productDir string
-		versions   string
-		showPaths  bool
-		showDiff   bool
-		verbose    bool
+		versions  string
+		showPaths bool
+		showDiff  bool
+		verbose   bool
 	)
 
 	cmd := &cobra.Command{
@@ -59,10 +61,19 @@ This command supports two modes:
    Compare two specific files directly.
    Example: compare file-contents file1.rst file2.rst
 
-2. Version comparison (one file argument + flags):
+2. Version comparison (one file argument):
    Compare the same file across multiple documentation versions.
-   Example: compare file-contents /path/to/manual/manual/source/file.rst \
-            --product-dir /path/to/manual \
+   The product directory is automatically detected from the file path.
+
+   By default, all available versions are automatically discovered and compared.
+   You can optionally specify specific versions using --versions.
+
+   Examples:
+     # Compare across all versions (auto-discovered)
+     compare file-contents /path/to/manual/manual/source/file.rst
+
+     # Compare across specific versions
+     compare file-contents /path/to/manual/manual/source/file.rst \
             --versions manual,upcoming,v8.1,v8.0
 
 The command provides progressive output detail:
@@ -74,12 +85,11 @@ Files that don't exist in certain versions are reported separately and
 do not cause errors.`,
 		Args: cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runCompare(args, productDir, versions, showPaths, showDiff, verbose)
+			return runCompare(args, versions, showPaths, showDiff, verbose)
 		},
 	}
 
-	cmd.Flags().StringVarP(&productDir, "product-dir", "p", "", "Product directory path (e.g., /path/to/manual)")
-	cmd.Flags().StringVarP(&versions, "versions", "V", "", "Comma-separated list of versions (e.g., manual,upcoming,v8.1)")
+	cmd.Flags().StringVarP(&versions, "versions", "V", "", "Comma-separated list of versions (optional; auto-discovers all versions if not specified)")
 	cmd.Flags().BoolVar(&showPaths, "show-paths", false, "Display file paths of files that differ")
 	cmd.Flags().BoolVarP(&showDiff, "show-diff", "d", false, "Display unified diff output")
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Show detailed processing information")
@@ -94,7 +104,6 @@ do not cause errors.`,
 //
 // Parameters:
 //   - args: Command line arguments (1 or 2 file paths)
-//   - productDir: Product directory path (for version comparison)
 //   - versions: Comma-separated version list (for version comparison)
 //   - showPaths: If true, show file paths
 //   - showDiff: If true, show diffs
@@ -102,23 +111,45 @@ do not cause errors.`,
 //
 // Returns:
 //   - error: Any error encountered during comparison
-func runCompare(args []string, productDir, versions string, showPaths, showDiff, verbose bool) error {
+func runCompare(args []string, versions string, showPaths, showDiff, verbose bool) error {
 	// Validate arguments based on mode
 	if len(args) == 2 {
 		// Direct comparison mode
-		if productDir != "" || versions != "" {
-			return fmt.Errorf("--product-dir and --versions cannot be used with two file arguments")
+		if versions != "" {
+			return fmt.Errorf("--versions cannot be used with two file arguments")
 		}
 		return runDirectComparison(args[0], args[1], showPaths, showDiff, verbose)
 	} else if len(args) == 1 {
 		// Version comparison mode
-		if productDir == "" {
-			return fmt.Errorf("--product-dir is required when comparing versions (use -p or --product-dir)")
+		// Convert to absolute path
+		absPath, err := filepath.Abs(args[0])
+		if err != nil {
+			return fmt.Errorf("failed to get absolute path: %w", err)
 		}
+
+		// Auto-detect product directory from the file path
+		productDir, err := projectinfo.FindProductDirectory(absPath)
+		if err != nil {
+			return fmt.Errorf("failed to detect product directory from file path: %w\n\nPlease ensure the file is within a MongoDB documentation structure (e.g., /path/to/product/{version}/source/...)", err)
+		}
+
+		if verbose {
+			fmt.Printf("Auto-detected product directory: %s\n", productDir)
+		}
+
+		// If no versions specified, auto-discover all versions
 		if versions == "" {
-			return fmt.Errorf("--versions is required when comparing versions (use -V or --versions)")
+			discoveredVersions, err := projectinfo.DiscoverAllVersions(productDir)
+			if err != nil {
+				return fmt.Errorf("failed to discover versions: %w\n\nYou can specify versions manually using --versions", err)
+			}
+			versions = strings.Join(discoveredVersions, ",")
+			if verbose {
+				fmt.Printf("Auto-discovered versions: %s\n", versions)
+			}
 		}
-		return runVersionComparison(args[0], productDir, versions, showPaths, showDiff, verbose)
+
+		return runVersionComparison(absPath, productDir, versions, showPaths, showDiff, verbose)
 	}
 
 	return fmt.Errorf("expected 1 or 2 file arguments")

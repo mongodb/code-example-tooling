@@ -8,6 +8,7 @@ This document describes the business logic behind procedure parsing in the `audi
 - [What is a Procedure?](#what-is-a-procedure)
 - [Procedure Formats](#procedure-formats)
 - [Procedure Variations](#procedure-variations)
+- [Sub-Procedures and List Type Tracking](#sub-procedures-and-list-type-tracking)
 - [Include Directive Handling](#include-directive-handling)
 - [Uniqueness and Grouping](#uniqueness-and-grouping)
 - [Analysis vs. Extraction Semantics](#analysis-vs-extraction-semantics)
@@ -30,7 +31,7 @@ Procedures have:
 - A **title/heading** (the section heading above the procedure)
 - A **series of steps** (numbered or bulleted instructions)
 - Optional **variations** (different content for different contexts)
-- Optional **sub-steps** (nested procedures within steps)
+- Optional **sub-procedures** (ordered lists within steps, each tracked separately with its list marker type)
 
 ## Procedure Formats
 
@@ -81,6 +82,55 @@ a. First step
 b. Second step
 c. Third step
 ```
+
+**Continuation Markers:** MongoDB documentation uses `#.` as a continuation marker for ordered lists, allowing the build system to automatically number items:
+
+```rst
+a. First step
+
+#. Second step (automatically becomes 'b.')
+
+#. Third step (automatically becomes 'c.')
+```
+
+The parser recognizes `#.` as a continuation of the current list type (numbered or lettered) and converts it to the appropriate next marker.
+
+### 2a. Hierarchical Procedures with Numbered Headings
+
+Some procedures use numbered headings to represent top-level steps, with ordered lists as sub-steps:
+
+```rst
+Procedure
+---------
+
+1. Modify the Keyfile
+~~~~~~~~~~~~~~~~~~~~~
+
+Update the keyfile to include both old and new keys.
+
+a. Open the keyfile in a text editor.
+
+#. Add the new key on a separate line.
+
+#. Save the file.
+
+2. Restart Each Member
+~~~~~~~~~~~~~~~~~~~~~~
+
+Restart all members one at a time.
+
+a. Shut down the member.
+
+#. Restart the member.
+```
+
+**Parser Behavior:**
+- Detects "Procedure" heading followed by numbered headings (1., 2., 3., etc.)
+- Treats numbered headings as top-level steps of a single procedure
+- Parses ordered lists within each numbered heading as sub-steps
+- Sets `HasSubSteps` flag to true if sub-steps are found
+- **Analysis:** Shows 1 procedure with N steps (where N is the number of numbered headings)
+- **Extraction:** Creates 1 file containing all numbered heading steps and their sub-steps
 
 ### 3. YAML Steps Files
 
@@ -320,6 +370,84 @@ Installation Instructions
   - `installation-instructions-download-the-installer-1f0961.rst` (appears in `windows` selection)
 
 **Rationale:** Each platform has a completely different installation procedure with different steps, so they should be extracted as separate files. However, for analysis/reporting, they're grouped as one logical "Installation Instructions" procedure with platform variations.
+
+## Sub-Procedures and List Type Tracking
+
+MongoDB documentation often contains **sub-procedures** - ordered lists within procedure steps that represent nested sequences of actions. The parser tracks these sub-procedures separately and preserves their list marker type (numbered vs. lettered).
+
+### Sub-Procedure Structure
+
+Each step can contain multiple sub-procedures, where each sub-procedure is a separate ordered list:
+
+```rst
+.. procedure::
+
+   .. step:: Restart Each Member
+
+      **For each secondary member:**
+
+      a. Shut down the member.
+
+      b. Restart the member.
+
+      **For the primary:**
+
+      a. Step down the primary.
+
+      #. Shut down the member.
+
+      #. Restart the member.
+```
+
+In this example, step "Restart Each Member" contains **two separate sub-procedures**:
+1. Sub-procedure 1 (2 steps): For each secondary member
+2. Sub-procedure 2 (3 steps): For the primary
+
+### List Type Tracking
+
+The parser tracks whether each sub-procedure uses numbered (`1.`, `2.`, `3.`) or lettered (`a.`, `b.`, `c.`) markers:
+
+**Data Structure:**
+```go
+type SubProcedure struct {
+    Steps    []Step // The steps in this sub-procedure
+    ListType string // "numbered" or "lettered"
+}
+
+type Step struct {
+    Title         string
+    Content       string
+    SubProcedures []SubProcedure // Multiple sub-procedures within this step
+}
+```
+
+**Parser Behavior:**
+- Detects each ordered list within a step as a separate sub-procedure
+- Determines list type from the first item (`1.` → numbered, `a.` → lettered)
+- Stores each sub-procedure with its list type
+
+### Display with `--show-sub-procedures` Flag
+
+The `extract procedures` command includes a `--show-sub-procedures` flag that displays sub-procedures using their original list marker type:
+
+**Example Output:**
+```
+Step 2 (Restart Each Member) contains 2 sub-procedures with a total of 5 sub-steps
+
+   Sub-procedure 1 (2 steps):
+      a. Shut down the member.
+      b. Restart the member.
+
+   Sub-procedure 2 (3 steps):
+      a. Step down the primary.
+      b. Shut down the member.
+      c. Restart the member.
+```
+
+**Benefits:**
+- Makes it easier for writers to match CLI output with source files
+- Preserves the semantic meaning of list marker types
+- Shows the structure of multiple sub-procedures within a step
 
 ## Include Directive Handling
 
@@ -676,6 +804,54 @@ Setup Instructions
 - Main procedure has 1 step with sub-procedure
 - `HasSubSteps` flag is set to true
 - Sub-procedure is not extracted separately (only top-level procedures are extracted)
+
+### Pattern: Hierarchical Procedure with Numbered Headings
+
+```rst
+Procedure
+---------
+
+1. First Major Step
+~~~~~~~~~~~~~~~~~~~
+
+Description of the first step.
+
+a. Sub-step one
+
+#. Sub-step two
+
+2. Second Major Step
+~~~~~~~~~~~~~~~~~~~~
+
+Description of the second step.
+
+a. Sub-step one
+
+#. Sub-step two
+```
+
+**Result:**
+- Analysis: 1 unique procedure with 2 steps
+- `HasSubSteps` flag is set to true (because of the ordered lists)
+- Extraction: 1 file containing both numbered heading steps and their sub-steps
+
+### Pattern: Continuation Markers in Ordered Lists
+
+```rst
+Setup Steps
+-----------
+
+a. First step
+
+#. Second step (becomes 'b.')
+
+#. Third step (becomes 'c.')
+```
+
+**Result:**
+- Parser recognizes `#.` as continuation of lettered list
+- Converts to: a., b., c.
+- Works for both numbered (1., 2., 3.) and lettered (a., b., c.) lists
 
 ## Testing Strategy
 

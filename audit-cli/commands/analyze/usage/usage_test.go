@@ -258,6 +258,27 @@ func TestReferencesTarget(t *testing.T) {
 			currentFile: filepath.Join(absTestDataDir, "includes/nested-include.rst"),
 			expected:    false,
 		},
+		{
+			name:        "Step file transformation - absolute path",
+			refPath:     "/includes/steps/shard-collection.rst",
+			targetFile:  filepath.Join(absTestDataDir, "includes/steps-shard-collection.yaml"),
+			currentFile: filepath.Join(absTestDataDir, "test.txt"),
+			expected:    true,
+		},
+		{
+			name:        "Step file transformation - relative path",
+			refPath:     "steps/shard-collection.rst",
+			targetFile:  filepath.Join(absTestDataDir, "includes/steps-shard-collection.yaml"),
+			currentFile: filepath.Join(absTestDataDir, "includes/test.txt"),
+			expected:    true,
+		},
+		{
+			name:        "Step file no match - different name",
+			refPath:     "/includes/steps/other-steps.rst",
+			targetFile:  filepath.Join(absTestDataDir, "includes/steps-shard-collection.yaml"),
+			currentFile: filepath.Join(absTestDataDir, "test.txt"),
+			expected:    false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -267,6 +288,111 @@ func TestReferencesTarget(t *testing.T) {
 				t.Errorf("expected %v, got %v", tt.expected, result)
 			}
 		})
+	}
+}
+
+// TestTransformStepFilePath tests the transformStepFilePath function.
+func TestTransformStepFilePath(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "Step file transformation",
+			input:    "/path/to/includes/steps-shard-collection.yaml",
+			expected: "/path/to/includes/steps/shard-collection.rst",
+		},
+		{
+			name:     "Step file with complex name",
+			input:    "/path/to/includes/steps-convert-replset-to-sharded-cluster.yaml",
+			expected: "/path/to/includes/steps/convert-replset-to-sharded-cluster.rst",
+		},
+		{
+			name:     "Non-step file - no transformation",
+			input:    "/path/to/includes/fact-something.yaml",
+			expected: "/path/to/includes/fact-something.yaml",
+		},
+		{
+			name:     "Non-yaml file - no transformation",
+			input:    "/path/to/includes/steps-something.rst",
+			expected: "/path/to/includes/steps-something.rst",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := transformStepFilePath(tt.input)
+			if result != tt.expected {
+				t.Errorf("expected %v, got %v", tt.expected, result)
+			}
+		})
+	}
+}
+
+// TestTransformExtractFilePath tests the transformExtractFilePath function.
+func TestTransformExtractFilePath(t *testing.T) {
+	tests := []struct {
+		name     string
+		filePath string
+		refID    string
+		expected string
+	}{
+		{
+			name:     "Extract file transformation",
+			filePath: "/path/to/includes/extracts-single-threaded-driver.yaml",
+			refID:    "c-driver-single-threaded",
+			expected: "/path/to/includes/extracts/c-driver-single-threaded.rst",
+		},
+		{
+			name:     "Release file transformation",
+			filePath: "/path/to/includes/release-pinning.yaml",
+			refID:    "pin-repo-to-version-yum",
+			expected: "/path/to/includes/release/pin-repo-to-version-yum.rst",
+		},
+		{
+			name:     "Non-extract file - no transformation",
+			filePath: "/path/to/includes/fact-something.yaml",
+			refID:    "some-ref",
+			expected: "/path/to/includes/fact-something.yaml",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := transformExtractFilePath(tt.filePath, tt.refID)
+			if result != tt.expected {
+				t.Errorf("expected %v, got %v", tt.expected, result)
+			}
+		})
+	}
+}
+
+// TestGetExtractRefs tests the getExtractRefs function.
+func TestGetExtractRefs(t *testing.T) {
+	// Use the test extract file from testdata
+	testFile := "../../../testdata/input-files/source/includes/extracts-test.yaml"
+
+	refs, err := getExtractRefs(testFile)
+	if err != nil {
+		t.Fatalf("getExtractRefs failed: %v", err)
+	}
+
+	expectedRefs := []string{"test-extract-intro", "test-extract-examples"}
+	if len(refs) != len(expectedRefs) {
+		t.Errorf("expected %d refs, got %d", len(expectedRefs), len(refs))
+	}
+
+	// Check that all expected refs are present
+	refMap := make(map[string]bool)
+	for _, ref := range refs {
+		refMap[ref] = true
+	}
+
+	for _, expectedRef := range expectedRefs {
+		if !refMap[expectedRef] {
+			t.Errorf("expected ref %s not found", expectedRef)
+		}
 	}
 }
 

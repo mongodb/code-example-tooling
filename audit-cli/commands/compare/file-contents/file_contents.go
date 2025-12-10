@@ -38,7 +38,7 @@ import (
 // The product directory is automatically detected from the file path.
 //
 // Flags:
-//   - -V, --versions: Comma-separated list of versions (required for version comparison)
+//   - -V, --versions: Comma-separated list of versions (optional; auto-discovers all versions if not specified)
 //   - --show-paths: Display file paths of files that differ
 //   - -d, --show-diff: Display unified diff output
 //   - -v, --verbose: Show detailed processing information
